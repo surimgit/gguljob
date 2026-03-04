@@ -1,0 +1,177 @@
+pipeline {
+    agent any
+    
+    // [설정] 트리거: 'develop' 브랜치에 푸시될 때만 실행
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'develop')
+    }
+    
+    environment {
+        // 도커 컴포즈 및 스크립트 위치 (루트)
+        DOCKER_COMPOSE_DIR = '.' 
+        BACKEND_DIR = 'backend' 
+        
+        // ★ 중요: 젠킨스에 등록한 .env 파일 Credential ID
+        ENV_CREDENTIAL_ID = 'dev-backend-env'
+    }
+
+    // [핵심] 동시에 여러 빌드가 실행되지 않도록 막음
+    options {
+        disableConcurrentBuilds() 
+    }
+
+    stages {
+        // [Step 1] 소스 코드 가져오기
+        stage('Checkout') {
+            steps {
+                echo '=== 1. Checkout (Develop Branch) ==='
+                checkout scm
+            }
+        }
+
+        // [Step 1.5] AI 서비스 배포 (변경 감지 시 수행)
+        stage('Deploy AI Service') {
+            // AI 폴더나 설정 파일이 변경되었을 때만 실행
+            when {
+                changeset "ai/**"
+            }
+            steps {
+                echo '=== 1.5 Deploy AI Service (Changes Detected) ==='
+                dir("${DOCKER_COMPOSE_DIR}") {
+                    withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
+                        script {
+                            try {
+                                // .env 준비 (AI 키가 여기에 들어 있어야 함!)
+                                sh 'cp $ENV_FILE .env'
+                                
+                                // AI 서비스만 독립적으로 재빌드 & 배포
+                                sh 'docker compose -f docker-compose.dev.yml up -d --build ai-service-dev'
+                                
+                                echo "✅ AI Service Deployed Successfully"
+                            } catch (Exception e) {
+                                echo "❌ AI Service Deploy Failed"
+                                throw e
+                            } finally {
+                                sh 'rm -f .env'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // [Step 2] 백엔드 빌드 (테스트 제외)
+        stage('Build Backend') {
+            steps {
+                echo '=== 2. Build Spring Boot (Dev) ==='
+                dir("${BACKEND_DIR}") {
+                    script {
+                        sh 'chmod +x gradlew'
+                        sh './gradlew clean build -x test'
+                    }
+                }
+            }
+        }
+
+        // [Step 3] ★ Blue/Green 무중단 배포 (수정됨)
+        stage('Deploy (Blue/Green)') {
+            steps {
+                echo "=== 3. Executing Blue/Green Deployment Script ==="
+                dir("${DOCKER_COMPOSE_DIR}") {
+                    // [수정 포인트] 기존 .env 파일 + 방금 만든 AWS 키 2개를 동시에 꺼냅니다.
+                    withCredentials([
+                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE'),
+                        string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
+                        string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
+                    ]) {
+                        script {
+                            try {
+                                // 1. .env 파일 생성 (deploy.sh와 docker-compose가 참조함)
+                                sh 'cp $ENV_FILE .env'
+                                
+                                // 2. 혹시 모르니 파일 존재 확인 (내용은 보안상 안 보여줌)
+                                sh 'ls -al .env'
+
+                                // 3. 배포 스크립트에 실행 권한 부여
+                                sh 'chmod +x deploy.sh'
+
+                                // 4. ★ 대망의 무중단 배포 스크립트 실행
+                                // (이 스크립트가 알아서 Blue/Green 판단하고 스위칭함)
+                                sh './deploy.sh'
+
+                            } catch (Exception e) {
+                                echo "❌ 배포 스크립트 실행 중 오류 발생!"
+                                throw e // 에러를 던져서 파이프라인을 실패 처리함
+                            } finally {
+                                // 5. [보안] 배포 끝나면 .env 파일 즉시 삭제
+                                sh 'rm -f .env'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // [Step 4] 청소 (오래된 이미지 정리)
+        stage('Cleanup') {
+            steps {
+                // 사용하지 않는 이미지(dangling) 삭제
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
+                def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+
+                def msg = "#### ✌️🥳✌️ 캬~ 백엔드 배포 성공! ✌️🥳✌️\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "**시간:** ${currentBuild.durationString}\n\n" +
+                        "[🔗 Jenkins 로그 확인](${env.BUILD_URL})"
+                
+                mattermostSend (
+                    color: "#0004ff", 
+                    message: msg,
+                    channel: "#chitkey-cicd",
+                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy" 
+                )
+            }
+        }
+        failure {
+            script {
+                def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
+                def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+                
+                def logs = currentBuild.rawBuild.getLog(20).join("\n")
+                
+                def msg = "#### ☠️🤯💩 스트레스 많이 받을 거야. 백엔드 배포 실패! 💩🤯☠️\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "### 📜 **에러 로그 요약**\n" +
+                        "```text\n" + // 마크다운 코드 블록 시작
+                        "${logs}\n" + // 로그 내용 주입
+                        "```\n" +     // 마크다운 코드 블록 끝
+                        "[🔍 젠킨스 로그 전체 보기](${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)"
+                
+                mattermostSend (
+                    color: "#ff0000",
+                    message: msg,
+                    channel: "#chitkey-cicd",
+                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy"
+                )
+            }
+        }
+    }
+}

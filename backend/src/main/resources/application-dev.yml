@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    # Dev Container DB Name: gguljob_dev
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/gguljob_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:gguljob-redis-dev}
+      port: ${REDIS_PORT:6379}

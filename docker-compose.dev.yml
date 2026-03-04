@@ -1,0 +1,236 @@
+version: "3.8"
+
+# [개발용 컴포즈 파일]
+services:
+  # =======================================================
+  # [MySQL] - SSH 터널링
+  # =======================================================
+  db-dev:
+    image: mysql:8.0
+    container_name: gguljob-db-dev
+    env_file: ./.env
+    environment:
+      MYSQL_DATABASE: gguljob_dev
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      # 일반 유저 계정 생성
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - ./data/mysql-dev:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [Neo4j Dev]
+  # =======================================================
+  neo4j-dev:
+    image: neo4j:5.15
+    container_name: gguljob-neo4j-dev
+    ports:
+      # prod와 포트 충돌 방지: dev는 7475/7688 사용
+      - "127.0.0.1:7475:7474" # Browser
+      - "127.0.0.1:7688:7687" # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=1G
+    volumes:
+      - ./data/neo4j-dev/data:/data
+      - ./data/neo4j-dev/logs:/logs
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [Redis]
+  # =======================================================
+  redis-dev:
+    image: redis:alpine
+    container_name: gguljob-redis-dev
+    ports:
+      - "127.0.0.1:6379:6379" # Redis 접속 포트
+    volumes:
+      - ./data/redis-dev:/data 
+    command: redis-server --appendonly yes
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [Elasticsearch] - 검색 엔진
+  # =======================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: gguljob-elasticsearch-dev
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data    
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "127.0.0.1:9201:9200" # prod와 포트 충돌 방지: dev는 9201 사용
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [FastAPI AI Service]
+  # =======================================================
+  ai-service-dev:
+    build:
+      context: ./ai
+    container_name: gguljob-ai-dev
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - REDIS_HOST=gguljob-redis-dev
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - gguljob-network-dev
+    depends_on:
+      - redis-dev
+      - neo4j-dev
+    restart: always
+
+  # =======================================================
+  # [Frontend - React + Nginx (Development Build)]
+  # =======================================================
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gguljob-frontend-dev
+    
+    # EC2 내부 SSH 터널링
+    ports:
+      - "127.0.0.1:3000:80"
+      
+    # React(Vite)는 빌드 타임(npm run build)
+    # 필요한 변수는 ./frontend/.env 파일
+    networks:
+      - gguljob-network-dev
+    restart: always
+    
+  # =======================================================
+  # [Blue Backend] : 기본 포트 8081
+  # 보안 핵심: API도 외부 노출 차단. 터널링 필수.
+  # =======================================================
+  backend-dev-blue:
+    # 이미지를 명시하여 Blue/Green이 동일한 이미지를 공유하도록 함
+    image: gguljob-backend-dev:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gguljob-backend-dev-blue
+    env_file: ./.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_PORT=8080
+
+      - DB_HOST=gguljob-db-dev
+      - DB_NAME=gguljob_dev
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      - REDIS_HOST=gguljob-redis-dev
+      - REDIS_PORT=6379
+
+      - AI_SERVICE_URL=http://gguljob-ai-dev:8000
+
+      - NEO4J_URI=bolt://gguljob-neo4j-dev:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CDN_URL=${CDN_URL}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    ports:
+      - "127.0.0.1:8081:8080" # 호스트의 8081을 컨테이너 8080에 연결
+    depends_on:
+      - db-dev
+      - redis-dev
+      - neo4j-dev
+      - ai-service-dev
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [Green Backend] : 교체 포트 8082
+  # =======================================================
+  backend-dev-green:
+    image: gguljob-backend-dev:latest
+    # build 컨텍스트는 동일함
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gguljob-backend-dev-green
+    env_file: ./.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_PORT=8080
+
+      - DB_HOST=gguljob-db-dev
+      - DB_NAME=gguljob_dev
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      - REDIS_HOST=gguljob-redis-dev
+      - REDIS_PORT=6379
+
+      - AI_SERVICE_URL=http://gguljob-ai-dev:8000
+
+      - NEO4J_URI=bolt://gguljob-neo4j-dev:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CDN_URL=${CDN_URL}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    ports:
+      - "127.0.0.1:8082:8080" # 호스트의 8082를 컨테이너 8080에 연결
+    depends_on:
+      - db-dev
+      - redis-dev
+      - neo4j-dev
+      - ai-service-dev
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+  # =======================================================
+  # [Nginx] Reverse Proxy
+  # =======================================================
+  nginx-dev:
+    image: nginx:latest
+    container_name: gguljob-nginx-dev
+    ports:
+      - "8000:80"
+      - "8443:443"
+    volumes:
+      - ./nginx/conf.d-dev:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - backend-dev-blue
+      - backend-dev-green
+      - frontend-dev
+    networks:
+      - gguljob-network-dev
+    restart: always
+
+networks:
+  gguljob-network-dev: 
+    external: true
+    name: gguljob-network-dev

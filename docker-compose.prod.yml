@@ -1,0 +1,292 @@
+version: "3.8"
+
+# [운영용 컴포즈 파일]
+services:
+  # =======================================================
+  # [MySQL] - SSH 터널링
+  # =======================================================
+  mysql:
+    image: mysql:8.0
+    container_name: gguljob-db-prod
+    # SSH 터널링
+    ports:
+      - "127.0.0.1:3306:3306"
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      # 일반 사용자 생성 (초기화 시 자동 생성됨)
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - gguljob-network
+    restart: always
+    # 로그 용량 제한 
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Neo4j]
+  # =======================================================
+  neo4j:
+    image: neo4j:5.15
+    container_name: gguljob-neo4j-prod
+    # 운영 환경에서는 외부 접속 차단 (백엔드만 내부 통신)
+    # SSH 터널링이 필요하다면 ports 주석 해제
+    ports:
+      - "127.0.0.1:7474:7474" # HTTP (로컬에서만 관리자 접속)
+      - "127.0.0.1:7687:7687" # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_dbms_memory_heap_initial__size=1G
+      - NEO4J_dbms_memory_heap_max__size=2G
+    volumes:
+      - ./data/neo4j/data:/data
+      - ./data/neo4j/logs:/logs
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Redis]
+  # =======================================================
+  redis:
+    image: redis:alpine
+    container_name: gguljob-redis-prod
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - gguljob-network
+    command: redis-server --appendonly yes
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m" 
+        max-file: "3"
+
+  # =======================================================
+  # [Elasticsearch] - 검색 엔진
+  # =======================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: gguljob-elasticsearch-prod
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "127.0.0.1:9200:9200" # SSH 터널링 전용
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [FastAPI AI Service]
+  # =======================================================
+  ai-service:
+    build:
+      context: ./ai
+    container_name: gguljob-ai-prod
+    environment:
+      - REDIS_HOST=gguljob-redis-prod
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - gguljob-network
+    depends_on:
+      - redis
+      - neo4j
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Frontend - React + Nginx]
+  # =======================================================
+  frontend:
+    image: gguljob-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gguljob-frontend-prod
+    
+    # 내부망(gguljob-network)에서 80번 포트로 대기 중입니다.
+    # 외부 Nginx(gguljob-nginx-prod)가 http://gguljob-frontend-prod:80 으로 접속합니다.
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Backend - Blue]
+  # =======================================================
+  backend-blue:
+    image: gguljob-backend:latest
+    container_name: gguljob-backend-prod-blue
+    env_file: ./.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_PORT=8080
+
+      - DB_HOST=gguljob-db-prod
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      - REDIS_HOST=gguljob-redis-prod
+      - REDIS_PORT=6379
+
+      - NEO4J_URI=bolt://gguljob-neo4j-prod:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
+      - AI_SERVICE_URL=http://gguljob-ai-prod:8000
+
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CDN_URL=${CDN_URL}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    networks:
+      - gguljob-network
+    depends_on:
+      - mysql
+      - redis
+      - neo4j
+      - ai-service
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Backend - Green]
+  # =======================================================
+  backend-green:
+    image: gguljob-backend:latest
+    container_name: gguljob-backend-prod-green
+    env_file: ./.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_PORT=8080
+
+      - DB_HOST=gguljob-db-prod
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      - REDIS_HOST=gguljob-redis-prod
+      - REDIS_PORT=6379
+
+      - NEO4J_URI=bolt://gguljob-neo4j-prod:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
+      - AI_SERVICE_URL=http://gguljob-ai-prod:8000
+
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CDN_URL=${CDN_URL}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    networks:
+      - gguljob-network
+    depends_on:
+      - mysql
+      - redis
+      - neo4j
+      - ai-service
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Nginx] Reverse Proxy
+  # =======================================================
+  nginx:
+    image: nginx:latest
+    container_name: gguljob-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    depends_on: 
+      - backend-blue
+      - backend-green
+      - frontend
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =======================================================
+  # [Jenkins] CI/CD Tool
+  # =======================================================
+  jenkins:
+    build:
+      context: ./jenkins_docker
+      args:
+        # EC2에서 `stat -c '%g' /var/run/docker.sock` 으로 확인 후 맞출 것 (보통 999)
+        DOCKER_GID: "999"
+    container_name: gguljob-jenkins-prod
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    mem_limit: 10g
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+networks:
+  gguljob-network:
+    external: true
+    name: gguljob-network

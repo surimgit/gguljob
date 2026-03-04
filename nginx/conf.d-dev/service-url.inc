@@ -1,0 +1,1 @@
+set $service_url http://chitkey-backend-dev-blue:8080;

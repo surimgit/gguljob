@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: gguljob-backend
+
+  # Base Profile (Default: local)
+  profiles:
+    active: local
+
+# Security (JWT)
+jwt:
+  secret: ${JWT_SECRET:default-jwt-secret-key-please-change-in-production}
+  access-minutes: ${JWT_ACCESS_MINUTES:2880}
+  refresh-days: ${JWT_REFRESH_DAYS:14}
+
+# OAuth (Kakao)
+kakao:
+  oidc:
+    userinfo-url: https://kapi.kakao.com/v1/oidc/userinfo
+    jwks-uri: https://kauth.kakao.com/.well-known/jwks.json
+    issuer: https://kauth.kakao.com
+    audience: ${KAKAO_CLIENT_ID:default-kakao-client-id}
+  userinfo-url: https://kapi.kakao.com/v2/user/me
+
+# API Documentation (Swagger)
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    groups-order: DESC
+    operations-sorter: method
+  api-docs:
+    path: /api-docs

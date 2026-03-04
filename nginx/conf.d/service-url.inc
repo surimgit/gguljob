@@ -1,0 +1,1 @@
+set $service_url http://gguljob-backend-prod-blue:8080;

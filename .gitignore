@@ -1,0 +1,11 @@
+.env
+backend/src/main/resources/application-local.yml
+.idea
+.vscode
+INFRA.md
+
+# Docker volume 데이터 (DB, Redis, Neo4j 등 실제 데이터)
+data/
+
+# Jenkins 홈 디렉토리
+jenkins_home/
