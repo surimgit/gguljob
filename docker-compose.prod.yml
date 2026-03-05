@@ -76,30 +76,30 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m" 
+        max-size: "10m"
         max-file: "3"
 
   # =======================================================
   # [Elasticsearch] - 검색 엔진
   # =======================================================
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-    container_name: gguljob-elasticsearch-prod
-    volumes:
-      - ./data/elasticsearch:/usr/share/elasticsearch/data
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "127.0.0.1:9200:9200" # SSH 터널링 전용
-    networks:
-      - gguljob-network
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+  #   container_name: gguljob-elasticsearch-prod
+  #   volumes:
+  #     - ./data/elasticsearch:/usr/share/elasticsearch/data
+  #   environment:
+  #     - discovery.type=single-node
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "127.0.0.1:9200:9200" # SSH 터널링 전용
+  #   networks:
+  #     - gguljob-network
+  #   restart: always
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
 
   # =======================================================
   # [FastAPI AI Service]
@@ -133,7 +133,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: gguljob-frontend-prod
-    
+
     # 내부망(gguljob-network)에서 80번 포트로 대기 중입니다.
     # 외부 Nginx(gguljob-nginx-prod)가 http://gguljob-frontend-prod:80 으로 접속합니다.
     networks:
@@ -248,7 +248,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
-    depends_on: 
+    depends_on:
       - backend-blue
       - backend-green
       - frontend

@@ -55,7 +55,7 @@ services:
     ports:
       - "127.0.0.1:6379:6379" # Redis 접속 포트
     volumes:
-      - ./data/redis-dev:/data 
+      - ./data/redis-dev:/data
     command: redis-server --appendonly yes
     networks:
       - gguljob-network-dev
@@ -64,19 +64,19 @@ services:
   # =======================================================
   # [Elasticsearch] - 검색 엔진
   # =======================================================
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-    container_name: gguljob-elasticsearch-dev
-    volumes:
-      - ./data/elasticsearch:/usr/share/elasticsearch/data    
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "127.0.0.1:9201:9200" # prod와 포트 충돌 방지: dev는 9201 사용
-    networks:
-      - gguljob-network-dev
-    restart: always
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+  #   container_name: gguljob-elasticsearch-dev
+  #   volumes:
+  #     - ./data/elasticsearch:/usr/share/elasticsearch/data    
+  #   environment:
+  #     - discovery.type=single-node
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "127.0.0.1:9201:9200" # prod와 포트 충돌 방지: dev는 9201 사용
+  #   networks:
+  #     - gguljob-network-dev
+  #   restart: always
 
   # =======================================================
   # [FastAPI AI Service]
@@ -106,17 +106,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: gguljob-frontend-dev
-    
+
     # EC2 내부 SSH 터널링
     ports:
       - "127.0.0.1:3000:80"
-      
+
     # React(Vite)는 빌드 타임(npm run build)
     # 필요한 변수는 ./frontend/.env 파일
     networks:
       - gguljob-network-dev
     restart: always
-    
+
   # =======================================================
   # [Blue Backend] : 기본 포트 8081
   # 보안 핵심: API도 외부 노출 차단. 터널링 필수.
@@ -231,6 +231,6 @@ services:
     restart: always
 
 networks:
-  gguljob-network-dev: 
+  gguljob-network-dev:
     external: true
     name: gguljob-network-dev
