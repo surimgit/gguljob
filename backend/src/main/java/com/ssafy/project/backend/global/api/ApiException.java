@@ -25,4 +25,11 @@ public class ApiException extends RuntimeException {
         this.errorCode = errorCode;
         this.errors = List.of(new ErrorResponse.FieldError(field, reason));
     }
+
+    // MR 리뷰 반영: 여러 개의 필드 에러를 한 번에 처리할 수 있는 생성자 추가
+    public ApiException(ErrorCode errorCode, String message, List<ErrorResponse.FieldError> errors) {
+        super(message);
+        this.errorCode = errorCode;
+        this.errors = errors;
+    }
 }

@@ -1,6 +1,10 @@
 package com.ssafy.project.backend.global.api;
 
-import com.ssafy.project.backend.global.exception.*; // 팀원분이 만든 예외 패키지 import!
+import com.ssafy.project.backend.global.exception.BadRequestException;
+import com.ssafy.project.backend.global.exception.DuplicateResourceException;
+import com.ssafy.project.backend.global.exception.ForbiddenException;
+import com.ssafy.project.backend.global.exception.ResourceNotFoundException;
+import com.ssafy.project.backend.global.exception.UnAuthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +29,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ec.status()).body(ErrorResponse.of(ec, message, errors));
     }
 
-    // ✨ 팀원분이 만든 커스텀 예외 5종 세트 낚아채기 시작!
+    // 커스텀 비즈니스 예외 처리
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException e) {
