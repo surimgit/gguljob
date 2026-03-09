@@ -8,7 +8,7 @@ interface JobCardProps {
 
 const JobCard = ({ job }: JobCardProps) => {
   return (
-    <a href={job.url} target="_blank" rel="noopener noreferrer" aria-label={`${job.company} ${job.title} 채용 정보 (새 탭에서 열림)`}>
+    <a href={job.url} target="_blank" rel="noopener noreferrer">
       <Card className="hover:shadow-md transition-shadow">
         <h3 className="text-lg font-semibold text-cta mb-1">{job.title}</h3>
         <p className="text-accent font-medium text-sm mb-3">{job.company}</p>
@@ -17,6 +17,7 @@ const JobCard = ({ job }: JobCardProps) => {
             <Badge key={tech} label={tech} variant="tech" />
           ))}
         </div>
+        <span className="sr-only">(새 탭에서 열림)</span>
       </Card>
     </a>
   );
