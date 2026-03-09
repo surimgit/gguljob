@@ -29,3 +29,10 @@ export interface Position {
   description: string;
   isOpen: boolean;
 }
+
+export interface ProjectQueryParams {
+  page?: number;
+  size?: number;
+  techStack?: string;
+  status?: string;
+}

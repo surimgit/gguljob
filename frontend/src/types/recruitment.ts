@@ -8,3 +8,10 @@ export interface Job {
   deadline: string | null;
   url: string;
 }
+
+export interface JobQueryParams {
+  page?: number;
+  size?: number;
+  techStack?: string;
+  experience?: string;
+}
