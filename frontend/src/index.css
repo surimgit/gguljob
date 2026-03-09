@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  /* 꿀잡 디자인 시스템 */
+  --color-accent: #F59E0B;
+  --color-cta: #111827;
+  --color-background: #FFF8F0;
+
+  --font-sans: "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
+}
