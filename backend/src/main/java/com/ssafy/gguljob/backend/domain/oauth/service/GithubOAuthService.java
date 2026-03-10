@@ -23,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class GithubOAuthService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
@@ -46,18 +46,28 @@ public class GithubOAuthService {
         }
 
         String finalEmail = email;
+
+
+        String nameToSave = userInfo.getName() != null ? userInfo.getName() : userInfo.getLogin();
+        if (nameToSave.length() > 20) {
+            nameToSave = nameToSave.substring(0, 20);
+        }
+
+        String finalName = nameToSave;
+
         User user = userRepository.findByEmail(finalEmail)
+            .map(existingUser -> {
+                log.info("♻️ 기존 회원 로그인: 깃허브 최신 프로필로 동기화합니다. 이메일: {}", finalEmail);
+                existingUser.updateGithubProfile(finalName, userInfo.getAvatar_url());
+                return userRepository.save(existingUser);
+            })
             .orElseGet(() -> {
                 log.info("DB에 새 회원 정보를 저장합니다. 이메일: {}", finalEmail);
 
-                String nameToSave = userInfo.getName() != null ? userInfo.getName() : userInfo.getLogin();
-                if (nameToSave.length() > 20) {
-                    nameToSave = nameToSave.substring(0, 20);
-                }
 
                 User newUser = User.builder()
                     .email(finalEmail)
-                    .userName(nameToSave)
+                    .userName(finalName)
                     .imageUrl(userInfo.getAvatar_url())
                     .authority("ROLE_USER")
                     .build();

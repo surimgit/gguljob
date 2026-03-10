@@ -65,4 +65,9 @@ public class User extends BaseTimeEntity {
         this.imageUrl = imageUrl;
         this.authority = authority;
     }
+
+    public void updateGithubProfile(String userName, String imageUrl) {
+        this.userName = userName;
+        this.imageUrl = imageUrl;
+    }
 }
