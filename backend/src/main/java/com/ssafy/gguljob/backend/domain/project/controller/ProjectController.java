@@ -2,14 +2,17 @@ package com.ssafy.gguljob.backend.domain.project.controller;
 
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +32,14 @@ public class ProjectController {
 
         ProjectResponse.Id response = projectService.createProject(userDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<Simple>> getMyProjects(
+        @AuthenticationPrincipal CustomUserDetails userDetails){
+
+        List<ProjectResponse.Simple> response = projectService.getMyProjects(userDetails.getId());
+
+        return ResponseEntity.ok(response);
     }
 }
