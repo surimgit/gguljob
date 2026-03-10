@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
 import Container from '../common/Container';
 import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
+import gguljobLogo from '../../assets/images/gguljob_logo.png';
 
 const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <Container className="h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-1.5 text-xl font-bold text-cta">
-            <span>🐝</span>
-            <span>꿀잡</span>
+          <Link to="/" className="flex items-center">
+            <img src={gguljobLogo} alt="꿀잡" className="h-9" />
           </Link>
           <nav className="flex items-center gap-6">
             <Link to="/projects" className="text-gray-600 hover:text-cta font-medium">
