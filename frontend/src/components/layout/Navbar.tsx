@@ -9,7 +9,7 @@ const Navbar = () => {
       <Container className="h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center">
-            <img src={gguljobLogo} alt="꿀잡" className="h-9" />
+            <img src={gguljobLogo} alt="꿀잡" className="h-20" />
           </Link>
           <nav className="flex items-center gap-6">
             <Link to="/projects" className="text-gray-600 hover:text-cta font-medium">
