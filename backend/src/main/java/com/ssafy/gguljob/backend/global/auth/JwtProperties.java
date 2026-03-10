@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.global.auth;
+package com.ssafy.gguljob.backend.global.auth;
 
 import lombok.Getter;
 import lombok.Setter;

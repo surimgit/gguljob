@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.global.api;
+package com.ssafy.gguljob.backend.global.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -1,5 +1,5 @@
-package com.ssafy.project.backend.domain.user.entity;
-import com.ssafy.project.backend.domain.user.type.OAuthProviderType;
+package com.ssafy.gguljob.backend.domain.user.entity;
+import com.ssafy.gguljob.backend.domain.user.type.OAuthProviderType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

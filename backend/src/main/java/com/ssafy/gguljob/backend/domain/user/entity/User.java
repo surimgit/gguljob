@@ -1,9 +1,9 @@
-package com.ssafy.project.backend.domain.user.entity;
+package com.ssafy.gguljob.backend.domain.user.entity;
 
-import com.ssafy.project.backend.domain.user.type.ExperienceLevel;
-import com.ssafy.project.backend.domain.user.type.PositionType;
-import com.ssafy.project.backend.domain.user.type.TeamTendency;
-import com.ssafy.project.backend.global.entity.BaseTimeEntity;
+import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
+import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -47,13 +47,12 @@ public class User extends BaseTimeEntity {
     @Column(length = 50)
     private ExperienceLevel experience;
 
-    @Column(name = "team_role", length = 50)
-    private String teamRole;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "team_tendency", length = 50)
     private TeamTendency teamTendency;
 
     @Column(name = "profile_image_url", length = 255)
     private String imageUrl;
+
+
 }

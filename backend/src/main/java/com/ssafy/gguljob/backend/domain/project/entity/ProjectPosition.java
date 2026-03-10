@@ -1,7 +1,7 @@
-package com.ssafy.project.backend.domain.project.entity;
-import com.ssafy.project.backend.domain.project.type.PositionStatus;
-import com.ssafy.project.backend.domain.user.type.PositionType;
-import com.ssafy.project.backend.global.entity.BaseTimeEntity;
+package com.ssafy.gguljob.backend.domain.project.entity;
+import com.ssafy.gguljob.backend.domain.project.type.PositionStatus;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

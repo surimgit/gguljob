@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.global.auth;
+package com.ssafy.gguljob.backend.global.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -72,7 +72,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                .verifyWith(secretKey) // 서명 검증!
+                .verifyWith(secretKey) // 서명 검증
                 .build()
                 .parseSignedClaims(token);
             return true;
@@ -100,5 +100,20 @@ public class JwtTokenProvider {
             .getPayload(); // JJWT 0.12.x 최신 문법 (getBody() 아님!)
 
         return Long.parseLong(claims.getSubject());
+    }
+
+    /**
+     * 5. 토큰에서 유저 권한(role) 추출
+     * 팔찌에 적힌 등급(ROLE_USER, ROLE_ADMIN 등)을 읽어옵니다.
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
+
+        // 토큰 생성할 때 "role"이라는 이름으로 넣었던 값을 그대로 빼옵니다.
+        return claims.get("role", String.class);
     }
 }

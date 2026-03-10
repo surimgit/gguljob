@@ -1,6 +1,6 @@
-package com.ssafy.project.backend.domain.github.entity;
+package com.ssafy.gguljob.backend.domain.github.entity;
 
-import com.ssafy.project.backend.domain.project.entity.Project;
+import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

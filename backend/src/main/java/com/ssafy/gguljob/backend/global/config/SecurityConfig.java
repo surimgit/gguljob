@@ -1,5 +1,7 @@
-package com.ssafy.project.backend.global.config;
+package com.ssafy.gguljob.backend.global.config;
 
+import com.ssafy.gguljob.backend.global.auth.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,10 +9,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // 인증 없이 허용할 경로 목록
     private static final String[] PUBLIC_URLS = {
@@ -37,7 +43,8 @@ public class SecurityConfig {
                 // TODO: 인증 구현 전까지 임시 전체 허용
                 //       인증 완성 후 아래 줄 제거하고 .anyRequest().authenticated() 로 교체
                 .anyRequest().permitAll()
-            );
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

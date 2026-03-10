@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.global.entity;
+package com.ssafy.gguljob.backend.global.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

@@ -1,9 +1,9 @@
-package com.ssafy.project.backend.domain.project.entity;
+package com.ssafy.gguljob.backend.domain.project.entity;
 
-import com.ssafy.project.backend.domain.project.type.RequestStatus;
-import com.ssafy.project.backend.domain.project.type.RequestType;
-import com.ssafy.project.backend.domain.user.entity.User;
-import com.ssafy.project.backend.global.entity.BaseTimeEntity;
+import com.ssafy.gguljob.backend.domain.project.type.RequestStatus;
+import com.ssafy.gguljob.backend.domain.project.type.RequestType;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

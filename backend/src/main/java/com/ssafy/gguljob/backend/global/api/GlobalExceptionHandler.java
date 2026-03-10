@@ -1,10 +1,10 @@
-package com.ssafy.project.backend.global.api;
+package com.ssafy.gguljob.backend.global.api;
 
-import com.ssafy.project.backend.global.exception.BadRequestException;
-import com.ssafy.project.backend.global.exception.DuplicateResourceException;
-import com.ssafy.project.backend.global.exception.ForbiddenException;
-import com.ssafy.project.backend.global.exception.ResourceNotFoundException;
-import com.ssafy.project.backend.global.exception.UnAuthorizedException;
+import com.ssafy.gguljob.backend.global.exception.BadRequestException;
+import com.ssafy.gguljob.backend.global.exception.DuplicateResourceException;
+import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import com.ssafy.gguljob.backend.global.exception.UnAuthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

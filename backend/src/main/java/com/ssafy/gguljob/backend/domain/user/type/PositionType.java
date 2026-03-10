@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.domain.user.type;
+package com.ssafy.gguljob.backend.domain.user.type;
 
 public enum PositionType {
     BE, FE, AI, PM, INFRA, DESIGN

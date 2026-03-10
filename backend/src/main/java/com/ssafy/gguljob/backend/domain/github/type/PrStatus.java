@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.domain.github.type;
+package com.ssafy.gguljob.backend.domain.github.type;
 
 public enum PrStatus {
     OPEN, CLOSED, MERGED

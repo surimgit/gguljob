@@ -1,6 +1,6 @@
-package com.ssafy.project.backend.domain.user.entity;
+package com.ssafy.gguljob.backend.domain.user.entity;
 
-import com.ssafy.project.backend.global.entity.BaseTimeEntity;
+import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

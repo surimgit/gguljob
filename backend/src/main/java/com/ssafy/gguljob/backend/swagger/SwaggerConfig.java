@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.swagger;
+package com.ssafy.gguljob.backend.swagger;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
