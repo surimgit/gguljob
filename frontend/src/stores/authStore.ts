@@ -14,7 +14,8 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isAuthenticated: false,
+      // accessToken 존재 여부로 초기화 → persist 불일치 방지
+      isAuthenticated: localStorage.getItem('accessToken') !== null,
       setUser: (user) => set({ user, isAuthenticated: true }),
       setTokens: (accessToken, refreshToken) => {
         localStorage.setItem('accessToken', accessToken);
@@ -28,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user }), // isAuthenticated는 persist 제외
     }
   )
 );
