@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -61,4 +62,17 @@ public class Project extends BaseTimeEntity {
 
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
+
+    @Builder
+    public Project(User leader, String teamName, String title, String domain, String description, Boolean isPublic, String imageUrl, String documentUrl) {
+        this.leader = leader;
+        this.teamName = teamName;
+        this.title = title;
+        this.domain = domain;
+        this.description = description;
+        this.status = ProjectStatus.RECRUITING;
+        this.isPublic = isPublic != null ? isPublic : false;
+        this.imageUrl = imageUrl;
+        this.documentUrl = documentUrl;
+    }
 }
