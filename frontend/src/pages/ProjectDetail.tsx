@@ -8,16 +8,17 @@ import Board from '../components/feature/detail/tabs/Board';
 const TABS = ['소개', '팀원', '기술스택', '지원하기', '게시판'] as const;
 type Tab = (typeof TABS)[number];
 
-const TAB_COMPONENTS: Record<Tab, React.ReactNode> = {
-  소개: <Overview />,
-  팀원: <TeamMembers />,
-  기술스택: <TechStack />,
-  지원하기: <Apply />,
-  게시판: <Board />,
+const TAB_COMPONENTS: Record<Tab, React.ComponentType> = {
+  소개: Overview,
+  팀원: TeamMembers,
+  기술스택: TechStack,
+  지원하기: Apply,
+  게시판: Board,
 };
 
 const ProjectDetail = () => {
   const [activeTab, setActiveTab] = useState<Tab>('소개');
+  const ActiveComponent = TAB_COMPONENTS[activeTab];
 
   return (
     <div>
@@ -36,7 +37,7 @@ const ProjectDetail = () => {
           </button>
         ))}
       </div>
-      <div className="mt-6">{TAB_COMPONENTS[activeTab]}</div>
+      <div className="mt-6"><ActiveComponent /></div>
     </div>
   );
 };
