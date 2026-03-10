@@ -6,6 +6,14 @@ spring:
   profiles:
     active: local
 
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+
 # Security (JWT)
 jwt:
   secret: ${JWT_SECRET:default-jwt-secret-key-please-change-in-production}

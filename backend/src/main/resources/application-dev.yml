@@ -21,3 +21,4 @@ spring:
     redis:
       host: ${REDIS_HOST:gguljob-redis-dev}
       port: ${REDIS_PORT:6379}
+
