@@ -5,3 +5,5 @@ export const getMe = () => api.get<User>('/v1/user/me');
 
 export const updateProfile = (data: Partial<Pick<User, 'name' | 'techStacks'>>) =>
   api.patch<User>('/v1/user/me', data);
+
+export const logoutApi = () => api.post('/v1/auth/logout');
