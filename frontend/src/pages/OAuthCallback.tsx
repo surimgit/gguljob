@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { getMe } from '../api/user';
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const { setTokens, setUser, logout } = useAuthStore();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -24,11 +26,31 @@ const OAuthCallback = () => {
         setUser(res.data);
         navigate('/', { replace: true });
       })
-      .catch(() => {
-        logout();
-        navigate('/login', { replace: true });
+      .catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          logout();
+          navigate('/login', { replace: true });
+        } else {
+          setError('로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        }
       });
   }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-gray-700 text-sm mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/login', { replace: true })}
+            className="text-sm text-accent underline"
+          >
+            로그인 페이지로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
