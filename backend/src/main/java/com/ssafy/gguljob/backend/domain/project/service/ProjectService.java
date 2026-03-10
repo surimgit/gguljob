@@ -6,10 +6,16 @@ import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
+import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +27,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectSkillRepository projectSkillRepository;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -51,4 +58,29 @@ public class ProjectService {
         return ProjectResponse.Id.from(savedProject);
     }
 
+    public List<ProjectResponse.Simple> getMyProjects(Long userId) {
+
+        List<ProjectMember> memberships = projectMemberRepository.findActiveProjectsByUserId(userId,
+            MemberStatus.ATTEND);
+
+        return memberships.stream().map(membership -> {
+            Project project = membership.getProject();
+
+            // 역할별 인원수 계산
+            Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(
+                    project.getId())
+                .stream()
+                .collect(Collectors.toMap(
+                    row -> row[0].toString(),
+                    row -> (Long) row[1]
+                ));
+
+            // 스킬 이름 최대 4개 조회
+            List<String> skills = projectSkillRepository.findTop4SkillNamesByProjectId(
+                project.getId(), PageRequest.of(0, 4)
+            );
+
+            return ProjectResponse.Simple.of(project, roleCounts, skills);
+        }).collect(Collectors.toList());
+    }
 }
