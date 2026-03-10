@@ -82,9 +82,9 @@ pipeline {
                 dir("${DOCKER_COMPOSE_DIR}") {
                     // [수정 포인트] 기존 .env 파일 + 방금 만든 AWS 키 2개를 동시에 꺼냅니다.
                     withCredentials([
-                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE'),
-                        string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
-                        string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
+                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')
+                        // string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
+                        // string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
                     ]) {
                         script {
                             try {
