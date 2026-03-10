@@ -152,21 +152,15 @@ pipeline {
                 def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
                 def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
                 def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
-                
-                def logs = currentBuild.rawBuild.getLog(20).join("\n")
-                
+
                 def msg = "#### ☠️🤯💩 스트레스 많이 받을 거야. 백엔드 배포 실패! 💩🤯☠️\n" +
                         "**프로젝트:** ${env.JOB_NAME}\n" +
                         "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
                         "**브랜치:** `${branch}`\n" +
                         "**작성자:** ${author}\n" +
                         "**커밋:** ${message}\n" +
-                        "### 📜 **에러 로그 요약**\n" +
-                        "```text\n" + // 마크다운 코드 블록 시작
-                        "${logs}\n" + // 로그 내용 주입
-                        "```\n" +     // 마크다운 코드 블록 끝
-                        "[🔍 젠킨스 로그 전체 보기](${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)"
-                
+                        "[🔍 젠킨스 로그 전체 보기](${env.BUILD_URL}console)"
+
                 mattermostSend (
                     color: "#ff0000",
                     message: msg,
