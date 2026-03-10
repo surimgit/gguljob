@@ -27,9 +27,9 @@
 
         stage('Inject .env') {
             // frontend 폴더에 변경이 있을 때만 실행
-            when {
-                changeset "frontend/**"
-            }
+            // when {
+            //     changeset "frontend/**"
+            // }
             steps {
                 echo '=== 2. 프론트엔드 환경변수 주입 ==='
                 // ★ Vite는 빌드 시점에 .env를 번들에 삽입하므로
@@ -44,9 +44,9 @@
         }
 
         stage('Build & Deploy') {
-            when {
-                changeset "frontend/**"
-            }
+            // when {
+            //     changeset "frontend/**"
+            // }
             steps {
                 echo '=== 3. Docker 이미지 빌드 및 컨테이너 재배포 ==='
                 script {
