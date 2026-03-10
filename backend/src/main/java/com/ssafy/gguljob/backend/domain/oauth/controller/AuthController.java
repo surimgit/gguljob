@@ -1,7 +1,12 @@
 package com.ssafy.gguljob.backend.domain.oauth.controller;
 
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
+import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,11 +54,36 @@ public class AuthController {
         response.sendRedirect(redirectUri);
     }
 
-    @Operation(summary = "테스트용 현재 로그인한 유저 ID 조회", description = "발급받은 AccessToken이 유효한지 테스트합니다.")
-    @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getMyInfo(@AuthenticationPrincipal Long userId) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("userId", userId);
+    @Operation(
+        summary = "현재 로그인한 유저 ID 조회(테스트용)",
+        description = "발급받은 AccessToken을 검증하고 유저의 핵심 정보를 반환합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "인증 성공 및 유저 정보 조회 완료",
+            content = @Content(schema = @Schema(implementation = ApiResponseDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "유효하지 않거나 만료된 토큰입니다. (재로그인 필요)",
+            content = @Content(schema = @Schema(example = "{\"status\": 401, \"message\": \"인증에 실패했습니다.\", \"data\": null}"))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "존재하지 않는 탈퇴한 유저입니다.",
+            content = @Content(schema = @Schema(example = "{\"status\": 404, \"message\": \"유저를 찾을 수 없습니다.\", \"data\": null}"))
+        )
+    })@GetMapping("/me")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getMyInfo(@AuthenticationPrincipal Long userId) {
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("role", "ROLE_USER");
+        data.put("status", "ACTIVE");
+
+        ApiResponseDto<Map<String, Object>> response =
+            new ApiResponseDto<>(200, "인증 성공", data);
 
         return ResponseEntity.ok(response);
     }
