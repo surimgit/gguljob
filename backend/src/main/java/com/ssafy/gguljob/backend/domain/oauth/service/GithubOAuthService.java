@@ -26,6 +26,7 @@ public class GithubOAuthService {
     private final RestTemplate restTemplate;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final com.ssafy.gguljob.backend.global.redis.RedisService redisService;
 
     @Value("${spring.security.oauth2.client.registration.github.client-id}")
     private String clientId;
@@ -77,6 +78,8 @@ public class GithubOAuthService {
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        redisService.setValues("RT:" + user.getId(), refreshToken, java.time.Duration.ofDays(14));
 
         log.info("JWT 토큰 발급 성공");
 

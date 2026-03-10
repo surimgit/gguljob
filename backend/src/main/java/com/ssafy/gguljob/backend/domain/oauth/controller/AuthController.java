@@ -1,7 +1,9 @@
 package com.ssafy.gguljob.backend.domain.oauth.controller;
 
+import com.ssafy.gguljob.backend.domain.oauth.dto.TokenRequestDto;
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
+import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,6 +21,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import com.ssafy.gguljob.backend.global.redis.RedisService;
+import com.ssafy.gguljob.backend.domain.oauth.service.GithubOAuthService;
 
 @Slf4j
 @RestController
@@ -27,7 +31,9 @@ import java.io.IOException;
 @Tag(name = "Auth", description = "인증/인가 및 소셜 로그인 API")
 public class AuthController {
 
-    private final com.ssafy.gguljob.backend.domain.oauth.service.GithubOAuthService githubOAuthService;
+    private final GithubOAuthService githubOAuthService;
+    private final RedisService redisService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${spring.security.oauth2.client.registration.github.client-id}")
     private String githubClientId;
@@ -90,6 +96,39 @@ public class AuthController {
 
         ApiResponseDto<Map<String, Object>> response =
             new ApiResponseDto<>(200, userName + "사용자 인증 성공", data);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "토큰 재발급 (Refresh)", description = "만료된 AccessToken과 유효한 RefreshToken을 받아 새 토큰을 발급합니다.")
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponseDto<TokenResponseDto>> refresh(@RequestBody TokenRequestDto requestDto) {
+
+        // 1. Refresh Token 자체가 정상인지 검증
+        if (!jwtTokenProvider.validateToken(requestDto.getRefreshToken())) {
+            throw new RuntimeException("Refresh Token이 유효하지 않습니다.");
+        }
+
+        // 2. 토큰에서 유저 ID 꺼내기
+        Long userId = jwtTokenProvider.getUserIdFromToken(requestDto.getRefreshToken());
+
+        // 3. Redis에서 우리가 저장해둔 토큰 가져오기
+        String redisRefreshToken = redisService.getValues("RT:" + userId);
+
+        // 4. 레디스에 없거나, 프론트가 준 거랑 다르면
+        if (redisRefreshToken == null || !redisRefreshToken.equals(requestDto.getRefreshToken())) {
+            throw new RuntimeException("토큰 정보가 일치하지 않거나 로그아웃된 유저입니다.");
+        }
+
+        // 5. 검증 통과
+        String newAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+        // 6. Redis에 새 Refresh Token으로 덮어쓰기
+        redisService.setValues("RT:" + userId, newRefreshToken, java.time.Duration.ofDays(14));
+
+        TokenResponseDto newTokenDto = new TokenResponseDto(newAccessToken, newRefreshToken);
+        ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신 폼 미쳤다!", newTokenDto);
 
         return ResponseEntity.ok(response);
     }
