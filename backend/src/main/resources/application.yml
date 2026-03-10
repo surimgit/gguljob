@@ -29,6 +29,10 @@ kakao:
     audience: ${KAKAO_CLIENT_ID:default-kakao-client-id}
   userinfo-url: https://kapi.kakao.com/v2/user/me
 
+app:
+  frontend:
+    redirect-url: ${APP_FRONTEND_REDIRECT_URL}
+
 # API Documentation (Swagger)
 springdoc:
   swagger-ui:
