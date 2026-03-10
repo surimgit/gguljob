@@ -1,1 +1,1 @@
-set $service_url http://chitkey-backend-dev-blue:8080;
+set $service_url http://gguljob-backend-dev-blue:8080;
