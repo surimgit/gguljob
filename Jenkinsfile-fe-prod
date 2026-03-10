@@ -89,8 +89,8 @@
                 mattermostSend(
                     color: "#0004ff",
                     message: msg,
-                    channel: "#gguljob-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy"
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
                 )
             }
         }
@@ -114,8 +114,8 @@
                 mattermostSend(
                     color: "#ff0000",
                     message: msg,
-                    channel: "#gguljob-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy"
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
                 )
             }
         }

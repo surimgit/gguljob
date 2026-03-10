@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.global.config;
+package com.ssafy.gguljob.backend.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,17 +27,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // REST API → CSRF 불필요
-            .csrf(AbstractHttpConfigurer::disable)
-            // JWT 사용 → 세션 미사용
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(PUBLIC_URLS).permitAll()
-                // TODO: 인증 구현 전까지 임시 전체 허용
-                //       인증 완성 후 아래 줄 제거하고 .anyRequest().authenticated() 로 교체
-                .anyRequest().permitAll()
-            );
+                // REST API → CSRF 불필요
+                .csrf(AbstractHttpConfigurer::disable)
+                // JWT 사용 → 세션 미사용
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        // TODO: 인증 구현 전까지 임시 전체 허용
+                        // 인증 완성 후 아래 줄 제거하고 .anyRequest().authenticated() 로 교체
+                        .anyRequest().permitAll());
 
         return http.build();
     }

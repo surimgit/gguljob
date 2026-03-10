@@ -1,4 +1,4 @@
-package com.ssafy.project.backend.health;
+package com.ssafy.gguljob.backend.health;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;

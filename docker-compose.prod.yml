@@ -269,7 +269,7 @@ services:
       context: ./jenkins_docker
       args:
         # EC2에서 `stat -c '%g' /var/run/docker.sock` 으로 확인 후 맞출 것 (보통 999)
-        DOCKER_GID: "999"
+        DOCKER_GID: "988"
     container_name: gguljob-jenkins-prod
     environment:
       - JENKINS_OPTS=--prefix=/jenkins

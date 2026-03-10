@@ -9,3 +9,10 @@ data/
 
 # Jenkins 홈 디렉토리
 jenkins_home/
+
+# AI 크롤러 데이터 파일 (코드만 관리)
+ai/crawler/*.csv
+ai/crawler/*.xlsx
+ai/crawler/*.txt
+ai/crawler/job_images/
+ai/crawler/__pycache__/

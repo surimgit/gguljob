@@ -2,9 +2,10 @@
 - [ ] FE
 - [ ] BE
 - [ ] AI
+- [ ] INFRA
 
 ## 🔗 지라 링크
-- Closes [S14P11E103-](https://ssafy.atlassian.net/browse/S14P11E103-)
+- Closes [S14P21E107-](https://ssafy.atlassian.net/browse/S14P21E107-)
 
 ## 💥 작업 내용
 - 
