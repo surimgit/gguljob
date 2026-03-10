@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 @Entity
 @Table(name = "users")
@@ -54,5 +55,14 @@ public class User extends BaseTimeEntity {
     @Column(name = "profile_image_url", length = 255)
     private String imageUrl;
 
+    @Column(name = "authority", length = 20)
+    private String authority;
 
+    @Builder
+    public User(String userName, String email, String imageUrl, String authority) {
+        this.userName = userName;
+        this.email = email;
+        this.imageUrl = imageUrl;
+        this.authority = authority;
+    }
 }
