@@ -6,6 +6,14 @@ spring:
   profiles:
     active: local
 
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+
 # Security (JWT)
 jwt:
   secret: ${JWT_SECRET:default-jwt-secret-key-please-change-in-production}
@@ -20,6 +28,10 @@ kakao:
     issuer: https://kauth.kakao.com
     audience: ${KAKAO_CLIENT_ID:default-kakao-client-id}
   userinfo-url: https://kapi.kakao.com/v2/user/me
+
+app:
+  frontend:
+    redirect-url: ${APP_FRONTEND_REDIRECT_URL}
 
 # API Documentation (Swagger)
 springdoc:
