@@ -62,6 +62,9 @@ pipeline {
 
         // [Step 2] 백엔드 빌드 (테스트 제외)
         stage('Build Backend') {
+            when {
+                changeset "backend/**"
+            }
             steps {
                 echo '=== 2. Build Spring Boot (Dev) ==='
                 dir("${BACKEND_DIR}") {
@@ -73,8 +76,11 @@ pipeline {
             }
         }
 
-        // [Step 3] ★ Blue/Green 무중단 배포 (수정됨)
+        // [Step 3] ★ Blue/Green 무중단 배포
         stage('Deploy (Blue/Green)') {
+            when {
+                changeset "backend/**"
+            }
             steps {
                 echo "=== 3. Executing Blue/Green Deployment Script ==="
                 dir("${DOCKER_COMPOSE_DIR}") {
@@ -140,8 +146,8 @@ pipeline {
                 mattermostSend (
                     color: "#0004ff", 
                     message: msg,
-                    channel: "#chitkey-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy" 
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza" 
                 )
             }
         }
@@ -168,8 +174,8 @@ pipeline {
                 mattermostSend (
                     color: "#ff0000",
                     message: msg,
-                    channel: "#chitkey-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy"
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
                 )
             }
         }

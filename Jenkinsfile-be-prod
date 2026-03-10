@@ -72,6 +72,9 @@ pipeline {
         }
 
         stage('Build Backend') {
+            when {
+                changeset "backend/**"
+            }
             steps {
                 echo '=== 2. Build Spring Boot (Prod) ==='
                 dir("${BACKEND_DIR}") {
@@ -84,6 +87,9 @@ pipeline {
         }
 
         stage('Deploy (Blue/Green)') {
+            when {
+                changeset "backend/**"
+            }
             steps {
                 echo "=== 3. Executing Prod Deployment Script ==="
                 dir("${DOCKER_COMPOSE_DIR}") {
@@ -139,8 +145,8 @@ pipeline {
                 mattermostSend (
                     color: "#00ff00", // 초록색 (운영 성공은 특별하니까)
                     message: msg,
-                    channel: "#chitkey-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy" 
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
                 )
             }
         }
@@ -150,8 +156,8 @@ pipeline {
                 mattermostSend (
                     color: "#ff0000",
                     message: "#### 🚨 [Prod] 운영 서버 배포 실패! 비상! 🚨",
-                    channel: "#chitkey-cicd",
-                    endpoint: "https://meeting.ssafy.com/hooks/ca6xh3164iyh5jfj3h7axs3djy"
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
                 )
             }
         }

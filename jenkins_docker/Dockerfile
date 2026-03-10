@@ -17,20 +17,20 @@ ARG DOCKER_GID=999
 # Docker CLI + Compose Plugin 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        gnupg \
-        lsb-release && \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-        https://download.docker.com/linux/debian \
-        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    https://download.docker.com/linux/debian \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        docker-ce-cli \
-        docker-compose-plugin && \
+    docker-ce-cli \
+    docker-compose-plugin && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -38,5 +38,21 @@ RUN apt-get update && \
 # → docker-compose.prod.yml의 'user: root' 를 제거하고 이 방식으로 권한 관리 권장
 RUN groupadd -f -g ${DOCKER_GID} docker && \
     usermod -aG docker jenkins
+
+# Jenkins 플러그인 설치 (jenkins-plugin-cli 사용)
+# USER root 상태에서 설치 후 jenkins 유저로 전환
+RUN jenkins-plugin-cli --plugins \
+    # GitLab 연동 (Webhook 트리거)
+    gitlab-plugin \
+    # 파이프라인 핵심
+    workflow-aggregator \
+    # Git
+    git \
+    # Mattermost 알림
+    mattermost \
+    # 파이프라인에서 Credentials 사용
+    credentials-binding \
+    # 브랜치별 멀티브랜치 파이프라인
+    multibranch-scan-webhook-trigger
 
 USER jenkins
