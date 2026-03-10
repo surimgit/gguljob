@@ -1,6 +1,6 @@
 // VITE_API_BASE_URL은 백엔드 OAuth 서버 주소입니다 (예: https://api.example.com)
 // 올바르게 설정되지 않으면 GitHub 로그인이 동작하지 않습니다
-const GITHUB_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/oauth2/authorization/github`;
+const GITHUB_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1/auth/github`;
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_BASE_URL) {
   console.warn('[GitHubLoginButton] VITE_API_BASE_URL이 설정되지 않았습니다. GitHub 로그인이 작동하지 않을 수 있습니다.');

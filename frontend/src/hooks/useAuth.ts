@@ -12,7 +12,7 @@ export const useAuth = () => {
         .then((res) => setUser(res.data))
         .catch(() => logout());
     }
-  }, []);
+  }, [isAuthenticated, setUser, logout]);
 
   return { user, isAuthenticated, logout };
 };
