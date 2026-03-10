@@ -17,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,8 +39,9 @@ public class ProjectMember extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "position_id")
-    private Long positionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "position_id")
+    private ProjectPosition projectPosition;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -51,4 +53,13 @@ public class ProjectMember extends BaseTimeEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Builder
+    public ProjectMember(Project project, User user, ProjectPosition projectPosition, MemberStatus status, PositionType role){
+        this.project = project;
+        this.user = user;
+        this.status = status == null ? MemberStatus.ATTEND : status;
+        this.role = role;
+        this.projectPosition = projectPosition;
+    }
 }
