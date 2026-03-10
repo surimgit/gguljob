@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.oauth.controller;
 
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
+import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,7 +32,7 @@ public class AuthController {
     @Value("${spring.security.oauth2.client.registration.github.client-id}")
     private String githubClientId;
 
-    @Operation(summary = "깃허브 소셜 로그인 연동", description = "깃허브 로그인 창으로 강제 이동(Redirect) 시킵니다.")
+    @Operation(summary = "깃허브 소셜 로그인 연동", description = "깃허브 로그인 창(http://localhost:8080/api/v1/auth/github)으로 강제 이동(Redirect) 시킵니다.")
     @GetMapping("/github")
     public void redirectToGithub(HttpServletResponse response) throws IOException {
         // 깃허브 로그인 공식 URL로 리다이렉트
@@ -75,15 +76,20 @@ public class AuthController {
             content = @Content(schema = @Schema(example = "{\"status\": 404, \"message\": \"유저를 찾을 수 없습니다.\", \"data\": null}"))
         )
     })@GetMapping("/me")
-    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getMyInfo(@AuthenticationPrincipal Long userId) {
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getMyInfo(
+        @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+
+        Long userId = customUserDetails.getId();
+        String userName = customUserDetails.getUser().getUserName();
+        String email = customUserDetails.getUser().getEmail();
 
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
-        data.put("role", "ROLE_USER");
-        data.put("status", "ACTIVE");
+        data.put("userName", userName);
+        data.put("email", email);
 
         ApiResponseDto<Map<String, Object>> response =
-            new ApiResponseDto<>(200, "인증 성공", data);
+            new ApiResponseDto<>(200, userName + "사용자 인증 성공", data);
 
         return ResponseEntity.ok(response);
     }
