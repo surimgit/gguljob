@@ -1,16 +1,8 @@
 import { type FC } from 'react';
 
 const LANGUAGES = [
-  'JavaScript',
-  'TypeScript',
-  'Python',
-  'Java',
-  'Kotlin',
-  'Swift',
-  'Go',
-  'C++',
-  'Rust',
-  'Ruby',
+  'JavaScript', 'TypeScript', 'Python', 'Java', 'Kotlin',
+  'Swift', 'Go', 'C++', 'Rust', 'Ruby',
 ];
 
 interface Props {
@@ -29,36 +21,23 @@ const Step4Languages: FC<Props> = ({ selected, onChange }) => {
 
   return (
     <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-        주로 사용하는 언어는?
-      </h2>
-      <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>여러 개 선택할 수 있어요</p>
+      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1.5">주로 사용하는 언어는?</h2>
+        <p className="text-sm text-gray-500">여러 개 선택할 수 있어요</p>
+      </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 10,
-          marginBottom: 20,
-        }}
-      >
+      <div className="flex flex-wrap gap-2.5 mb-5">
         {LANGUAGES.map((lang) => {
           const isSelected = selected.includes(lang);
           return (
             <button
               key={lang}
               onClick={() => toggle(lang)}
-              style={{
-                padding: '8px 18px',
-                borderRadius: 999,
-                border: isSelected ? '2px solid #F59E0B' : '1px solid #E8DFB8',
-                background: isSelected ? '#FFFBEA' : '#FFFFFF',
-                fontSize: 14,
-                fontWeight: isSelected ? 600 : 400,
-                color: '#111827',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
+              className={`py-2 px-[18px] rounded-full text-sm transition-all duration-150 cursor-pointer border-2
+                ${isSelected
+                  ? 'border-accent bg-amber-50 font-semibold text-gray-900'
+                  : 'border-border-warm bg-white font-normal text-gray-900'
+                }`}
             >
               {lang}
             </button>
@@ -67,15 +46,8 @@ const Step4Languages: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       {selected.length > 0 && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#FFF9E6',
-            borderRadius: 12,
-            border: '1px solid #F3E09A',
-          }}
-        >
-          <span style={{ fontSize: 13, color: '#92400E' }}>
+        <div className="px-4 py-3 bg-[#FFF9E6] rounded-xl border border-[#F3E09A]">
+          <span className="text-[13px] text-amber-800">
             <strong>선택됨:</strong> {selected.join(', ')}
           </span>
         </div>

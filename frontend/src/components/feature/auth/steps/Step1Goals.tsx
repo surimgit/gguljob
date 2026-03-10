@@ -25,46 +25,23 @@ const Step1Goals: FC<Props> = ({ selected, onChange }) => {
 
   return (
     <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-        목표가 무엇인가요?
-      </h2>
-      <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>복수 선택이 가능해요</p>
+      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1.5">목표가 무엇인가요?</h2>
+        <p className="text-sm text-gray-500">복수 선택이 가능해요</p>
+      </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12,
-        }}
-      >
+      <div className="grid grid-cols-2 gap-3">
         {GOALS.map((goal) => {
           const isSelected = selected.includes(goal.id);
           return (
             <button
               key={goal.id}
               onClick={() => toggle(goal.id)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px 12px',
-                borderRadius: 16,
-                border: isSelected ? '2px solid #F59E0B' : '1px solid #E8DFB8',
-                background: isSelected ? '#FFFBEA' : '#FFFFFF',
-                cursor: 'pointer',
-                gap: 8,
-                transition: 'all 0.15s',
-              }}
+              className={`flex flex-col items-center justify-center py-5 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2 border-2
+                ${isSelected ? 'border-accent bg-amber-50' : 'border-border-warm bg-white'}`}
             >
-              <span style={{ fontSize: 28 }}>{goal.emoji}</span>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: isSelected ? 600 : 400,
-                  color: '#111827',
-                }}
-              >
+              <span className="text-3xl">{goal.emoji}</span>
+              <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
                 {goal.label}
               </span>
             </button>

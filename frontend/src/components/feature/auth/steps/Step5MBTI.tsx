@@ -7,24 +7,11 @@ const MBTI_ROWS = [
   ['ISTP', 'ISFP', 'ESTP', 'ESFP'],
 ];
 
-// 그룹별 색상 매핑
-const MBTI_GROUP: Record<string, { color: string; name: string }> = {
-  INTJ: { color: '#EF4444', name: '분석가' },
-  INTP: { color: '#EF4444', name: '분석가' },
-  ENTJ: { color: '#EF4444', name: '분석가' },
-  ENTP: { color: '#EF4444', name: '분석가' },
-  INFJ: { color: '#60A5FA', name: '외교관' },
-  INFP: { color: '#60A5FA', name: '외교관' },
-  ENFJ: { color: '#60A5FA', name: '외교관' },
-  ENFP: { color: '#60A5FA', name: '외교관' },
-  ISTJ: { color: '#34D399', name: '관리자' },
-  ISFJ: { color: '#34D399', name: '관리자' },
-  ESTJ: { color: '#34D399', name: '관리자' },
-  ESFJ: { color: '#34D399', name: '관리자' },
-  ISTP: { color: '#FBBF24', name: '탐험가' },
-  ISFP: { color: '#FBBF24', name: '탐험가' },
-  ESTP: { color: '#FBBF24', name: '탐험가' },
-  ESFP: { color: '#FBBF24', name: '탐험가' },
+const MBTI_GROUP: Record<string, string> = {
+  INTJ: '#EF4444', INTP: '#EF4444', ENTJ: '#EF4444', ENTP: '#EF4444',
+  INFJ: '#60A5FA', INFP: '#60A5FA', ENFJ: '#60A5FA', ENFP: '#60A5FA',
+  ISTJ: '#34D399', ISFJ: '#34D399', ESTJ: '#34D399', ESFJ: '#34D399',
+  ISTP: '#FBBF24', ISFP: '#FBBF24', ESTP: '#FBBF24', ESFP: '#FBBF24',
 };
 
 const LEGENDS = [
@@ -42,45 +29,29 @@ interface Props {
 const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
   return (
     <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-        MBTI를 알려주세요
-      </h2>
-      <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>팀 매칭에 참고할게요</p>
+      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1.5">MBTI를 알려주세요</h2>
+        <p className="text-sm text-gray-500">팀 매칭에 참고할게요</p>
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+      <div className="flex flex-col gap-2 mb-5">
         {MBTI_ROWS.map((row, rowIdx) => (
-          <div key={rowIdx} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          <div key={rowIdx} className="grid grid-cols-4 gap-2">
             {row.map((type) => {
               const isSelected = selected === type;
-              const group = MBTI_GROUP[type];
               return (
                 <button
                   key={type}
                   onClick={() => onChange(type)}
-                  style={{
-                    padding: '10px 0',
-                    borderRadius: 10,
-                    border: isSelected ? '2px solid #F59E0B' : '1px solid #E8DFB8',
-                    background: isSelected ? '#FFFBEA' : '#FFFFFF',
-                    fontSize: 13,
-                    fontWeight: isSelected ? 700 : 400,
-                    color: '#111827',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 4,
-                  }}
+                  className={`py-2.5 rounded-[10px] text-[13px] transition-all duration-150 cursor-pointer flex items-center justify-center gap-1 border-2
+                    ${isSelected
+                      ? 'border-accent bg-amber-50 font-bold text-gray-900'
+                      : 'border-border-warm bg-white font-normal text-gray-900'
+                    }`}
                 >
                   <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: group.color,
-                      flexShrink: 0,
-                    }}
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ background: MBTI_GROUP[type] }}
                   />
                   {type}
                 </button>
@@ -91,30 +62,13 @@ const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       {/* 범례 */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 10,
-          padding: '12px 16px',
-          background: '#F9FAFB',
-          borderRadius: 12,
-          border: '1px solid #E8DFB8',
-        }}
-      >
+      <div className="flex flex-wrap gap-2.5 px-4 py-3 bg-gray-50 rounded-xl border border-border-warm">
         {LEGENDS.map(({ color, label, desc }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: color,
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontSize: 12, color: '#374151' }}>
-              <strong>{label}</strong> <span style={{ color: '#9CA3AF' }}>({desc})</span>
+          <div key={label} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+            <span className="text-[12px] text-gray-700">
+              <strong>{label}</strong>{' '}
+              <span className="text-gray-400">({desc})</span>
             </span>
           </div>
         ))}

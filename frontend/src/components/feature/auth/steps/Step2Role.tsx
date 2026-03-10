@@ -18,50 +18,27 @@ interface Props {
 const Step2Role: FC<Props> = ({ selected, onChange }) => {
   return (
     <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-        어떤 직무를 희망하시나요?
-      </h2>
-      <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>하나를 선택해주세요</p>
+      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1.5">어떤 직무를 희망하시나요?</h2>
+        <p className="text-sm text-gray-500">하나를 선택해주세요</p>
+      </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12,
-        }}
-      >
+      <div className="grid grid-cols-2 gap-3">
         {ROLES.map(({ id, Icon, label }) => {
           const isSelected = selected === id;
           return (
             <button
               key={id}
               onClick={() => onChange(id)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '24px 12px',
-                borderRadius: 16,
-                border: isSelected ? '2px solid #F59E0B' : '1px solid #E8DFB8',
-                background: isSelected ? '#FFFBEA' : '#FFFFFF',
-                cursor: 'pointer',
-                gap: 10,
-                transition: 'all 0.15s',
-              }}
+              className={`flex flex-col items-center justify-center py-6 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2.5 border-2
+                ${isSelected ? 'border-accent bg-amber-50' : 'border-border-warm bg-white'}`}
             >
               <Icon
                 size={28}
-                color={isSelected ? '#F59E0B' : '#6B7280'}
+                className={isSelected ? 'text-accent' : 'text-gray-500'}
                 strokeWidth={1.5}
               />
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: isSelected ? 600 : 400,
-                  color: '#111827',
-                }}
-              >
+              <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
                 {label}
               </span>
             </button>
