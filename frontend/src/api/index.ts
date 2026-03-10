@@ -19,14 +19,60 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// 토큰 갱신 중 대기 중인 요청 큐
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token!)));
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    if (isRefreshing) {
+      return new Promise<string>((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then((token) => {
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      processQueue(error, null);
+      isRefreshing = false;
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      return Promise.reject(error);
+    }
+
+    try {
+      const { data } = await axios.post('/api/v1/auth/refresh', { refreshToken });
+      const newAccessToken: string = data.accessToken;
+      localStorage.setItem('accessToken', newAccessToken);
+      processQueue(null, newAccessToken);
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return api(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 
