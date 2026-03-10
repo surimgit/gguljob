@@ -1,9 +1,9 @@
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
+import { logoutApi } from '../../api/user';
 import Container from '../common/Container';
 import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
 import gguljobLogo from '../../assets/images/gguljob_logo.png';
-import { useAuthStore } from '../../stores/authStore';
-import { logoutApi } from '../../api/user';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -12,8 +12,8 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logoutApi();
-    } catch {
-      // API 실패해도 클라이언트 토큰은 삭제
+    } catch (error) {
+      console.error('로그아웃 API 호출 실패:', error);
     } finally {
       logout();
       navigate('/', { replace: true });
