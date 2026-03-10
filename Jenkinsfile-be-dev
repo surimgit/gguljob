@@ -62,9 +62,7 @@ pipeline {
 
         // [Step 2] 백엔드 빌드 (테스트 제외)
         stage('Build Backend') {
-            when {
-                changeset "backend/**"
-            }
+            // when { branch 'develop' }
             steps {
                 echo '=== 2. Build Spring Boot (Dev) ==='
                 dir("${BACKEND_DIR}") {
