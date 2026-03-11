@@ -1,10 +1,7 @@
 import json
-import os
 import re
 import time
-from io import BytesIO
 
-from PIL import Image
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -81,7 +78,7 @@ HEADERS = {
 
 CHECKPOINT_FILE = "jobkorea_jobs_checkpoint.csv"
 OUTPUT_FILE = "jobkorea_jobs_all.csv"
-IMAGE_DIR = "job_images"  # 공고 이미지 저장 디렉터리
+
 
 # 잡코리아 일반 검색결과 목록 API (JavaScript로 동적 로드 되는 부분)
 GI_LIST_API = "https://www.jobkorea.co.kr/Recruit/Home/_GI_List/"
@@ -382,7 +379,7 @@ def get_job_detail(session: requests.Session, job_id: str) -> dict:
     empty = {
         "마감일": None, "내용형식": "text",
         "고용형태": "", "경력": "", "지역": "", "급여": "",
-        "기술스택": "[]", "포지션상세": None, "직무카테고리": "", "학력": "", "이미지_urls": "[]",
+        "기술스택": "[]", "포지션상세": None, "직무카테고리": "", "학력": "",
     }
     url = DETAIL_BASE.format(job_id=job_id)
 
@@ -409,7 +406,6 @@ def get_job_detail(session: requests.Session, job_id: str) -> dict:
 
     ocr_text: str | None = None
     description_html: str | None = None
-    image_urls: list[str] = []
 
     # 마감일
     recruitment = base_data.get("overview", {}).get("recruitment", {})
@@ -486,28 +482,6 @@ def get_job_detail(session: requests.Session, job_id: str) -> dict:
                 ocr_text = (ocr_text + "\n" + text) if ocr_text else text
         elif dtype == "DESCRIPTION":
             description_html = content_text
-            _soup_imgs = BeautifulSoup(content_text, "html.parser")
-            for _img in _soup_imgs.find_all("img"):
-                src = _img.get("src", "")
-                if src and src.startswith("http"):
-                    # 세션 쿠키가 살아 있는 지금 바로 다운로드해 로컬 저장
-                    try:
-                        img_resp = session.get(
-                            src, headers=HEADERS, timeout=10)
-                        img_resp.raise_for_status()
-                        ct = img_resp.headers.get("Content-Type", "")
-                        if ct.startswith("image/"):
-                            os.makedirs(IMAGE_DIR, exist_ok=True)
-                            fname = f"{job_id}_{len(image_urls)}.jpg"
-                            fpath = os.path.join(IMAGE_DIR, fname)
-                            # qwen2.5vl 패치 크기(28)의 배수인 448x448로 저장
-                            img = Image.open(
-                                BytesIO(img_resp.content)).convert("RGB")
-                            img = img.resize((448, 448), Image.LANCZOS)
-                            img.save(fpath, "JPEG", quality=85)
-                            image_urls.append(fpath)
-                    except Exception:
-                        pass
 
     # 내용형식 판단 (DESCRIPTION.html 안에 <img> 태그 있으면 이미지형)
     내용형식 = "text"
@@ -547,7 +521,6 @@ def get_job_detail(session: requests.Session, job_id: str) -> dict:
         "포지션상세": 포지션상세,
         "직무카테고리": 직무카테고리,
         "학력": 학력,
-        "이미지_urls": json.dumps(image_urls, ensure_ascii=False),
     }
 
 
