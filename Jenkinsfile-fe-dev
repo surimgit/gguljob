@@ -7,10 +7,9 @@ pipeline {
     }
 
     environment {
-        COMPOSE_FILE      = 'docker-compose.dev.yml'
-        SERVICE_NAME      = 'frontend-dev'
-        FRONTEND_DIR      = 'frontend'
-        ENV_CREDENTIAL_ID = 'dev-frontend-env'
+        COMPOSE_FILE = 'docker-compose.dev.yml'
+        SERVICE_NAME = 'frontend-dev'
+        FRONTEND_DIR = 'frontend'
     }
 
     options {
@@ -25,41 +24,19 @@ pipeline {
             }
         }
 
-        stage('Inject .env') {
-            // frontend 폴더에 변경이 있을 때만 실행
-            // when {
-            //     changeset "frontend/**"
-            // }
-            steps {
-                echo '=== 2. 프론트엔드 환경변수 주입 ==='
-                // ★ Vite는 빌드 시점에 .env를 번들에 삽입하므로
-                //   docker build 전에 반드시 frontend/.env가 있어야 함
-                dir("${FRONTEND_DIR}") {
-                    withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
-                        sh 'cp $ENV_FILE .env'
-                        sh 'ls -al .env'
-                    }
-                }
-            }
-        }
-
         stage('Build & Deploy') {
             // when {
             //     changeset "frontend/**"
             // }
             steps {
-                echo '=== 3. Docker 이미지 빌드 및 컨테이너 재배포 ==='
+                echo '=== 2. Docker 이미지 빌드 및 컨테이너 재배포 ==='
                 script {
                     try {
-                        // frontend/.env가 있는 상태에서 docker build → npm run build → dist/ 생성
                         sh "docker compose -f ${COMPOSE_FILE} up -d --build ${SERVICE_NAME}"
                         echo "✅ ${SERVICE_NAME} 배포 완료"
                     } catch (Exception e) {
                         echo "❌ 배포 실패"
                         throw e
-                    } finally {
-                        // ★ 보안: 빌드 후 .env 즉시 삭제 (워크스페이스에 평문 잔류 방지)
-                        sh "rm -f ${FRONTEND_DIR}/.env"
                     }
                 }
             }
@@ -67,7 +44,7 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                echo '=== 4. 미사용 이미지 정리 ==='
+                echo '=== 3. 미사용 이미지 정리 ==='
                 sh 'docker image prune -f'
             }
         }
