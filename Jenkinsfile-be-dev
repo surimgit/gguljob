@@ -1,11 +1,6 @@
 pipeline {
     agent any
-    
-    // [설정] 트리거: 'develop' 브랜치에 푸시될 때만 실행
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'develop')
-    }
-    
+
     environment {
         // 도커 컴포즈 및 스크립트 위치 (루트)
         DOCKER_COMPOSE_DIR = '.' 
@@ -62,7 +57,7 @@ pipeline {
 
         // [Step 2] 백엔드 빌드 (테스트 제외)
         stage('Build Backend') {
-            // when { branch 'develop' }
+            when { changeset "backend/**" }
             steps {
                 echo '=== 2. Build Spring Boot (Dev) ==='
                 dir("${BACKEND_DIR}") {
@@ -76,7 +71,7 @@ pipeline {
 
         // [Step 3] ★ Blue/Green 무중단 배포
         stage('Deploy (Blue/Green)') {
-            // when { branch 'develop' }
+            when { changeset "backend/**" }
             steps {
                 echo "=== 3. Executing Blue/Green Deployment Script ==="
                 dir("${DOCKER_COMPOSE_DIR}") {
