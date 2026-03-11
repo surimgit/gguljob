@@ -10,7 +10,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,7 @@ public class AuthController {
     private String githubClientId;
 
     @Operation(summary = "깃허브 소셜 로그인 연동", description = "깃허브 로그인 창(http://localhost:8080/api/v1/auth/github)으로 강제 이동(Redirect) 시킵니다.")
+    @SecurityRequirements()
     @GetMapping("/github")
     public void redirectToGithub(HttpServletResponse response) throws IOException {
         // 깃허브 로그인 공식 URL로 리다이렉트
@@ -49,6 +53,7 @@ public class AuthController {
     private String frontendRedirectUrl;
 
     @Operation(summary = "깃허브 로그인 콜백", description = "깃허브에서 인가 코드를 받아와 JWT 토큰을 발급합니다.")
+    @SecurityRequirements()
     @GetMapping("/github/callback")
     public void githubCallback(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
         log.info("깃허브에서 받아온 인가 코드: {}", code);
@@ -131,5 +136,26 @@ public class AuthController {
         ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신 폼 미쳤다!", newTokenDto);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponseDto<Void>> logout(@AuthenticationPrincipal CustomUserDetails userDetails, HttpServletRequest request) {
+        String accessToken = resolveToken(request);
+
+        redisService.deleteValues("RT:" + userDetails.getId());
+
+        if(accessToken != null) {
+            Long expiration = jwtTokenProvider.getExpiration(accessToken);
+            redisService.setValues(accessToken, "logout", java.time.Duration.ofMillis(expiration));
+        }
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "로그아웃 성공", null));
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }
