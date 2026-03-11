@@ -23,6 +23,8 @@ public class SwaggerConfig {
                 return new OpenAPI()
                                 .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이이이잉")
                                                 .version("v1.0.0"))
+                                .addServersItem(new Server().url("http://localhost:8080")
+                                                .description("Local 서버"))
                                 .addServersItem(new Server().url("https://j14e107.p.ssafy.io:8443")
                                                 .description("Dev 서버"))
                                 .addServersItem(new Server().url("https://j14e107.p.ssafy.io")
