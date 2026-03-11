@@ -12,11 +12,13 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +99,39 @@ public class ProjectDashboardService {
     // 활동 로그 (MR 랭킹 + 최근 활동)
     @Transactional(readOnly = true)
     public ProjectResponse.GitLog getGitLog(Long userId, Long projectId) {
-        return new GitLog(null, null);
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("프로젝트를 찾을 수 없습니다"));
+
+        validateAccess(project, userId);
+
+        // MR 랭킹
+        var rankingProjections = pullRequestRepository.findMrRankingByProjectId(projectId, PageRequest.of(0, 5));
+        List<ProjectResponse.MrRankingDto> rankings = new ArrayList<>();
+        int rank = 1;
+        for (var proj : rankingProjections) {
+            rankings.add(new ProjectResponse.MrRankingDto(
+                rank++,
+                proj.getUserId(),
+                proj.getUserName(),
+                proj.getProfileImageUrl(),
+                proj.getMrCount()
+            ));
+        }
+
+        // 최근 활동 내역
+        List<ProjectResponse.ActivityLogDto> top5Activities = pullRequestRepository
+            .findTop5ByProject_IdOrderByCreatedAtDesc(projectId)
+            .stream()
+            .map(pr -> new ProjectResponse.ActivityLogDto(
+                pr.getUser().getUserName(),
+                pr.getUser().getImageUrl(),
+                pr.getTitle(),
+                pr.getBranchName(),
+                pr.getCreatedAt(),
+                "PR"
+            ))
+            .toList();
+
+        return new GitLog(rankings, top5Activities);
     }
 }
