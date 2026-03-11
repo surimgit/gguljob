@@ -10,7 +10,7 @@ import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth
 
 const MOCK_PROFILE = {
   name: '홍길동',
-  role: '프론트엔드',
+  role: 'FE' as const,
   bio: '안녕하세요, 꿀잡을 이용 중인 홍길동입니다.',
   techStacks: ['React', 'TypeScript', 'Firebase'],
 };
