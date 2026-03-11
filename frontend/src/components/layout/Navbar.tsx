@@ -28,13 +28,13 @@ const Navbar = () => {
             <img src={gguljobLogo} alt="꿀잡" className="h-20" />
           </Link>
           <nav className="flex items-center gap-6">
-            <Link to="/projects" className="text-gray-600 hover:text-cta font-medium">
+            <Link to="/projects" className="text-gray-600 hover:text-text-primary font-medium">
               프로젝트
             </Link>
-            <Link to="/projects?tab=find" className="text-gray-600 hover:text-cta font-medium">
+            <Link to="/projects?tab=find" className="text-gray-600 hover:text-text-primary font-medium">
               프로젝트 찾기
             </Link>
-            <Link to="/recruitment" className="text-gray-600 hover:text-cta font-medium">
+            <Link to="/recruitment" className="text-gray-600 hover:text-text-primary font-medium">
               채용
             </Link>
           </nav>
@@ -60,7 +60,7 @@ const Navbar = () => {
               type="text"
               placeholder="Search"
               disabled
-              className="w-48 pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-48 pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -79,7 +79,7 @@ const Navbar = () => {
               )}
               <button
                 onClick={handleLogout}
-                className="text-sm font-medium text-gray-600 hover:text-cta transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-text-primary transition-colors"
               >
                 로그아웃
               </button>

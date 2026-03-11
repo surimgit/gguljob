@@ -33,7 +33,7 @@ const EXPERIENCE_LABELS: Record<string, string> = {
 };
 
 const TAG_COLORS = [
-  'border-accent text-amber-800 bg-amber-50',
+  'border-primary text-amber-800 bg-amber-50',
   'border-green-400 text-green-800 bg-green-50',
   'border-blue-400 text-blue-800 bg-blue-50',
   'border-pink-400 text-pink-800 bg-pink-50',
@@ -88,7 +88,7 @@ const ProfileCompletePopup: FC<Props> = ({ formData, onClose }) => {
           {/* CTA */}
           <button
             onClick={onClose}
-            className="w-full py-3.5 rounded-xl border-none bg-accent text-white text-base font-bold cursor-pointer hover:bg-amber-600 transition-colors duration-150"
+            className="w-full py-3.5 rounded-xl border-none bg-primary text-white text-base font-bold cursor-pointer hover:bg-amber-600 transition-colors duration-150"
           >
             메인페이지로
           </button>

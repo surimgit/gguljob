@@ -21,7 +21,7 @@ const Step4Languages: FC<Props> = ({ selected, onChange }) => {
 
   return (
     <div>
-      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+      <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">주로 사용하는 언어는?</h2>
         <p className="text-sm text-gray-500">여러 개 선택할 수 있어요</p>
       </div>
@@ -35,8 +35,8 @@ const Step4Languages: FC<Props> = ({ selected, onChange }) => {
               onClick={() => toggle(lang)}
               className={`py-2 px-[18px] rounded-full text-sm transition-all duration-150 cursor-pointer border-2
                 ${isSelected
-                  ? 'border-accent bg-amber-50 font-semibold text-gray-900'
-                  : 'border-border-warm bg-white font-normal text-gray-900'
+                  ? 'border-primary bg-amber-50 font-semibold text-gray-900'
+                  : 'border-border bg-white font-normal text-gray-900'
                 }`}
             >
               {lang}

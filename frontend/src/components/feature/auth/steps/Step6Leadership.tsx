@@ -11,13 +11,13 @@ const Step6Leadership: FC<Props> = ({ value, onChange }) => {
 
   return (
     <div>
-      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+      <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">팀에서의 성향은?</h2>
         <p className="text-sm text-gray-500">슬라이더를 움직여 표현해주세요</p>
       </div>
 
       {/* 타입 카드 */}
-      <div className="w-36 h-36 mx-auto mb-8 flex flex-col items-center justify-center bg-[#FFF3C4] border-2 border-accent rounded-2xl gap-2.5">
+      <div className="w-36 h-36 mx-auto mb-8 flex flex-col items-center justify-center bg-[#FFF3C4] border-2 border-primary rounded-2xl gap-2.5">
         <span className="text-[40px]">{leaderType.emoji}</span>
         <span className="text-lg font-bold text-gray-900">{leaderType.label}</span>
       </div>

@@ -1,12 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  /* 꿀잡 디자인 시스템 */
-  --color-accent: #F59E0B;
-  --color-cta: #111827;
-  --color-background: #FFF8F0;
-  --color-modal-bg: #FDFBF3;
-  --color-border-warm: #E8DFB8;
+  /* ── Primary ── */
+  --color-primary:        #F7C948;   /* Primary */
+  --color-primary-hover:  #F2B705;   /* Primary Hover */
+  --color-primary-soft:   #FFF2C6;   /* Primary Soft */
 
+  /* ── Background / Surface ── */
+  --color-background:     #F7F8FA;   /* Background */
+  --color-surface:        #FFFFFF;   /* Surface */
+
+  /* ── Text ── */
+  --color-text-primary:   #111827;   /* Text Primary */
+  --color-text-secondary: #6B7280;   /* Text Secondary */
+  --color-text-tertiary:  #9CA3AF;   /* Text Tertiary */
+
+  /* ── Border / Accent ── */
+  --color-border:         #E5E7EB;   /* Border */
+  --color-accent-sky:     #BFE8F5;   /* Accent Sky */
+
+  /* ── Semantic ── */
+  --color-success:        #22C55E;   /* Success */
+  --color-warning:        #F97316;   /* Warning */
+  --color-error:          #EF4444;   /* Error */
+  --color-blue:           #2196F3;   /* Blue */
+
+  /* ── Brown/Olive Text Scale ── */
+  --color-text-brown:     #705401;   /* Text */
+  --color-text-brown-2:   #9A7300;   /* Text2 */
+
+  /* ── Font ── */
   --font-sans: "Pretendard Variable", ui-sans-serif, system-ui, sans-serif;
 }
