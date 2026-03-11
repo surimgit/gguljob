@@ -24,7 +24,7 @@ public class JwtTokenProvider {
     private SecretKey secretKey;
 
     /**
-     * 의존성 주입이 완료된 후, yml에서 가져온 평문 비밀키를 암호화용 SecretKey 객체로 변환합니다.
+     * 의존성 주입이 완료된 후, yml에서 가져온 평문 비밀키를 암호화용 SecretKey 객체로 변환
      */
     @PostConstruct
     public void init() {
@@ -34,7 +34,7 @@ public class JwtTokenProvider {
 
     /**
      * 1. Access Token 생성
-     * 유저 식별자(ID)와 권한(Role)을 담아서 짧은 수명의 팔찌를 만듭니다.
+     * 유저 식별자(ID)와 권한(Role)을 담아서 짧은 수명의 팔찌를 만듦
      */
     public String createAccessToken(Long userId, String role) {
         long now = System.currentTimeMillis();
@@ -51,7 +51,7 @@ public class JwtTokenProvider {
 
     /**
      * 2. Refresh Token 생성
-     * 권한 정보 없이 유저 식별자만 담아서 긴 수명의 예비용 팔찌를 만듭니다.
+     * 권한 정보 없이 유저 식별자만 담아서 긴 수명의 예비용 팔찌를 만듦
      */
     public String createRefreshToken(Long userId) {
         long now = System.currentTimeMillis();
@@ -67,7 +67,7 @@ public class JwtTokenProvider {
 
     /**
      * 3. 토큰 유효성 검증
-     * 가드가 이 팔찌가 위조됐는지, 기간이 지났는지 확인합니다.
+     * 가드가 이 팔찌가 위조됐는지, 기간이 지났는지 확인
      */
     public boolean validateToken(String token) {
         try {
@@ -90,7 +90,7 @@ public class JwtTokenProvider {
 
     /**
      * 4. 토큰에서 유저 ID(subject) 추출
-     * 팔찌가 유효하다면, 팔찌에 적혀있는 유저 번호를 읽어옵니다.
+     * 팔찌가 유효하다면, 팔찌에 적혀있는 유저 번호를 읽어옴
      */
     public Long getUserIdFromToken(String token) {
         Claims claims = Jwts.parser()
@@ -104,7 +104,7 @@ public class JwtTokenProvider {
 
     /**
      * 5. 토큰에서 유저 권한(role) 추출
-     * 팔찌에 적힌 등급(ROLE_USER, ROLE_ADMIN 등)을 읽어옵니다.
+     * 팔찌에 적힌 등급(ROLE_USER, ROLE_ADMIN 등)을 읽어옴
      */
     public String getRoleFromToken(String token) {
         Claims claims = Jwts.parser()
@@ -115,5 +115,17 @@ public class JwtTokenProvider {
 
         // 토큰 생성할 때 "role"이라는 이름으로 넣었던 값을 그대로 빼옵니다.
         return claims.get("role", String.class);
+    }
+
+    public Long getExpiration(String token) {
+        Date expiration = Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getExpiration();
+
+        long now = new Date().getTime();
+        return (expiration.getTime() - now);
     }
 }

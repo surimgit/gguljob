@@ -28,6 +28,8 @@ public class SecurityConfig {
             "/swagger-ui.html", "/swagger-ui/**", "/api-docs/**",
             // TODO: 로그인/회원가입 완성 후 아래 경로 추가
             // "/api/v1/auth/**",
+            "/api/v1/auth/github",
+            "/api/v1/auth/github/callback",
     };
 
     @Bean
@@ -41,7 +43,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.requestMatchers(PUBLIC_URLS).permitAll()
                         // TODO: 인증 구현 전까지 임시 전체 허용
                         // 인증 완성 후 아래 줄 제거하고 .anyRequest().authenticated() 로 교체
-                        .anyRequest().permitAll())
+                        // .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
