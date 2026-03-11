@@ -30,9 +30,11 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/oauth/callback" element={<OAuthCallback />} />
 
+      {/* 홈은 자체 Layout(Navbar+Footer) 포함 */}
+      <Route path="/" element={<Home />} />
+
       <Route element={<Layout />}>
         {/* 공개 라우트 */}
-        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
