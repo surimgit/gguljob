@@ -1,4 +1,8 @@
 .env
+.env-*
+**/.env
+**/.env-*
+*.env
 backend/src/main/resources/application-local.yml
 .idea
 .vscode
