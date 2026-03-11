@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class SwaggerConfig {
@@ -22,6 +23,10 @@ public class SwaggerConfig {
                 return new OpenAPI()
                                 .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이잉")
                                                 .version("v1.0.0"))
+                                .addServersItem(new Server().url("https://j14e107.p.ssafy.io:8443")
+                                                .description("Dev 서버"))
+                                .addServersItem(new Server().url("https://j14e107.p.ssafy.io")
+                                                .description("Prod 서버"))
                                 .components(new Components().addSecuritySchemes(schemeName,
                                                 new SecurityScheme().type(SecurityScheme.Type.HTTP)
                                                                 .scheme("bearer")
