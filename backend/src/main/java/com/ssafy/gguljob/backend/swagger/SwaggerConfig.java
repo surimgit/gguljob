@@ -20,7 +20,7 @@ public class SwaggerConfig {
                                 new SecurityRequirement().addList(schemeName);
 
                 return new OpenAPI()
-                                .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이이잉")
+                                .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이잉")
                                                 .version("v1.0.0"))
                                 .components(new Components().addSecuritySchemes(schemeName,
                                                 new SecurityScheme().type(SecurityScheme.Type.HTTP)
