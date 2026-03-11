@@ -81,7 +81,7 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
         <button
           type="button"
           onClick={onEdit}
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-white font-semibold text-sm ml-auto transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-bk font-semibold text-sm ml-auto transition-colors"
         >
           <Settings className="w-4 h-4" />
           개인정보 수정
@@ -90,17 +90,17 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
 
       {/* 콘텐츠 영역 */}
       <div className="bg-stone-100 mx-4 mb-4 rounded-2xl p-6">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="flex justify-between gap-6">
           {/* 기술 스택 섹션 */}
           <div>
             <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 mb-4">
               🛠 기술 스택
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
               {user.techStacks.map((stack, i) => (
                 <span
                   key={stack}
-                  className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium ${STACK_COLORS[i % STACK_COLORS.length]}`}
+                  className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium w-fit ${STACK_COLORS[i % STACK_COLORS.length]}`}
                 >
                   {stack}
                 </span>
@@ -113,9 +113,9 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
             <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 mb-4">
               🚀 대표 프로젝트
             </h3>
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               {user.projects.slice(0, 2).map((project, pi) => (
-                <div key={project.id} className="bg-white rounded-2xl overflow-hidden">
+                <div key={project.id} className="bg-white rounded-2xl overflow-hidden flex-1">
                   <div className={`p-4 pb-3 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
                     <span className="text-2xl mb-2 block">{project.emoji}</span>
                     <p className="text-base font-bold text-gray-900">{project.name}</p>
