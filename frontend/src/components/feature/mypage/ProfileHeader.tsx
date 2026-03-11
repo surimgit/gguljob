@@ -16,6 +16,7 @@ interface ProfileHeaderProps {
   bio: string;
   techStacks: string[];
   avatarUrl?: string;
+  onAvatarClick: () => void;
   onEdit: () => void;
   onWithdraw: () => void;
 }
@@ -28,6 +29,7 @@ const ProfileHeader = ({
   bio,
   techStacks,
   avatarUrl,
+  onAvatarClick,
   onEdit,
   onWithdraw,
 }: ProfileHeaderProps) => {
@@ -35,13 +37,17 @@ const ProfileHeader = ({
     <div className="bg-white rounded-2xl p-8 w-full shadow-sm">
       <div className="flex items-center gap-6">
         {/* 아바타 영역 */}
-        <div className="w-24 h-24 rounded-full bg-yellow-300 flex items-center justify-center flex-shrink-0">
+        <button
+          type="button"
+          onClick={onAvatarClick}
+          className="w-24 h-24 rounded-full bg-yellow-300 flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           {avatarUrl ? (
             <img src={avatarUrl} alt={name} className="w-full h-full object-cover rounded-full" />
           ) : (
             <span className="text-4xl">🐝</span>
           )}
-        </div>
+        </button>
 
         {/* 프로필 정보 영역 */}
         <div className="flex flex-col gap-2 flex-1">
@@ -85,7 +91,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-white font-semibold text-sm transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-cta font-semibold text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
             정보수정

@@ -76,9 +76,10 @@ public class ProjectService {
                 ));
 
             // 스킬 이름 최대 4개 조회
-            List<String> skills = projectSkillRepository.findTop4SkillNamesByProjectId(
-                project.getId(), PageRequest.of(0, 4)
-            );
+            List<String> allSkills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
+            List<String> skills = allSkills.stream()
+                .limit(4)
+                .toList();
 
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());

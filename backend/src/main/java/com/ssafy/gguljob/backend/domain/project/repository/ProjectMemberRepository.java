@@ -20,4 +20,11 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         "WHERE pm.project.id = :projectId AND pm.status = 'ATTEND' " +
         "GROUP BY pm.role")
     List<Object[]> countRolesByProjectId(@Param("projectId") Long projectId);
+
+    // [권한 체크] 특정 유저가 프로젝트 참여 중인지 확인
+    boolean existsByProject_IdAndUser_IdAndStatus(Long projetId, Long userId, MemberStatus status);
+
+    // 참여 중인 팀원의 역할 목록 추출
+    @Query("SELECT pm.role FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.status = :status")
+    List<String> findRolesByProjectIdAndStatus(@Param("projectId") Long projectId, @Param("status") MemberStatus status);
 }

@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import type { User } from '../types/user';
 
-const MOCK_USER = {
+const MOCK_USER: User = {
   id: 1,
   name: '홍길동',
   email: 'test@test.com',
   profileImage: null,
+  role: 'FE',
   techStacks: ['React', 'TypeScript', 'Firebase'],
 };
 
