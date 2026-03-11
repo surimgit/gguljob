@@ -30,7 +30,8 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     docker-ce-cli \
-    docker-compose-plugin && \
+    docker-compose-plugin \
+    docker-buildx-plugin && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
