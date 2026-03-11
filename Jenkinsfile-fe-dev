@@ -40,7 +40,7 @@ pipeline {
                     }
                 }
             }
-
+        }
         stage('Cleanup') {
             steps {
                 echo '=== 3. 미사용 이미지 정리 ==='
