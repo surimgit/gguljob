@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    // 트리거: develop 브랜치 푸시 시, frontend/** 변경 감지
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'develop')
-    }
-
     environment {
         COMPOSE_FILE = 'docker-compose.dev.yml'
         SERVICE_NAME = 'frontend-dev'

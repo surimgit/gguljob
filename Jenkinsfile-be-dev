@@ -1,11 +1,6 @@
 pipeline {
     agent any
-    
-    // [설정] 트리거: 'develop' 브랜치에 푸시될 때만 실행
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'develop')
-    }
-    
+
     environment {
         // 도커 컴포즈 및 스크립트 위치 (루트)
         DOCKER_COMPOSE_DIR = '.' 
