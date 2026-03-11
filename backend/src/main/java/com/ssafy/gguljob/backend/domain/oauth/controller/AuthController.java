@@ -49,6 +49,7 @@ public class AuthController {
         String githubLoginUrl = "https://github.com/login/oauth/authorize?client_id=" + githubClientId;
         response.sendRedirect(githubLoginUrl);
     }
+
     @Value("${app.frontend.redirect-url}")
     private String frontendRedirectUrl;
 
@@ -105,7 +106,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "토큰 재발급 (Refresh)", description = "만료된 AccessToken과 유효한 RefreshToken을 받아 새 토큰을 발급합니다.")
+    @Operation(summary = "토큰 재발급 (Refresh)", description = "만료된 AccessToken을 대체하기 위해 유효한 RefreshToken을 보내 새 토큰 세트를 발급받습니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
+            content = @Content(schema = @Schema(implementation = TokenResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Redis에 토큰이 없거나 정보가 일치하지 않음 (재로그인 필요)",
+            content = @Content(schema = @Schema(example = "{\"status\": 400, \"message\": \"토큰 정보가 일치하지 않거나 로그아웃된 유저입니다.\", \"data\": null}")))
+    })
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponseDto<TokenResponseDto>> refresh(@RequestBody TokenRequestDto requestDto) {
 
@@ -138,6 +145,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "로그아웃", description = "현재 사용 중인 AccessToken을 블랙리스트에 등록하고, Redis의 RefreshToken을 삭제하여 로그아웃 처리합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+            content = @Content(schema = @Schema(example = "{\"status\": 200, \"message\": \"로그아웃 성공\", \"data\": null}"))),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자 (이미 로그아웃 되었거나 만료된 토큰)",
+            content = @Content(schema = @Schema(example = "{\"status\": 401, \"message\": \"인증에 실패했습니다.\", \"data\": null}")))
+    })
     @PostMapping("/logout")
     public ResponseEntity<ApiResponseDto<Void>> logout(@AuthenticationPrincipal CustomUserDetails userDetails, HttpServletRequest request) {
         String accessToken = resolveToken(request);
