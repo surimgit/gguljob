@@ -18,29 +18,32 @@ public class SwaggerConfig {
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(schemeName);
 
         return new OpenAPI()
-            .info(new Info()
-                .title("🐝🍯 꿀잡 API 명세서")
-                .description("위잉위잉")
-                .version("v1.0.0"))
-            .components(new Components().addSecuritySchemes(
-                schemeName,
-                new SecurityScheme()
-                    .type(SecurityScheme.Type.HTTP)
-                    .scheme("bearer")
-                    .bearerFormat("JWT")
-            ))
-            .addSecurityItem(securityRequirement);
+                .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉위잉위잉").version("v1.0.0"))
+                .components(new Components().addSecuritySchemes(schemeName, new SecurityScheme()
+                        .type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
+                .addSecurityItem(securityRequirement);
     }
 
     @Bean
     public OpenApiCustomizer globalOpenApiCustomizer() {
-        return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
-            operation.getResponses()
-                .addApiResponse("400", new io.swagger.v3.oas.models.responses.ApiResponse().description("유효하지 않은 데이터 (BadRequestException)"))
-                .addApiResponse("401", new io.swagger.v3.oas.models.responses.ApiResponse().description("인증되지 않은 사용자 (UnAuthorizedException)"))
-                .addApiResponse("403", new io.swagger.v3.oas.models.responses.ApiResponse().description("권한이 없는 사용자 요청 (ForbiddenException)"))
-                .addApiResponse("404", new io.swagger.v3.oas.models.responses.ApiResponse().description("DB에 데이터 없음 (ResourceNotFoundException)"))
-                .addApiResponse("409", new io.swagger.v3.oas.models.responses.ApiResponse().description("데이터 중복 발생 (DuplicateResourceException)"));
-        }));
+        return openApi -> openApi.getPaths().values()
+                .forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
+                    operation.getResponses()
+                            .addApiResponse("400",
+                                    new io.swagger.v3.oas.models.responses.ApiResponse()
+                                            .description("유효하지 않은 데이터 (BadRequestException)"))
+                            .addApiResponse("401",
+                                    new io.swagger.v3.oas.models.responses.ApiResponse()
+                                            .description("인증되지 않은 사용자 (UnAuthorizedException)"))
+                            .addApiResponse("403",
+                                    new io.swagger.v3.oas.models.responses.ApiResponse()
+                                            .description("권한이 없는 사용자 요청 (ForbiddenException)"))
+                            .addApiResponse("404",
+                                    new io.swagger.v3.oas.models.responses.ApiResponse()
+                                            .description("DB에 데이터 없음 (ResourceNotFoundException)"))
+                            .addApiResponse("409",
+                                    new io.swagger.v3.oas.models.responses.ApiResponse()
+                                            .description("데이터 중복 발생 (DuplicateResourceException)"));
+                }));
     }
 }
