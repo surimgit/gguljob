@@ -5,9 +5,10 @@ interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  containerClassName?: string;
 }
 
-const BaseModal = ({ isOpen, onClose, children }: BaseModalProps) => {
+const BaseModal = ({ isOpen, onClose, children, containerClassName = 'bg-white rounded-3xl p-8 w-[400px] shadow-2xl' }: BaseModalProps) => {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -34,7 +35,7 @@ const BaseModal = ({ isOpen, onClose, children }: BaseModalProps) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl"
+        className={containerClassName}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
