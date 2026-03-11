@@ -125,7 +125,7 @@ pipeline {
                 def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
                 def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
 
-                def msg = "#### ✌️🥳✌️ 캬~ 백엔드 배포 성공! ✌️🥳✌️\n" +
+                def msg = "#### ✌️🥳✌️ [Dev] 백엔드 배포 성공! ✌️🥳✌️\n" +
                         "**프로젝트:** ${env.JOB_NAME}\n" +
                         "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
                         "**브랜치:** `${branch}`\n" +
@@ -148,7 +148,7 @@ pipeline {
                 def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
                 def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
 
-                def msg = "#### ☠️🤯💩 스트레스 많이 받을 거야. 백엔드 배포 실패! 💩🤯☠️\n" +
+                def msg = "#### ☠️🤯💩 스트레스 많이 받을 거야. [Dev] 백엔드 배포 실패! 💩🤯☠️\n" +
                         "**프로젝트:** ${env.JOB_NAME}\n" +
                         "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
                         "**브랜치:** `${branch}`\n" +

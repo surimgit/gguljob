@@ -248,10 +248,10 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
-    depends_on:
-      - backend-blue
-      - backend-green
-      - frontend
+    # depends_on:
+    #   - backend-blue
+    #   - backend-green
+    #   - frontend
     networks:
       - gguljob-network
     restart: always
