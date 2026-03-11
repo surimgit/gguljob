@@ -3,7 +3,7 @@ import Container from '../common/Container';
 
 const Footer = () => {
   return (
-    <footer className="py-12" style={{ backgroundColor: '#F2B705' }}>
+    <footer className="bg-primary-hover py-12">
       <Container>
         {/* 상단: 링크 컬럼 */}
         <div className="flex gap-16 mb-10">
@@ -50,13 +50,13 @@ const Footer = () => {
         {/* 하단: 대형 GGULJOB 텍스트 */}
         <div className="border-t border-primary-hover pt-6 text-center">
           <p
-            className="font-extrabold tracking-tight leading-none"
-            style={{ color: '#705401', fontSize: 'clamp(6rem, 15vw, 18rem)' }}
+            className="font-extrabold tracking-tight leading-none text-text-brown"
+            style={{ fontSize: 'clamp(6rem, 15vw, 18rem)' }}
           >
             GGULJOB
           </p>
           <p className="text-sm font-bold text-text-brown mt-4">
-            © {new Date().getFullYear()} PROJECT S1422. THE ALL-IN-ONE PROJECT PLATFORM
+            © {new Date().getFullYear()} PROJECT GUIDE. THE ALL-IN-ONE PROJECT PLATFORM
           </p>
         </div>
       </Container>
