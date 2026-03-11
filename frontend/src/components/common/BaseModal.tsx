@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -25,18 +26,19 @@ const BaseModal = ({ isOpen, onClose, children }: BaseModalProps) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl font-sans"
+        className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
