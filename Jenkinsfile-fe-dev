@@ -25,15 +25,21 @@ pipeline {
                 echo '=== 2. Docker 이미지 빌드 및 컨테이너 재배포 ==='
                 script {
                     try {
-                        sh "docker compose -f ${COMPOSE_FILE} up -d --build ${SERVICE_NAME}"
+                        // 1. 기존 캐시를 완전히 무시하고 백지부터 새로 빌드 (--no-cache 추가)
+                        sh "docker compose -f ${COMPOSE_FILE} build --no-cache ${SERVICE_NAME}"
+                        
+                        // 2. 새로 빌드된 이미지로 컨테이너 실행
+                        sh "docker compose -f ${COMPOSE_FILE} up -d ${SERVICE_NAME}"
+                        
                         echo "✅ ${SERVICE_NAME} 배포 완료"
                     } catch (Exception e) {
                         echo "❌ 배포 실패"
                         throw e
+                    } finally {
+                        sh "rm -f ${FRONTEND_DIR}/.env"
                     }
                 }
             }
-        }
 
         stage('Cleanup') {
             steps {
