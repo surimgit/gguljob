@@ -61,8 +61,8 @@ public class AuthController {
 
         TokenResponseDto tokenDto = githubOAuthService.loginWithGithub(code);
 
-        String redirectUri = String.format("%s?accessToken=%s&refreshToken=%s",
-            frontendRedirectUrl, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+        String redirectUri = String.format("%s?accessToken=%s&refreshToken=%s&isNewUser=%b",
+            frontendRedirectUrl, tokenDto.getAccessToken(), tokenDto.getRefreshToken(), tokenDto.isNewUser());
 
         response.sendRedirect(redirectUri);
     }
@@ -139,8 +139,8 @@ public class AuthController {
         // 6. Redis에 새 Refresh Token으로 덮어쓰기
         redisService.setValues("RT:" + userId, newRefreshToken, java.time.Duration.ofDays(14));
 
-        TokenResponseDto newTokenDto = new TokenResponseDto(newAccessToken, newRefreshToken);
-        ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신 폼 미쳤다!", newTokenDto);
+        TokenResponseDto newTokenDto = new TokenResponseDto(newAccessToken, newRefreshToken, false);
+        ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신", newTokenDto);
 
         return ResponseEntity.ok(response);
     }
