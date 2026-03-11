@@ -16,7 +16,7 @@ public class ProjectResponse {
         }
     }
 
-    // 2. 내 프로젝트 목록 조회 응답용
+    // 내 프로젝트 목록 조회 응답용
     public record Simple(
         Long projectId,
         String title,
@@ -44,4 +44,55 @@ public class ProjectResponse {
             );
         }
     }
+
+    // 프로젝트 상세 dashboard 응답
+    public record TeamDashboard(
+        ProjectOverviewDto projectInfo,
+        TeamStatsDto teamStats,
+        GitRepoDto gitRepoInfo
+    ) {}
+
+    public record ProjectOverviewDto(
+        String title,
+        String teamName,
+        String domain,
+        String description,
+        List<String> skills
+    ) {}
+
+    public record TeamStatsDto(
+        int totalMembers,
+        Map<String, Long> roleCounts, // {"FE": 3, "BE": 2}
+        long totalCommits,
+        long totalTroubleshootings
+    ) {}
+
+    public record GitRepoDto(
+        String repoUrl,
+        String lastSyncTime
+    ) {}
+
+    // gitlog 응답
+    public record GitLog(
+        List<MrRankingDto> mrRankings,
+        List<ActivityLogDto> recentActivities
+    ) {}
+
+    public record MrRankingDto(
+        int rank,
+        Long userId,
+        String userName,
+        String profileImageUrl,
+        long mrCount
+    ) {}
+
+    public record ActivityLogDto(
+        String userName,
+        String profileImageUrl,
+        String content,  // MR 제목
+        String label, // 브랜치명
+        LocalDateTime createdAt,
+        String activityType
+    ) {}
+
 }
