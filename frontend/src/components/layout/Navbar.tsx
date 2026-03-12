@@ -23,18 +23,18 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
       <Container className="h-14 flex items-center justify-between px-[10px]">
-        <div className="flex items-center gap-70">
+        <div className="flex items-center gap-70 shrink-0">
           <Link to="/" className="flex items-center">
             <img src={gguljobLogo} alt="꿀잡" className="h-16" />
           </Link>
           <nav className="flex items-center gap-30">
-            <Link to="/projects" className="text-text-primary hover:text-text-primary font-medium text-sm">
+            <Link to="/projects" className="text-text-primary hover:text-text-primary font-medium text-sm whitespace-nowrap">
               프로젝트
             </Link>
-            <Link to="/projects?tab=find" className="text-text-primary hover:text-text-primary font-medium text-sm">
+            <Link to="/projects?tab=find" className="text-text-primary hover:text-text-primary font-medium text-sm whitespace-nowrap">
               프로젝트 찾기
             </Link>
-            <Link to="/recruitment" className="text-text-primary hover:text-text-primary font-medium text-sm">
+            <Link to="/recruitment" className="text-text-primary hover:text-text-primary font-medium text-sm whitespace-nowrap">
               채용
             </Link>
           </nav>
