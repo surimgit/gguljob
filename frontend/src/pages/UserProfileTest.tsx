@@ -13,7 +13,7 @@ const MOCK_USER = {
       name: '꿀잡',
       description: '개발자 구직 매칭 플랫폼',
       emoji: '🐝',
-      bgColor: 'amber' as const,
+      bgColor: 'amber',
       myRole: 'Backend',
       period: '2025.01 ~ 진행중',
       techStacks: ['Spring', 'MySQL', 'Redis'],
