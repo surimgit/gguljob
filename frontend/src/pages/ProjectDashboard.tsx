@@ -143,26 +143,33 @@ const HexStat = ({
   children?: React.ReactNode;
 }) => (
   <div
-    className={`bg-white flex flex-col items-center justify-center shadow-md ${
-      large ? "w-32 h-36" : "w-28 h-32"
-    }`}
-    style={{ clipPath: HEX_CLIP }}
+    className="relative"
+    style={{
+      width: large ? 128 : 112,
+      height: large ? 144 : 128,
+      filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
+    }}
   >
-    <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-      {label}
-    </span>
-    <span
-      className={`font-black ${large ? "text-4xl" : "text-2xl"}`}
-      style={{ color: "var(--color-text-primary)" }}
+    <div
+      className="bg-white flex flex-col items-center justify-center w-full h-full"
+      style={{ clipPath: HEX_CLIP }}
     >
-      {value}
-    </span>
-    {children}
-    {subLabel && (
       <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-        {subLabel}
+        {label}
       </span>
-    )}
+      <span
+        className={`font-black ${large ? "text-4xl" : "text-2xl"}`}
+        style={{ color: "var(--color-text-primary)" }}
+      >
+        {value}
+      </span>
+      {children}
+      {subLabel && (
+        <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+          {subLabel}
+        </span>
+      )}
+    </div>
   </div>
 );
 
@@ -203,7 +210,7 @@ const ProjectDashboard = () => {
                   isActive
                     ? {
                         background: "var(--color-primary)",
-                        color: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
                       }
                     : { color: "var(--color-text-secondary)" }
                 }
@@ -228,38 +235,58 @@ const ProjectDashboard = () => {
           className="rounded-2xl p-8 relative overflow-hidden"
           style={{
             background:
-              "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)",
+              "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-soft) 100%)",
           }}
         >
           <div className="flex items-start justify-between gap-8">
             {/* 좌측 프로젝트 정보 */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-3">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white">
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                  style={{ background: "rgba(0,0,0,0.1)", color: "var(--color-text-primary)" }}
+                >
                   {project.domain}
                 </span>
-                <span className="flex items-center gap-1 text-xs font-medium text-white">
+                <span
+                  className="flex items-center gap-1 text-xs font-medium"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ background: "var(--color-success)" }}
                   />
                   {project.status === "active" ? "진행중" : "완료"}
                 </span>
-                <span className="text-xs text-white/70">
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {project.recruitStatus}
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-white mb-3">
+              <h1
+                className="text-3xl font-bold mb-3"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 {project.title}
               </h1>
-              <p className="text-sm text-white/80 leading-relaxed mb-5 max-w-lg">
+              <p
+                className="text-sm leading-relaxed mb-5 max-w-lg"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 {project.description}
               </p>
               <div className="flex flex-wrap gap-2">
                 {project.techStacks.map((stack) => (
                   <span
                     key={stack}
-                    className="px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30"
+                    className="px-3 py-1 rounded-full text-xs font-medium border"
+                    style={{
+                      background: "rgba(0,0,0,0.08)",
+                      color: "var(--color-text-primary)",
+                      borderColor: "rgba(0,0,0,0.15)",
+                    }}
                   >
                     {stack}
                   </span>
@@ -268,7 +295,7 @@ const ProjectDashboard = () => {
             </div>
 
             {/* 우측 헥사곤 스탯 */}
-            <div className="flex flex-col items-center gap-3 flex-shrink-0">
+            <div className="flex flex-col items-center flex-shrink-0">
               <HexStat label="팀원" value={project.memberCount} large>
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span style={{ color: "var(--color-blue)" }}>
@@ -279,7 +306,7 @@ const ProjectDashboard = () => {
                   </span>
                 </div>
               </HexStat>
-              <div className="flex gap-2">
+              <div className="flex gap-4" style={{ marginTop: -20 }}>
                 <HexStat
                   label="커밋"
                   value={project.totalCommits}
