@@ -23,7 +23,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 권한 리턴 (단일 권한 기준)
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority()));
+        return Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority().getKey()));
     }
 
     @Override
