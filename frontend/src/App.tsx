@@ -10,6 +10,7 @@ import Recruitment from './pages/Recruitment';
 import MyPage from './pages/MyPage';
 import ProjectDetail from './pages/ProjectDetail';
 import OAuthCallback from './pages/OAuthCallback';
+import UserProfileTest from './pages/UserProfileTest';
 import { useAuthStore } from './stores/authStore';
 
 const MOCK_USER = {
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         <Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
+        <Route path="/user-profile-test" element={<UserProfileTest />} />
 
         {/* 로그인 필요 라우트 */}
         <Route element={<PrivateRoute />}>
