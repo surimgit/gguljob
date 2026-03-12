@@ -39,6 +39,7 @@ const AppRoutes = () => {
   }, [logout, navigate]);
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     if (searchParams.get('login') !== null) {
       setTokens('mock-access-token', 'mock-refresh-token');
       setUser(MOCK_USER);
