@@ -70,4 +70,21 @@ public class User extends BaseTimeEntity {
         this.userName = userName;
         this.imageUrl = imageUrl;
     }
+
+    public void updateOnboarding(String description, PositionType role, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
+        this.description = description;
+        this.role = role;
+        this.experience = experience;
+        this.mbti = mbti;
+        this.teamTendency = teamTendency;
+    }
+
+    //  프로필 정보 수정용
+    public void updateProfile(String description, PositionType role, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
+        if (description != null) this.description = description;
+        if (role != null) this.role = role;
+        if (experience != null) this.experience = experience;
+        if (mbti != null) this.mbti = mbti;
+        if (teamTendency != null) this.teamTendency = teamTendency;
+    }
 }

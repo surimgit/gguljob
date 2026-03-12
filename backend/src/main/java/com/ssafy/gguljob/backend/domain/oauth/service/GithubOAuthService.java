@@ -56,25 +56,28 @@ public class GithubOAuthService {
 
         String finalName = nameToSave;
 
-        User user = userRepository.findByEmail(finalEmail)
-            .map(existingUser -> {
-                log.info("♻️ 기존 회원 로그인: 깃허브 최신 프로필로 동기화합니다. 이메일: {}", finalEmail);
-                existingUser.updateGithubProfile(finalName, userInfo.getAvatar_url());
-                return userRepository.save(existingUser);
-            })
-            .orElseGet(() -> {
-                log.info("DB에 새 회원 정보를 저장합니다. 이메일: {}", finalEmail);
+        boolean isNewUser = false; // 뉴비 판독기 초기화
+        User user;
 
+        java.util.Optional<User> existingUserOpt = userRepository.findByEmail(finalEmail);
 
-                User newUser = User.builder()
-                    .email(finalEmail)
-                    .userName(finalName)
-                    .imageUrl(userInfo.getAvatar_url())
-                    .authority("ROLE_USER")
-                    .build();
+        if (existingUserOpt.isPresent()) {
+            log.info("기존 회원 로그인: 깃허브 최신 프로필로 동기화합니다. 이메일: {}", finalEmail);
+            user = existingUserOpt.get();
+            user.updateGithubProfile(finalName, userInfo.getAvatar_url());
+            user = userRepository.save(user);
+        } else {
+            log.info("DB에 새 회원 정보를 저장합니다. 이메일: {}", finalEmail);
+            isNewUser = true; //
 
-                return userRepository.save(newUser);
-            });
+            User newUser = User.builder()
+                .email(finalEmail)
+                .userName(finalName)
+                .imageUrl(userInfo.getAvatar_url())
+                .authority("ROLE_USER")
+                .build();
+            user = userRepository.save(newUser);
+        }
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
@@ -83,7 +86,7 @@ public class GithubOAuthService {
 
         log.info("JWT 토큰 발급 성공");
 
-        return new TokenResponseDto(accessToken, refreshToken);
+        return new TokenResponseDto(accessToken, refreshToken, isNewUser);
     }
 
     /**
