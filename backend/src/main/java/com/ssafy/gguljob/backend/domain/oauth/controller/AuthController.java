@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -61,10 +62,26 @@ public class AuthController {
 
         TokenResponseDto tokenDto = githubOAuthService.loginWithGithub(code);
 
-        String redirectUri = String.format("%s?accessToken=%s&refreshToken=%s",
-            frontendRedirectUrl, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+        String redirectUri = String.format("%s?accessToken=%s&refreshToken=%s&isNewUser=%b",
+            frontendRedirectUrl, tokenDto.getAccessToken(), tokenDto.getRefreshToken(), tokenDto.isNewUser());
 
         response.sendRedirect(redirectUri);
+    }
+
+    @Operation(summary = "[개발용] 프리패스 로그인", description = "테스트할 때 깃허브 안 거치고 강제로 토큰을 뱉어줍니다. (실서버 배포 전 삭제하기)")
+    @GetMapping("/test-login")
+    public ResponseEntity<ApiResponseDto<TokenResponseDto>> testLogin(
+        @Parameter(description = "테스트할 유저 ID (기본값 1)")
+        @RequestParam(defaultValue = "1") Long userId) {
+
+        String testAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
+        String testRefreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+        redisService.setValues("RT:" + userId, testRefreshToken, java.time.Duration.ofDays(14));
+
+        TokenResponseDto tokenDto = new TokenResponseDto(testAccessToken, testRefreshToken, false);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "백도어 로그인 성공", tokenDto));
     }
 
     @Operation(
@@ -139,8 +156,8 @@ public class AuthController {
         // 6. Redis에 새 Refresh Token으로 덮어쓰기
         redisService.setValues("RT:" + userId, newRefreshToken, java.time.Duration.ofDays(14));
 
-        TokenResponseDto newTokenDto = new TokenResponseDto(newAccessToken, newRefreshToken);
-        ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신 폼 미쳤다!", newTokenDto);
+        TokenResponseDto newTokenDto = new TokenResponseDto(newAccessToken, newRefreshToken, false);
+        ApiResponseDto<TokenResponseDto> response = new ApiResponseDto<>(200, "토큰 갱신", newTokenDto);
 
         return ResponseEntity.ok(response);
     }

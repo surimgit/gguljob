@@ -17,7 +17,6 @@ interface ProfileHeaderProps {
   techStacks: string[];
   avatarUrl?: string;
   onAvatarClick: () => void;
-  onEdit: () => void;
   onWithdraw: () => void;
 }
 
@@ -30,7 +29,6 @@ const ProfileHeader = ({
   techStacks,
   avatarUrl,
   onAvatarClick,
-  onEdit,
   onWithdraw,
 }: ProfileHeaderProps) => {
   return (

@@ -95,7 +95,6 @@ const MyPage = () => {
         techStacks={profile.techStacks}
         avatarUrl={profile.avatarUrl}
         onAvatarClick={() => setIsProfileModalOpen(true)}
-        onEdit={handleOpenEdit}
         onWithdraw={() => setIsWithdrawOpen(true)}
       />
       <ProjectSummary />
