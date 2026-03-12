@@ -11,6 +11,7 @@ import {
   RefreshCw,
   GitCommit,
 } from "lucide-react";
+import ProjectSettings from "../components/feature/project/ProjectSettings";
 
 /* ── 타입 ── */
 interface TeamMember {
@@ -230,6 +231,10 @@ const ProjectDashboard = () => {
           })}
         </div>
 
+        {activeTab === "settings" && <ProjectSettings />}
+
+        {activeTab === "team" && (
+        <>
         {/* ── 프로젝트 히어로 배너 ── */}
         <div
           className="rounded-2xl p-8 relative overflow-hidden"
@@ -727,6 +732,8 @@ const ProjectDashboard = () => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
