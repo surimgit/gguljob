@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import UserProfileModal from '../components/feature/mypage/UserProfileModal';
+import type { ProfileUser } from '../components/feature/mypage/ProfileModalLayout';
 
-const MOCK_USER = {
+const MOCK_USER: ProfileUser = {
   id: '1',
   name: '김개발',
   role: 'Backend',
