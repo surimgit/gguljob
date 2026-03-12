@@ -70,13 +70,16 @@ public class PullRequest extends BaseTimeEntity {
 
     @Builder
     public PullRequest(GitRepository gitRepository, User user, Project project,
-        Integer prNumber, String title, String branchName,
-        PrStatus status, LocalDateTime githubCreatedAt) {
+        Integer prNumber, String title, String diffUrl, String diffContent, String diffSummary,
+        String branchName, PrStatus status, LocalDateTime githubCreatedAt) {
         this.gitRepository = gitRepository;
         this.user = user;
         this.project = project;
         this.prNumber = prNumber;
         this.title = title;
+        this.diffUrl = diffUrl;
+        this.diffContent = diffContent;
+        this.diffSummary = diffSummary;
         this.branchName = branchName;
         this.status = status;
         this.githubCreatedAt = githubCreatedAt;

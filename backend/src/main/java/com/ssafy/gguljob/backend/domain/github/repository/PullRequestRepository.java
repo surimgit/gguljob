@@ -23,6 +23,8 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
         "GROUP BY pr.user.id ORDER BY COUNT(pr.id) DESC")
     List<MrRankingProjection> findMrRankingByProjectId(@Param("projectId") Long projectId, Pageable pageable);
 
+    List<PullRequest> findByGitRepository_Id(Long gitRepositoryId);
+
     public interface MrRankingProjection {
         Long getUserId();
         String getUserName();

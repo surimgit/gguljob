@@ -17,6 +17,7 @@ import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +99,12 @@ public class ProjectService {
 
         Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
+
+        // 중복 등록 방지
+        Optional<GitRepository> existingRepoOpt = gitRepositoryRepository.findByProject_Id(projectId);
+        if (existingRepoOpt.isPresent() && existingRepoOpt.get().getRepoUrl().equals(request.repoUrl())) {
+            throw new IllegalArgumentException("이미 동일한 깃허브 레포지토리가 등록되어 있습니다.");
+        }
 
         // 서버 시크릿 키 생성
         String webhookSecret = UUID.randomUUID().toString().replace("-", "");
