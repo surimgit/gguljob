@@ -61,7 +61,9 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const [form, setForm] = useState<ProfileEditForm>(initialData);
   const [stackInput, setStackInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   const suggestions = stackInput.trim()
     ? TECH_STACK_OPTIONS.filter(
@@ -75,6 +77,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
     }
     setStackInput('');
     setShowSuggestions(false);
+    setHighlightedIndex(-1);
   };
 
   const removeStack = (stack: string) => {
@@ -88,9 +91,13 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const isSelected = (projectId: number) =>
     form.projects.some((p) => p.id === String(projectId));
 
+  const removeProject = (id: string) => {
+    setForm((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
+  };
+
   const toggleProject = (project: UserProject) => {
     if (isSelected(project.id)) {
-      setForm((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== String(project.id)) }));
+      removeProject(String(project.id));
     } else if (form.projects.length < 2) {
       const newProject: Project = {
         id: String(project.id),
@@ -232,24 +239,52 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               <input
                 type="text"
                 value={stackInput}
-                onChange={(e) => { setStackInput(e.target.value); setShowSuggestions(true); }}
+                onChange={(e) => {
+                  setStackInput(e.target.value);
+                  setShowSuggestions(true);
+                  setHighlightedIndex(-1);
+                }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && stackInput.trim()) {
+                  if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    addStack(stackInput.trim());
+                    setHighlightedIndex((prev) => {
+                      const next = Math.min(prev + 1, suggestions.length - 1);
+                      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+                      return next;
+                    });
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setHighlightedIndex((prev) => {
+                      const next = Math.max(prev - 1, 0);
+                      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+                      return next;
+                    });
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+                      addStack(suggestions[highlightedIndex]);
+                    } else if (stackInput.trim()) {
+                      addStack(stackInput.trim());
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowSuggestions(false);
+                    setHighlightedIndex(-1);
                   }
                 }}
                 placeholder="기술 스택 입력 후 Enter"
                 className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute top-full mt-1 w-full bg-white border border-border rounded-xl shadow-md z-10 max-h-40 overflow-y-auto">
-                  {suggestions.map((s) => (
+                <ul ref={listRef} className="absolute top-full mt-1 w-full bg-white border border-border rounded-xl shadow-md z-10 max-h-40 overflow-y-auto">
+                  {suggestions.map((s, idx) => (
                     <li
                       key={s}
                       onMouseDown={() => addStack(s)}
-                      className="px-4 py-2 text-sm text-text-primary hover:bg-primary-soft cursor-pointer"
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      className={`px-4 py-2 text-sm text-text-primary cursor-pointer transition-colors ${
+                        idx === highlightedIndex ? 'bg-primary-soft' : 'hover:bg-primary-soft'
+                      }`}
                     >
                       {s}
                     </li>
@@ -266,55 +301,57 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               <span className="text-xs text-text-tertiary">{form.projects.length}/2 선택</span>
             </div>
 
-            {/* 선택 가능한 프로젝트 목록 */}
+            {/* 선택된 프로젝트 태그 */}
+            {form.projects.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {form.projects.map((project) => (
+                  <span
+                    key={project.id}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full border border-primary bg-primary-soft text-sm text-text-primary"
+                  >
+                    {project.name}
+                    <button type="button" onClick={() => removeProject(project.id)}>
+                      <X className="w-3 h-3 text-text-secondary hover:text-text-primary" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* 프로젝트 리스트박스 */}
             {eligibleProjects.length === 0 ? (
               <p className="text-sm text-text-tertiary py-4 text-center">
                 진행 중이거나 완료한 프로젝트가 없습니다.
               </p>
             ) : (
-              <div className="flex flex-col gap-2">
+              <ul className="border border-border rounded-xl overflow-hidden bg-white max-h-48 overflow-y-auto">
                 {eligibleProjects.map((project) => {
                   const selected = isSelected(project.id);
                   const disabled = !selected && form.projects.length >= 2;
                   return (
-                    <button
-                      key={project.id}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => toggleProject(project)}
-                      className={`flex items-center justify-between p-3 rounded-xl border text-left transition-colors ${
-                        selected
-                          ? 'border-primary bg-primary-soft'
-                          : disabled
-                          ? 'border-border bg-white opacity-40 cursor-not-allowed'
-                          : 'border-border bg-white hover:border-primary hover:bg-primary-soft'
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-text-primary">{project.title}</p>
-                          <span className="text-xs text-text-tertiary flex-shrink-0">
-                            {STATUS_LABEL[project.status]}
-                          </span>
+                    <li key={project.id} className="border-b border-border last:border-b-0">
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => toggleProject(project)}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
+                          selected
+                            ? 'bg-primary-soft'
+                            : disabled
+                            ? 'opacity-40 cursor-not-allowed bg-white'
+                            : 'bg-white hover:bg-primary-soft'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">{project.title}</p>
+                          <p className="text-xs text-text-tertiary">{STATUS_LABEL[project.status]}</p>
                         </div>
-                        <p className="text-xs text-text-secondary mt-0.5 truncate">{project.description}</p>
-                        <div className="flex gap-1 mt-1.5 flex-wrap">
-                          {project.techStacks.slice(0, 4).map((s) => (
-                            <span key={s} className="px-2 py-0.5 rounded-full bg-background text-xs text-text-secondary border border-border">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-colors ${
-                        selected ? 'border-primary bg-primary' : 'border-border'
-                      }`}>
-                        {selected && <Check className="w-3 h-3 text-text-primary" />}
-                      </div>
-                    </button>
+                        {selected && <Check className="w-4 h-4 text-text-brown flex-shrink-0 ml-3" />}
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
 
             {/* 선택된 프로젝트 역할 입력 */}
