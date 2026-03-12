@@ -1,5 +1,9 @@
 package com.ssafy.gguljob.backend.domain.project.service;
 
+import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
+import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
@@ -13,9 +17,10 @@ import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +33,9 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ProjectSkillRepository projectSkillRepository;
+    private final GitRepositoryRepository gitRepositoryRepository;
+    private final GithubSyncService githubSyncService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -83,5 +91,30 @@ public class ProjectService {
 
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
+
+        Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
+            .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
+
+        // 서버 시크릿 키 생성
+        String webhookSecret = UUID.randomUUID().toString().replace("-", "");
+
+        GitRepository gitRepository = gitRepositoryRepository.findByProject_Id(projectId)
+            .orElseGet(() -> GitRepository.builder().project(project).build());
+
+        gitRepository.updateRepoInfo(request.repoUrl(), webhookSecret);
+        gitRepositoryRepository.save(gitRepository);
+
+        // 트랜잭션을 물고 있지 않도록 이벤트를 던지고 즉시 응답
+        eventPublisher.publishEvent(new InitialPrSyncEvent(
+            gitRepository.getId(),
+            projectId,
+            request.repoUrl(),
+            request.githubToken(),
+            webhookSecret
+        ));
     }
 }

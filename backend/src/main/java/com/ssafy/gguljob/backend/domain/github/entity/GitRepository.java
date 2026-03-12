@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -33,4 +34,16 @@ public class GitRepository {
 
     @Column(name = "webhook_secret", nullable = false, length = 100)
     private String webhookSecret;
+
+    @Builder
+    public GitRepository(Project project, String repoUrl, String webhookSecret){
+        this.project = project;
+        this.repoUrl = repoUrl;
+        this.webhookSecret = webhookSecret;
+    }
+
+    public void updateRepoInfo(String repoUrl, String webhookSecret) {
+        this.repoUrl = repoUrl;
+        this.webhookSecret = webhookSecret;
+    }
 }

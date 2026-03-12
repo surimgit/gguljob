@@ -144,17 +144,31 @@ pipeline {
         }
         failure {
             script {
+                // 1. 전체 로그를 1만 줄까지 긁어와서 txt 파일로 저장 (백엔드 맞춤 파일명)
+                def fullLogs = currentBuild.rawBuild.getLog(10000).join("\n")
+                writeFile file: 'backend_error_log.txt', text: fullLogs
+                
+                // 2. 젠킨스에 txt 파일을 보관 (Artifact)
+                archiveArtifacts artifacts: 'backend_error_log.txt', allowEmptyArchive: true
+
                 def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
                 def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
                 def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+                
+                // 3. 백엔드 에러는 스택 트레이스가 기니까 넉넉하게 마지막 100줄 추출
+                def shortLogs = currentBuild.rawBuild.getLog(100).join("\n")
 
+                // 귀하의 영혼이 담긴 헤더 문구는 그대로 보존했습니다.
                 def msg = "#### ☠️🤯💩 스트레스 많이 받을 거야. [Dev] 백엔드 배포 실패! 💩🤯☠️\n" +
                         "**프로젝트:** ${env.JOB_NAME}\n" +
                         "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
                         "**브랜치:** `${branch}`\n" +
-                        "**작성자:** ${author}\n" +
-                        "**커밋:** ${message}\n" +
-                        "[🔍 젠킨스 로그 전체 보기](${env.BUILD_URL}console)"
+                        "**🚨 범인(작성자):** **${author}** (직접 로그 다운받아서 원인 찾으세요!)\n" +
+                        "**커밋:** ${message}\n\n" +
+                        "### 📥 [전체 에러 로그 다운로드 (클릭)](${env.BUILD_URL}artifact/backend_error_log.txt)\n\n" +
+                        "### 📜 핵심 에러 요약 (Spring Boot Stack Trace)\n" +
+                        "```text\n${shortLogs}\n```\n" +
+                        "[🔍 젠킨스 로그 전체 웹에서 보기](${env.BUILD_URL}console)"
 
                 mattermostSend (
                     color: "#ff0000",
