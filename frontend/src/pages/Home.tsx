@@ -1,36 +1,19 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import type { User } from '../types/user';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
+import HeroSection from '../components/home/HeroSection';
+import FlowSection from '../components/home/FlowSection';
+import KeyFeaturesSection from '../components/home/KeyFeaturesSection';
 
-const MOCK_USER: User = {
-  id: 1,
-  name: '홍길동',
-  email: 'test@test.com',
-  profileImage: null,
-  role: 'FE',
-  techStacks: ['React', 'TypeScript', 'Firebase'],
-};
-
-const Home = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, setUser, setTokens, logout } = useAuthStore();
-
-  const handleMockLogin = () => {
-    setTokens('mock-access-token', 'mock-refresh-token');
-    setUser(MOCK_USER);
-  };
-
-  return (
-    <div>
-      <h1>메인 페이지입니다.</h1>
-      {isAuthenticated ? (
-        <button onClick={logout}>로그아웃 (테스트)</button>
-      ) : (
-        <button onClick={handleMockLogin}>로그인 (테스트)</button>
-      )}
-      <button onClick={() => navigate('/mypage')}>마이페이지 (테스트)</button>
-    </div>
-  );
-};
+const Home = () => (
+  <div className="min-h-screen flex flex-col">
+    <Navbar />
+    <main className="flex-1">
+      <HeroSection />
+      <FlowSection />
+      <KeyFeaturesSection />
+    </main>
+    <Footer />
+  </div>
+);
 
 export default Home;
