@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   FolderOpen,
   User,
@@ -12,106 +13,7 @@ import {
   GitCommit,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
-
-/* ── 타입 ── */
-interface TeamMember {
-  name: string;
-  avatarColor?: string;
-  commits: number;
-}
-
-interface RecentActivity {
-  type: "commit" | "system";
-  author?: string;
-  avatarColor?: string;
-  message: string;
-  branch?: string;
-  time: string;
-}
-
-interface ProjectData {
-  id: string;
-  domain: string;
-  status: "active" | "done";
-  recruitStatus: string;
-  title: string;
-  description: string;
-  techStacks: string[];
-  memberCount: number;
-  fe: number;
-  be: number;
-  totalCommits: number;
-  troubleshootingCount: number;
-  troubleshootingResolved: number;
-  repoUrl: string;
-  lastSyncAt: string;
-  currentTopic: { title: string; description: string };
-  mrRanking: TeamMember[];
-  recentActivities: RecentActivity[];
-}
-
-/* ── 목업 데이터 ── */
-const MOCK_PROJECT: ProjectData = {
-  id: "1",
-  domain: "개발도구",
-  status: "active",
-  recruitStatus: "모집중 D-12",
-  title: "꿀잡 - AI 기반 구직 매칭 플랫폼",
-  description:
-    "GitHub 분석과 AI 매칭을 통해 개발자에게 최적의 프로젝트 팀을 추천하는 서비스입니다. 기술 스택, 협업 성향, 경험치를 종합 분석합니다.",
-  techStacks: ["React", "TypeScript", "Spring Boot", "PostgreSQL", "Redis"],
-  memberCount: 6,
-  fe: 3,
-  be: 3,
-  totalCommits: 247,
-  troubleshootingCount: 18,
-  troubleshootingResolved: 14,
-  repoUrl: "github.com/ssafy/gguljob",
-  lastSyncAt: "5분 전",
-  currentTopic: {
-    title: "프로젝트 대시보드 UI 개선",
-    description:
-      "팀 프로젝트 탭의 대시보드 레이아웃을 개선하고, Git 연동 상태 표시 및 MR 랭킹 시스템을 구현합니다.",
-  },
-  mrRanking: [
-    { name: "김도현", avatarColor: "var(--color-primary)", commits: 52 },
-    { name: "이서준", avatarColor: "var(--color-success)", commits: 41 },
-    { name: "박지민", avatarColor: "#EC4899", commits: 38 },
-    { name: "정하은", avatarColor: "#7C3AED", commits: 29 },
-    { name: "최민수", avatarColor: "var(--color-blue)", commits: 22 },
-  ],
-  recentActivities: [
-    {
-      type: "commit",
-      author: "김도현",
-      avatarColor: "var(--color-primary)",
-      message: "feat: 프로젝트 대시보드 히어로 배너 구현",
-      branch: "fe/feature-dashboard",
-      time: "2시간 전",
-    },
-    {
-      type: "commit",
-      author: "이서준",
-      avatarColor: "var(--color-success)",
-      message: "fix: JWT 토큰 갱신 로직 수정",
-      branch: "be/fix-auth",
-      time: "3시간 전",
-    },
-    {
-      type: "system",
-      message: "GitHub 레포지토리가 동기화되었습니다",
-      time: "5시간 전",
-    },
-    {
-      type: "commit",
-      author: "박지민",
-      avatarColor: "#EC4899",
-      message: "refactor: API 응답 타입 통일 및 에러 핸들링 개선",
-      branch: "be/refactor-api",
-      time: "어제",
-    },
-  ],
-};
+import { useProjectStore } from "../stores/projectStore";
 
 const AI_TOPICS = [
   "GitHub Actions CI/CD 파이프라인 구축",
@@ -174,14 +76,57 @@ const HexStat = ({
   </div>
 );
 
+const AVATAR_COLORS = [
+  "var(--color-primary)",
+  "var(--color-success)",
+  "#EC4899",
+  "#7C3AED",
+  "var(--color-blue)",
+];
+
+const formatTime = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}분 전`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  return `${Math.floor(hours / 24)}일 전`;
+};
+
 /* ── 메인 페이지 ── */
 const ProjectDashboard = () => {
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<string>("team");
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
-  const project = MOCK_PROJECT;
 
-  const maxCommits = Math.max(...project.mrRanking.map((m) => m.commits));
+  const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
+    useProjectStore();
+
+  useEffect(() => {
+    if (id) fetchDashboard(Number(id));
+  }, [id, fetchDashboard]);
+
+  if (dashboardLoading || !dashboard) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--color-background)" }}
+      >
+        <p style={{ color: "var(--color-text-tertiary)" }}>
+          {dashboardLoading ? "불러오는 중..." : "프로젝트를 찾을 수 없습니다."}
+        </p>
+      </div>
+    );
+  }
+
+  const { projectInfo, teamStats, gitRepoInfo } = dashboard;
+  const rankings = gitLog?.mrRankings ?? [];
+  const activities = gitLog?.recentActivities ?? [];
+  const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
+
+  const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
+  const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
 
   return (
     <div
@@ -251,7 +196,7 @@ const ProjectDashboard = () => {
                   className="px-2.5 py-0.5 rounded-full text-xs font-bold"
                   style={{ background: "rgba(0,0,0,0.1)", color: "var(--color-text-primary)" }}
                 >
-                  {project.domain}
+                  {projectInfo.domain || "미정"}
                 </span>
                 <span
                   className="flex items-center gap-1 text-xs font-medium"
@@ -261,29 +206,29 @@ const ProjectDashboard = () => {
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ background: "var(--color-success)" }}
                   />
-                  {project.status === "active" ? "진행중" : "완료"}
+                  진행중
                 </span>
                 <span
                   className="text-xs"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  {project.recruitStatus}
+                  {projectInfo.teamName}
                 </span>
               </div>
               <h1
                 className="text-3xl font-bold mb-3"
                 style={{ color: "var(--color-text-primary)" }}
               >
-                {project.title}
+                {projectInfo.title}
               </h1>
               <p
                 className="text-sm leading-relaxed mb-5 max-w-lg"
                 style={{ color: "var(--color-text-secondary)" }}
               >
-                {project.description}
+                {projectInfo.description}
               </p>
               <div className="flex flex-wrap gap-2">
-                {project.techStacks.map((stack) => (
+                {(projectInfo.skills ?? []).map((stack) => (
                   <span
                     key={stack}
                     className="px-3 py-1 rounded-full text-xs font-medium border"
@@ -301,26 +246,26 @@ const ProjectDashboard = () => {
 
             {/* 우측 헥사곤 스탯 */}
             <div className="flex flex-col items-center flex-shrink-0">
-              <HexStat label="팀원" value={project.memberCount} large>
+              <HexStat label="팀원" value={teamStats.totalMembers} large>
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span style={{ color: "var(--color-blue)" }}>
-                    FE {project.fe}
+                    FE {feCount}
                   </span>
                   <span style={{ color: "var(--color-success)" }}>
-                    BE {project.be}
+                    BE {beCount}
                   </span>
                 </div>
               </HexStat>
               <div className="flex gap-4" style={{ marginTop: -20 }}>
                 <HexStat
                   label="커밋"
-                  value={project.totalCommits}
+                  value={teamStats.totalCommits}
                   subLabel="total"
                 />
                 <HexStat
                   label="트러블슈팅"
-                  value={project.troubleshootingCount}
-                  subLabel={`해결 ${project.troubleshootingResolved}`}
+                  value={teamStats.totalTroubleshootings}
+                  subLabel="total"
                 />
               </div>
             </div>
@@ -383,14 +328,14 @@ const ProjectDashboard = () => {
                     className="text-sm font-bold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {project.repoUrl}
+                    {gitRepoInfo?.repoUrl ?? "연동된 레포 없음"}
                   </span>
                 </div>
                 <span
                   className="text-xs font-medium"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  {project.lastSyncAt} 동기화
+                  {gitRepoInfo?.lastSyncTime ? `${formatTime(gitRepoInfo.lastSyncTime)} 동기화` : ""}
                 </span>
               </div>
             </div>
@@ -416,13 +361,13 @@ const ProjectDashboard = () => {
                   className="text-base font-bold mb-1"
                   style={{ color: "var(--color-primary-hover)" }}
                 >
-                  {project.currentTopic.title}
+                  {projectInfo.title}
                 </p>
                 <p
                   className="text-sm leading-relaxed"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  {project.currentTopic.description}
+                  {projectInfo.description}
                 </p>
               </div>
 
@@ -576,9 +521,9 @@ const ProjectDashboard = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-2.5">
-                {project.mrRanking.map((member, idx) => (
+                {rankings.map((member, idx) => (
                   <div
-                    key={idx}
+                    key={member.userId}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl"
                     style={
                       idx === 0
@@ -595,21 +540,21 @@ const ProjectDashboard = () => {
                             : "var(--color-text-tertiary)",
                       }}
                     >
-                      {idx + 1}
+                      {member.rank}
                     </span>
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                       style={{
-                        background: member.avatarColor || "var(--color-primary)",
+                        background: AVATAR_COLORS[idx % AVATAR_COLORS.length],
                       }}
                     >
-                      {member.name.charAt(0)}
+                      {member.userName?.charAt(0) ?? "?"}
                     </div>
                     <span
                       className="text-sm font-semibold flex-1"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      {member.name}
+                      {member.userName}
                     </span>
                     <div
                       className="flex-1 h-2 rounded-full overflow-hidden"
@@ -618,7 +563,7 @@ const ProjectDashboard = () => {
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${(member.commits / maxCommits) * 100}%`,
+                          width: `${(member.mrCount / maxCommits) * 100}%`,
                           background:
                             idx === 0
                               ? "var(--color-primary)"
@@ -635,7 +580,7 @@ const ProjectDashboard = () => {
                             : "var(--color-text-secondary)",
                       }}
                     >
-                      {member.commits}
+                      {member.mrCount}
                     </span>
                   </div>
                 ))}
@@ -660,7 +605,7 @@ const ProjectDashboard = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                {project.recentActivities.map((activity, idx) => (
+                {activities.map((activity, idx) => (
                   <div
                     key={idx}
                     className="flex items-start gap-3 px-2 py-2.5 rounded-lg"
@@ -670,15 +615,14 @@ const ProjectDashboard = () => {
                         : {}
                     }
                   >
-                    {activity.type === "commit" ? (
+                    {activity.userName ? (
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                         style={{
-                          background:
-                            activity.avatarColor || "var(--color-primary)",
+                          background: AVATAR_COLORS[idx % AVATAR_COLORS.length],
                         }}
                       >
-                        {activity.author?.charAt(0)}
+                        {activity.userName.charAt(0)}
                       </div>
                     ) : (
                       <div
@@ -692,31 +636,26 @@ const ProjectDashboard = () => {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      {activity.author && (
+                      {activity.userName && (
                         <p
                           className="text-xs font-bold mb-0.5"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
-                          {activity.author}
+                          {activity.userName}
                         </p>
                       )}
                       <p
                         className="text-sm font-medium line-clamp-2"
-                        style={{
-                          color:
-                            activity.type === "commit"
-                              ? "var(--color-text-primary)"
-                              : "var(--color-text-secondary)",
-                        }}
+                        style={{ color: "var(--color-text-primary)" }}
                       >
-                        {activity.message}
+                        {activity.content}
                       </p>
-                      {activity.branch && (
+                      {activity.label && (
                         <p
                           className="text-xs font-mono mt-0.5 font-semibold"
                           style={{ color: "var(--color-blue)" }}
                         >
-                          {activity.branch}
+                          {activity.label}
                         </p>
                       )}
                     </div>
@@ -724,7 +663,7 @@ const ProjectDashboard = () => {
                       className="text-xs flex-shrink-0 font-medium"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      {activity.time}
+                      {formatTime(activity.createdAt)}
                     </span>
                   </div>
                 ))}

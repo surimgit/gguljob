@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Info,
   ChevronDown,
@@ -13,6 +14,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import { useProjectStore } from '../stores/projectStore';
 
 /* ── 상수 ── */
 
@@ -55,6 +57,9 @@ interface ProjectFormState {
 /* ── 컴포넌트 ── */
 
 const CreateProject = () => {
+  const navigate = useNavigate();
+  const { createProject } = useProjectStore();
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<ProjectFormState>({
     name: '',
     description: '',
@@ -101,7 +106,25 @@ const CreateProject = () => {
   const removeMember = (idx: number) =>
     setForm((prev) => ({ ...prev, members: prev.members.filter((_, i) => i !== idx) }));
 
-  const canSubmit = form.name.trim().length > 0;
+  const canSubmit = form.name.trim().length > 0 && !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    try {
+      const projectId = await createProject({
+        title: form.name,
+        domain: form.domains[0],
+        description: form.description,
+        leaderRole: form.members[0]?.position || 'FRONTEND',
+      });
+      navigate(`/my-projects/${projectId}`);
+    } catch {
+      alert('프로젝트 생성에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   /* ── JSX ── */
 
@@ -476,14 +499,15 @@ const CreateProject = () => {
         <button
           type="button"
           disabled={!canSubmit}
+          onClick={handleSubmit}
           className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto block py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-bold transition-colors"
           style={{
             backgroundColor: canSubmit ? 'var(--color-primary)' : 'var(--color-border)',
-            color: canSubmit ? 'var(--color-surface)' : 'var(--color-text-tertiary)',
+            color: canSubmit ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
             cursor: canSubmit ? 'pointer' : 'not-allowed',
           }}
         >
-          프로젝트 생성하기
+          {submitting ? '생성 중...' : '프로젝트 생성하기'}
         </button>
       </div>
     </div>
