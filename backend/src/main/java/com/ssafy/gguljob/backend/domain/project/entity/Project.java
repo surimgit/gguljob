@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.project.entity;
 
 import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
+import com.ssafy.gguljob.backend.domain.skill.entity.ProjectSkill;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
@@ -13,8 +14,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -62,6 +66,9 @@ public class Project extends BaseTimeEntity {
 
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
+
+    @OneToMany(mappedBy = "project")
+    private List<ProjectSkill> projectSkills = new ArrayList<>();
 
     @Builder
     public Project(User leader, String teamName, String title, String domain, String description, Boolean isPublic, String imageUrl, String documentUrl) {
