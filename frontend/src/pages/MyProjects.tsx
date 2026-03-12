@@ -28,18 +28,18 @@ interface Project {
 /* ── 상수 ── */
 
 const DOMAIN_COLORS: Record<string, string> = {
-  소셜: "var(--color-blue)",
-  "AI/ML": "var(--color-warning)",
-  에듀테크: "var(--color-warning)",
-  커뮤니케이션: "var(--color-blue)",
-  엔터테인먼트: "var(--color-warning)",
-  개발도구: "var(--color-primary-hover)",
+  소셜: "var(--color-amber)",
+  "AI/ML": "var(--color-amber)",
+  에듀테크: "var(--color-amber)",
+  커뮤니케이션: "var(--color-amber)",
+  엔터테인먼트: "var(--color-amber)",
+  개발도구: "var(--color-amber)",
 };
 
 const AVATAR_COLORS = [
   "var(--color-primary)",
   "var(--color-blue)",
-  "var(--color-success)",
+  "var(--color-success-dark)",
   "#EC4899",
 ];
 
@@ -131,7 +131,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           className="flex items-center gap-1 text-xs font-medium"
           style={{
             color: isActive
-              ? "var(--color-success)"
+              ? "var(--color-success-dark)"
               : "var(--color-text-tertiary)",
           }}
         >
@@ -139,7 +139,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
             className="w-1.5 h-1.5 rounded-full"
             style={{
               backgroundColor: isActive
-                ? "var(--color-success)"
+                ? "var(--color-success-dark)"
                 : "var(--color-text-tertiary)",
             }}
           />
