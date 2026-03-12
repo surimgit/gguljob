@@ -143,7 +143,7 @@ const HexStat = ({
   children?: React.ReactNode;
 }) => (
   <div
-    className={`bg-white flex flex-col items-center justify-center ${
+    className={`bg-white flex flex-col items-center justify-center shadow-md ${
       large ? "w-32 h-36" : "w-28 h-32"
     }`}
     style={{ clipPath: HEX_CLIP }}
@@ -310,7 +310,7 @@ const ProjectDashboard = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <GitBranch
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     style={{ color: "var(--color-primary)" }}
                   />
                   <span
@@ -321,12 +321,12 @@ const ProjectDashboard = () => {
                   </span>
                 </div>
                 <span
-                  className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ background: "#DCFCE7", color: "var(--color-success)" }}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                  style={{ background: "#DCFCE7", color: "#16A34A" }}
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: "var(--color-success)" }}
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: "#16A34A" }}
                   />
                   연동됨
                 </span>
@@ -348,15 +348,15 @@ const ProjectDashboard = () => {
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                   </svg>
                   <span
-                    className="text-sm font-medium"
+                    className="text-sm font-bold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     {project.repoUrl}
                   </span>
                 </div>
                 <span
-                  className="text-xs"
-                  style={{ color: "var(--color-text-tertiary)" }}
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
                 >
                   {project.lastSyncAt} 동기화
                 </span>
@@ -536,19 +536,32 @@ const ProjectDashboard = () => {
             >
               <div className="flex items-center gap-2 text-base font-bold mb-4">
                 <BarChart2
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   style={{ color: "var(--color-primary)" }}
                 />
                 <span style={{ color: "var(--color-text-primary)" }}>
                   MR 랭킹
                 </span>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5">
                 {project.mrRanking.map((member, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                    style={
+                      idx === 0
+                        ? { background: "var(--color-primary-soft)" }
+                        : {}
+                    }
+                  >
                     <span
-                      className="text-sm font-bold w-4"
-                      style={{ color: "var(--color-text-tertiary)" }}
+                      className="text-sm font-black w-5 text-center"
+                      style={{
+                        color:
+                          idx === 0
+                            ? "var(--color-primary-hover)"
+                            : "var(--color-text-tertiary)",
+                      }}
                     >
                       {idx + 1}
                     </span>
@@ -561,17 +574,17 @@ const ProjectDashboard = () => {
                       {member.name.charAt(0)}
                     </div>
                     <span
-                      className="text-sm font-medium flex-1"
+                      className="text-sm font-semibold flex-1"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       {member.name}
                     </span>
                     <div
-                      className="flex-1 h-1.5 rounded-full overflow-hidden"
+                      className="flex-1 h-2 rounded-full overflow-hidden"
                       style={{ background: "var(--color-border)" }}
                     >
                       <div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full transition-all"
                         style={{
                           width: `${(member.commits / maxCommits) * 100}%`,
                           background:
@@ -582,7 +595,7 @@ const ProjectDashboard = () => {
                       />
                     </div>
                     <span
-                      className="text-sm font-bold w-8 text-right"
+                      className="text-sm font-black w-8 text-right"
                       style={{
                         color:
                           idx === 0
@@ -607,16 +620,24 @@ const ProjectDashboard = () => {
             >
               <div className="flex items-center gap-2 text-base font-bold mb-4">
                 <Zap
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   style={{ color: "var(--color-primary)" }}
                 />
                 <span style={{ color: "var(--color-text-primary)" }}>
                   최근 활동
                 </span>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
                 {project.recentActivities.map((activity, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 px-2 py-2.5 rounded-lg"
+                    style={
+                      idx % 2 === 0
+                        ? { background: "var(--color-background)" }
+                        : {}
+                    }
+                  >
                     {activity.type === "commit" ? (
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -639,8 +660,16 @@ const ProjectDashboard = () => {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
+                      {activity.author && (
+                        <p
+                          className="text-xs font-bold mb-0.5"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
+                          {activity.author}
+                        </p>
+                      )}
                       <p
-                        className="text-sm line-clamp-2"
+                        className="text-sm font-medium line-clamp-2"
                         style={{
                           color:
                             activity.type === "commit"
@@ -652,7 +681,7 @@ const ProjectDashboard = () => {
                       </p>
                       {activity.branch && (
                         <p
-                          className="text-xs font-mono mt-0.5"
+                          className="text-xs font-mono mt-0.5 font-semibold"
                           style={{ color: "var(--color-blue)" }}
                         >
                           {activity.branch}
@@ -660,7 +689,7 @@ const ProjectDashboard = () => {
                       )}
                     </div>
                     <span
-                      className="text-xs flex-shrink-0"
+                      className="text-xs flex-shrink-0 font-medium"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
                       {activity.time}
