@@ -6,3 +6,5 @@ export { default as Troubleshooting } from './Troubleshooting';
 export { default as Portfolio } from './Portfolio';
 export { default as MyProfileModal } from './MyProfileModal';
 export { default as ProfileEditModal } from './ProfileEditModal';
+export { default as UserProfileModal } from './UserProfileModal';
+export type { UserProfileModalUser } from './UserProfileModal';
