@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
@@ -12,10 +12,22 @@ import ProjectDetail from './pages/ProjectDetail';
 import OAuthCallback from './pages/OAuthCallback';
 import { useAuthStore } from './stores/authStore';
 
+const MOCK_USER = {
+  id: 1,
+  name: '테스트 유저',
+  email: 'test@example.com',
+  profileImage: null,
+  techStacks: ['React', 'TypeScript'],
+  role: 'FE' as const,
+};
+
 // BrowserRouter 내부에서 navigate를 사용하기 위해 분리
 const AppRoutes = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const logout = useAuthStore((state) => state.logout);
+  const setUser = useAuthStore((state) => state.setUser);
+  const setTokens = useAuthStore((state) => state.setTokens);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -25,6 +37,17 @@ const AppRoutes = () => {
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, [logout, navigate]);
+
+  useEffect(() => {
+    if (searchParams.get('login') !== null) {
+      setTokens('mock-access-token', 'mock-refresh-token');
+      setUser(MOCK_USER);
+      // 파라미터 제거 후 현재 경로 유지
+      const url = new URL(window.location.href);
+      url.searchParams.delete('login');
+      window.history.replaceState(null, '', url.toString());
+    }
+  }, [searchParams, setTokens, setUser]);
 
   return (
     <Routes>
