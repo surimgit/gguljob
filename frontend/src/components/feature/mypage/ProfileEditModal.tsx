@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { X, Camera, Check } from 'lucide-react';
-import { BaseModal } from '../../common';
+import { BaseModal, TechStackInput } from '../../common';
 import type { PositionType } from '../../../types/user';
 import type { Project as UserProject } from '../../../types/project';
 
@@ -13,14 +13,6 @@ const POSITION_LABEL: Record<PositionType, string> = {
   DESIGN: 'Design',
 };
 
-const TECH_STACK_OPTIONS = [
-  'React', 'Vue', 'Angular', 'Next.js', 'Nuxt.js',
-  'TypeScript', 'JavaScript', 'Python', 'Java', 'Kotlin', 'Swift', 'Go', 'Rust',
-  'Node.js', 'Spring', 'Django', 'FastAPI', 'Express',
-  'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase',
-  'Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure',
-  'Git', 'Figma', 'TailwindCSS',
-];
 
 const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
 
@@ -59,30 +51,7 @@ interface ProfileEditModalProps {
 
 const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProjects }: ProfileEditModalProps) => {
   const [form, setForm] = useState<ProfileEditForm>(initialData);
-  const [stackInput, setStackInput] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-
-  const suggestions = stackInput.trim()
-    ? TECH_STACK_OPTIONS.filter(
-        (s) => s.toLowerCase().includes(stackInput.toLowerCase()) && !form.techStacks.includes(s)
-      )
-    : [];
-
-  const addStack = (stack: string) => {
-    if (!form.techStacks.includes(stack)) {
-      setForm((prev) => ({ ...prev, techStacks: [...prev.techStacks, stack] }));
-    }
-    setStackInput('');
-    setShowSuggestions(false);
-    setHighlightedIndex(-1);
-  };
-
-  const removeStack = (stack: string) => {
-    setForm((prev) => ({ ...prev, techStacks: prev.techStacks.filter((s) => s !== stack) }));
-  };
 
   const eligibleProjects = availableProjects.filter(
     (p) => p.status === 'IN_PROGRESS' || p.status === 'COMPLETED'
@@ -222,76 +191,10 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           {/* 기술 스택 */}
           <div>
             <h3 className="text-base font-bold text-text-primary mb-3">🛠 기술 스택</h3>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {form.techStacks.map((stack) => (
-                <span
-                  key={stack}
-                  className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-text-primary"
-                >
-                  {stack}
-                  <button type="button" onClick={() => removeStack(stack)}>
-                    <X className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                value={stackInput}
-                onChange={(e) => {
-                  setStackInput(e.target.value);
-                  setShowSuggestions(true);
-                  setHighlightedIndex(-1);
-                }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setHighlightedIndex((prev) => {
-                      const next = Math.min(prev + 1, suggestions.length - 1);
-                      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
-                      return next;
-                    });
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setHighlightedIndex((prev) => {
-                      const next = Math.max(prev - 1, 0);
-                      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
-                      return next;
-                    });
-                  } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
-                      addStack(suggestions[highlightedIndex]);
-                    } else if (stackInput.trim()) {
-                      addStack(stackInput.trim());
-                    }
-                  } else if (e.key === 'Escape') {
-                    setShowSuggestions(false);
-                    setHighlightedIndex(-1);
-                  }
-                }}
-                placeholder="기술 스택 입력 후 Enter"
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {showSuggestions && suggestions.length > 0 && (
-                <ul ref={listRef} className="absolute top-full mt-1 w-full bg-white border border-border rounded-xl shadow-md z-10 max-h-40 overflow-y-auto">
-                  {suggestions.map((s, idx) => (
-                    <li
-                      key={s}
-                      onMouseDown={() => addStack(s)}
-                      onMouseEnter={() => setHighlightedIndex(idx)}
-                      className={`px-4 py-2 text-sm text-text-primary cursor-pointer transition-colors ${
-                        idx === highlightedIndex ? 'bg-primary-soft' : 'hover:bg-primary-soft'
-                      }`}
-                    >
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <TechStackInput
+              value={form.techStacks}
+              onChange={(stacks) => setForm((prev) => ({ ...prev, techStacks: stacks }))}
+            />
           </div>
 
           {/* 대표 프로젝트 */}
