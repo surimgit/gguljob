@@ -29,6 +29,10 @@ public class SkillService {
 
         List<Skill> skills = skillRepository.findAllByNameIn(skillNames);
 
+        if (skills.size() != skillNames.size()) {
+            throw new IllegalArgumentException("DB에 존재하지 않는 기술 스택이 포함되어 있습니다.");
+        }
+
         List<UserSkill> userSkills = skills.stream()
             .map(skill -> UserSkill.builder()
                 .user(user)

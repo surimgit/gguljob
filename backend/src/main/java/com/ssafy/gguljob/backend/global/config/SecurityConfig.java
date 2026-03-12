@@ -30,6 +30,7 @@ public class SecurityConfig {
             // "/api/v1/auth/**",
             "/api/v1/auth/github",
             "/api/v1/auth/github/callback",
+            "/api/v1/auth/test-login",
     };
 
     @Bean
