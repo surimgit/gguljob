@@ -34,7 +34,9 @@
 
   /* ── Semantic ── */
   --color-success:        #22C55E;   /* Success */
+  --color-success-dark:   #16A34A;   /* Success Dark */
   --color-warning:        #F97316;   /* Warning */
+  --color-amber:          #F59E0B;   /* Amber */
   --color-error:          #EF4444;   /* Error */
   --color-blue:           #2196F3;   /* Blue */
 
