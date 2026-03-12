@@ -19,6 +19,10 @@
   --color-border:         #E5E7EB;   /* Border */
   --color-accent-sky:     #BFE8F5;   /* Accent Sky */
 
+  /* ── CTA ── */
+  --color-cta:            #24292F;   /* CTA (GitHub Button) */
+  --color-icon:           #242424;   /* Icon */
+
   /* ── Semantic ── */
   --color-success:        #22C55E;   /* Success */
   --color-warning:        #F97316;   /* Warning */
