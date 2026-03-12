@@ -13,6 +13,7 @@ import OAuthCallback from './pages/OAuthCallback';
 import UserProfileTest from './pages/UserProfileTest';
 import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
+import MyProjects from './pages/MyProjects';
 import { useAuthStore } from './stores/authStore';
 
 const MOCK_USER = {
@@ -71,6 +72,7 @@ const AppRoutes = () => {
         {/* 로그인 필요 라우트 */}
         <Route element={<PrivateRoute />}>
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
         </Route>

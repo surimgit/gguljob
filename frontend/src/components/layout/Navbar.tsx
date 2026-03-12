@@ -28,10 +28,10 @@ const Navbar = () => {
             <img src={gguljobLogo} alt="꿀잡" className="h-20" />
           </Link>
           <nav className="flex items-center gap-6">
-            <Link to="/projects" className="text-gray-600 hover:text-text-primary font-medium">
+            <Link to="/my-projects" className="text-gray-600 hover:text-text-primary font-medium">
               프로젝트
             </Link>
-            <Link to="/projects?tab=find" className="text-gray-600 hover:text-text-primary font-medium">
+            <Link to="/projects" className="text-gray-600 hover:text-text-primary font-medium">
               프로젝트 찾기
             </Link>
             <Link to="/recruitment" className="text-gray-600 hover:text-text-primary font-medium">
