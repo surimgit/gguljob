@@ -386,6 +386,8 @@ def get_job_detail(session: requests.Session, job_id: str) -> dict:
     for attempt in range(RETRY_COUNT):
         try:
             resp = session.get(url, headers=HEADERS, timeout=15)
+            if resp.status_code == 404:
+                return empty  # 만료/삭제된 공고 즉시 스킵
             if resp.status_code == 429:
                 print(f"    ⏳ Rate Limit (id={job_id}), {RETRY_WAIT}초 대기...")
                 time.sleep(RETRY_WAIT)
@@ -574,6 +576,20 @@ def crawl_all_jobkorea_jobs(limit: int | None = None):
     _save_checkpoint(existing_df, new_rows)
 
     final_df = pd.read_csv(CHECKPOINT_FILE, encoding="utf-8-sig")
+
+    # 포지션상세·경력·고용형태 모두 빈 레코드 = 404로 내용 없는 껍데기 → 제거
+    before = len(final_df)
+    valid = (
+        final_df["포지션상세"].notna() & (final_df["포지션상세"].astype(str) != "nan")
+    ) | (
+        final_df["경력"].notna() & (final_df["경력"].astype(str) != "nan")
+    ) | (
+        final_df["고용형태"].notna() & (final_df["고용형태"].astype(str) != "nan")
+    )
+    final_df = final_df[valid]
+    print(
+        f"\n[필터링] 빈 레코드 제거: {before}건 → {len(final_df)}건 (-{before - len(final_df)}건)")
+
     final_df.drop(columns=["job_id"], errors="ignore").to_csv(
         OUTPUT_FILE, index=False, encoding="utf-8-sig")
 
