@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Trash2, Camera } from 'lucide-react';
+import { X, Camera, Check } from 'lucide-react';
 import { BaseModal } from '../../common';
 import type { PositionType } from '../../../types/user';
+import type { Project as UserProject } from '../../../types/project';
 
 const POSITION_LABEL: Record<PositionType, string> = {
   FE: 'Frontend',
@@ -22,11 +23,10 @@ const TECH_STACK_OPTIONS = [
 ];
 
 const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
-const PROJECT_BG: Record<string, string> = {
-  amber: 'bg-amber-100',
-  green: 'bg-green-100',
-  sky: 'bg-sky-100',
-  purple: 'bg-purple-100',
+
+const STATUS_LABEL: Record<string, string> = {
+  IN_PROGRESS: '진행중',
+  COMPLETED: '완료',
 };
 
 interface Project {
@@ -54,9 +54,10 @@ interface ProfileEditModalProps {
   onClose: () => void;
   onSave: (data: ProfileEditForm) => void;
   initialData: ProfileEditForm;
+  availableProjects: UserProject[];
 }
 
-const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditModalProps) => {
+const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProjects }: ProfileEditModalProps) => {
   const [form, setForm] = useState<ProfileEditForm>(initialData);
   const [stackInput, setStackInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -80,28 +81,35 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
     setForm((prev) => ({ ...prev, techStacks: prev.techStacks.filter((s) => s !== stack) }));
   };
 
-  const addProject = () => {
-    const newProject: Project = {
-      id: crypto.randomUUID(),
-      name: '',
-      description: '',
-      emoji: '🚀',
-      bgColor: PROJECT_BG_OPTIONS[form.projects.length % PROJECT_BG_OPTIONS.length],
-      myRole: '',
-      period: '',
-      techStacks: [],
-    };
-    setForm((prev) => ({ ...prev, projects: [...prev.projects, newProject] }));
+  const eligibleProjects = availableProjects.filter(
+    (p) => p.status === 'IN_PROGRESS' || p.status === 'COMPLETED'
+  );
+
+  const isSelected = (projectId: number) =>
+    form.projects.some((p) => p.id === String(projectId));
+
+  const toggleProject = (project: UserProject) => {
+    if (isSelected(project.id)) {
+      setForm((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== String(project.id)) }));
+    } else if (form.projects.length < 2) {
+      const newProject: Project = {
+        id: String(project.id),
+        name: project.title,
+        description: project.description,
+        emoji: '🚀',
+        bgColor: PROJECT_BG_OPTIONS[form.projects.length % PROJECT_BG_OPTIONS.length],
+        myRole: '',
+        period: STATUS_LABEL[project.status] ?? project.status,
+        techStacks: project.techStacks,
+      };
+      setForm((prev) => ({ ...prev, projects: [...prev.projects, newProject] }));
+    }
   };
 
-  const removeProject = (id: string) => {
-    setForm((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
-  };
-
-  const updateProject = (id: string, field: keyof Project, value: string | string[]) => {
+  const updateMyRole = (id: string, myRole: string) => {
     setForm((prev) => ({
       ...prev,
-      projects: prev.projects.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+      projects: prev.projects.map((p) => (p.id === id ? { ...p, myRole } : p)),
     }));
   };
 
@@ -143,7 +151,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden group"
+              className="relative w-20 h-20 rounded-full bg-primary-soft flex items-center justify-center overflow-hidden group"
             >
               {form.avatarUrl ? (
                 <img src={form.avatarUrl} alt="프로필" className="w-full h-full object-cover" />
@@ -161,14 +169,14 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
               className="hidden"
               onChange={handleImageChange}
             />
-            <span className="text-xs text-gray-400">사진 변경</span>
+            <span className="text-xs text-text-tertiary">사진 변경</span>
           </div>
 
           {/* 이름 / 역할 / 소개 */}
           <div className="flex flex-col gap-3 flex-1">
             <div className="flex gap-3">
               <div className="flex flex-col gap-1 flex-1">
-                <label className="text-xs font-medium text-gray-500">이름</label>
+                <label className="text-xs font-medium text-text-secondary">이름</label>
                 <input
                   type="text"
                   value={form.name}
@@ -177,7 +185,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500">역할</label>
+                <label className="text-xs font-medium text-text-secondary">역할</label>
                 <select
                   value={form.role ?? ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as PositionType || null }))}
@@ -191,7 +199,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-500">소개</label>
+              <label className="text-xs font-medium text-text-secondary">소개</label>
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
@@ -203,15 +211,15 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
         </div>
 
         {/* 콘텐츠 영역 */}
-        <div className="bg-stone-100 mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-6">
+        <div className="bg-background mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-6">
           {/* 기술 스택 */}
           <div>
-            <h3 className="text-base font-bold text-gray-800 mb-3">🛠 기술 스택</h3>
+            <h3 className="text-base font-bold text-text-primary mb-3">🛠 기술 스택</h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {form.techStacks.map((stack) => (
                 <span
                   key={stack}
-                  className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-gray-700"
+                  className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-text-primary"
                 >
                   {stack}
                   <button type="button" onClick={() => removeStack(stack)}>
@@ -241,7 +249,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
                     <li
                       key={s}
                       onMouseDown={() => addStack(s)}
-                      className="px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 cursor-pointer"
+                      className="px-4 py-2 text-sm text-text-primary hover:bg-primary-soft cursor-pointer"
                     >
                       {s}
                     </li>
@@ -254,85 +262,79 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
           {/* 대표 프로젝트 */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-gray-800">🚀 대표 프로젝트</h3>
-              <button
-                type="button"
-                onClick={addProject}
-                className="flex items-center gap-1 text-sm text-primary font-medium hover:text-amber-600"
-              >
-                <Plus className="w-4 h-4" />
-                추가
-              </button>
+              <h3 className="text-base font-bold text-text-primary">🚀 대표 프로젝트</h3>
+              <span className="text-xs text-text-tertiary">{form.projects.length}/2 선택</span>
             </div>
-            <div className="flex flex-col gap-3">
-              {form.projects.map((project) => (
-                <div key={project.id} className="bg-white rounded-2xl overflow-hidden">
-                  <div className={`p-4 flex flex-col gap-2 ${PROJECT_BG[project.bgColor]}`}>
-                    <div className="flex items-center justify-between">
-                      <input
-                        type="text"
-                        value={project.emoji}
-                        onChange={(e) => updateProject(project.id, 'emoji', e.target.value)}
-                        className="w-10 text-2xl bg-transparent focus:outline-none"
-                        maxLength={2}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeProject(project.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+
+            {/* 선택 가능한 프로젝트 목록 */}
+            {eligibleProjects.length === 0 ? (
+              <p className="text-sm text-text-tertiary py-4 text-center">
+                진행 중이거나 완료한 프로젝트가 없습니다.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {eligibleProjects.map((project) => {
+                  const selected = isSelected(project.id);
+                  const disabled = !selected && form.projects.length >= 2;
+                  return (
+                    <button
+                      key={project.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => toggleProject(project)}
+                      className={`flex items-center justify-between p-3 rounded-xl border text-left transition-colors ${
+                        selected
+                          ? 'border-primary bg-primary-soft'
+                          : disabled
+                          ? 'border-border bg-white opacity-40 cursor-not-allowed'
+                          : 'border-border bg-white hover:border-primary hover:bg-primary-soft'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-text-primary">{project.title}</p>
+                          <span className="text-xs text-text-tertiary flex-shrink-0">
+                            {STATUS_LABEL[project.status]}
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-secondary mt-0.5 truncate">{project.description}</p>
+                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                          {project.techStacks.slice(0, 4).map((s) => (
+                            <span key={s} className="px-2 py-0.5 rounded-full bg-background text-xs text-text-secondary border border-border">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-colors ${
+                        selected ? 'border-primary bg-primary' : 'border-border'
+                      }`}>
+                        {selected && <Check className="w-3 h-3 text-text-primary" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 선택된 프로젝트 역할 입력 */}
+            {form.projects.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2">
+                <p className="text-xs font-medium text-text-secondary">나의 역할 입력</p>
+                {form.projects.map((project) => (
+                  <div key={project.id} className="flex items-center gap-3 px-3 py-2 bg-white rounded-xl border border-border">
+                    <p className="text-sm font-medium text-text-primary flex-1 truncate">{project.name}</p>
                     <input
                       type="text"
-                      value={project.name}
-                      onChange={(e) => updateProject(project.id, 'name', e.target.value)}
-                      placeholder="프로젝트명"
-                      className="text-base font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:outline-none focus:border-primary"
-                    />
-                    <input
-                      type="text"
-                      value={project.description}
-                      onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                      placeholder="한 줄 설명"
-                      className="text-xs text-gray-600 bg-transparent border-b border-gray-300 focus:outline-none focus:border-primary"
+                      value={project.myRole}
+                      onChange={(e) => updateMyRole(project.id, e.target.value)}
+                      placeholder="예: Frontend"
+                      className="text-xs text-text-secondary px-2 py-1.5 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary w-36 flex-shrink-0"
                     />
                   </div>
-                  <div className="px-4 py-3 flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={project.myRole}
-                        onChange={(e) => updateProject(project.id, 'myRole', e.target.value)}
-                        placeholder="역할 (예: Frontend)"
-                        className="flex-1 text-xs text-gray-600 px-2 py-1 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <input
-                        type="text"
-                        value={project.period}
-                        onChange={(e) => updateProject(project.id, 'period', e.target.value)}
-                        placeholder="기간 (예: 2025.01 - 진행중)"
-                        className="flex-1 text-xs text-gray-600 px-2 py-1 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={project.techStacks.join(', ')}
-                      onChange={(e) =>
-                        updateProject(
-                          project.id,
-                          'techStacks',
-                          e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-                        )
-                      }
-                      placeholder="기술 스택 (쉼표로 구분)"
-                      className="text-xs text-gray-600 px-2 py-1 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -341,7 +343,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData }: ProfileEditM
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-border text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-background transition-colors"
           >
             취소
           </button>

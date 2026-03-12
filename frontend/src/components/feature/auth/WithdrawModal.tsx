@@ -28,7 +28,7 @@ const WithdrawModal = ({ isOpen, onClose, onConfirm }: WithdrawModalProps) => {
         <div className="flex gap-3 w-full mt-2">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-700 font-medium text-base hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors"
           >
             취소
           </button>
