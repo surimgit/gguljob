@@ -22,7 +22,7 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
-      <Container className="h-14 flex items-center justify-between" style={{ paddingLeft: '10px', paddingRight: '10px' }}>
+      <Container className="h-14 flex items-center justify-between px-[10px]">
         <div className="flex items-center gap-70">
           <Link to="/" className="flex items-center">
             <img src={gguljobLogo} alt="꿀잡" className="h-16" />
