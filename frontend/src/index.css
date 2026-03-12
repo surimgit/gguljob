@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 2s ease-in-out infinite;
+}
+
 @theme {
   /* ── Primary ── */
   --color-primary:        #F7C948;   /* Primary */
@@ -18,6 +27,10 @@
   /* ── Border / Accent ── */
   --color-border:         #E5E7EB;   /* Border */
   --color-accent-sky:     #BFE8F5;   /* Accent Sky */
+
+  /* ── CTA ── */
+  --color-cta:            #24292F;   /* CTA (GitHub Button) */
+  --color-icon:           #242424;   /* Icon */
 
   /* ── Semantic ── */
   --color-success:        #22C55E;   /* Success */
