@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +35,17 @@ public class UserController {
         userService.onboardUser(userDetails.getId(), requestDto);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "온보딩 정보 등록 완료", null));
+    }
+
+    @Operation(summary = "회원 탈퇴", description = "유저 본인의 계정과 연관된 모든 데이터를 삭제하고 탈퇴합니다.")
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<ApiResponseDto<Void>> withdraw(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        log.info("회원 탈퇴 API 호출 - 요청 유저 ID: {}", userDetails.getId());
+
+        userService.withdrawUser(userDetails.getId());
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "회원 탈퇴가 정상적으로 처리되었습니다.", null));
     }
 }
