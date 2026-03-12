@@ -106,21 +106,21 @@ const CreateProject = () => {
   /* ── JSX ── */
 
   return (
-    <div style={{ backgroundColor: 'var(--color-background)' }} className="min-h-screen pb-28">
-      <div className="max-w-xl mx-auto px-4 py-10 flex flex-col gap-6">
+    <div style={{ backgroundColor: 'var(--color-background)' }} className="min-h-screen pb-24 sm:pb-28">
+      <div className="max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
         {/* 페이지 헤더 */}
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             새 프로젝트 생성
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
             프로젝트 정보를 입력하고 팀원을 모집하세요
           </p>
         </div>
 
         {/* ─── 섹션 1: 기본 정보 ─── */}
-        <section className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-5" style={{ color: 'var(--color-text-primary)' }}>
+        <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
+          <h2 className="flex items-center gap-2 text-base font-bold mb-4 sm:mb-5" style={{ color: 'var(--color-text-primary)' }}>
             📋 기본 정보
           </h2>
 
@@ -227,7 +227,7 @@ const CreateProject = () => {
         </section>
 
         {/* ─── 섹션 2: 기술 스택 ─── */}
-        <section className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
+        <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
           <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             🛠 기술 스택
           </h2>
@@ -301,7 +301,7 @@ const CreateProject = () => {
 
         {/* ─── 섹션 3: AI 역할별 인원 분석 ─── */}
         <section
-          className="rounded-2xl p-6 shadow-sm"
+          className="rounded-2xl p-4 sm:p-6 shadow-sm"
           style={{ backgroundColor: '#EDE9FE', border: '1px solid #C4B5FD' }}
         >
           <h2 className="flex items-center gap-2 text-base font-bold mb-1" style={{ color: '#7C3AED' }}>
@@ -313,7 +313,7 @@ const CreateProject = () => {
 
           {/* PDF 업로드 */}
           <label
-            className="border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 cursor-pointer"
+            className="border-2 border-dashed rounded-xl p-5 sm:p-8 flex flex-col items-center gap-2 cursor-pointer"
             style={{ borderColor: '#C4B5FD', backgroundColor: 'var(--color-surface)' }}
           >
             <FileText className="w-10 h-10" style={{ color: 'var(--color-text-tertiary)' }} />
@@ -351,7 +351,7 @@ const CreateProject = () => {
         </section>
 
         {/* ─── 섹션 4: 팀원 등록 ─── */}
-        <section className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
+        <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
           <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             👥 팀원 등록
           </h2>
@@ -361,7 +361,7 @@ const CreateProject = () => {
 
           {/* 입력 폼 */}
           <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 value={memberDraft.name}
@@ -470,13 +470,13 @@ const CreateProject = () => {
 
       {/* ─── 하단 고정 CTA ─── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3"
+        className="fixed bottom-0 left-0 right-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3"
         style={{ backgroundColor: 'var(--color-background)' }}
       >
         <button
           type="button"
           disabled={!canSubmit}
-          className="w-full max-w-xl mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
+          className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto block py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-bold transition-colors"
           style={{
             backgroundColor: canSubmit ? 'var(--color-primary)' : 'var(--color-border)',
             color: canSubmit ? 'var(--color-surface)' : 'var(--color-text-tertiary)',
