@@ -75,12 +75,12 @@ public class GithubOAuthService {
                 .email(finalEmail)
                 .userName(finalName)
                 .imageUrl(userInfo.getAvatar_url())
-                .authority(RoleType.USER)
+                .authority(RoleType.ROLE_USER)
                 .build();
             user = userRepository.save(newUser);
         }
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority().getKey());
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority().name());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         redisService.setValues("RT:" + user.getId(), refreshToken, java.time.Duration.ofDays(14));

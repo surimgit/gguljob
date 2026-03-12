@@ -12,6 +12,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberReposito
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
@@ -92,6 +93,30 @@ public class ProjectService {
 
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());
+    }
+
+    // =========================================================================
+    // 🌟 마이페이지 위젯용: 가장 최근에 참여한 진행 중 프로젝트 딱 1개 조회
+    // =========================================================================
+    public ProjectResponse.Simple getMyRepProject(Long userId) {
+        // (주의: findFirstBy... 쿼리메서드는 ProjectMemberRepository에 추가하셔야 합니다!)
+        Optional<ProjectMember> repMemberOpt = projectMemberRepository
+            .findFirstByUserIdAndProjectStatusOrderByProjectCreatedAtDesc(userId, ProjectStatus.RECRUITING); // 형님 기본값이 RECRUITING이길래 맞췄습니다!
+
+        if (repMemberOpt.isEmpty()) {
+            return null; // 참여 중인 프로젝트 없으면 깔끔하게 null 리턴
+        }
+
+        Project project = repMemberOpt.get().getProject();
+
+        // 형님 스타일 그대로 적용 (역할 카운트 + 스킬 4개)
+        Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(project.getId())
+            .stream().collect(Collectors.toMap(row -> row[0].toString(), row -> (Long) row[1]));
+
+        List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId())
+            .stream().limit(4).toList();
+
+        return ProjectResponse.Simple.of(project, roleCounts, skills);
     }
 
     @Transactional
