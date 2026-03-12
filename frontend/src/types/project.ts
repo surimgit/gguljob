@@ -1,3 +1,5 @@
+/* ── 기존 (프로젝트 찾기 페이지용) ── */
+
 export type ProjectStatus = 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED';
 
 export interface Project {
@@ -35,4 +37,89 @@ export interface ProjectQueryParams {
   size?: number;
   techStack?: string;
   status?: string;
+}
+
+/* ── 백엔드 API 연동 타입 ── */
+
+export type BackendProjectStatus = 'RECRUITING' | 'PROCEEDING' | 'DONE';
+
+// GET /projects/me 응답
+export interface ProjectSimple {
+  projectId: number;
+  title: string;
+  teamName: string;
+  domain: string;
+  leaderName: string;
+  status: BackendProjectStatus;
+  finishedAt: string | null;
+  imageUrl: string | null;
+  roleCounts: Record<string, number>;
+  skills: string[];
+}
+
+// POST /projects 요청
+export interface CreateProjectRequest {
+  title: string;
+  teamName?: string;
+  domain?: string;
+  description?: string;
+  isPublic?: boolean;
+  imageUrl?: string;
+  documentUrl?: string;
+  leaderRole: string;
+}
+
+// POST /projects 응답
+export interface CreateProjectResponse {
+  projectId: number;
+}
+
+// PUT /projects/{id}/git-repo 요청
+export interface RegisterGitRepoRequest {
+  repoUrl: string;
+  githubToken?: string;
+}
+
+// GET /projects/{id}/team-dashboard 응답
+export interface TeamDashboard {
+  projectInfo: {
+    title: string;
+    teamName: string;
+    domain: string;
+    description: string;
+    skills: string[];
+  };
+  teamStats: {
+    totalMembers: number;
+    roleCounts: Record<string, number>;
+    totalCommits: number;
+    totalTroubleshootings: number;
+  };
+  gitRepoInfo: {
+    repoUrl: string;
+    lastSyncTime: string;
+  } | null;
+}
+
+// GET /projects/{id}/gitlog 응답
+export interface GitLog {
+  mrRankings: MrRanking[];
+  recentActivities: ActivityLog[];
+}
+
+export interface MrRanking {
+  rank: number;
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
+  mrCount: number;
+}
+
+export interface ActivityLog {
+  userName: string;
+  profileImageUrl: string | null;
+  content: string;
+  label: string;
+  createdAt: string;
+  activityType: string;
 }
