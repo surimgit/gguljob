@@ -33,7 +33,7 @@ const Navbar = () => {
         </Link>
 
         {/* 데스크톱 네비게이션 */}
-        <nav className="hidden md:flex items-center gap-8 ml-12">
+        <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
           <Link to="/projects" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
             프로젝트
           </Link>
@@ -46,7 +46,7 @@ const Navbar = () => {
         </nav>
 
         {/* 데스크톱 우측 영역 */}
-        <div className="hidden md:flex items-center gap-4 ml-auto">
+        <div className="hidden lg:flex items-center gap-6 ml-auto">
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
@@ -70,7 +70,7 @@ const Navbar = () => {
           </div>
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -94,7 +94,7 @@ const Navbar = () => {
 
         {/* 모바일 햄버거 버튼 */}
         <button
-          className="md:hidden flex items-center justify-center w-10 h-10 text-icon hover:text-text-primary transition-colors"
+          className="lg:hidden flex items-center justify-center w-10 h-10 text-icon hover:text-text-primary transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
         >
@@ -112,7 +112,7 @@ const Navbar = () => {
 
       {/* 모바일 메뉴 드롭다운 */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-surface border-t border-border shadow-lg">
+        <div className="lg:hidden bg-surface border-t border-border shadow-lg">
           <div className="px-4 py-3 space-y-1">
             <Link
               to="/projects"
