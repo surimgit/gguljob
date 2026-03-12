@@ -6,7 +6,7 @@ interface BadgeProps {
 const variantStyles = {
   tech: 'border border-gray-300 text-gray-700 bg-white',
   status: 'bg-amber-100 text-amber-700',
-  accent: 'bg-accent text-white',
+  accent: 'bg-primary text-white',
 };
 
 const Badge = ({ label, variant = 'tech' }: BadgeProps) => {

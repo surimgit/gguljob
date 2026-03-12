@@ -15,7 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -62,4 +64,24 @@ public class PullRequest extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private PrStatus status;
+
+    @Column(name = "github_created_at")
+    private LocalDateTime githubCreatedAt;
+
+    @Builder
+    public PullRequest(GitRepository gitRepository, User user, Project project,
+        Integer prNumber, String title, String diffUrl, String diffContent, String diffSummary,
+        String branchName, PrStatus status, LocalDateTime githubCreatedAt) {
+        this.gitRepository = gitRepository;
+        this.user = user;
+        this.project = project;
+        this.prNumber = prNumber;
+        this.title = title;
+        this.diffUrl = diffUrl;
+        this.diffContent = diffContent;
+        this.diffSummary = diffSummary;
+        this.branchName = branchName;
+        this.status = status;
+        this.githubCreatedAt = githubCreatedAt;
+    }
 }

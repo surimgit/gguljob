@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { logoutApi } from '../../api/user';
@@ -7,7 +8,8 @@ import gguljobLogo from '../../assets/images/gguljob_logo.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -20,30 +22,34 @@ const Navbar = () => {
     }
   };
 
-  return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-      <Container className="h-16 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center">
-            <img src={gguljobLogo} alt="꿀잡" className="h-20" />
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link to="/projects" className="text-gray-600 hover:text-cta font-medium">
-              프로젝트
-            </Link>
-            <Link to="/projects?tab=find" className="text-gray-600 hover:text-cta font-medium">
-              프로젝트 찾기
-            </Link>
-            <Link to="/recruitment" className="text-gray-600 hover:text-cta font-medium">
-              채용
-            </Link>
-          </nav>
-        </div>
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
-        <div className="flex items-center gap-4">
+  return (
+    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
+      <Container className="h-14 flex items-center justify-between px-4">
+        {/* 로고 */}
+        <Link to="/" className="flex items-center shrink-0">
+          <img src={gguljobLogo} alt="꿀잡" className="h-16" />
+        </Link>
+
+        {/* 데스크톱 네비게이션 */}
+        <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
+          <Link to="/my-projects" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+            프로젝트
+          </Link>
+          <Link to="/projects" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+            프로젝트 찾기
+          </Link>
+          <Link to="/recruitment" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+            채용
+          </Link>
+        </nav>
+
+        {/* 데스크톱 우측 영역 */}
+        <div className="hidden lg:flex items-center gap-6 ml-auto">
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -55,40 +61,129 @@ const Navbar = () => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            {/* TODO: 검색 기능 구현 예정? 아닐수도? */}
             <input
               type="text"
               placeholder="Search"
               disabled
-              className="w-48 pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-40 pl-9 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface text-text-primary placeholder-text-tertiary focus:outline-none disabled:cursor-not-allowed"
             />
           </div>
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              {user?.profileImage ? (
-                <img
-                  src={user.profileImage}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                  {user?.name?.[0] ?? '?'}
-                </div>
-              )}
-              <button
-                onClick={handleLogout}
-                className="text-sm font-medium text-gray-600 hover:text-cta transition-colors"
-              >
-                로그아웃
+            <div className="flex items-center gap-5">
+              <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <button className="text-icon hover:text-text-primary transition-colors" aria-label="프로필">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
+              <button onClick={handleLogout} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
               </button>
             </div>
           ) : (
             <GitHubLoginButton />
           )}
         </div>
+
+        {/* 모바일 햄버거 버튼 */}
+        <button
+          className="lg:hidden flex items-center justify-center w-10 h-10 text-icon hover:text-text-primary transition-colors"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+        >
+          {mobileMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </Container>
+
+      {/* 모바일 메뉴 드롭다운 */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-surface border-t border-border shadow-lg">
+          <div className="px-4 py-3 space-y-1">
+            <Link
+              to="/my-projects"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+            >
+              프로젝트
+            </Link>
+            <Link
+              to="/projects"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+            >
+              프로젝트 찾기
+            </Link>
+            <Link
+              to="/recruitment"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+            >
+              채용
+            </Link>
+          </div>
+
+          <div className="px-4 py-3 border-t border-border">
+            <div className="relative mb-3">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search"
+                disabled
+                className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background text-text-primary placeholder-text-tertiary focus:outline-none disabled:cursor-not-allowed"
+              />
+            </div>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button className="text-icon hover:text-text-primary transition-colors" aria-label="프로필">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </button>
+                <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <GitHubLoginButton />
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

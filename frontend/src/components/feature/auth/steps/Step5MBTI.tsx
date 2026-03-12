@@ -29,7 +29,7 @@ interface Props {
 const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
   return (
     <div>
-      <div className="sticky top-0 bg-modal-bg z-10 pb-3 pt-1">
+      <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">MBTI를 알려주세요</h2>
         <p className="text-sm text-gray-500">팀 매칭에 참고할게요</p>
       </div>
@@ -45,8 +45,8 @@ const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
                   onClick={() => onChange(type)}
                   className={`py-2.5 rounded-[10px] text-[13px] transition-all duration-150 cursor-pointer flex items-center justify-center gap-1 border-2
                     ${isSelected
-                      ? 'border-accent bg-amber-50 font-bold text-gray-900'
-                      : 'border-border-warm bg-white font-normal text-gray-900'
+                      ? 'border-primary bg-amber-50 font-bold text-gray-900'
+                      : 'border-border bg-white font-normal text-gray-900'
                     }`}
                 >
                   <span
@@ -62,7 +62,7 @@ const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       {/* 범례 */}
-      <div className="flex flex-wrap gap-2.5 px-4 py-3 bg-gray-50 rounded-xl border border-border-warm">
+      <div className="flex flex-wrap gap-2.5 px-4 py-3 bg-gray-50 rounded-xl border border-border">
         {LEGENDS.map(({ color, label, desc }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />

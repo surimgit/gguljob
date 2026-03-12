@@ -92,7 +92,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
-        <div className="bg-modal-bg rounded-[20px] w-full max-w-[480px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
+        <div className="bg-surface rounded-[20px] w-full max-w-[480px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
           {/* Header */}
           <div className="px-6 pt-3 flex-shrink-0">
             {/* 로고 + X 버튼 */}
@@ -116,13 +116,13 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
                 <span className="text-[13px] text-gray-500 font-medium">
                   프로필 설정
                 </span>
-                <span className="text-[13px] text-accent font-bold">
+                <span className="text-[13px] text-primary font-bold">
                   {step}/6
                 </span>
               </div>
               <div className="h-[5px] rounded-full bg-gray-200 mb-6 overflow-hidden">
                 <div
-                  className="h-full bg-accent rounded-full transition-all duration-300"
+                  className="h-full bg-primary rounded-full transition-all duration-300"
                   style={{ width: `${(step / 6) * 100}%` }}
                 />
               </div>
@@ -170,7 +170,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 border-t border-border-warm flex-shrink-0">
+          <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 border-t border-border flex-shrink-0">
             {step > 1 && (
               <button
                 onClick={handlePrev}
@@ -186,7 +186,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
                 ${step === 1 ? "flex-1" : "flex-[2]"}
                 ${
                   canNext
-                    ? "bg-accent text-white cursor-pointer hover:bg-amber-600"
+                    ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
             >

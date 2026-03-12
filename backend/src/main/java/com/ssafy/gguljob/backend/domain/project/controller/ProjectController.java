@@ -16,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,5 +66,16 @@ public class ProjectController {
         Long userId = (userDetails != null) ? userDetails.getId() : null;
 
         return ResponseEntity.ok(dashboardService.getGitLog(userId, projectId));
+    }
+
+    @PutMapping("/{projectId}/git-repo")
+    public ResponseEntity<Void> registerGitRepository(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @Valid @RequestBody ProjectRequest.RegisterGitRepo request) {
+
+        projectService.registerGitRepository(userDetails.getId(), projectId, request);
+
+        return ResponseEntity.ok().build();
     }
 }
