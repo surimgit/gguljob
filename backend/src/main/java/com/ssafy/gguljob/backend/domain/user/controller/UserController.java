@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class UserController {
     @PostMapping("/onboarding")
     public ResponseEntity<ApiResponseDto<Void>> onboard(
         @AuthenticationPrincipal CustomUserDetails userDetails,
-        @RequestBody OnboardingRequestDto requestDto) {
+        @Valid @RequestBody OnboardingRequestDto requestDto) {
 
         log.info("온보딩 API 호출 - 요청 유저 ID: {}", userDetails.getId());
 

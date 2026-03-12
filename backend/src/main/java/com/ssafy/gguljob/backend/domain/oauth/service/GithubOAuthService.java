@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.oauth.dto.GithubUserInfo;
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -74,12 +75,12 @@ public class GithubOAuthService {
                 .email(finalEmail)
                 .userName(finalName)
                 .imageUrl(userInfo.getAvatar_url())
-                .authority("ROLE_USER")
+                .authority(RoleType.USER)
                 .build();
             user = userRepository.save(newUser);
         }
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority());
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority().getKey());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         redisService.setValues("RT:" + user.getId(), refreshToken, java.time.Duration.ofDays(14));
