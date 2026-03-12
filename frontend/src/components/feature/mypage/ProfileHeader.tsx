@@ -40,7 +40,7 @@ const ProfileHeader = ({
         <button
           type="button"
           onClick={onAvatarClick}
-          className="w-24 h-24 rounded-full bg-yellow-300 flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+          className="w-24 h-24 rounded-full bg-primary flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt={name} className="w-full h-full object-cover rounded-full" />
@@ -53,16 +53,16 @@ const ProfileHeader = ({
         <div className="flex flex-col gap-2 flex-1">
           {/* 이름 + 역할 배지 */}
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-gray-900">{name}</span>
+            <span className="text-2xl font-bold text-text-primary">{name}</span>
             {role && (
-              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+              <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
                 {POSITION_LABEL[role]}
               </span>
             )}
           </div>
 
           {/* 소개글 */}
-          <p className="text-sm text-gray-500">{bio}</p>
+          <p className="text-sm text-text-secondary">{bio}</p>
 
           {/* 기술 스택 태그 */}
           <div className="flex gap-2 flex-wrap mt-1">
@@ -70,14 +70,14 @@ const ProfileHeader = ({
               HIGHLIGHTED_STACKS.includes(stack) ? (
                 <span
                   key={stack}
-                  className="px-3 py-1 rounded-full border border-amber-300 text-amber-600 text-xs font-medium"
+                  className="px-3 py-1 rounded-full border border-primary text-text-brown-2 text-xs font-medium"
                 >
                   {stack}
                 </span>
               ) : (
                 <span
                   key={stack}
-                  className="px-3 py-1 rounded-full border border-gray-200 text-gray-600 text-xs font-medium"
+                  className="px-3 py-1 rounded-full border border-border text-text-secondary text-xs font-medium"
                 >
                   {stack}
                 </span>
@@ -90,8 +90,7 @@ const ProfileHeader = ({
         <div className="flex items-center gap-3 ml-auto">
           <button
             type="button"
-            onClick={onEdit}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-text-primary font-semibold text-sm transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
             정보수정
@@ -99,7 +98,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onWithdraw}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-sm transition-colors"
+            className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-sm transition-colors"
           >
             <UserX className="w-4 h-4" />
             탈퇴

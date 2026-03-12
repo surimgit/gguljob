@@ -1,4 +1,5 @@
-import { X, Settings } from 'lucide-react';
+import { useReducer, useRef, useEffect } from 'react';
+import { X, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BaseModal } from '../../common';
 
 const STACK_COLORS = [
@@ -15,6 +16,8 @@ const PROJECT_BG: Record<string, string> = {
   sky: 'bg-sky-100',
   purple: 'bg-purple-100',
 };
+
+const MAX_ROWS_PER_PAGE = 4;
 
 interface MyProfileModalProps {
   isOpen: boolean;
@@ -40,15 +43,60 @@ interface MyProfileModalProps {
   };
 }
 
+type StackState = { page: number; pages: string[][] };
+type StackAction =
+  | { type: 'reset'; pages: string[][] }
+  | { type: 'prev' }
+  | { type: 'next' };
+
+const stackReducer = (state: StackState, action: StackAction): StackState => {
+  switch (action.type) {
+    case 'reset': return { page: 0, pages: action.pages };
+    case 'prev':  return { ...state, page: Math.max(0, state.page - 1) };
+    case 'next':  return { ...state, page: Math.min(state.pages.length - 1, state.page + 1) };
+  }
+};
+
 const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) => {
+  const [{ page: stackPage, pages }, dispatch] = useReducer(stackReducer, { page: 0, pages: [[]] });
+  // whitespace-nowrap으로 태그 높이 고정(40px), gap-2(8px) 기준
+  const containerHeight = MAX_ROWS_PER_PAGE * 40 + (MAX_ROWS_PER_PAGE - 1) * 8;
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen || !measureRef.current) return;
+
+    // 각 태그의 offsetTop으로 줄 번호 계산
+    const spans = Array.from(measureRef.current.querySelectorAll('span'));
+    const rows: string[][] = [];
+    let lastTop = -1;
+
+    spans.forEach((span, i) => {
+      const top = (span as HTMLElement).offsetTop;
+      if (top !== lastTop) {
+        rows.push([]);
+        lastTop = top;
+      }
+      rows[rows.length - 1].push(user.techStacks[i]);
+    });
+
+    // MAX_ROWS_PER_PAGE씩 묶어 페이지 구성
+    const newPages: string[][] = [];
+    for (let i = 0; i < rows.length; i += MAX_ROWS_PER_PAGE) {
+      newPages.push(rows.slice(i, i + MAX_ROWS_PER_PAGE).flat());
+    }
+
+    dispatch({ type: 'reset', pages: newPages.length > 0 ? newPages : [[]] });
+  }, [isOpen, user.techStacks]);
+
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
       containerClassName="bg-white rounded-3xl w-[720px] overflow-hidden shadow-2xl"
     >
-      {/* 상단 amber 바 */}
-      <div className="h-14 bg-amber-400 w-full relative flex items-center justify-end px-5">
+      {/* 상단 바 */}
+      <div className="h-14 bg-primary w-full relative flex items-center justify-end px-5">
         <button
           type="button"
           onClick={onClose}
@@ -60,7 +108,7 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
 
       {/* 프로필 헤더 */}
       <div className="flex items-center gap-5 px-10 py-6">
-        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-20 h-20 rounded-full bg-primary-soft flex items-center justify-center flex-shrink-0 overflow-hidden">
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
           ) : (
@@ -70,18 +118,18 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
 
         <div className="flex flex-col gap-1 flex-1">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-gray-900">{user.name}</span>
-            <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+            <span className="text-2xl font-bold text-text-primary">{user.name}</span>
+            <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
               {user.role}
             </span>
           </div>
-          <p className="text-sm text-gray-500">{user.bio}</p>
+          <p className="text-sm text-text-secondary">{user.bio}</p>
         </div>
 
         <button
           type="button"
           onClick={onEdit}
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-text-primary font-semibold text-sm ml-auto transition-colors"
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm ml-auto transition-colors"
         >
           <Settings className="w-4 h-4" />
           개인정보 수정
@@ -89,28 +137,84 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="bg-stone-100 mx-4 mb-4 rounded-2xl p-6">
-        <div className="flex justify-between gap-6">
+      <div className="bg-background mx-4 mb-4 rounded-2xl p-6">
+        <div className="flex gap-6">
           {/* 기술 스택 섹션 */}
-          <div>
-            <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 mb-4">
-              🛠 기술 스택
-            </h3>
-            <div className="flex flex-col gap-2">
+          <div className="flex-1 min-w-0">
+            {/* 측정용 숨김 렌더링 */}
+            <div
+              ref={measureRef}
+              className="flex flex-wrap gap-2 invisible absolute"
+              style={{ width: 'calc(720px - 360px - 24px - 48px - 16px)' }}
+              aria-hidden="true"
+            >
               {user.techStacks.map((stack, i) => (
                 <span
                   key={stack}
-                  className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium w-fit ${STACK_COLORS[i % STACK_COLORS.length]}`}
+                  className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[i % STACK_COLORS.length]}`}
                 >
                   {stack}
                 </span>
               ))}
             </div>
+
+            <h3 className="flex items-center gap-2 text-base font-bold text-text-primary mb-4">
+              🛠 기술 스택
+            </h3>
+
+            {/* 좌우 슬라이더 */}
+            <div className="overflow-hidden" style={{ height: containerHeight }}>
+              <div
+                className="flex transition-transform duration-300"
+                style={{ transform: `translateX(-${stackPage * 100}%)` }}
+              >
+                {pages.map((pageStacks, pageIdx) => (
+                  <div
+                    key={pageIdx}
+                    className="flex flex-wrap gap-2 content-start flex-shrink-0 w-full"
+                  >
+                    {pageStacks.map((stack, i) => {
+                      const globalIdx = pages.slice(0, pageIdx).flat().length + i;
+                      return (
+                        <span
+                          key={stack}
+                          className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[globalIdx % STACK_COLORS.length]}`}
+                        >
+                          {stack}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {pages.length > 1 && (
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'prev' })}
+                  disabled={stackPage === 0}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-border text-text-secondary disabled:opacity-30 hover:bg-background transition-colors"
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                </button>
+                <span className="text-xs text-text-tertiary">{stackPage + 1} / {pages.length}</span>
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'next' })}
+                  disabled={stackPage === pages.length - 1}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-border text-text-secondary disabled:opacity-30 hover:bg-background transition-colors"
+                >
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 대표 프로젝트 섹션 */}
-          <div>
-            <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 mb-4">
+          <div className="w-[360px] flex-shrink-0">
+            <h3 className="flex items-center gap-2 text-base font-bold text-text-primary mb-4">
               🚀 대표 프로젝트
             </h3>
             <div className="flex gap-3">
@@ -118,11 +222,11 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
                 <div key={project.id} className="bg-white rounded-2xl overflow-hidden flex-1">
                   <div className={`p-4 pb-3 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
                     <span className="text-2xl mb-2 block">{project.emoji}</span>
-                    <p className="text-base font-bold text-gray-900">{project.name}</p>
-                    <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
+                    <p className="text-base font-bold text-text-primary">{project.name}</p>
+                    <p className="text-xs text-text-secondary mt-0.5">{project.description}</p>
                   </div>
                   <div className="px-4 py-3">
-                    <p className="text-xs text-gray-400 mb-2">
+                    <p className="text-xs text-text-tertiary mb-2">
                       {project.myRole} · {project.period}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
