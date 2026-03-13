@@ -17,6 +17,7 @@ public class ProfileResponseDto {
     private String mbti;
     private String teamTendency;
     private List<SkillDto> skills;
+    private List<RepProjectDto> repProjects;
 
     @Getter
     @Builder
@@ -24,5 +25,16 @@ public class ProfileResponseDto {
         private String name;
         private String category;
         private String iconUrl;
+    }
+
+    @Getter
+    @Builder
+    public static class RepProjectDto {
+        private Long projectId;
+        private String title;
+        private String description;
+        private String role;
+        private String period;
+        private List<String> skills;
     }
 }

@@ -21,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -128,5 +129,17 @@ public class UserController {
         String imageUrl = userService.updateProfileImage(userDetails.getId(), file);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지 업로드 성공", imageUrl));
+    }
+
+    @Operation(summary = "타 사용자 프로필 조회", description = "사용자 ID를 기반으로 다른 사용자의 공개 프로필을 조회합니다.")
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponseDto<ProfileResponseDto>> getOtherProfile(
+        @PathVariable Long userId) {
+
+        log.info("타 사용자 프로필 조회 API 호출 - 대상 유저 ID: {}", userId);
+
+        ProfileResponseDto profileDto = userService.getOtherProfile(userId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "타 사용자 프로필 조회 성공", profileDto));
     }
 }

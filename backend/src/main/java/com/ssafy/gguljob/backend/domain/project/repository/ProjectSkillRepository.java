@@ -12,4 +12,5 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Long
     @Query("SELECT s.name FROM ProjectSkill ps JOIN ps.skill s WHERE ps.project.id = :projectId")
     List<String> findAllSkillNamesByProjectId(@Param("projectId") Long projectId);
 
+    List<ProjectSkill> findByProjectId(Long projectId);
 }

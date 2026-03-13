@@ -34,4 +34,6 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     Optional<ProjectMember> findFirstByUserIdAndProjectStatusOrderByProjectCreatedAtDesc(
         Long userId, ProjectStatus status
     );
+
+    Optional<ProjectMember> findByProjectIdAndUserId(Long projectId, Long userId);
 }
