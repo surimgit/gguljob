@@ -7,6 +7,7 @@ import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ssafy.gguljob.backend.domain.skill.service.SkillService;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -28,6 +30,7 @@ public class UserService {
     private final UserSkillRepository userSkillRepository;
     private final RedisService redisService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final S3ImageService s3ImageService;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -94,5 +97,21 @@ public class UserService {
             .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
             .skills(skillDtoList)
             .build();
+    }
+
+    @Transactional
+    public String updateProfileImage(Long userId, MultipartFile file) {
+        // 1. 유저 찾기
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        // 2. S3에 이미지 업로드하고 URL 받아오기
+        String uploadedImageUrl = s3ImageService.uploadProfileImage(file);
+
+        // 3. 유저 엔티티에 URL 업데이트
+        user.updateImageUrl(uploadedImageUrl);
+
+        // 4. 업로드된 URL 반환 (프론트엔드에서 바로 화면에 띄울 수 있게)
+        return uploadedImageUrl;
     }
 }
