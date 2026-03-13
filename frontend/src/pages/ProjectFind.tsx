@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import ProjectCard from '../components/feature/project/ProjectCard';
+import type { Project } from '../components/feature/project/ProjectCard';
 import ProjectFilter from '../components/feature/project/ProjectFilter';
 import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel';
+import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
 import { mockProjects } from '../mocks/mockProjects';
 
 const ITEMS_PER_PAGE = 9;
@@ -12,6 +14,7 @@ const ProjectFind = () => {
   const [domainFilter, setDomainFilter] = useState('전체');
   const [positionFilter, setPositionFilter] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
 
@@ -120,7 +123,7 @@ const ProjectFind = () => {
         {/* 카드 그리드 */}
         <div ref={gridRef} className="grid grid-cols-3 gap-x-[16px] gap-y-[16px]">
           {paginatedProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard key={project.id} project={project} onClick={setSelectedProject} />
           ))}
         </div>
 

@@ -100,7 +100,7 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
     <BaseModal
       isOpen
       onClose={onClose}
-      containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
     >
       {/* 상단 그라디언트 바 + 닫기 버튼 */}
       <div
@@ -112,8 +112,8 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
         </button>
       </div>
 
-      {/* 본문 */}
-      <div className="px-[32px] pt-[24px] pb-[32px]">
+      {/* 본문 - 스크롤 영역 */}
+      <div className="px-[32px] pt-[24px] pb-[32px] overflow-y-auto flex-1">
 
         {/* 카테고리 + 상태 */}
         <div className="flex items-center gap-[12px]">
