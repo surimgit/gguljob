@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberReposito
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
+import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
@@ -42,6 +43,17 @@ public class UserService {
         skillService.saveUserSkills(user, requestDto.getSkills());
 
         log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
+    }
+
+    public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+
+        user.updateProfile(requestDto);
+
+        if(requestDto.getSkills() != null) {
+            skillService.saveUserSkills(user, requestDto.getSkills());
+        }
     }
 
     public void withdrawUser(Long userId) {
