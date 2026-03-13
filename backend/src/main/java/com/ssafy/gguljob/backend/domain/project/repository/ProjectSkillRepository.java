@@ -18,4 +18,8 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Long
     void deleteAllByProjectId(@Param("projectId") Long projectId);
 
     List<ProjectSkill> findAllByProjectId(Long projectId);
+
+    @Query("SELECT ps FROM ProjectSkill ps JOIN FETCH ps.skill WHERE ps.project.id IN :projectIds")
+    List<ProjectSkill> findByProjectIdIn(@Param("projectIds") List<Long> projectIds);
+
 }

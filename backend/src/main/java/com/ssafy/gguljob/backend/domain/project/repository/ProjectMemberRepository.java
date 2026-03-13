@@ -43,4 +43,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     void bulkUpdateStatusToLeave(@Param("projectId") Long projectId, @Param("userIds") List<Long> userIds);
 
     List<ProjectMember> findAllByProjectIdAndStatus(Long projectId, MemberStatus status);
+
+    @Query("SELECT pm FROM ProjectMember pm WHERE pm.user.id = :userId AND pm.project.id IN :projectIds")
+    List<ProjectMember> findByUserIdAndProjectIdIn(@Param("userId") Long userId, @Param("projectIds") List<Long> projectIds);
 }

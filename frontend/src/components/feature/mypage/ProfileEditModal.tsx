@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { X, Camera, Check } from 'lucide-react';
 import { BaseModal, TechStackInput } from '../../common';
 import type { PositionType } from '../../../types/user';
-import type { Project as UserProject } from '../../../types/project';
+import type { ProjectSimple } from '../../../types/project';
 
 const POSITION_LABEL: Record<PositionType, string> = {
   FE: 'Frontend',
@@ -16,10 +16,6 @@ const POSITION_LABEL: Record<PositionType, string> = {
 
 const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
 
-const STATUS_LABEL: Record<string, string> = {
-  IN_PROGRESS: '진행중',
-  COMPLETED: '완료',
-};
 
 interface Project {
   id: string;
@@ -46,7 +42,7 @@ interface ProfileEditModalProps {
   onClose: () => void;
   onSave: (data: ProfileEditForm) => void;
   initialData: ProfileEditForm;
-  availableProjects: UserProject[];
+  availableProjects: ProjectSimple[];
 }
 
 const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProjects }: ProfileEditModalProps) => {
@@ -54,29 +50,35 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const eligibleProjects = availableProjects.filter(
-    (p) => p.status === 'IN_PROGRESS' || p.status === 'COMPLETED'
+    (p) => p.status === 'PROCEEDING' || p.status === 'DONE'
   );
 
   const isSelected = (projectId: number) =>
     form.projects.some((p) => p.id === String(projectId));
 
+  const STATUS_MAP: Record<string, string> = {
+    RECRUITING: '모집중',
+    PROCEEDING: '진행중',
+    DONE: '완료',
+  };
+
   const removeProject = (id: string) => {
     setForm((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
   };
 
-  const toggleProject = (project: UserProject) => {
-    if (isSelected(project.id)) {
-      removeProject(String(project.id));
+  const toggleProject = (project: ProjectSimple) => {
+    if (isSelected(project.projectId)) {
+      removeProject(String(project.projectId));
     } else if (form.projects.length < 2) {
       const newProject: Project = {
-        id: String(project.id),
+        id: String(project.projectId),
         name: project.title,
-        description: project.description,
+        description: project.domain ?? '',
         emoji: '🚀',
         bgColor: PROJECT_BG_OPTIONS[form.projects.length % PROJECT_BG_OPTIONS.length],
         myRole: '',
-        period: STATUS_LABEL[project.status] ?? project.status,
-        techStacks: project.techStacks,
+        period: STATUS_MAP[project.status] ?? project.status,
+        techStacks: project.skills ?? [],
       };
       setForm((prev) => ({ ...prev, projects: [...prev.projects, newProject] }));
     }
@@ -229,10 +231,10 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
             ) : (
               <ul className="border border-border rounded-xl overflow-hidden bg-white max-h-48 overflow-y-auto">
                 {eligibleProjects.map((project) => {
-                  const selected = isSelected(project.id);
+                  const selected = isSelected(project.projectId);
                   const disabled = !selected && form.projects.length >= 2;
                   return (
-                    <li key={project.id} className="border-b border-border last:border-b-0">
+                    <li key={project.projectId} className="border-b border-border last:border-b-0">
                       <button
                         type="button"
                         disabled={disabled}
@@ -247,7 +249,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-text-primary truncate">{project.title}</p>
-                          <p className="text-xs text-text-tertiary">{STATUS_LABEL[project.status]}</p>
+                          <p className="text-xs text-text-tertiary">{STATUS_MAP[project.status] ?? project.status}</p>
                         </div>
                         {selected && <Check className="w-4 h-4 text-text-brown flex-shrink-0 ml-3" />}
                       </button>

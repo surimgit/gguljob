@@ -15,16 +15,20 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -112,5 +116,30 @@ public class UserController {
         userService.updateMyProfile(userDetails.getId(), requestDto);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필이 성공적으로 수정되었습니다.", null));
+    }
+
+    @Operation(summary = "프로필 이미지 수정", description = "프로필 이미지를 업로드하고 S3 URL을 반환합니다.")
+    @PatchMapping(value = "/me/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseDto<String>> updateProfileImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestPart(value = "file") MultipartFile file) {
+
+        log.info("프로필 이미지 업로드 API 호출 - 요청 유저 ID: {}", userDetails.getId());
+
+        String imageUrl = userService.updateProfileImage(userDetails.getId(), file);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지 업로드 성공", imageUrl));
+    }
+
+    @Operation(summary = "타 사용자 프로필 조회", description = "사용자 ID를 기반으로 다른 사용자의 공개 프로필을 조회합니다.")
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponseDto<ProfileResponseDto>> getOtherProfile(
+        @PathVariable Long userId) {
+
+        log.info("타 사용자 프로필 조회 API 호출 - 대상 유저 ID: {}", userId);
+
+        ProfileResponseDto profileDto = userService.getOtherProfile(userId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "타 사용자 프로필 조회 성공", profileDto));
     }
 }
