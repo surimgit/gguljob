@@ -32,6 +32,7 @@ public class SecurityConfig {
             "/api/v1/auth/github",
             "/api/v1/auth/github/callback",
             "/api/v1/auth/test-login",
+            "/api/v1/github/webhook",
     };
 
     @Bean

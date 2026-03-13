@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface GitRepositoryRepository extends JpaRepository<GitRepository, Long> {
 
     Optional<GitRepository> findByProject_Id(Long projectId);
+
+    Optional<GitRepository> findByRepoUrl(String repoUrl);
 }
