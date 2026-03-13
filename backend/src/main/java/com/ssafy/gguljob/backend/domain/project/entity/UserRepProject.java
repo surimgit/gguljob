@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "user_rep_projects")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserRepProject extends BaseTimeEntity { // 🚀 쌉근본 상속!
+public class UserRepProject extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -17,6 +17,8 @@ import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -129,7 +131,6 @@ public class UserService {
         User user = userRepository.findById(targetUserId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // 2. 타 유저 기술 스택 목록
         List<ProfileResponseDto.SkillDto> skillDtoList = userSkillRepository.findAllByUser(user).stream()
             .map(userSkill -> ProfileResponseDto.SkillDto.builder()
                 .name(userSkill.getSkill().getName())
@@ -138,40 +139,50 @@ public class UserService {
                 .build())
             .toList();
 
-        // 3. '대표 프로젝트' 긁어와서 조립
-        List<UserRepProject> repProjectEntities = userRepProjectRepository.findByUserId(targetUserId);
+        List<UserRepProject> repProjectEntities = userRepProjectRepository.findByUserIdWithProject(targetUserId)
+            .stream().limit(2).toList();
 
-        List<ProfileResponseDto.RepProjectDto> repProjectDtoList = repProjectEntities.stream()
-            .map(rep -> {
+        List<ProfileResponseDto.RepProjectDto> repProjectDtoList = Collections.emptyList();
+
+        if (!repProjectEntities.isEmpty()) {
+            List<Long> projectIds = repProjectEntities.stream()
+                .map(rep -> rep.getProject().getId())
+                .toList();
+
+            Map<Long, String> roleMap = projectMemberRepository.findByUserIdAndProjectIdIn(targetUserId, projectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    pm -> pm.getProject().getId(),
+                    pm -> pm.getRole().name()
+                ));
+
+            Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                    ps -> ps.getProject().getId(),
+                    Collectors.mapping(ps -> ps.getSkill().getName(), Collectors.toList())
+                ));
+
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+
+            repProjectDtoList = repProjectEntities.stream().map(rep -> {
                 Project project = rep.getProject();
+                Long pId = project.getId();
 
-                // 프로젝트에서 이 유저의 역할(Role) 찾기
-                String roleName = projectMemberRepository.findByProjectIdAndUserId(project.getId(), targetUserId)
-                    .map(member -> member.getRole().name()) // "프론트엔드 리드" 같은 문자열이 나온다고 가정
-                    .orElse("참여자"); // 못 찾았을 때 기본값
-
-                // 기간 포맷팅 (예: "2024.09 ~ 2024.12")
-                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
                 String startStr = project.getCreatedAt() != null ? project.getCreatedAt().format(formatter) : "미상";
                 String endStr = project.getFinishedAt() != null ? project.getFinishedAt().format(formatter) : "진행중";
-                String period = startStr + " - " + endStr;
-
-                // 프로젝트에 쓰인 기술 스택 이름들만 List<String>으로 긁어오기
-                List<String> projectSkills = projectSkillRepository.findByProjectId(project.getId()).stream()
-                    .map(ps -> ps.getSkill().getName())
-                    .toList();
+                String period = startStr + " ~ " + endStr;
 
                 return ProfileResponseDto.RepProjectDto.builder()
-                    .projectId(project.getId())
+                    .projectId(pId)
                     .title(project.getTitle())
                     .description(project.getDescription())
-                    .role(roleName)
+                    .role(roleMap.getOrDefault(pId, "참여자"))
                     .period(period)
-                    .skills(projectSkills)
+                    .skills(skillMap.getOrDefault(pId, Collections.emptyList()))
                     .build();
-            })
-            .limit(2)
-            .toList();
+            }).toList();
+        }
 
         return ProfileResponseDto.builder()
             .userId(user.getId())

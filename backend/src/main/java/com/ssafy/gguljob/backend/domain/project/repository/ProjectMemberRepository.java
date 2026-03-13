@@ -35,5 +35,6 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         Long userId, ProjectStatus status
     );
 
-    Optional<ProjectMember> findByProjectIdAndUserId(Long projectId, Long userId);
+    @Query("SELECT pm FROM ProjectMember pm WHERE pm.user.id = :userId AND pm.project.id IN :projectIds")
+    List<ProjectMember> findByUserIdAndProjectIdIn(@Param("userId") Long userId, @Param("projectIds") List<Long> projectIds);
 }
