@@ -1,6 +1,11 @@
 package com.ssafy.gguljob.backend.domain.user.service;
 
+import com.ssafy.gguljob.backend.domain.project.entity.Project;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
+import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.UserRepProjectRepository;
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
@@ -31,6 +36,8 @@ public class UserService {
     private final RedisService redisService;
     private final ProjectMemberRepository projectMemberRepository;
     private final S3ImageService s3ImageService;
+    private final UserRepProjectRepository userRepProjectRepository;
+    private final ProjectSkillRepository projectSkillRepository;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -87,6 +94,7 @@ public class UserService {
             .toList();
 
         return ProfileResponseDto.builder()
+            .userId(user.getId())
             .email(user.getEmail())
             .userName(user.getUserName())
             .imageUrl(user.getImageUrl())
@@ -113,5 +121,68 @@ public class UserService {
 
         // 4. 업로드된 URL 반환 (프론트엔드에서 바로 화면에 띄울 수 있게)
         return uploadedImageUrl;
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileResponseDto getOtherProfile(Long targetUserId) {
+
+        User user = userRepository.findById(targetUserId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 2. 타 유저 기술 스택 목록
+        List<ProfileResponseDto.SkillDto> skillDtoList = userSkillRepository.findAllByUser(user).stream()
+            .map(userSkill -> ProfileResponseDto.SkillDto.builder()
+                .name(userSkill.getSkill().getName())
+                .category(userSkill.getSkill().getCategory().name())
+                .iconUrl(userSkill.getSkill().getIconUrl())
+                .build())
+            .toList();
+
+        // 3. '대표 프로젝트' 긁어와서 조립
+        List<UserRepProject> repProjectEntities = userRepProjectRepository.findByUserId(targetUserId);
+
+        List<ProfileResponseDto.RepProjectDto> repProjectDtoList = repProjectEntities.stream()
+            .map(rep -> {
+                Project project = rep.getProject();
+
+                // 프로젝트에서 이 유저의 역할(Role) 찾기
+                String roleName = projectMemberRepository.findByProjectIdAndUserId(project.getId(), targetUserId)
+                    .map(member -> member.getRole().name()) // "프론트엔드 리드" 같은 문자열이 나온다고 가정
+                    .orElse("참여자"); // 못 찾았을 때 기본값
+
+                // 기간 포맷팅 (예: "2024.09 ~ 2024.12")
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+                String startStr = project.getCreatedAt() != null ? project.getCreatedAt().format(formatter) : "미상";
+                String endStr = project.getFinishedAt() != null ? project.getFinishedAt().format(formatter) : "진행중";
+                String period = startStr + " - " + endStr;
+
+                // 프로젝트에 쓰인 기술 스택 이름들만 List<String>으로 긁어오기
+                List<String> projectSkills = projectSkillRepository.findByProjectId(project.getId()).stream()
+                    .map(ps -> ps.getSkill().getName())
+                    .toList();
+
+                return ProfileResponseDto.RepProjectDto.builder()
+                    .projectId(project.getId())
+                    .title(project.getTitle())
+                    .description(project.getDescription())
+                    .role(roleName)
+                    .period(period)
+                    .skills(projectSkills)
+                    .build();
+            })
+            .limit(2)
+            .toList();
+
+        return ProfileResponseDto.builder()
+            .userId(user.getId())
+            .userName(user.getUserName())
+            .imageUrl(user.getImageUrl())
+            .description(user.getDescription())
+            .roles(user.getRoles() != null
+                ? user.getRoles().stream().map(Enum::name).toList()
+                : java.util.Collections.emptyList())
+            .skills(skillDtoList)
+            .repProjects(repProjectDtoList)
+            .build();
     }
 }
