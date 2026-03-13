@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Trash2,
   ChevronDown,
@@ -7,6 +7,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import type { TeamDashboard } from "../../../../types/project";
 
 /* ── 타입 ── */
 interface Role {
@@ -80,26 +81,54 @@ const getAvatarColor = (name: string) => {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-/* ── 더미 데이터 ── */
-const DUMMY_ROLES: Role[] = [
-  { id: "r1", name: "Frontend", status: "closed", current: 3, total: 3, stacks: ["React", "TypeScript", "Tailwind"] },
-  { id: "r2", name: "Backend", status: "open", current: 1, total: 2, stacks: ["Spring Boot", "JPA", "Redis"] },
-  { id: "r3", name: "Design", status: "closed", current: 1, total: 1, stacks: ["Figma", "Adobe XD"] },
-];
+/* ── 역할 코드→표시명 ── */
+const ROLE_CODE_TO_LABEL: Record<string, string> = {
+  FE: "Frontend",
+  BE: "Backend",
+  AI: "AI",
+  PM: "PM",
+  INFRA: "Infra",
+  DESIGN: "Design",
+  FRONTEND: "Frontend",
+  BACKEND: "Backend",
+};
 
-const DUMMY_MEMBERS: Member[] = [
-  { id: "m1", name: "김도현", role: "Frontend", joinDate: "2025-01-15", contribution: 142, isLeader: true, isMe: true },
-  { id: "m2", name: "이서연", role: "Frontend", joinDate: "2025-01-18", contribution: 98 },
-  { id: "m3", name: "박준호", role: "Frontend", joinDate: "2025-02-01", contribution: 67 },
-  { id: "m4", name: "최민지", role: "Backend", joinDate: "2025-01-20", contribution: 115 },
-  { id: "m5", name: "정하윤", role: "Design", joinDate: "2025-02-10", contribution: 45 },
-];
+/* ── dashboard → props 변환 ── */
+const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
+  const { roleCounts } = dashboard.teamStats;
+  if (!roleCounts) return [];
+  return Object.entries(roleCounts).map(([code, count], idx) => {
+    const name = ROLE_CODE_TO_LABEL[code] ?? code;
+    return {
+      id: `role-${idx}`,
+      name,
+      status: (count > 0 ? "closed" : "open") as "open" | "closed",
+      current: count,
+      total: Math.max(count, 1),
+      stacks: [],
+    };
+  });
+};
 
-const DUMMY_APPLICATIONS: Application[] = [
-  { id: "a1", name: "한지훈", role: "Backend", appliedAt: "10분 전", stacks: ["Java", "Spring", "MySQL"], status: "pending" },
-  { id: "a2", name: "윤서아", role: "Frontend", appliedAt: "1시간 전", stacks: ["React", "Next.js", "TypeScript"], status: "accepted" },
-  { id: "a3", name: "송민수", role: "Backend", appliedAt: "3시간 전", stacks: ["Node.js", "Express", "MongoDB"], status: "pending" },
-];
+const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
+  const { roleCounts } = dashboard.teamStats;
+  if (!roleCounts) return [];
+  const members: Member[] = [];
+  Object.entries(roleCounts).forEach(([code, count]) => {
+    const roleName = ROLE_CODE_TO_LABEL[code] ?? code;
+    for (let i = 0; i < count; i++) {
+      members.push({
+        id: `${code}-${i}`,
+        name: `${roleName} ${i + 1}`,
+        role: roleName,
+        joinDate: "-",
+        contribution: 0,
+        isLeader: members.length === 0,
+      });
+    }
+  });
+  return members;
+};
 
 /* ── 직무 추가 모달 ── */
 const AddRoleModal = ({
@@ -783,14 +812,23 @@ const TeamManagement = ({
   );
 };
 
-/* ── 기본 export (더미 데이터 포함) ── */
-const TeamMembers = () => {
+/* ── 기본 export ── */
+const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
+  const roles = useMemo(
+    () => (dashboard ? dashboardToRoles(dashboard) : []),
+    [dashboard],
+  );
+  const members = useMemo(
+    () => (dashboard ? dashboardToMembers(dashboard) : []),
+    [dashboard],
+  );
+
   return (
     <TeamManagement
-      projectName="꿀잡 프로젝트"
-      roles={DUMMY_ROLES}
-      members={DUMMY_MEMBERS}
-      applications={DUMMY_APPLICATIONS}
+      projectName={dashboard?.projectInfo.title ?? "프로젝트"}
+      roles={roles}
+      members={members}
+      applications={[]}
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
