@@ -76,7 +76,8 @@ const OAuthCallback = () => {
         isOpen={showProfileModal}
         onClose={() => {
           setShowProfileModal(false);
-          navigate('/', { replace: true });
+          logout();
+          navigate('/login', { replace: true });
         }}
         onComplete={(_formData) => {
           // TODO: 서버에 프로필 데이터 저장 API 연동
