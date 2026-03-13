@@ -237,7 +237,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   const stats = dashboard?.teamStats;
   const gitRepo = dashboard?.gitRepoInfo;
 
-  // dashboard에서 멤버 목록 생성 (roleCounts 기반, 개별 멤버 API가 없으므로)
+  // TODO: 팀원 목록 API 추가 후 실제 멤버 데이터로 교체 (현재 roleCounts 기반 임시 생성)
   const membersFromDashboard: TeamMember[] = useMemo(() => {
     if (!stats?.roleCounts) return [];
     return Object.entries(stats.roleCounts).flatMap(([role, count]) => {

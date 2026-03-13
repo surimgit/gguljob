@@ -93,7 +93,8 @@ const ROLE_CODE_TO_LABEL: Record<string, string> = {
   BACKEND: "Backend",
 };
 
-/* ── dashboard → props 변환 ── */
+// TODO: 백엔드에 팀원 개별 조회/포지션 상세/합류 신청 API 추가 후 교체 필요
+// 현재는 roleCounts(역할별 인원 수)만으로 임시 변환
 const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
   const { roleCounts } = dashboard.teamStats;
   if (!roleCounts) return [];
@@ -102,6 +103,7 @@ const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
     return {
       id: `role-${idx}`,
       name,
+      // TODO: 포지션 API에서 targetCount, status, requireSkills 조회로 교체
       status: (count > 0 ? "closed" : "open") as "open" | "closed",
       current: count,
       total: Math.max(count, 1),
@@ -114,6 +116,7 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
   const { roleCounts } = dashboard.teamStats;
   if (!roleCounts) return [];
   const members: Member[] = [];
+  // TODO: 팀원 목록 API에서 실제 이름/가입일/기여도 조회로 교체
   Object.entries(roleCounts).forEach(([code, count]) => {
     const roleName = ROLE_CODE_TO_LABEL[code] ?? code;
     for (let i = 0; i < count; i++) {
@@ -828,7 +831,7 @@ const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
       roles={roles}
       members={members}
-      applications={[]}
+      applications={[]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
