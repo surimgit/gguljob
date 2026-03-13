@@ -68,6 +68,9 @@ public class PullRequest extends BaseTimeEntity {
     @Column(name = "github_created_at")
     private LocalDateTime githubCreatedAt;
 
+    @Column(name = "github_closed_at")
+    private LocalDateTime githubClosedAt;
+
     @Builder
     public PullRequest(GitRepository gitRepository, User user, Project project,
         Integer prNumber, String title, String diffUrl, String diffContent, String diffSummary,
@@ -83,5 +86,16 @@ public class PullRequest extends BaseTimeEntity {
         this.branchName = branchName;
         this.status = status;
         this.githubCreatedAt = githubCreatedAt;
+    }
+
+    public void updatePrInfo(PrStatus status, String title, String diffSummary) {
+        this.status = status;
+        this.title = title;
+        this.diffSummary = diffSummary;
+    }
+
+    public void updateStatus(PrStatus status, LocalDateTime closedAt) {
+        this.status = status;
+        this.githubClosedAt = closedAt;
     }
 }
