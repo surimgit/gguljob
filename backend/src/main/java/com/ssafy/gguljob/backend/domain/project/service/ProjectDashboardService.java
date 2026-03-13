@@ -3,7 +3,7 @@ package com.ssafy.gguljob.backend.domain.project.service;
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
-import com.ssafy.gguljob.backend.domain.github.repository.TroubleshootingRepository;
+import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.GitLog;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;

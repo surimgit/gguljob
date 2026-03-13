@@ -25,7 +25,8 @@ public class SecurityConfig {
             // 헬스체크
             "/api/v1/health",
             // Swagger UI
-            "/swagger-ui.html", "/swagger-ui/**", "/api-docs/**",
+            "/swagger-ui.html", "/swagger-ui/**",
+            "/api-docs/**", "/v3/api-docs/**",
             // TODO: 로그인/회원가입 완성 후 아래 경로 추가
             // "/api/v1/auth/**",
             "/api/v1/auth/github",

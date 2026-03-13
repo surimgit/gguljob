@@ -1,6 +1,8 @@
 package com.ssafy.gguljob.backend.domain.user.controller;
 
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingService;
+import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.service.UserService;
@@ -30,6 +32,7 @@ import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 public class UserController {
     private final UserService userService;
     private final ProjectService projectService;
+    private final TroubleshootingService troubleshootingService;
 
     @Operation(summary = "초기 프로필 설정 (온보딩)", description = "최초 로그인 시 필수 추가 정보를 입력받아 저장합니다.")
     @PostMapping("/onboarding")
@@ -82,5 +85,17 @@ public class UserController {
         @AuthenticationPrincipal CustomUserDetails userDetails) {
         ProjectResponse.Simple response = projectService.getMyRepProject(userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "대표 프로젝트 조회 성공", response));
+    }
+
+    @Operation(summary = "마이페이지 위젯용 내 트러블슈팅 조회", description = "마이페이지 하단 위젯에 표시할 트러블슈팅 요약본 2개를 최신순으로 가져옵니다.")
+    @GetMapping("/me/troubleshootings/widget")
+    public ResponseEntity<ApiResponseDto<List<TroubleshootingResponse.Widget>>> getMyWidget(
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getId();
+
+        List<TroubleshootingResponse.Widget> responses = troubleshootingService.getMyWidgetList(userId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "마이페이지 위젯 조회", responses));
     }
 }
