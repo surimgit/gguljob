@@ -331,7 +331,7 @@ const TeamManagement = ({
         return {
           ...r,
           total: newTotal,
-          status: r.current >= newTotal ? "closed" : r.status,
+          status: r.current >= newTotal ? "closed" : "open",
         };
       }),
     );
