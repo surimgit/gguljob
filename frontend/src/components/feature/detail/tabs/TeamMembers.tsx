@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Trash2,
   ChevronDown,
@@ -6,14 +6,25 @@ import {
   Minus,
   UserPlus,
   X,
+  Check,
 } from "lucide-react";
 import type { TeamDashboard } from "../../../../types/project";
 
 /* ── 타입 ── */
+type RoleStatus = "open" | "paused" | "closed";
+
+type RoleType =
+  | "프론트엔드"
+  | "백엔드"
+  | "인프라/DevOps"
+  | "디자인"
+  | "데이터/AI"
+  | "기획/PM";
+
 interface Role {
   id: string;
   name: string;
-  status: "open" | "closed";
+  status: RoleStatus;
   current: number;
   total: number;
   stacks: string[];
@@ -46,33 +57,34 @@ interface TeamManagementProps {
   onAddRole: () => void;
   onDeleteRole: (roleId: string) => void;
   onUpdateRoleCount: (roleId: string, delta: number) => void;
-  onToggleRoleStatus: (roleId: string) => void;
+  onUpdateRoleStatus: (roleId: string, status: RoleStatus) => void;
   onAccept: (applicationId: string) => void;
   onReject: (applicationId: string) => void;
 }
 
 /* ── 직무별 색상 ── */
 const ROLE_COLORS: Record<string, string> = {
+  프론트엔드: "#2196F3",
+  백엔드: "#22C55E",
+  디자인: "#d22ab6",
+  "기획/PM": "#F59E0B",
+  "인프라/DevOps": "#7C3AED",
+  "데이터/AI": "#EC4899",
   Frontend: "#2196F3",
   Backend: "#22C55E",
   Design: "#d22ab6",
   PM: "#F59E0B",
   DevOps: "#7C3AED",
   AI: "#EC4899",
+  Infra: "#7C3AED",
 };
 
 const getRoleColor = (role: string) => ROLE_COLORS[role] ?? "#6B7280";
 
 /* ── 아바타 색상 (해시 기반) ── */
 const AVATAR_COLORS = [
-  "#2196F3",
-  "#22C55E",
-  "#EC4899",
-  "#7C3AED",
-  "#F59E0B",
-  "#EF4444",
-  "#14B8A6",
-  "#F97316",
+  "#2196F3", "#22C55E", "#EC4899", "#7C3AED",
+  "#F59E0B", "#EF4444", "#14B8A6", "#F97316",
 ];
 
 const getAvatarColor = (name: string) => {
@@ -83,14 +95,9 @@ const getAvatarColor = (name: string) => {
 
 /* ── 역할 코드→표시명 ── */
 const ROLE_CODE_TO_LABEL: Record<string, string> = {
-  FE: "Frontend",
-  BE: "Backend",
-  AI: "AI",
-  PM: "PM",
-  INFRA: "Infra",
-  DESIGN: "Design",
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
+  FE: "프론트엔드", BE: "백엔드", AI: "데이터/AI", PM: "기획/PM",
+  INFRA: "인프라/DevOps", DESIGN: "디자인",
+  FRONTEND: "프론트엔드", BACKEND: "백엔드",
 };
 
 // TODO: 백엔드에 팀원 개별 조회/포지션 상세/합류 신청 API 추가 후 교체 필요
@@ -104,7 +111,7 @@ const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
       id: `role-${idx}`,
       name,
       // TODO: 포지션 API에서 targetCount, status, requireSkills 조회로 교체
-      status: (count > 0 ? "closed" : "open") as "open" | "closed",
+      status: (count > 0 ? "closed" : "open") as RoleStatus,
       current: count,
       total: Math.max(count, 1),
       stacks: [],
@@ -133,120 +140,379 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
   return members;
 };
 
-/* ── 직무 추가 모달 ── */
-const AddRoleModal = ({
-  onClose,
-  onAdd,
+/* ── 상태 드롭다운 설정 ── */
+const STATUS_OPTIONS: {
+  key: RoleStatus;
+  label: string;
+  dotColor: string;
+  textColor: string;
+  activeBg: string;
+}[] = [
+  {
+    key: "open",
+    label: "모집 중",
+    dotColor: "var(--color-blue)",
+    textColor: "var(--color-blue)",
+    activeBg: "rgba(33,150,243,0.15)",
+  },
+  {
+    key: "paused",
+    label: "일시 중단",
+    dotColor: "var(--color-primary-hover)",
+    textColor: "var(--color-primary-hover)",
+    activeBg: "var(--color-primary-soft)",
+  },
+  {
+    key: "closed",
+    label: "모집 마감",
+    dotColor: "var(--color-error)",
+    textColor: "var(--color-error)",
+    activeBg: "rgba(239,68,68,0.23)",
+  },
+];
+
+const getStatusConfig = (status: RoleStatus) =>
+  STATUS_OPTIONS.find((o) => o.key === status) ?? STATUS_OPTIONS[0];
+
+/* ── 상태 뱃지 스타일 ── */
+const getBadgeStyle = (status: RoleStatus) => {
+  const cfg = getStatusConfig(status);
+  return {
+    background: cfg.activeBg,
+    border: `1px solid ${cfg.dotColor}`,
+    color: cfg.textColor,
+  };
+};
+
+/* ══════════════════════════════════════
+   모집 상태 드롭다운
+   ══════════════════════════════════════ */
+const StatusDropdown = ({
+  roleId,
+  currentStatus,
+  onSelect,
 }: {
-  onClose: () => void;
-  onAdd: (name: string, total: number, stacks: string[]) => void;
+  roleId: string;
+  currentStatus: RoleStatus;
+  onSelect: (roleId: string, status: RoleStatus) => void;
 }) => {
-  const [name, setName] = useState("");
-  const [total, setTotal] = useState(1);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const cfg = getStatusConfig(currentStatus);
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* 뱃지 버튼 */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer"
+        style={getBadgeStyle(currentStatus)}
+      >
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: cfg.dotColor }}
+        />
+        {cfg.label}
+        <ChevronDown className="w-3 h-3" />
+      </button>
+
+      {/* 드롭다운 */}
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 w-[148px] rounded-[12px] overflow-hidden z-50"
+          style={{
+            background: "var(--color-surface)",
+            boxShadow: "0px 8px 24px 0px rgba(0,0,0,0.12)",
+          }}
+        >
+          {STATUS_OPTIONS.map((opt, idx) => {
+            const isSelected = opt.key === currentStatus;
+            return (
+              <button
+                key={opt.key}
+                onClick={() => {
+                  onSelect(roleId, opt.key);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-[12.5px] cursor-pointer"
+                style={{
+                  background: isSelected ? opt.activeBg : "var(--color-surface)",
+                  borderBottom:
+                    idx < STATUS_OPTIONS.length - 1
+                      ? "1px solid var(--color-border)"
+                      : "none",
+                  color: opt.textColor,
+                  fontWeight: isSelected ? 700 : 400,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: opt.dotColor }}
+                />
+                <span className="flex-1 text-left">{opt.label}</span>
+                {isSelected && <Check className="w-3 h-3 flex-shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════
+   팀원 모집하기 모달 (RecruitModal)
+   ══════════════════════════════════════ */
+const ROLE_LIST: RoleType[] = [
+  "프론트엔드", "백엔드", "인프라/DevOps",
+  "디자인", "데이터/AI", "기획/PM",
+];
+
+interface RecruitModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (data: { role: RoleType; count: number; stacks: string[] }) => void;
+  addedRoles?: RoleType[];
+}
+
+const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitModalProps) => {
+  const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
+  const [count, setCount] = useState(1);
   const [stackInput, setStackInput] = useState("");
   const [stacks, setStacks] = useState<string[]>([]);
 
-  const addStack = () => {
-    const trimmed = stackInput.trim();
+  if (!isOpen) return null;
+
+  const addStack = (value: string) => {
+    const trimmed = value.trim();
     if (trimmed && !stacks.includes(trimmed)) {
-      setStacks([...stacks, trimmed]);
-      setStackInput("");
+      setStacks((prev) => [...prev, trimmed]);
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addStack(stackInput);
+      setStackInput("");
+    } else if (e.key === "Backspace" && !stackInput && stacks.length > 0) {
+      setStacks((prev) => prev.slice(0, -1));
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val.includes(",")) {
+      val.split(",").forEach((s) => addStack(s));
+      setStackInput("");
+    } else {
+      setStackInput(val);
+    }
+  };
+
+  const canConfirm = selectedRole !== null && stacks.length > 0;
+
+  const handleConfirm = () => {
+    if (!canConfirm || !selectedRole) return;
+    onConfirm({ role: selectedRole, count, stacks });
+    // reset
+    setSelectedRole(null);
+    setCount(1);
+    setStackInput("");
+    setStacks([]);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div
-        className="w-[420px] rounded-2xl p-6"
-        style={{ background: "var(--color-surface)" }}
+        className="w-[500px] rounded-[18px] overflow-hidden"
+        style={{
+          background: "var(--color-background)",
+          boxShadow: "0px 24px 60px 0px rgba(0,0,0,0.18)",
+        }}
       >
-        <div className="flex items-center justify-between mb-5">
-          <h3
-            className="text-lg font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            직무 추가하기
-          </h3>
+        {/* 상단 헤더 바 */}
+        <div
+          className="h-[27px] flex items-center justify-end px-2"
+          style={{
+            background: "var(--color-primary-hover)",
+            borderRadius: "18px 18px 0 0",
+          }}
+        >
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer"
-            style={{ color: "var(--color-text-tertiary)" }}
+            className="w-5 h-5 flex items-center justify-center rounded-[9px] cursor-pointer"
+            style={{ background: "rgba(255,255,255,0.5)", color: "#5c5647" }}
           >
-            <X className="w-5 h-5" />
+            <X className="w-3 h-3" />
           </button>
         </div>
 
-        {/* 직무명 */}
-        <label
-          className="block text-sm font-semibold mb-1.5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          직무명
-        </label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="예: Frontend, Backend, Design"
-          className="w-full px-3 py-2.5 rounded-lg text-sm mb-4 outline-none"
-          style={{ border: "1px solid var(--color-border)" }}
-        />
-
-        {/* 모집 인원 */}
-        <label
-          className="block text-sm font-semibold mb-1.5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          모집 인원
-        </label>
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={() => setTotal(Math.max(1, total - 1))}
-            className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer"
-            style={{ border: "1px solid var(--color-border)" }}
-          >
-            <Minus className="w-4 h-4" style={{ color: "var(--color-text-secondary)" }} />
-          </button>
-          <span
-            className="text-base font-bold w-8 text-center"
+        {/* 본문 */}
+        <div className="px-6 pt-5 pb-6">
+          {/* 타이틀 */}
+          <h3
+            className="text-[20px] font-bold mb-0.5"
             style={{ color: "var(--color-text-primary)" }}
           >
-            {total}
-          </span>
-          <button
-            onClick={() => setTotal(total + 1)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer"
-            style={{ border: "1px solid var(--color-border)" }}
+            팀원 모집하기
+          </h3>
+          <p
+            className="text-[12px] mb-5"
+            style={{ color: "var(--color-text-secondary)" }}
           >
-            <Plus className="w-4 h-4" style={{ color: "var(--color-text-secondary)" }} />
-          </button>
-        </div>
+            모집할 직무와 요구 스택을 설정하세요
+          </p>
 
-        {/* 기술 스택 */}
-        <label
-          className="block text-sm font-semibold mb-1.5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          요구 기술 스택
-        </label>
-        <div className="flex gap-2 mb-2">
-          <input
-            value={stackInput}
-            onChange={(e) => setStackInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addStack())}
-            placeholder="기술 스택 입력 후 Enter"
-            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ border: "1px solid var(--color-border)" }}
-          />
-          <button
-            onClick={addStack}
-            className="px-3 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer"
-            style={{ background: "var(--color-primary-hover)" }}
+          {/* 1. 직무 선택 */}
+          <label
+            className="block text-[12.5px] font-bold mb-2"
+            style={{ color: "var(--color-text-primary)" }}
           >
-            추가
-          </button>
-        </div>
-        {stacks.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
+            직무 선택 <span style={{ color: "var(--color-error)" }}>*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            {ROLE_LIST.map((role) => {
+              const isAdded = addedRoles.includes(role);
+              const isSelected = selectedRole === role;
+
+              let btnStyle: React.CSSProperties;
+              if (isAdded) {
+                btnStyle = {
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  opacity: 0.5,
+                  cursor: "not-allowed",
+                };
+              } else if (isSelected) {
+                btnStyle = {
+                  background: "var(--color-primary-soft)",
+                  border: "1px solid var(--color-primary-hover)",
+                  cursor: "pointer",
+                };
+              } else {
+                btnStyle = {
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  cursor: "pointer",
+                };
+              }
+
+              const dotColor = isAdded
+                ? "var(--color-text-tertiary)"
+                : isSelected
+                  ? "var(--color-primary-hover)"
+                  : "var(--color-border)";
+
+              return (
+                <button
+                  key={role}
+                  disabled={isAdded}
+                  onClick={() => setSelectedRole(role)}
+                  className="w-[145px] h-[40px] rounded-[10px] flex items-center gap-2 px-3 text-left"
+                  style={btnStyle}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: dotColor }}
+                  />
+                  <div className="flex flex-col">
+                    <span
+                      className="text-[12.5px] font-semibold"
+                      style={{
+                        color: isAdded
+                          ? "var(--color-text-tertiary)"
+                          : "var(--color-text-primary)",
+                      }}
+                    >
+                      {role}
+                    </span>
+                    {isAdded && (
+                      <span
+                        className="text-[10px]"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      >
+                        추가됨
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 2. 모집 인원 */}
+          <label
+            className="block text-[12.5px] font-bold mb-2"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            모집 인원
+          </label>
+          <div className="flex items-center gap-3 mb-5">
+            <button
+              onClick={() => setCount(Math.max(1, count - 1))}
+              className="w-[34px] h-[34px] flex items-center justify-center rounded-[8px] cursor-pointer"
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <Minus className="w-4 h-4" style={{ color: "var(--color-text-secondary)" }} />
+            </button>
+            <span
+              className="text-[18px] font-extrabold w-8 text-center"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              {count}
+            </span>
+            <button
+              onClick={() => setCount(Math.min(10, count + 1))}
+              className="w-[34px] h-[34px] flex items-center justify-center rounded-[8px] cursor-pointer"
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <Plus className="w-4 h-4" style={{ color: "var(--color-text-secondary)" }} />
+            </button>
+            <span
+              className="text-[12px]"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              명
+            </span>
+          </div>
+
+          {/* 3. 요구 스택/기술 */}
+          <label
+            className="block text-[12.5px] font-bold mb-1"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            요구 스택/기술 <span style={{ color: "var(--color-error)" }}>*</span>
+          </label>
+          <p
+            className="text-[11.5px] mb-2"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 삭제
+          </p>
+          <div
+            className="flex flex-wrap items-center gap-1.5 min-h-[48px] px-3 py-2 rounded-[10px]"
+            style={{
+              background: "var(--color-surface)",
+              border: "1.333px solid var(--color-border)",
+            }}
+          >
             {stacks.map((s) => (
               <span
                 key={s}
@@ -265,40 +531,51 @@ const AddRoleModal = ({
                 </button>
               </span>
             ))}
+            <input
+              value={stackInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={stacks.length === 0 ? "스택 입력 후 Enter..." : ""}
+              className="flex-1 min-w-[100px] text-[12.5px] font-mono outline-none bg-transparent"
+              style={{ color: "var(--color-text-primary)" }}
+            />
           </div>
-        )}
 
-        {/* 버튼 */}
-        <div className="flex gap-2 mt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold cursor-pointer"
-            style={{
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={() => {
-              if (name.trim()) {
-                onAdd(name.trim(), total, stacks);
-                onClose();
-              }
-            }}
-            className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white cursor-pointer"
-            style={{ background: "var(--color-primary-hover)" }}
-          >
-            추가하기
-          </button>
+          {/* 4. 하단 버튼 */}
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={onClose}
+              className="flex-1 h-[49px] rounded-[14px] text-[14px] font-black cursor-pointer"
+              style={{
+                background: "var(--color-surface)",
+                border: "2px solid var(--color-border)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              취소
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!canConfirm}
+              className="flex-1 h-[49px] rounded-[14px] text-[14px] font-black"
+              style={{
+                background: canConfirm ? "var(--color-primary-hover)" : "var(--color-border)",
+                color: canConfirm ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
+                cursor: canConfirm ? "pointer" : "not-allowed",
+              }}
+            >
+              확인
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-/* ── 메인 컴포넌트 ── */
+/* ══════════════════════════════════════
+   메인 컴포넌트
+   ══════════════════════════════════════ */
 const TeamManagement = ({
   roles: initialRoles,
   members,
@@ -306,13 +583,13 @@ const TeamManagement = ({
   onAddRole,
   onDeleteRole,
   onUpdateRoleCount,
-  onToggleRoleStatus,
+  onUpdateRoleStatus,
   onAccept,
   onReject,
 }: TeamManagementProps) => {
   const [roles, setRoles] = useState(initialRoles);
   const [applications, setApplications] = useState(initialApps);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showRecruitModal, setShowRecruitModal] = useState(false);
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
@@ -322,6 +599,8 @@ const TeamManagement = ({
     (acc[m.role] ??= []).push(m);
     return acc;
   }, {});
+
+  const addedRoles = roles.map((r) => r.name) as RoleType[];
 
   const handleUpdateCount = (roleId: string, delta: number) => {
     setRoles((prev) =>
@@ -338,13 +617,11 @@ const TeamManagement = ({
     onUpdateRoleCount(roleId, delta);
   };
 
-  const handleToggleStatus = (roleId: string) => {
+  const handleUpdateStatus = (roleId: string, status: RoleStatus) => {
     setRoles((prev) =>
-      prev.map((r) =>
-        r.id === roleId ? { ...r, status: r.status === "open" ? "closed" : "open" } : r,
-      ),
+      prev.map((r) => (r.id === roleId ? { ...r, status } : r)),
     );
-    onToggleRoleStatus(roleId);
+    onUpdateRoleStatus(roleId, status);
   };
 
   const handleDeleteRole = (roleId: string) => {
@@ -357,7 +634,6 @@ const TeamManagement = ({
     setApplications((prev) =>
       prev.map((a) => (a.id === appId ? { ...a, status: "accepted" as const } : a)),
     );
-    // 수락 시 해당 직무 current 증가 → 충원 완료면 자동 마감
     if (app) {
       setRoles((prev) =>
         prev.map((r) => {
@@ -381,16 +657,17 @@ const TeamManagement = ({
     onReject(appId);
   };
 
-  const handleAddRole = (name: string, total: number, stacks: string[]) => {
+  const handleRecruitConfirm = (data: { role: RoleType; count: number; stacks: string[] }) => {
     const newRole: Role = {
       id: `r${Date.now()}`,
-      name,
+      name: data.role,
       status: "open",
       current: 0,
-      total,
-      stacks,
+      total: data.count,
+      stacks: data.stacks,
     };
     setRoles((prev) => [...prev, newRole]);
+    setShowRecruitModal(false);
     onAddRole();
   };
 
@@ -423,7 +700,7 @@ const TeamManagement = ({
               </span>
             </div>
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => setShowRecruitModal(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer"
               style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
@@ -437,7 +714,6 @@ const TeamManagement = ({
             {roles.map((role) => {
               const color = getRoleColor(role.name);
               const pct = role.total > 0 ? (role.current / role.total) * 100 : 0;
-              const isClosed = role.status === "closed";
 
               return (
                 <div
@@ -449,30 +725,17 @@ const TeamManagement = ({
                     boxShadow: "4px 4px 4px 0px rgba(0,0,0,0.25)",
                   }}
                 >
-                  {/* 카드 상단: 직무명 + 상태 뱃지 + 삭제 */}
+                  {/* 카드 상단: 직무명 + 상태 드롭다운 + 삭제 */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-bold" style={{ color }}>
                       {role.name}
                     </span>
                     <div className="flex items-center gap-2">
-                      {/* 모집 상태 뱃지 (토글) */}
-                      <button
-                        onClick={() => handleToggleStatus(role.id)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer"
-                        style={{
-                          background: isClosed ? "rgba(239,68,68,0.15)" : "rgba(33,150,243,0.15)",
-                          border: `1px solid ${isClosed ? "var(--color-error)" : "var(--color-blue)"}`,
-                          color: isClosed ? "var(--color-error)" : "var(--color-blue)",
-                        }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: isClosed ? "var(--color-error)" : "var(--color-blue)" }}
-                        />
-                        {isClosed ? "모집 마감" : "모집 중"}
-                        <ChevronDown className="w-3 h-3" />
-                      </button>
-                      {/* 삭제 */}
+                      <StatusDropdown
+                        roleId={role.id}
+                        currentStatus={role.status}
+                        onSelect={handleUpdateStatus}
+                      />
                       <button
                         onClick={() => handleDeleteRole(role.id)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
@@ -583,7 +846,6 @@ const TeamManagement = ({
               const color = getRoleColor(role);
               return (
                 <div key={role}>
-                  {/* 직무 그룹 헤더 */}
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold" style={{ color }}>
                       {role} {roleMembers.length}
@@ -594,21 +856,18 @@ const TeamManagement = ({
                     />
                   </div>
 
-                  {/* 팀원 행 */}
                   <div className="flex flex-col gap-1.5">
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
                         className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
                       >
-                        {/* 아바타 */}
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                           style={{ background: getAvatarColor(member.name) }}
                         >
                           {member.name.charAt(0)}
                         </div>
-                        {/* 이름 + 뱃지 */}
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span
                             className="text-sm font-semibold truncate"
@@ -636,14 +895,12 @@ const TeamManagement = ({
                             </span>
                           )}
                         </div>
-                        {/* 가입일 */}
                         <span
                           className="text-xs flex-shrink-0"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
                           {member.joinDate}
                         </span>
-                        {/* 기여도 */}
                         <span
                           className="text-xs font-bold flex-shrink-0 w-10 text-right"
                           style={{ color: "var(--color-text-secondary)" }}
@@ -703,7 +960,6 @@ const TeamManagement = ({
                   border: "1px solid var(--color-border)",
                 }}
               >
-                {/* 아바타 */}
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                   style={{ background: getAvatarColor(app.name) }}
@@ -711,7 +967,6 @@ const TeamManagement = ({
                   {app.name.charAt(0)}
                 </div>
 
-                {/* 정보 */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span
@@ -749,7 +1004,6 @@ const TeamManagement = ({
                   </div>
                 </div>
 
-                {/* 액션 버튼 */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {isPending ? (
                     <>
@@ -804,13 +1058,13 @@ const TeamManagement = ({
         </div>
       </div>
 
-      {/* ── 직무 추가 모달 ── */}
-      {showAddModal && (
-        <AddRoleModal
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAddRole}
-        />
-      )}
+      {/* ── 팀원 모집하기 모달 ── */}
+      <RecruitModal
+        isOpen={showRecruitModal}
+        onClose={() => setShowRecruitModal(false)}
+        onConfirm={handleRecruitConfirm}
+        addedRoles={addedRoles}
+      />
     </div>
   );
 };
@@ -835,7 +1089,7 @@ const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
-      onToggleRoleStatus={(id) => console.log("상태 토글:", id)}
+      onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
       onAccept={(id) => console.log("수락:", id)}
       onReject={(id) => console.log("거절:", id)}
     />
@@ -843,5 +1097,5 @@ const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
 };
 
 export default TeamMembers;
-export { TeamManagement };
-export type { Role, Member, Application, TeamManagementProps };
+export { TeamManagement, RecruitModal };
+export type { Role, Member, Application, TeamManagementProps, RoleType, RoleStatus, RecruitModalProps };
