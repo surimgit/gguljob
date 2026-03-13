@@ -13,6 +13,8 @@ import {
   X,
 } from "lucide-react";
 
+import type { TeamDashboard } from "../../../types/project";
+
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 
@@ -22,6 +24,10 @@ interface TeamMember {
   position: string;
   email: string;
   avatarColor?: string;
+}
+
+interface ProjectSettingsProps {
+  dashboard?: TeamDashboard | null;
 }
 
 /* ── 상수 ── */
@@ -194,39 +200,66 @@ const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
   "AI/ML": { bg: "#FEF3C7", color: "var(--color-warning)" },
 };
 
-/* ── 초기 목업 데이터 ── */
-const INITIAL = {
-  createdAt: "2026-02-15",
-  status: "active" as ProjectStatus,
-  name: "꿀잡 - AI 매칭 플랫폼",
-  description:
-    "GitHub 분석과 AI 매칭을 통해 개발자에게 최적의 프로젝트 팀을 추천하는 서비스입니다.",
-  domains: ["웹기술"],
-  gitUrl: "https://github.com/ssafy/gguljob",
-  techStacks: {
-    frontend: ["React", "TypeScript"],
-    backend: ["Spring Boot"],
-    database: ["PostgreSQL", "Redis"],
-  } as Record<string, string[]>,
-  members: [
-    { id: "1", name: "김도현", position: "PM", email: "dohyun@ssafy.com" },
-    { id: "2", name: "이서준", position: "Backend", email: "seojun@ssafy.com" },
-    { id: "3", name: "박지민", position: "Frontend", email: "jimin@ssafy.com" },
-    { id: "4", name: "정하은", position: "AI/ML", email: "haeun@ssafy.com" },
-  ] as TeamMember[],
+/* ── 스킬을 카테고리에 매핑 ── */
+const SKILL_TO_CATEGORY: Record<string, string> = {};
+TECH_CATEGORIES.forEach((cat) => {
+  cat.stacks.forEach((stack) => {
+    SKILL_TO_CATEGORY[stack.toLowerCase()] = cat.key;
+  });
+});
+
+const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
+  const result: Record<string, string[]> = {};
+  skills.forEach((skill) => {
+    const category = SKILL_TO_CATEGORY[skill.toLowerCase()];
+    if (category) {
+      (result[category] ??= []).push(skill);
+    }
+  });
+  return result;
+};
+
+/* ── 역할 코드→표시명 ── */
+const ROLE_CODE_TO_LABEL: Record<string, string> = {
+  FE: "Frontend",
+  BE: "Backend",
+  AI: "AI/ML",
+  PM: "PM",
+  INFRA: "Infra",
+  DESIGN: "Design",
+  FRONTEND: "Frontend",
+  BACKEND: "Backend",
 };
 
 /* ── 컴포넌트 ── */
-const ProjectSettings = () => {
-  const [status, setStatus] = useState<ProjectStatus>(INITIAL.status);
-  const [name, setName] = useState(INITIAL.name);
-  const [description, setDescription] = useState(INITIAL.description);
-  const [domains, setDomains] = useState<string[]>(INITIAL.domains);
-  const [gitUrl, setGitUrl] = useState(INITIAL.gitUrl);
+const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
+  const info = dashboard?.projectInfo;
+  const stats = dashboard?.teamStats;
+  const gitRepo = dashboard?.gitRepoInfo;
+
+  // TODO: 팀원 목록 API 추가 후 실제 멤버 데이터로 교체 (현재 roleCounts 기반 임시 생성)
+  const membersFromDashboard: TeamMember[] = useMemo(() => {
+    if (!stats?.roleCounts) return [];
+    return Object.entries(stats.roleCounts).flatMap(([role, count]) => {
+      const label = ROLE_CODE_TO_LABEL[role] ?? role;
+      return Array.from({ length: count }, (_, i) => ({
+        id: `${role}-${i}`,
+        name: `${label} ${i + 1}`,
+        position: label,
+        email: "",
+      }));
+    });
+  }, [stats]);
+
+  const [status, setStatus] = useState<ProjectStatus>("active");
+  const [name, setName] = useState(info?.title ?? "");
+  const [description, setDescription] = useState(info?.description ?? "");
+  const [domains, setDomains] = useState<string[]>(info?.domain ? [info.domain] : []);
+  const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
-    INITIAL.techStacks
+    skillsToTechStacks(info?.skills ?? [])
   );
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL.members);
+  const [members, setMembers] = useState<TeamMember[]>(membersFromDashboard);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   // 새 팀원 추가 폼
@@ -239,17 +272,27 @@ const ProjectSettings = () => {
     [techStacks]
   );
 
+  const initialRef = useMemo(() => ({
+    status: "active" as ProjectStatus,
+    name: info?.title ?? "",
+    description: info?.description ?? "",
+    domains: info?.domain ? [info.domain] : [],
+    gitUrl: gitRepo?.repoUrl ?? "",
+    techStacks: skillsToTechStacks(info?.skills ?? []),
+    members: membersFromDashboard,
+  }), [info, gitRepo, membersFromDashboard]);
+
   const hasChanges = useMemo(() => {
     return (
-      status !== INITIAL.status ||
-      name !== INITIAL.name ||
-      description !== INITIAL.description ||
-      JSON.stringify(domains) !== JSON.stringify(INITIAL.domains) ||
-      gitUrl !== INITIAL.gitUrl ||
-      JSON.stringify(techStacks) !== JSON.stringify(INITIAL.techStacks) ||
-      JSON.stringify(members) !== JSON.stringify(INITIAL.members)
+      status !== initialRef.status ||
+      name !== initialRef.name ||
+      description !== initialRef.description ||
+      JSON.stringify(domains) !== JSON.stringify(initialRef.domains) ||
+      gitUrl !== initialRef.gitUrl ||
+      JSON.stringify(techStacks) !== JSON.stringify(initialRef.techStacks) ||
+      JSON.stringify(members) !== JSON.stringify(initialRef.members)
     );
-  }, [status, name, description, domains, gitUrl, techStacks, members]);
+  }, [status, name, description, domains, gitUrl, techStacks, members, initialRef]);
 
   const toggleDomain = (d: string) =>
     setDomains((prev) =>
@@ -318,7 +361,7 @@ const ProjectSettings = () => {
           className="text-xs mt-0.5"
           style={{ color: "var(--color-text-tertiary)" }}
         >
-          생성일: {INITIAL.createdAt}
+          {info?.title ?? "프로젝트 설정"}
         </p>
       </div>
 
