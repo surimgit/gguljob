@@ -82,4 +82,22 @@ public class Project extends BaseTimeEntity {
         this.imageUrl = imageUrl;
         this.documentUrl = documentUrl;
     }
+
+    public void updateBasicInfo(String title, String teamName, String description, String domain, String status) {
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+        if (teamName != null && !teamName.isBlank()) {
+            this.teamName = teamName;
+        }
+        if (status != null && !status.isBlank()) {
+            this.status = ProjectStatus.valueOf(status);
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (domain != null) {
+            this.domain = domain;
+        }
+    }
 }
