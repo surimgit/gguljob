@@ -76,7 +76,8 @@ const DOMAINS = [
   "빅데이터",
   "블록체인",
   "자율주행",
-  "콘텐츠",
+  "핀테크",
+  "메타버스",
 ];
 
 const TECH_CATEGORIES: {
