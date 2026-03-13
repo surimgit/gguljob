@@ -4,10 +4,12 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberReposito
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
+import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,7 @@ public class UserService {
 
         user.updateOnboarding(
             requestDto.getDescription(),
-            requestDto.getPosition(),
+            requestDto.getRoles(),
             requestDto.getExperience(),
             requestDto.getMbti(),
             requestDto.getTeamTendency()
@@ -42,6 +44,17 @@ public class UserService {
         skillService.saveUserSkills(user, requestDto.getSkills());
 
         log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
+    }
+
+    public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+
+        user.updateProfile(requestDto);
+
+        if(requestDto.getSkills() != null) {
+            skillService.saveUserSkills(user, requestDto.getSkills());
+        }
     }
 
     public void withdrawUser(Long userId) {
@@ -75,7 +88,7 @@ public class UserService {
             .userName(user.getUserName())
             .imageUrl(user.getImageUrl())
             .description(user.getDescription())
-            .position(user.getRole() != null ? user.getRole().name() : null)
+            .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
             .experience(user.getExperience() != null ? user.getExperience().name() : null)
             .mbti(user.getMbti())
             .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)

@@ -12,7 +12,7 @@ public class ProfileResponseDto {
     private String userName;
     private String imageUrl;
     private String description;
-    private String position;
+    private List<String> roles;
     private String experience;
     private String mbti;
     private String teamTendency;
