@@ -26,8 +26,8 @@ const OAuthCallback = () => {
     setTokens(accessToken, refreshToken);
 
     getMe()
-      .then((res) => {
-        setUser(res.data);
+      .then((user) => {
+        setUser(user);
         setIsLoading(false);
         if (isNewUser) {
           setShowProfileModal(true);

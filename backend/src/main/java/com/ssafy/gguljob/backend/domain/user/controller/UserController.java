@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,8 +24,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -112,5 +115,18 @@ public class UserController {
         userService.updateMyProfile(userDetails.getId(), requestDto);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필이 성공적으로 수정되었습니다.", null));
+    }
+
+    @Operation(summary = "프로필 이미지 수정", description = "프로필 이미지를 업로드하고 S3 URL을 반환합니다.")
+    @PatchMapping(value = "/me/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseDto<String>> updateProfileImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestPart(value = "file") MultipartFile file) {
+
+        log.info("프로필 이미지 업로드 API 호출 - 요청 유저 ID: {}", userDetails.getId());
+
+        String imageUrl = userService.updateProfileImage(userDetails.getId(), file);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지 업로드 성공", imageUrl));
     }
 }

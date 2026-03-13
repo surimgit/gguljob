@@ -9,7 +9,7 @@ export const useAuth = () => {
     const token = localStorage.getItem('accessToken');
     if (token && !isAuthenticated) {
       getMe()
-        .then((res) => setUser(res.data))
+        .then((user) => setUser(user))
         .catch(() => logout());
     }
   }, [isAuthenticated, setUser, logout]);

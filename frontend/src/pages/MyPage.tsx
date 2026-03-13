@@ -10,7 +10,7 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import type { PositionType } from '../types/user';
-import type { Project as ApiProject } from '../types/project';
+import type { ProjectSimple } from '../types/project';
 import { useAuthStore } from '../stores/authStore';
 import { getMe } from '../api/user';
 import { getMyProjects } from '../api/projects';
@@ -50,7 +50,7 @@ const MyPage = () => {
     techStacks: [],
     projects: [],
   });
-  const [myProjects, setMyProjects] = useState<ApiProject[]>([]);
+  const [myProjects, setMyProjects] = useState<ProjectSimple[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -73,9 +73,7 @@ const MyPage = () => {
   useEffect(() => {
     getMyProjects()
       .then((res) => {
-        // TODO: 백엔드 ApiResponseDto 래핑 구조에 따라 data 추출 필요할 수 있음
-        const data = res.data?.data ?? res.data ?? [];
-        setMyProjects(Array.isArray(data) ? data : []);
+        setMyProjects(res.data ?? []);
       })
       .catch(() => setMyProjects([]));
   }, []);
