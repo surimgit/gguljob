@@ -208,7 +208,6 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
           title="지원 완료"
           subtitle="프로젝트에 지원이 완료되었습니다."
           confirmText="확인"
-          cancelText="취소"
           onConfirm={() => {
             onApply?.(project, selectedPosition);
             setShowConfirm(false);

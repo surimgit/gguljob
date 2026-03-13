@@ -14,7 +14,7 @@ const ProjectConfirmModal = ({
   title,
   subtitle,
   confirmText = '확인',
-  cancelText = '취소',
+  cancelText,
   onConfirm,
   onClose,
 }: ProjectConfirmModalProps) => {
@@ -37,12 +37,14 @@ const ProjectConfirmModal = ({
 
       {/* 버튼 */}
       <div className="flex gap-[12px]">
-        <button
-          onClick={onClose}
-          className="flex-1 py-[14px] rounded-[12px] border-2 border-[#e5e7eb] text-[#6b7280] font-bold text-[14px] hover:bg-[#f7f8fa] transition-colors"
-        >
-          {cancelText}
-        </button>
+        {cancelText && (
+          <button
+            onClick={onClose}
+            className="flex-1 py-[14px] rounded-[12px] border-2 border-[#e5e7eb] text-[#6b7280] font-bold text-[14px] hover:bg-[#f7f8fa] transition-colors"
+          >
+            {cancelText}
+          </button>
+        )}
         <button
           onClick={onConfirm}
           className="flex-1 py-[14px] rounded-[12px] bg-[#22c55e] text-white font-bold text-[14px] hover:bg-[#16a34a] transition-colors"
