@@ -109,4 +109,8 @@ public class User extends BaseTimeEntity {
         if (request.getMbti() != null) this.mbti = request.getMbti();
         if (request.getTeamTendency() != null) this.teamTendency = request.getTeamTendency();
     }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }
