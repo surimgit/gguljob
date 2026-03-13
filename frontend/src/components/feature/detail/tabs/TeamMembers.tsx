@@ -82,7 +82,7 @@ const getAvatarColor = (name: string) => {
 
 /* ── 더미 데이터 ── */
 const DUMMY_ROLES: Role[] = [
-  { id: "r1", name: "Frontend", status: "open", current: 3, total: 3, stacks: ["React", "TypeScript", "Tailwind"] },
+  { id: "r1", name: "Frontend", status: "closed", current: 3, total: 3, stacks: ["React", "TypeScript", "Tailwind"] },
   { id: "r2", name: "Backend", status: "open", current: 1, total: 2, stacks: ["Spring Boot", "JPA", "Redis"] },
   { id: "r3", name: "Design", status: "closed", current: 1, total: 1, stacks: ["Figma", "Adobe XD"] },
 ];
@@ -293,9 +293,15 @@ const TeamManagement = ({
 
   const handleUpdateCount = (roleId: string, delta: number) => {
     setRoles((prev) =>
-      prev.map((r) =>
-        r.id === roleId ? { ...r, total: Math.max(r.current, r.total + delta) } : r,
-      ),
+      prev.map((r) => {
+        if (r.id !== roleId) return r;
+        const newTotal = Math.max(r.current, r.total + delta);
+        return {
+          ...r,
+          total: newTotal,
+          status: r.current >= newTotal ? "closed" : r.status,
+        };
+      }),
     );
     onUpdateRoleCount(roleId, delta);
   };
@@ -315,9 +321,24 @@ const TeamManagement = ({
   };
 
   const handleAccept = (appId: string) => {
+    const app = applications.find((a) => a.id === appId);
     setApplications((prev) =>
       prev.map((a) => (a.id === appId ? { ...a, status: "accepted" as const } : a)),
     );
+    // 수락 시 해당 직무 current 증가 → 충원 완료면 자동 마감
+    if (app) {
+      setRoles((prev) =>
+        prev.map((r) => {
+          if (r.name !== app.role) return r;
+          const newCurrent = r.current + 1;
+          return {
+            ...r,
+            current: newCurrent,
+            status: newCurrent >= r.total ? "closed" : r.status,
+          };
+        }),
+      );
+    }
     onAccept(appId);
   };
 
@@ -371,8 +392,8 @@ const TeamManagement = ({
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-white cursor-pointer"
-              style={{ background: "var(--color-primary-hover)" }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer"
+              style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
               <UserPlus className="w-4 h-4" />
               직무 추가하기
