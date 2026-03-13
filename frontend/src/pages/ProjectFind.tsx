@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import ProjectCard from '../components/feature/project/ProjectCard';
 import type { Project } from '../components/feature/project/ProjectCard';
 import ProjectCarouselCard from '../components/feature/project/ProjectCarouselCard';
+import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
 
 const sampleProjects: Project[] = [
   {
@@ -37,6 +39,8 @@ const sampleProjects: Project[] = [
 ];
 
 const ProjectFind = () => {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
   return (
     <div className="min-h-screen bg-gray-100 p-10">
       <h1 className="text-2xl font-black text-[#2d2a24] mb-8">ProjectCard 미리보기</h1>
@@ -45,7 +49,7 @@ const ProjectFind = () => {
           <ProjectCard
             key={project.id}
             project={project}
-            onClick={(p) => console.log('clicked:', p.title)}
+            onClick={(p) => setSelectedProject(p)}
           />
         ))}
       </div>
@@ -56,10 +60,21 @@ const ProjectFind = () => {
           <ProjectCarouselCard
             key={project.id}
             project={project}
-            onClick={(p) => console.log('clicked:', p.title)}
+            onClick={(p) => setSelectedProject(p)}
           />
         ))}
       </div>
+
+      {selectedProject && (
+        <ProjectApplyModal
+          project={selectedProject}
+          onClose={() => setSelectedProject(null)}
+          onApply={(p, pos) => {
+            console.log('지원:', p.title, pos);
+            setSelectedProject(null);
+          }}
+        />
+      )}
     </div>
   );
 };
