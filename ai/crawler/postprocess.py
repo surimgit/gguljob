@@ -87,6 +87,7 @@ def extract_from_text(content: str, job_category: str = "") -> dict | None:
                 response_format={"type": "json_object"},
                 temperature=0,
                 max_tokens=1024,
+                timeout=30,
             )
             return json.loads(resp.choices[0].message.content)
         except Exception as e:
@@ -95,6 +96,8 @@ def extract_from_text(content: str, job_category: str = "") -> dict | None:
                 wait = 2 ** attempt  # 1, 2, 4, 8, 16, 32초
                 print(f"  [429 재시도 {attempt+1}/6] {wait}초 대기...")
                 time.sleep(wait)
+            elif "timeout" in err_str.lower() or "timed out" in err_str.lower():
+                print(f"  [타임아웃 재시도 {attempt+1}/6]")
             else:
                 print(f"  [API 오류] {e}")
                 return None
