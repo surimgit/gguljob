@@ -6,14 +6,20 @@ import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,9 +50,14 @@ public class User extends BaseTimeEntity {
     @Column(length = 4)
     private String mbti;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id")
+    )
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private PositionType role;
+    @Column(name = "role", length = 20)
+    private List<PositionType> roles = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
@@ -76,9 +87,12 @@ public class User extends BaseTimeEntity {
         this.imageUrl = imageUrl;
     }
 
-    public void updateOnboarding(String description, PositionType role, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
+    public void updateOnboarding(String description, List<PositionType> roles, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
         this.description = description;
-        this.role = role;
+        this.roles.clear();
+        if(roles != null) {
+            this.roles.addAll(roles);
+        }
         this.experience = experience;
         this.mbti = mbti;
         this.teamTendency = teamTendency;
@@ -87,7 +101,10 @@ public class User extends BaseTimeEntity {
     //  프로필 정보 수정용
     public void updateProfile(ProfileUpdateRequestDto request) {
         if (request.getDescription() != null) this.description = request.getDescription();
-        if (request.getPosition() != null) this.role = request.getPosition();
+        if (request.getRoles() != null) {
+            this.roles.clear();
+            this.roles.addAll(request.getRoles());
+        }
         if (request.getExperience() != null) this.experience = request.getExperience();
         if (request.getMbti() != null) this.mbti = request.getMbti();
         if (request.getTeamTendency() != null) this.teamTendency = request.getTeamTendency();

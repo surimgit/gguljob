@@ -9,6 +9,7 @@ import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class UserService {
 
         user.updateOnboarding(
             requestDto.getDescription(),
-            requestDto.getPosition(),
+            requestDto.getRoles(),
             requestDto.getExperience(),
             requestDto.getMbti(),
             requestDto.getTeamTendency()
@@ -87,7 +88,7 @@ public class UserService {
             .userName(user.getUserName())
             .imageUrl(user.getImageUrl())
             .description(user.getDescription())
-            .position(user.getRole() != null ? user.getRole().name() : null)
+            .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
             .experience(user.getExperience() != null ? user.getExperience().name() : null)
             .mbti(user.getMbti())
             .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
