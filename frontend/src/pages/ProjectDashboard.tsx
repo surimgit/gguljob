@@ -301,13 +301,21 @@ const ProjectDashboard = () => {
                 </div>
                 <span
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                  style={{ background: "#DCFCE7", color: "#16A34A" }}
+                  style={
+                    gitRepoInfo?.repoUrl
+                      ? { background: "#DCFCE7", color: "#16A34A" }
+                      : { background: "var(--color-border)", color: "var(--color-text-tertiary)" }
+                  }
                 >
                   <span
                     className="w-2 h-2 rounded-full"
-                    style={{ background: "#16A34A" }}
+                    style={{
+                      background: gitRepoInfo?.repoUrl
+                        ? "#16A34A"
+                        : "var(--color-text-tertiary)",
+                    }}
                   />
-                  연동됨
+                  {gitRepoInfo?.repoUrl ? "연동됨" : "미연동"}
                 </span>
               </div>
               <div
