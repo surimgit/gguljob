@@ -1,6 +1,6 @@
 package com.ssafy.gguljob.backend.domain.troubleshooting.service;
 
-import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleShootingResponse;
+import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
 import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,10 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class TroubleshootingService {
     private final TroubleshootingRepository troubleshootingRepository;
 
-    public List<TroubleShootingResponse.Widget> getMyWidgetList(Long userId) {
+    public List<TroubleshootingResponse.Widget> getMyWidgetList(Long userId) {
         return troubleshootingRepository.findTop2ByProject_IdOrderByCreatedAtDesc(userId)
             .stream()
-            .map(TroubleShootingResponse.Widget::from)
+            .map(TroubleshootingResponse.Widget::from)
             .collect(Collectors.toList());
     }
 }

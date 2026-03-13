@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-public class TroubleShootingResponse {
+public class TroubleshootingResponse {
 
     @Getter
     @Builder
