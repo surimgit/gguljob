@@ -73,9 +73,7 @@ const MyPage = () => {
   useEffect(() => {
     getMyProjects()
       .then((res) => {
-        // 백엔드 ApiResponseDto 래핑: res.data = { status, message, data: [...] }
-        const data = res.data?.data ?? res.data ?? [];
-        setMyProjects(Array.isArray(data) ? data : []);
+        setMyProjects(res.data ?? []);
       })
       .catch(() => setMyProjects([]));
   }, []);
