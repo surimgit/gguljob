@@ -302,22 +302,30 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
   const [stacks, setStacks] = useState<string[]>([]);
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputWrapRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listPos, setListPos] = useState({ top: 0, left: 0, width: 0 });
 
-  // 직무 변경 시 기본 스택 세팅
   const handleSelectRole = (role: RoleType) => {
     setSelectedRole(role);
-    const defaults = ROLE_STACKS[role]?.slice(0, 3) ?? [];
-    setStacks(defaults);
+    setStacks([]);
     setStackInput("");
     setHighlightIdx(-1);
   };
 
+  // 리스트박스 위치를 input 기준으로 계산
+  const updateListPos = () => {
+    if (inputWrapRef.current) {
+      const rect = inputWrapRef.current.getBoundingClientRect();
+      setListPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+  };
+
   if (!isOpen) return null;
 
-  // 추천 목록: 직무별 스택 중 이미 추가된 것 제외 + 입력값 필터
   const allSuggestions = selectedRole ? ROLE_STACKS[selectedRole] : [];
+  const quickTags = allSuggestions.filter((s) => !stacks.includes(s));
   const filtered = allSuggestions.filter(
     (s) => !stacks.includes(s) && s.toLowerCase().includes(stackInput.toLowerCase()),
   );
@@ -333,19 +341,32 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
     addStack(value);
     setStackInput("");
     setHighlightIdx(-1);
+    setShowSuggestions(false);
     inputRef.current?.focus();
+  };
+
+  const scrollToItem = (idx: number) => {
+    if (!listRef.current) return;
+    const items = listRef.current.children;
+    if (items[idx]) {
+      (items[idx] as HTMLElement).scrollIntoView({ block: "nearest" });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (showSuggestions && filtered.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setHighlightIdx((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+        const next = highlightIdx < filtered.length - 1 ? highlightIdx + 1 : 0;
+        setHighlightIdx(next);
+        scrollToItem(next);
         return;
       }
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        setHighlightIdx((prev) => (prev > 0 ? prev - 1 : filtered.length - 1));
+        const next = highlightIdx > 0 ? highlightIdx - 1 : filtered.length - 1;
+        setHighlightIdx(next);
+        scrollToItem(next);
         return;
       }
       if (e.key === "Enter" && highlightIdx >= 0) {
@@ -378,7 +399,15 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
       setStackInput(val);
       setShowSuggestions(true);
       setHighlightIdx(-1);
+      updateListPos();
     }
+  };
+
+  const handleInputFocus = () => {
+    if (stackInput) {
+      setShowSuggestions(true);
+    }
+    updateListPos();
   };
 
   const canConfirm = selectedRole !== null && stacks.length > 0;
@@ -396,7 +425,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div
-        className="w-[500px] rounded-[18px] overflow-hidden"
+        className="w-[500px] rounded-[18px]"
         style={{
           background: "var(--color-background)",
           boxShadow: "0px 24px 60px 0px rgba(0,0,0,0.18)",
@@ -567,83 +596,116 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
           >
             Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 삭제
           </p>
-          <div className="relative">
-            <div
-              className="flex flex-wrap items-center gap-1.5 min-h-[48px] px-3 py-2 rounded-[10px]"
-              style={{
-                background: "var(--color-surface)",
-                border: "1.333px solid var(--color-border)",
-              }}
-            >
-              {stacks.map((s) => (
-                <span
-                  key={s}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
+          {/* 추천 태그 (클릭으로 추가) */}
+          {selectedRole && quickTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {quickTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => addStack(tag)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium cursor-pointer transition-colors"
                   style={{
-                    background: "var(--color-border)",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-secondary)",
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--color-primary-soft)";
+                    e.currentTarget.style.borderColor = "var(--color-primary-hover)";
+                    e.currentTarget.style.color = "var(--color-primary-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "var(--color-surface)";
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                    e.currentTarget.style.color = "var(--color-text-secondary)";
+                  }}
                 >
-                  {s}
-                  <button
-                    onClick={() => setStacks(stacks.filter((x) => x !== s))}
-                    className="cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+                  + {tag}
+                </button>
               ))}
-              <input
-                ref={inputRef}
-                value={stackInput}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                placeholder={stacks.length === 0 ? "스택 입력 후 Enter..." : ""}
-                className="flex-1 min-w-[100px] text-[12.5px] font-mono outline-none bg-transparent"
-                style={{ color: "var(--color-text-primary)" }}
-              />
             </div>
+          )}
 
-            {/* 자동완성 리스트박스 */}
-            {showSuggestions && filtered.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute left-0 right-0 top-full mt-1 max-h-[180px] overflow-y-auto rounded-[10px] z-50"
+          {/* 입력 필드 */}
+          <div
+            ref={inputWrapRef}
+            className="flex flex-wrap items-center gap-1.5 min-h-[48px] px-3 py-2 rounded-[10px]"
+            style={{
+              background: "var(--color-surface)",
+              border: "1.333px solid var(--color-border)",
+            }}
+          >
+            {stacks.map((s) => (
+              <span
+                key={s}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
                 style={{
-                  background: "var(--color-surface)",
-                  border: "1px solid var(--color-border)",
-                  boxShadow: "0px 8px 24px 0px rgba(0,0,0,0.12)",
+                  background: "var(--color-border)",
+                  color: "var(--color-text-secondary)",
                 }}
               >
-                {filtered.map((item, idx) => (
-                  <button
-                    key={item}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      selectSuggestion(item);
-                    }}
-                    onMouseEnter={() => setHighlightIdx(idx)}
-                    className="w-full text-left px-3 py-2 text-[12.5px] cursor-pointer flex items-center gap-2"
-                    style={{
-                      background: idx === highlightIdx ? "var(--color-primary-soft)" : "transparent",
-                      color: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-primary)",
-                      borderBottom: idx < filtered.length - 1 ? "1px solid var(--color-border)" : "none",
-                    }}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{
-                        background: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-tertiary)",
-                      }}
-                    />
-                    {item}
-                  </button>
-                ))}
-              </div>
-            )}
+                {s}
+                <button
+                  onClick={() => setStacks(stacks.filter((x) => x !== s))}
+                  className="cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <input
+              ref={inputRef}
+              value={stackInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={handleInputFocus}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder={stacks.length === 0 ? "스택 입력 후 Enter..." : ""}
+              className="flex-1 min-w-[100px] text-[12.5px] font-mono outline-none bg-transparent"
+              style={{ color: "var(--color-text-primary)" }}
+            />
           </div>
+
+          {/* 자동완성 리스트박스 (fixed → 모달 밖으로 렌더링) */}
+          {showSuggestions && filtered.length > 0 && (
+            <div
+              ref={listRef}
+              className="fixed z-[100] h-[180px] overflow-y-auto rounded-[10px]"
+              style={{
+                top: listPos.top,
+                left: listPos.left,
+                width: listPos.width,
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "0px 8px 24px 0px rgba(0,0,0,0.12)",
+              }}
+            >
+              {filtered.map((item, idx) => (
+                <button
+                  key={item}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    selectSuggestion(item);
+                  }}
+                  onMouseEnter={() => setHighlightIdx(idx)}
+                  className="w-full text-left px-3 py-2 text-[12.5px] cursor-pointer flex items-center gap-2"
+                  style={{
+                    background: idx === highlightIdx ? "var(--color-primary-soft)" : "transparent",
+                    color: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-primary)",
+                    borderBottom: idx < filtered.length - 1 ? "1px solid var(--color-border)" : "none",
+                  }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{
+                      background: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-tertiary)",
+                    }}
+                  />
+                  {item}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* 4. 하단 버튼 */}
           <div className="flex gap-4 mt-6">
