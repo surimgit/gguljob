@@ -10,7 +10,7 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import type { PositionType } from '../types/user';
-import type { Project as ApiProject } from '../types/project';
+import type { ProjectSimple } from '../types/project';
 import { useAuthStore } from '../stores/authStore';
 import { getMe } from '../api/user';
 import { getMyProjects } from '../api/projects';
@@ -50,7 +50,7 @@ const MyPage = () => {
     techStacks: [],
     projects: [],
   });
-  const [myProjects, setMyProjects] = useState<ApiProject[]>([]);
+  const [myProjects, setMyProjects] = useState<ProjectSimple[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
