@@ -33,8 +33,8 @@ interface FilterRowProps {
 
 function FilterRow({ label, options, selected, onChange }: FilterRowProps) {
   return (
-    <div className="flex items-center h-[32px] relative w-full">
-      <span className="font-bold text-[#111827] text-[13px] leading-[19.5px] w-[56px] shrink-0">
+    <div className="flex items-start min-h-[32px] relative w-full">
+      <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] w-[56px] shrink-0">
         {label}
       </span>
       <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
