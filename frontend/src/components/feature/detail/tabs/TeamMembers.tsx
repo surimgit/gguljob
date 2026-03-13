@@ -278,6 +278,16 @@ const ROLE_LIST: RoleType[] = [
   "디자인", "데이터/AI", "기획/PM",
 ];
 
+/* ── 직무별 추천 스택 ── */
+const ROLE_STACKS: Record<RoleType, string[]> = {
+  "프론트엔드": ["React", "Vue", "Angular", "Next.js", "Nuxt.js", "TypeScript", "JavaScript", "TailwindCSS", "Svelte", "Redux", "Recoil", "Zustand", "Sass", "Webpack", "Vite"],
+  "백엔드": ["Spring Boot", "Django", "FastAPI", "Express", "NestJS", "Node.js", "Java", "Python", "Go", "Rust", "Kotlin", "JPA", "MyBatis", "GraphQL", "gRPC"],
+  "인프라/DevOps": ["Docker", "Kubernetes", "AWS", "GCP", "Azure", "Jenkins", "Nginx", "Linux", "Terraform", "GitHub Actions", "GitLab CI", "Ansible", "Prometheus", "Grafana"],
+  "디자인": ["Figma", "Adobe XD", "Sketch", "Photoshop", "Illustrator", "Framer", "Zeplin", "InVision", "Principle", "After Effects"],
+  "데이터/AI": ["PyTorch", "TensorFlow", "Scikit-learn", "Pandas", "NumPy", "OpenCV", "HuggingFace", "LangChain", "Spark", "Hadoop", "Airflow", "Kafka", "R", "Tableau"],
+  "기획/PM": ["Jira", "Confluence", "Notion", "Slack", "Figma", "Miro", "Google Analytics", "Amplitude", "Mixpanel", "Asana", "Trello"],
+};
+
 interface RecruitModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -290,8 +300,27 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
   const [count, setCount] = useState(1);
   const [stackInput, setStackInput] = useState("");
   const [stacks, setStacks] = useState<string[]>([]);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // 직무 변경 시 기본 스택 세팅
+  const handleSelectRole = (role: RoleType) => {
+    setSelectedRole(role);
+    const defaults = ROLE_STACKS[role]?.slice(0, 3) ?? [];
+    setStacks(defaults);
+    setStackInput("");
+    setHighlightIdx(-1);
+  };
 
   if (!isOpen) return null;
+
+  // 추천 목록: 직무별 스택 중 이미 추가된 것 제외 + 입력값 필터
+  const allSuggestions = selectedRole ? ROLE_STACKS[selectedRole] : [];
+  const filtered = allSuggestions.filter(
+    (s) => !stacks.includes(s) && s.toLowerCase().includes(stackInput.toLowerCase()),
+  );
 
   const addStack = (value: string) => {
     const trimmed = value.trim();
@@ -300,13 +329,43 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
     }
   };
 
+  const selectSuggestion = (value: string) => {
+    addStack(value);
+    setStackInput("");
+    setHighlightIdx(-1);
+    inputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showSuggestions && filtered.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightIdx((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightIdx((prev) => (prev > 0 ? prev - 1 : filtered.length - 1));
+        return;
+      }
+      if (e.key === "Enter" && highlightIdx >= 0) {
+        e.preventDefault();
+        selectSuggestion(filtered[highlightIdx]);
+        return;
+      }
+    }
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      addStack(stackInput);
-      setStackInput("");
+      if (stackInput.trim()) {
+        addStack(stackInput);
+        setStackInput("");
+        setHighlightIdx(-1);
+      }
     } else if (e.key === "Backspace" && !stackInput && stacks.length > 0) {
       setStacks((prev) => prev.slice(0, -1));
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setHighlightIdx(-1);
     }
   };
 
@@ -317,6 +376,8 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
       setStackInput("");
     } else {
       setStackInput(val);
+      setShowSuggestions(true);
+      setHighlightIdx(-1);
     }
   };
 
@@ -365,13 +426,13 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
             className="text-[20px] font-bold mb-0.5"
             style={{ color: "var(--color-text-primary)" }}
           >
-            팀원 모집하기
+            모집할 직무 추가하기
           </h3>
           <p
             className="text-[12px] mb-5"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            모집할 직무와 요구 스택을 설정하세요
+            필요한 직무와 요구 스택을 설정하세요
           </p>
 
           {/* 1. 직무 선택 */}
@@ -418,7 +479,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
                 <button
                   key={role}
                   disabled={isAdded}
-                  onClick={() => setSelectedRole(role)}
+                  onClick={() => handleSelectRole(role)}
                   className="w-[145px] h-[40px] rounded-[10px] flex items-center gap-2 px-3 text-left"
                   style={btnStyle}
                 >
@@ -506,39 +567,82 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
           >
             Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 삭제
           </p>
-          <div
-            className="flex flex-wrap items-center gap-1.5 min-h-[48px] px-3 py-2 rounded-[10px]"
-            style={{
-              background: "var(--color-surface)",
-              border: "1.333px solid var(--color-border)",
-            }}
-          >
-            {stacks.map((s) => (
-              <span
-                key={s}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
+          <div className="relative">
+            <div
+              className="flex flex-wrap items-center gap-1.5 min-h-[48px] px-3 py-2 rounded-[10px]"
+              style={{
+                background: "var(--color-surface)",
+                border: "1.333px solid var(--color-border)",
+              }}
+            >
+              {stacks.map((s) => (
+                <span
+                  key={s}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
+                  style={{
+                    background: "var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  {s}
+                  <button
+                    onClick={() => setStacks(stacks.filter((x) => x !== s))}
+                    className="cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                ref={inputRef}
+                value={stackInput}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder={stacks.length === 0 ? "스택 입력 후 Enter..." : ""}
+                className="flex-1 min-w-[100px] text-[12.5px] font-mono outline-none bg-transparent"
+                style={{ color: "var(--color-text-primary)" }}
+              />
+            </div>
+
+            {/* 자동완성 리스트박스 */}
+            {showSuggestions && filtered.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute left-0 right-0 top-full mt-1 max-h-[180px] overflow-y-auto rounded-[10px] z-50"
                 style={{
-                  background: "var(--color-border)",
-                  color: "var(--color-text-secondary)",
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  boxShadow: "0px 8px 24px 0px rgba(0,0,0,0.12)",
                 }}
               >
-                {s}
-                <button
-                  onClick={() => setStacks(stacks.filter((x) => x !== s))}
-                  className="cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-            <input
-              value={stackInput}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={stacks.length === 0 ? "스택 입력 후 Enter..." : ""}
-              className="flex-1 min-w-[100px] text-[12.5px] font-mono outline-none bg-transparent"
-              style={{ color: "var(--color-text-primary)" }}
-            />
+                {filtered.map((item, idx) => (
+                  <button
+                    key={item}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(item);
+                    }}
+                    onMouseEnter={() => setHighlightIdx(idx)}
+                    className="w-full text-left px-3 py-2 text-[12.5px] cursor-pointer flex items-center gap-2"
+                    style={{
+                      background: idx === highlightIdx ? "var(--color-primary-soft)" : "transparent",
+                      color: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-primary)",
+                      borderBottom: idx < filtered.length - 1 ? "1px solid var(--color-border)" : "none",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{
+                        background: idx === highlightIdx ? "var(--color-primary-hover)" : "var(--color-text-tertiary)",
+                      }}
+                    />
+                    {item}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 4. 하단 버튼 */}
@@ -705,7 +809,7 @@ const TeamManagement = ({
               style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
               <UserPlus className="w-4 h-4" />
-              직무 추가하기
+              모집 직무 추가
             </button>
           </div>
 
@@ -718,7 +822,7 @@ const TeamManagement = ({
               return (
                 <div
                   key={role.id}
-                  className="rounded-2xl p-4"
+                  className="rounded-2xl p-4 overflow-visible"
                   style={{
                     background: "var(--color-surface)",
                     border: "1px solid var(--color-border)",
