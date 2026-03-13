@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.entity;
 
+import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
@@ -17,10 +18,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
@@ -82,11 +85,11 @@ public class User extends BaseTimeEntity {
     }
 
     //  프로필 정보 수정용
-    public void updateProfile(String description, PositionType role, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
-        if (description != null) this.description = description;
-        if (role != null) this.role = role;
-        if (experience != null) this.experience = experience;
-        if (mbti != null) this.mbti = mbti;
-        if (teamTendency != null) this.teamTendency = teamTendency;
+    public void updateProfile(ProfileUpdateRequestDto request) {
+        if (request.getDescription() != null) this.description = request.getDescription();
+        if (request.getPosition() != null) this.role = request.getPosition();
+        if (request.getExperience() != null) this.experience = request.getExperience();
+        if (request.getMbti() != null) this.mbti = request.getMbti();
+        if (request.getTeamTendency() != null) this.teamTendency = request.getTeamTendency();
     }
 }
