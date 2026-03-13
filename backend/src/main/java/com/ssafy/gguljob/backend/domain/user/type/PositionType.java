@@ -1,5 +1,38 @@
 package com.ssafy.gguljob.backend.domain.user.type;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 public enum PositionType {
-    BE, FE, AI, PM, INFRA, DESIGN
+    BE, FE, AI, PM, INFRA, DESIGN;
+
+    @JsonCreator
+    public static PositionType from(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        // 소문자도 대문자로 변경 (Frontend -> FRONTEND)
+        String upperValue = value.toUpperCase();
+
+        switch (upperValue) {
+            case "FRONTEND":
+            case "FRONT-END":
+            case "FE":
+                return FE;
+            case "BACKEND":
+            case "BACK-END":
+            case "BE":
+                return BE;
+            case "INFRASTRUCTURE":
+            case "INFRA":
+                return INFRA;
+            default:
+                // 매핑 안 된 글자(예: AI, PM)는 그대로 자바 Enum 이름으로 찾기
+                try {
+                    return PositionType.valueOf(upperValue);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("올바르지 않은 역할 값입니다: " + value);
+                }
+        }
+    }
 }
