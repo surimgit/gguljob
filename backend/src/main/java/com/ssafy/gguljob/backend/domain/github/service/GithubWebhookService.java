@@ -45,7 +45,7 @@ public class GithubWebhookService {
                 .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 레포지토리의 웹훅입니다: " + repoUrl));
 
             // 보안 서명 검증 (HMAC SHA-256)
-            //verifySignature(rawPayload, signature, gitRepo.getWebhookSecret());
+            verifySignature(rawPayload, signature, gitRepo.getWebhookSecret());
 
             handlePullRequestEvent(payloadNode, gitRepo);
 
