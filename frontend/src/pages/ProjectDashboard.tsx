@@ -107,6 +107,7 @@ const ProjectDashboard = () => {
   const [keyword, setKeyword] = useState("");
   const [editingRepo, setEditingRepo] = useState(false);
   const [repoInput, setRepoInput] = useState("");
+  const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
@@ -347,41 +348,57 @@ const ProjectDashboard = () => {
 
               {/* 수정 모드 */}
               {editingRepo && (
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={repoInput}
-                    onChange={(e) => setRepoInput(e.target.value)}
-                    placeholder="https://github.com/owner/repo"
-                    className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-                    style={{ border: "1px solid var(--color-border)" }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!id) return;
-                      api.put(`/v1/projects/${id}/git-repo`, { repoUrl: repoInput })
-                        .then(() => {
-                          setEditingRepo(false);
-                          fetchDashboard(Number(id));
-                        })
-                        .catch((err) => {
-                          console.error("레포 저장 실패:", err);
-                        });
-                    }}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
-                    style={{ background: "var(--color-primary-hover)" }}
-                  >
-                    저장
-                  </button>
-                  <button
-                    onClick={() => setEditingRepo(false)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium"
-                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
-                  >
-                    취소
-                  </button>
+                <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={repoInput}
+                      onChange={(e) => setRepoInput(e.target.value)}
+                      placeholder="https://github.com/owner/repo"
+                      className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                      style={{ border: "1px solid var(--color-border)" }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={tokenInput}
+                      onChange={(e) => setTokenInput(e.target.value)}
+                      placeholder="GitHub Personal Access Token"
+                      className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                      style={{ border: "1px solid var(--color-border)" }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+                    />
+                    <button
+                      onClick={() => {
+                        if (!id) return;
+                        api.put(`/v1/projects/${id}/git-repo`, { repoUrl: repoInput, githubToken: tokenInput })
+                          .then(() => {
+                            setEditingRepo(false);
+                            setTokenInput("");
+                            fetchDashboard(Number(id));
+                          })
+                          .catch((err) => {
+                            console.error("레포 저장 실패:", err);
+                          });
+                      }}
+                      disabled={!repoInput || !tokenInput}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ background: "var(--color-primary-hover)" }}
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => { setEditingRepo(false); setTokenInput(""); }}
+                      className="px-3 py-2 rounded-lg text-sm font-medium"
+                      style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+                    >
+                      취소
+                    </button>
+                  </div>
                 </div>
               )}
 
