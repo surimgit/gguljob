@@ -4,7 +4,7 @@ import heroSectionBee from '../../assets/images/herosection_bee.png';
 
 const HeroSection = () => {
   return (
-    <section className="bg-primary-soft min-h-[520px] flex flex-col items-center justify-start relative overflow-hidden pt-14 pb-1">
+    <section className="min-h-[520px] flex flex-col items-center justify-start relative overflow-hidden pt-14 pb-16" style={{ backgroundColor: '#FFFAEB' }}>
       {/* 슬로건 이미지 - 중앙 상단 */}
       <img src={heroSectionSlogan} alt="개발자를 위한 올인원 꿀 서비스" className="h-30 w-auto -mb-20" />
 
