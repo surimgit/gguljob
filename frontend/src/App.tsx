@@ -47,8 +47,8 @@ const AppRoutes = () => {
         setTokens(accessToken, refreshToken);
         return getMe();
       })
-      .then((res) => {
-        setUser(res.data);
+      .then((user) => {
+        setUser(user);
         const url = new URL(window.location.href);
         url.searchParams.delete('login');
         window.history.replaceState(null, '', url.toString());

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ProfileHeader,
   ProjectSummary,
@@ -10,7 +10,10 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import type { PositionType } from '../types/user';
-import { mockProjects } from '../mocks/projects';
+import type { Project as ApiProject } from '../types/project';
+import { useAuthStore } from '../stores/authStore';
+import { getMe } from '../api/user';
+import { getMyProjects } from '../api/projects';
 
 interface Project {
   id: string;
@@ -32,45 +35,50 @@ interface ProfileData {
   projects: Project[];
 }
 
-const INITIAL_PROFILE: ProfileData = {
-  name: '홍길동',
-  role: 'FE',
-  bio: '안녕하세요, 꿀잡을 이용 중인 홍길동입니다.',
-  techStacks: ['React', 'TypeScript', 'Firebase'],
-  projects: [
-    {
-      id: 'p1',
-      name: '꿀잡',
-      description: 'IT 취업 준비생을 위한 플랫폼',
-      emoji: '🍯',
-      bgColor: 'amber',
-      myRole: 'Frontend',
-      period: '2025.01 - 진행중',
-      techStacks: ['React', 'TypeScript'],
-    },
-    {
-      id: 'p2',
-      name: '사이드 프로젝트',
-      description: '개인 포트폴리오 사이트',
-      emoji: '🚀',
-      bgColor: 'green',
-      myRole: 'Fullstack',
-      period: '2024.09 - 2024.12',
-      techStacks: ['Next.js', 'Firebase'],
-    },
-  ],
-};
-
 const POSITION_LABEL: Record<PositionType, string> = {
   FE: 'Frontend', BE: 'Backend', AI: 'AI', PM: 'PM', INFRA: 'Infra', DESIGN: 'Design',
 };
 
 const MyPage = () => {
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE);
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+
+  const [profile, setProfile] = useState<ProfileData>({
+    name: '',
+    role: null,
+    bio: '',
+    techStacks: [],
+    projects: [],
+  });
+  const [myProjects, setMyProjects] = useState<ApiProject[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+
+  // auth store의 유저 정보로 프로필 초기화
+  useEffect(() => {
+    if (!user) return;
+    setProfile((prev) => ({
+      ...prev,
+      name: user.name,
+      role: user.position ?? user.role ?? null,
+      bio: user.description ?? '',
+      avatarUrl: user.profileImage ?? undefined,
+      techStacks: user.techStacks ?? [],
+    }));
+  }, [user]);
+
+  // 내 프로젝트 목록 가져오기 (프로필 수정 모달의 대표 프로젝트 선택용)
+  useEffect(() => {
+    getMyProjects()
+      .then((res) => {
+        // TODO: 백엔드 ApiResponseDto 래핑 구조에 따라 data 추출 필요할 수 있음
+        const data = res.data?.data ?? res.data ?? [];
+        setMyProjects(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setMyProjects([]));
+  }, []);
 
   const handleWithdrawConfirm = () => {
     setIsWithdrawOpen(false);
@@ -84,6 +92,8 @@ const MyPage = () => {
 
   const handleSave = (data: ProfileData) => {
     setProfile(data);
+    // 저장 후 최신 사용자 정보 다시 가져오기
+    getMe().then((u) => setUser(u)).catch(() => {});
   };
 
   return (
@@ -107,7 +117,7 @@ const MyPage = () => {
         onClose={() => setIsProfileModalOpen(false)}
         onEdit={handleOpenEdit}
         user={{
-          id: '1',
+          id: String(user?.id ?? ''),
           name: profile.name,
           role: profile.role ? POSITION_LABEL[profile.role] : '',
           bio: profile.bio,
@@ -121,7 +131,7 @@ const MyPage = () => {
         onClose={() => { setIsEditModalOpen(false); setIsProfileModalOpen(true); }}
         onSave={handleSave}
         initialData={profile}
-        availableProjects={mockProjects}
+        availableProjects={myProjects}
       />
       <WithdrawModal
         isOpen={isWithdrawOpen}
