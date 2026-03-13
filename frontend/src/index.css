@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+html {
+  overflow-x: hidden;
+}
+
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes scroll-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 50s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right 50s linear infinite;
+}
+
+.animate-scroll-left:hover,
+.animate-scroll-right:hover {
+  animation-play-state: paused;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-20px); }
