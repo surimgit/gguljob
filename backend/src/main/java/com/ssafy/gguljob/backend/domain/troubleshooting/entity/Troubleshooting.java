@@ -1,4 +1,4 @@
-package com.ssafy.gguljob.backend.domain.github.entity;
+package com.ssafy.gguljob.backend.domain.troubleshooting.entity;
 
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
