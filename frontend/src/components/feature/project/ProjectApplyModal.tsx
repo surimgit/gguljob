@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import BaseModal from '../../common/BaseModal';
+import ProjectConfirmModal from './ProjectConfirmModal';
 import type { Project } from './ProjectCard';
 import { X } from 'lucide-react';
 
@@ -88,6 +89,7 @@ function PositionCard({
 
 const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps) => {
   const [selectedPosition, setSelectedPosition] = useState<'fe' | 'be' | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const catColor = CATEGORY_COLORS[project.category] ?? DEFAULT_CATEGORY_COLOR;
   const avatarColor = project.author.avatarColor ?? '#43b581';
@@ -189,7 +191,7 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
         {/* 지원 버튼 */}
         <button
           disabled={!selectedPosition}
-          onClick={() => selectedPosition && onApply?.(project, selectedPosition)}
+          onClick={() => selectedPosition && setShowConfirm(true)}
           className={`w-full mt-[24px] py-[16px] rounded-[14px] font-black text-[15px] transition-all ${
             selectedPosition
               ? 'bg-primary text-[#111827] hover:bg-primary-hover shadow-[0px_4px_12px_0px_rgba(247,201,72,0.4)]'
@@ -200,6 +202,20 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
         </button>
 
       </div>
+
+      {showConfirm && selectedPosition && (
+        <ProjectConfirmModal
+          title="지원 완료"
+          subtitle="프로젝트에 지원이 완료되었습니다."
+          confirmText="확인"
+          cancelText="취소"
+          onConfirm={() => {
+            onApply?.(project, selectedPosition);
+            setShowConfirm(false);
+          }}
+          onClose={() => setShowConfirm(false)}
+        />
+      )}
     </BaseModal>
   );
 };
