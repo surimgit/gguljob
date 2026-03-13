@@ -6,68 +6,76 @@ type FeatureItemProps = {
   title: string;
   description: string;
   emoji: string;
+  bg: string;
 };
 
-const FeatureItem = ({ number, badge, title, description, emoji }: FeatureItemProps) => (
-  <div className="flex flex-col md:flex-row items-center gap-10 py-14 border-b border-border last:border-none">
-    {/* 텍스트 */}
-    <div className="flex-1 flex flex-col gap-4">
-      <span className="text-5xl font-extrabold text-primary-hover opacity-40">{number}</span>
-      <span className="inline-flex self-start items-center bg-primary text-text-brown text-xs font-semibold px-3 py-1 rounded-full">
-        {badge}
-      </span>
-      <h3 className="text-3xl font-bold text-text-primary">{title}</h3>
-      <p className="text-text-secondary leading-relaxed">{description}</p>
-    </div>
+const FeatureItem = ({ number, badge, title, description, emoji, bg }: FeatureItemProps) => (
+  <div className="py-14" style={{ backgroundColor: bg }}>
+    <Container>
+      <div className="flex flex-col md:flex-row items-center gap-10 py-12">
+        {/* 텍스트 */}
+        <div className="flex-1 flex flex-col gap-4">
+          <span className="text-5xl font-extrabold text-text-tertiary">{number}</span>
+          <span className="inline-flex self-start items-center bg-primary-hover text-text-brown text-xl font-extrabold px-10 py-2 rounded-full">
+            {badge}
+          </span>
+          <h3 className="text-5xl font-bold text-text-brown">{title}</h3>
+          <p className="text-lg font-semibold text-text-secondary leading-[3rem] whitespace-pre-line mt-4">{description}</p>
+        </div>
 
-    {/* 목업 이미지 플레이스홀더 */}
-    {/* TODO: 실제 스크린샷/목업 이미지로 교체 */}
-    <div className="flex-shrink-0 w-full md:w-96 h-56 bg-white border border-border rounded-2xl shadow-md flex items-center justify-center">
-      <div className="flex flex-col items-center gap-2 text-text-tertiary">
-        <span className="text-5xl">{emoji}</span>
-        <span className="text-sm">미리보기 이미지</span>
+        {/* 목업 이미지 플레이스홀더 */}
+        {/* TODO: 실제 스크린샷/목업 이미지로 교체 */}
+        <div className="flex-shrink-0 w-full md:w-[700px] h-120 bg-white border border-border rounded-2xl shadow-md flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-text-tertiary">
+            <span className="text-5xl">{emoji}</span>
+            <span className="text-sm">미리보기 이미지</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </Container>
   </div>
 );
 
 const FEATURES: FeatureItemProps[] = [
   {
     number: '01',
-    badge: '팀원의 일원이면',
+    badge: '최적의 팀 매칭',
     title: 'Team Building',
     description:
-      '마음이 맞는 개발자를 찾아 팀을 구성하고, 다양한 스택, 직군, 경험 분야별로 원하는 팀프로젝트로 팀을 만들 수 있어요.',
+      '아이디어를 현실로 구현할 팀을 연결해요. \n 기술 스택, 목표, 협업 성향을 바탕으로 \n 나와 잘 맞는 팀원과 프로젝트를 찾을 수 있어요.',
     emoji: '🔍',
+    bg: '#F8EFD2',
   },
   {
     number: '02',
-    badge: '기업 기록 정리',
+    badge: '개발 기록 정리',
     title: 'Trouble Shooting',
     description:
-      '팀 원 전체 현업 기록 정리로 해결된 오류 (개발팀), 클라이언트 문서나 이슈사항 기록을 남기면 팀 내 이슈해결 능력을 높일 수 있어요.',
+      '개발 중 겪은 문제와 해결 과정을 한 곳에 기록해요. \n 흩어지기 쉬운 고민의 흐름을 정리해 \n 나만의 트러블슈팅 자산으로 남길 수 있어요.',
     emoji: '🛠️',
+    bg: '#FFFCF0',
   },
   {
     number: '03',
     badge: '맞춤형 채용 추천',
     title: 'Job Matching',
     description:
-      '내 프로젝트에 등록된 기술스택과 포지션을 토대로 맞춤 채용 공고를 추천해드립니다. 이를 기반으로 이력서까지 한 번에 준비할 수 있어요.',
+      '내 프로젝트 경험과 맞는 채용 공고를 추천받아요. \n 포트폴리오와 연결되는 공고를 빠르게 확인하고 \n 다음 기호까지 자연스럽게 이어갈 수 있어요.',
     emoji: '💼',
+    bg: '#EEE4C6',
   },
 ];
 
 const KeyFeaturesSection = () => (
-  <section className="bg-primary-soft py-20">
-    <Container>
-      <h2 className="text-3xl font-bold text-text-primary mb-2">Key Features</h2>
-      <div>
-        {FEATURES.map((feature) => (
-          <FeatureItem key={feature.number} {...feature} />
-        ))}
-      </div>
-    </Container>
+  <section>
+    <div className="py-10" style={{ backgroundColor: '#FFFAEB' }}>
+      <Container>
+        <h2 className="text-4xl font-bold text-text-brown text-center">Key Features</h2>
+      </Container>
+    </div>
+    {FEATURES.map((feature) => (
+      <FeatureItem key={feature.number} {...feature} />
+    ))}
   </section>
 );
 
