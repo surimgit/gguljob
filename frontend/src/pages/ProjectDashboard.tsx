@@ -11,10 +11,15 @@ import {
   Sparkles,
   RefreshCw,
   GitCommit,
+  Pencil,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
 import { useProjectStore } from "../stores/projectStore";
+import api from "../api/index";
 
 const AI_TOPICS = [
   "GitHub Actions CI/CD 파이프라인 구축",
@@ -100,6 +105,9 @@ const ProjectDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("team");
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [editingRepo, setEditingRepo] = useState(false);
+  const [repoInput, setRepoInput] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
@@ -299,25 +307,84 @@ const ProjectDashboard = () => {
                     Git 레포지토리
                   </span>
                 </div>
-                <span
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                  style={
-                    gitRepoInfo?.repoUrl
-                      ? { background: "#DCFCE7", color: "#16A34A" }
-                      : { background: "var(--color-border)", color: "var(--color-text-tertiary)" }
-                  }
-                >
+                <div className="flex items-center gap-2">
                   <span
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      background: gitRepoInfo?.repoUrl
-                        ? "#16A34A"
-                        : "var(--color-text-tertiary)",
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                    style={
+                      gitRepoInfo?.repoUrl
+                        ? { background: "#DCFCE7", color: "#16A34A" }
+                        : { background: "var(--color-border)", color: "var(--color-text-tertiary)" }
+                    }
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        background: gitRepoInfo?.repoUrl
+                          ? "#16A34A"
+                          : "var(--color-text-tertiary)",
+                      }}
+                    />
+                    {gitRepoInfo?.repoUrl ? "연동됨" : "미연동"}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setEditingRepo(true);
+                      setRepoInput(gitRepoInfo?.repoUrl ?? "");
                     }}
-                  />
-                  {gitRepoInfo?.repoUrl ? "연동됨" : "미연동"}
-                </span>
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                    style={{
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-secondary)",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-background)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
+                  >
+                    <Pencil className="w-3 h-3" />
+                    수정
+                  </button>
+                </div>
               </div>
+
+              {/* 수정 모드 */}
+              {editingRepo && (
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={repoInput}
+                    onChange={(e) => setRepoInput(e.target.value)}
+                    placeholder="https://github.com/owner/repo"
+                    className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                    style={{ border: "1px solid var(--color-border)" }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!id) return;
+                      api.put(`/v1/projects/${id}/git-repo`, { repoUrl: repoInput })
+                        .then(() => {
+                          setEditingRepo(false);
+                          fetchDashboard(Number(id));
+                        })
+                        .catch((err) => {
+                          console.error("레포 저장 실패:", err);
+                        });
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                    style={{ background: "var(--color-primary-hover)" }}
+                  >
+                    저장
+                  </button>
+                  <button
+                    onClick={() => setEditingRepo(false)}
+                    className="px-3 py-2 rounded-lg text-sm font-medium"
+                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+                  >
+                    취소
+                  </button>
+                </div>
+              )}
+
               <div
                 className="flex items-center justify-between px-4 py-3 rounded-xl"
                 style={{
@@ -325,28 +392,60 @@ const ProjectDashboard = () => {
                   background: "var(--color-background)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <svg
-                    className="w-5 h-5"
+                    className="w-5 h-5 flex-shrink-0"
                     style={{ color: "var(--color-text-secondary)" }}
                     viewBox="0 0 24 24"
                     fill="currentColor"
                   >
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                   </svg>
+                  {gitRepoInfo?.repoUrl ? (
+                    <a
+                      href={gitRepoInfo.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-bold truncate hover:underline flex items-center gap-1"
+                      style={{ color: "var(--color-blue)" }}
+                    >
+                      {gitRepoInfo.repoUrl}
+                      <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    </a>
+                  ) : (
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      연동된 레포 없음
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  {gitRepoInfo?.repoUrl && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(gitRepoInfo.repoUrl);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                      style={{
+                        border: "1px solid var(--color-border)",
+                        color: copied ? "#16A34A" : "var(--color-text-secondary)",
+                      }}
+                    >
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copied ? "복사됨" : "복사"}
+                    </button>
+                  )}
                   <span
-                    className="text-sm font-bold"
-                    style={{ color: "var(--color-text-primary)" }}
+                    className="text-xs font-medium"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
-                    {gitRepoInfo?.repoUrl ?? "연동된 레포 없음"}
+                    {gitRepoInfo?.lastSyncTime ? `${formatTime(gitRepoInfo.lastSyncTime)} 동기화` : ""}
                   </span>
                 </div>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {gitRepoInfo?.lastSyncTime ? `${formatTime(gitRepoInfo.lastSyncTime)} 동기화` : ""}
-                </span>
               </div>
             </div>
 
