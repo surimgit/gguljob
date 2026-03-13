@@ -96,8 +96,8 @@ const ProjectFind = () => {
         </p>
 
         <div className="flex flex-col gap-[16px]">
-          <AutoScrollCarousel direction="left" cards={mockProjects} />
-          <AutoScrollCarousel direction="right" cards={mockProjects} />
+          <AutoScrollCarousel direction="left" cards={mockProjects} onCardClick={setSelectedProject} />
+          <AutoScrollCarousel direction="right" cards={mockProjects} onCardClick={setSelectedProject} />
         </div>
       </section>
 
