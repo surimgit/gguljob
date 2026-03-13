@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import ProjectCard from '../components/feature/project/ProjectCard';
 import ProjectFilter from '../components/feature/project/ProjectFilter';
 import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel';
-import { mockProjects } from '../data/mockProjects';
+import { mockProjects } from '../mocks/mockProjects';
 
 const ITEMS_PER_PAGE = 9;
 
