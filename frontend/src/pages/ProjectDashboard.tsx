@@ -13,6 +13,7 @@ import {
   GitCommit,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
+import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
 import { useProjectStore } from "../stores/projectStore";
 
 const AI_TOPICS = [
@@ -176,6 +177,7 @@ const ProjectDashboard = () => {
           })}
         </div>
 
+        {activeTab === "members" && <TeamMembers />}
         {activeTab === "settings" && <ProjectSettings />}
 
         {activeTab === "team" && (
