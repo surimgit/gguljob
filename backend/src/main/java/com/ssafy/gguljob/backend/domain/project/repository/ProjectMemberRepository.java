@@ -7,6 +7,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Long> {
@@ -34,4 +35,12 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     Optional<ProjectMember> findFirstByUserIdAndProjectStatusOrderByProjectCreatedAtDesc(
         Long userId, ProjectStatus status
     );
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ProjectMember pm " +
+        "SET pm.status = 'LEAVE', pm.deletedAt = CURRENT_TIMESTAMP " +
+        "WHERE pm.project.id = :projectId AND pm.user.id IN :userIds AND pm.status = 'ATTEND'")
+    void bulkUpdateStatusToLeave(@Param("projectId") Long projectId, @Param("userIds") List<Long> userIds);
+
+    List<ProjectMember> findAllByProjectIdAndStatus(Long projectId, MemberStatus status);
 }
