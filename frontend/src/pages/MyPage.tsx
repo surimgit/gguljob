@@ -73,7 +73,7 @@ const MyPage = () => {
   useEffect(() => {
     getMyProjects()
       .then((res) => {
-        // TODO: 백엔드 ApiResponseDto 래핑 구조에 따라 data 추출 필요할 수 있음
+        // 백엔드 ApiResponseDto 래핑: res.data = { status, message, data: [...] }
         const data = res.data?.data ?? res.data ?? [];
         setMyProjects(Array.isArray(data) ? data : []);
       })
