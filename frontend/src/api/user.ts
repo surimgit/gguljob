@@ -1,7 +1,25 @@
 import api from './index';
-import type { User } from '../types/user';
+import type { User, PositionType } from '../types/user';
 
-export const getMe = () => api.get<User>('/v1/user/me');
+/** GET /v1/user/me → ApiResponseDto<ProfileResponseDto> 를 User로 매핑 */
+export const getMe = async (): Promise<User> => {
+  const res = await api.get('/v1/user/me');
+  const d = res.data.data;
+  return {
+    id: d.userId,
+    name: d.userName,
+    email: d.email,
+    profileImage: d.imageUrl ?? null,
+    description: d.description ?? null,
+    position: (d.position as PositionType) ?? null,
+    experience: d.experience ?? null,
+    mbti: d.mbti ?? null,
+    teamTendency: d.teamTendency ?? null,
+    skills: d.skills ?? [],
+    techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
+    role: (d.position as PositionType) ?? null,
+  };
+};
 
 export const updateProfile = (data: Partial<Pick<User, 'name' | 'techStacks'>>) =>
   api.patch<User>('/v1/user/me', data);

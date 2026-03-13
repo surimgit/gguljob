@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
@@ -15,15 +16,7 @@ import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
 import { useAuthStore } from './stores/authStore';
-
-const MOCK_USER = {
-  id: 1,
-  name: '테스트 유저',
-  email: 'test@example.com',
-  profileImage: null,
-  techStacks: ['React', 'TypeScript'],
-  role: 'FE' as const,
-};
+import { getMe } from './api/user';
 
 // BrowserRouter 내부에서 navigate를 사용하기 위해 분리
 const AppRoutes = () => {
@@ -44,14 +37,25 @@ const AppRoutes = () => {
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    if (searchParams.get('login') !== null) {
-      setTokens('mock-access-token', 'mock-refresh-token');
-      setUser(MOCK_USER);
-      // 파라미터 제거 후 현재 경로 유지
-      const url = new URL(window.location.href);
-      url.searchParams.delete('login');
-      window.history.replaceState(null, '', url.toString());
-    }
+    if (searchParams.get('login') === null) return;
+
+    const userId = searchParams.get('login') || '1';
+
+    axios.get(`/api/v1/auth/test-login?userId=${userId}`)
+      .then((res) => {
+        const { accessToken, refreshToken } = res.data.data;
+        setTokens(accessToken, refreshToken);
+        return getMe();
+      })
+      .then((user) => {
+        setUser(user);
+        const url = new URL(window.location.href);
+        url.searchParams.delete('login');
+        window.history.replaceState(null, '', url.toString());
+      })
+      .catch((err) => {
+        console.error('[test-login] 실패:', err);
+      });
   }, [searchParams, setTokens, setUser]);
 
   return (

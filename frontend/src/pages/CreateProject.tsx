@@ -34,7 +34,14 @@ const TECH_CATEGORIES = {
 
 type TechCategory = keyof typeof TECH_CATEGORIES;
 
-const POSITIONS = ['Frontend', 'Backend', 'AI', 'PM', 'Infra', 'Design'];
+const POSITIONS = [
+  { label: 'Frontend', value: 'FE' },
+  { label: 'Backend', value: 'BE' },
+  { label: 'AI', value: 'AI' },
+  { label: 'PM', value: 'PM' },
+  { label: 'Infra', value: 'INFRA' },
+  { label: 'Design', value: 'DESIGN' },
+];
 
 /* ── 타입 ── */
 
@@ -116,7 +123,7 @@ const CreateProject = () => {
         title: form.name,
         domain: form.domains[0],
         description: form.description,
-        leaderRole: form.members[0]?.position || 'FRONTEND',
+        leaderRole: form.members[0]?.position || 'FE',
       });
       navigate(`/my-projects/${projectId}`);
     } catch {
@@ -413,7 +420,7 @@ const CreateProject = () => {
               >
                 <option value="">포지션 선택</option>
                 {POSITIONS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>
             </div>

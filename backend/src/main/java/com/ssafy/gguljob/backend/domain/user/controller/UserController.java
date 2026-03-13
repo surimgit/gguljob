@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingS
 import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
+import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.service.UserService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -97,5 +99,18 @@ public class UserController {
         List<TroubleshootingResponse.Widget> responses = troubleshootingService.getMyWidgetList(userId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "마이페이지 위젯 조회", responses));
+    }
+
+    @Operation(summary = "내 프로필 수정", description = "마이페이지에서 내 프로필 정보를 수정합니다.")
+    @PatchMapping("/me/profile")
+    public ResponseEntity<ApiResponseDto<Void>> updateMyProfile(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody ProfileUpdateRequestDto requestDto) {
+
+        log.info("프로필 수정 API 호출 - 요청 유저 ID: {}", userDetails.getId());
+
+        userService.updateMyProfile(userDetails.getId(), requestDto);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필이 성공적으로 수정되었습니다.", null));
     }
 }
