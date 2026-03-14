@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.join.entity;
 
 import com.ssafy.gguljob.backend.domain.join.type.JoinRequestStatus;
+import com.ssafy.gguljob.backend.domain.join.type.JoinRequestType;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
@@ -32,8 +33,9 @@ public class JoinRequest extends BaseTimeEntity {
     @Column(name = "position_id", nullable = false)
     private Long positionId;
 
-    @Column(name = "request_type", length = 20)
-    private String requestType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type", length = 20, nullable = false)
+    private JoinRequestType requestType;
 
     @Column(name = "appeal_content", columnDefinition = "TEXT")
     private String appealContent;
@@ -43,7 +45,7 @@ public class JoinRequest extends BaseTimeEntity {
     private JoinRequestStatus status;
 
     @Builder
-    public JoinRequest(User user, Project project, Long positionId, String requestType, String appealContent) {
+    public JoinRequest(User user, Project project, Long positionId, JoinRequestType requestType, String appealContent) {
         this.user = user;
         this.project = project;
         this.positionId = positionId;
