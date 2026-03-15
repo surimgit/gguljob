@@ -102,27 +102,6 @@ services:
   #       max-file: "3"
 
   # =======================================================
-  # [FastAPI AI Service]
-  # =======================================================
-  ai-service:
-    build:
-      context: ./ai
-    container_name: gguljob-ai-prod
-    environment:
-      - REDIS_HOST=gguljob-redis-prod
-      - REDIS_PORT=6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - gguljob-network
-    depends_on:
-      - redis
-      - neo4j
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # =======================================================
   # [Frontend - React + Nginx]
@@ -182,7 +161,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
@@ -227,7 +205,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
