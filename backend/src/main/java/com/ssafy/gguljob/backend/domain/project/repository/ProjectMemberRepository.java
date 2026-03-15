@@ -3,7 +3,8 @@ package com.ssafy.gguljob.backend.domain.project.repository;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
-import io.lettuce.core.dynamic.annotation.Param;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,7 +26,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     List<Object[]> countRolesByProjectId(@Param("projectId") Long projectId);
 
     // [권한 체크] 특정 유저가 프로젝트 참여 중인지 확인
-    boolean existsByProject_IdAndUser_IdAndStatus(Long projetId, Long userId, MemberStatus status);
+    boolean existsByProject_IdAndUser_IdAndStatus(Long projectId, Long userId, MemberStatus status);
 
     // 참여 중인 팀원의 역할 목록 추출
     @Query("SELECT pm.role FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.status = :status")
