@@ -10,4 +10,6 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     void deleteAllByUser(User user);
 
     List<UserSkill> findAllByUser(User user);
+
+    List<UserSkill> findByUserId(Long userId);
 }

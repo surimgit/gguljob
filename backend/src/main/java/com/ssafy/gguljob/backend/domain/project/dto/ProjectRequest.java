@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.util.List;
 
 public class ProjectRequest {
     // 프로젝트 생성 요청
@@ -31,5 +32,29 @@ public class ProjectRequest {
 
         @NotBlank(message = "GitHub Token은 필수입니다.")
         String githubToken
+    ) {}
+
+    // 프로젝트 상세 내용 수정
+    public record ProjectUpdateRequest(
+        @NotBlank(message = "프로젝트 상태는 필수입니다.")
+        String status, // RECRUITING, PROCEEDING, DONE, STOPPED
+
+        @NotBlank(message = "프로젝트명은 필수입니다.")
+        String title,
+
+        String teamName,
+        String description,
+        String domain,
+
+        @NotNull
+        List<Long> skillIds,
+
+        @NotNull
+        List<MemberDto> members
+    ) {}
+
+    public record MemberDto(
+        @NotNull Long userId,
+        @NotNull(message = "역할은 필수입니다.") PositionType role
     ) {}
 }

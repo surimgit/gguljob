@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export type ProjectStatus = '모집중' | '마감' | `마감 D-${number}`;
 
 export interface Project {
@@ -46,6 +48,7 @@ function getStatusStyle(status: ProjectStatus) {
 }
 
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
+  const [hovered, setHovered] = useState(false);
   const { category, status, title, description, techStack, slots, author } =
     project;
 
@@ -56,10 +59,18 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const visibleTech = techStack.slice(0, 3);
   const extraCount = techStack.length - visibleTech.length;
 
+  const bgColor = hovered
+    ? '#FFF2C6'
+    : status === '마감'
+    ? '#EDEBE6'
+    : '#ffffff';
+
   return (
     <a
-      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full hover:shadow-md hover:border-[#d1d5db] transition-all duration-200"
-      style={{ backgroundColor: status === '마감' ? '#EDEBE6' : '#ffffff' }}
+      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
+      style={{ backgroundColor: bgColor }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(project)}
     >
       {/* 상단: 카테고리 + 상태 */}
