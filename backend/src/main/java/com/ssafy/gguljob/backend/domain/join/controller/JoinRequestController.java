@@ -53,4 +53,28 @@ public class JoinRequestController {
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "사용자 초대 요청이 전송되었습니다.", null));
     }
+
+    // 프로젝트 참여/초대 수락
+    @Operation(summary = "프로젝트 참여/초대 수락", description = "팀 리더가 지원을 수락하거나, 유저가 팀 초대를 수락합니다.")
+    @PostMapping("/requests/{requestId}/accept")
+    public ResponseEntity<ApiResponseDto<Void>> acceptJoinRequest(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long requestId) {
+
+        joinRequestService.acceptRequest(userDetails.getId(), requestId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "요청이 처리(수락)되었습니다.", null));
+    }
+
+    // 프로젝트 참여/초대 거절
+    @Operation(summary = "프로젝트 참여/초대 거절", description = "팀 리더가 지원을 거절하거나, 유저가 팀 초대를 거절합니다.")
+    @PostMapping("/requests/{requestId}/reject")
+    public ResponseEntity<ApiResponseDto<Void>> rejectJoinRequest(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long requestId) {
+
+        joinRequestService.rejectRequest(userDetails.getId(), requestId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "요청이 처리(거절)되었습니다.", null));
+    }
 }
