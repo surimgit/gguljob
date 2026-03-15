@@ -60,4 +60,11 @@ public class JoinRequest extends BaseTimeEntity {
         }
         this.status = JoinRequestStatus.ACCEPTED;
     }
+
+    public void reject() {
+        if (this.status != JoinRequestStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 요청만 거절할 수 있습니다.");
+        }
+        this.status = JoinRequestStatus.REJECTED;
+    }
 }

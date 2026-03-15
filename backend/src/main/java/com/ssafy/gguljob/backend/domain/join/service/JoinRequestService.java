@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.join.service;
 
+import com.ssafy.gguljob.backend.domain.join.dto.JoinSubmitRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
@@ -8,16 +9,15 @@ import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
-import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +25,7 @@ public class JoinRequestService {
     private final JoinRequestRepository joinRequestRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+
     private final ProjectPositionRepository projectPositionRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -54,21 +55,23 @@ public class JoinRequestService {
     @Transactional
     public void inviteUser(Long leaderId, Long projectId, Long targetUserId, Long positionId) {
         Project project = projectRepository.findById(projectId).orElseThrow();
-        User targetUser = userRepository.findById(targetUserId).orElseThrow();
 
-        // 팀 리더인지 확인하는 로직 추가
+        // 초대 권한 검증 (리더만 초대 가능)
         if (!project.getLeader().getId().equals(leaderId)) {
             throw new IllegalArgumentException("프로젝트 리더만 팀원을 초대할 수 있습니다.");
         }
+
         if (joinRequestRepository.existsByProjectIdAndUserId(projectId, targetUserId)) {
             throw new IllegalArgumentException("이미 초대했거나 지원한 유저입니다.");
         }
+
+        User targetUser = userRepository.findById(targetUserId).orElseThrow();
 
         JoinRequest joinRequest = JoinRequest.builder()
             .user(targetUser)
             .project(project)
             .positionId(positionId)
-            .requestType(JoinRequestType.INVITE) 
+            .requestType(JoinRequestType.INVITE)
             .appealContent("프로젝트 리더의 초대입니다.")
             .build();
 
@@ -80,27 +83,22 @@ public class JoinRequestService {
         JoinRequest joinRequest = joinRequestRepository.findById(requestId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요청입니다."));
 
-        // 권한 검증 (APPLY / INVITE)
+        // 권한 빡세게 검증
         if (joinRequest.getRequestType() == JoinRequestType.APPLY) {
-            // APPLY(지원): 로그인한 유저가 프로젝트의 리더인지 확인
             if (!joinRequest.getProject().getLeader().getId().equals(loginUserId)) {
                 throw new IllegalArgumentException("프로젝트 리더만 수락할 수 있습니다.");
             }
         } else if (joinRequest.getRequestType() == JoinRequestType.INVITE) {
-            // INVITE(초대): 로그인한 유저가 '초대받은 당사자'인지 확인
             if (!joinRequest.getUser().getId().equals(loginUserId)) {
                 throw new IllegalArgumentException("본인에게 온 초대만 수락할 수 있습니다.");
             }
         }
 
-        // 상태를 ACCEPTED로 변경
         joinRequest.accept();
 
-        // 포지션 조회
         ProjectPosition projectPosition = projectPositionRepository.findById(joinRequest.getPositionId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포지션입니다."));
 
-        // 프로젝트 멤버 테이블에 추가
         ProjectMember newMember = ProjectMember.builder()
             .project(joinRequest.getProject())
             .user(joinRequest.getUser())
@@ -110,7 +108,6 @@ public class JoinRequestService {
             .build();
         projectMemberRepository.save(newMember);
 
-        // 알림 이벤트 발행
         Long targetNotifyUserId = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? joinRequest.getUser().getId()
             : joinRequest.getProject().getLeader().getId();
@@ -123,5 +120,38 @@ public class JoinRequestService {
             targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_ACCEPT"
         ));
     }
-}
 
+    // 프로젝트 합류/초대 거절 로직
+    @Transactional
+    public void rejectRequest(Long loginUserId, Long requestId) {
+        JoinRequest joinRequest = joinRequestRepository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요청입니다."));
+
+        // 권한 검증 (수락 로직과 동일)
+        if (joinRequest.getRequestType() == JoinRequestType.APPLY) {
+            if (!joinRequest.getProject().getLeader().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("프로젝트 리더만 거절할 수 있습니다.");
+            }
+        } else if (joinRequest.getRequestType() == JoinRequestType.INVITE) {
+            if (!joinRequest.getUser().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("본인에게 온 초대만 거절할 수 있습니다.");
+            }
+        }
+
+        // 상태를 REJECTED로 변경
+        joinRequest.reject();
+
+        // 알림 이벤트 발행
+        Long targetNotifyUserId = (joinRequest.getRequestType() == JoinRequestType.APPLY)
+            ? joinRequest.getUser().getId()
+            : joinRequest.getProject().getLeader().getId();
+
+        String message = (joinRequest.getRequestType() == JoinRequestType.APPLY)
+            ? "프로젝트 합류가 거절되었습니다."
+            : joinRequest.getUser().getUserName() + "님이 초대를 거절했습니다.";
+
+        eventPublisher.publishEvent(new JoinRequestEvent(
+            targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_REJECT"
+        ));
+    }
+}
