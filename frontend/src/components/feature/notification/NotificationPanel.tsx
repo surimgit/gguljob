@@ -18,46 +18,53 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
 ];
 
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
-const NotifIcon = ({ type }: { type: NotifType }) => {
-  if (type === 'team_accept') {
-    return (
-      <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, background: '#e8e8f5' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <polyline points="17 11 19 13 23 9" />
-        </svg>
-      </div>
-    );
-  }
-  if (type === 'join_request') {
-    return (
-      <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, background: '#f0e8f5' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <line x1="19" y1="8" x2="19" y2="14" />
-          <line x1="16" y1="11" x2="22" y2="11" />
-        </svg>
-      </div>
-    );
-  }
-  if (type === 'job_posting') {
-    return (
-      <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, background: '#e8f5e8' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-        </svg>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 40, height: 40, border: '2px solid #e05555' }}>
+const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }> = {
+  team_accept: {
+    wrapperClass: 'bg-[#e8e8f5]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <polyline points="17 11 19 13 23 9" />
+      </svg>
+    ),
+  },
+  join_request: {
+    wrapperClass: 'bg-[#f0e8f5]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  job_posting: {
+    wrapperClass: 'bg-[#e8f5e8]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+      </svg>
+    ),
+  },
+  team_reject: {
+    wrapperClass: 'border-2 border-[#e05555]',
+    iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05555" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="6" x2="6" y2="18" />
         <line x1="6" y1="6" x2="18" y2="18" />
       </svg>
+    ),
+  },
+};
+
+const NotifIcon = ({ type }: { type: NotifType }) => {
+  const { wrapperClass, iconEl } = ICON_CONFIG[type];
+  return (
+    <div className={`flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ${wrapperClass}`}>
+      {iconEl}
     </div>
   );
 };
