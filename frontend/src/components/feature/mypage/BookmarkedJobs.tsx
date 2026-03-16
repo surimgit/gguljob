@@ -1,6 +1,6 @@
 import { Bookmark, ChevronRight } from 'lucide-react';
-import mypageImg from '../../../assets/images/mypage.png';
 import { Link } from 'react-router-dom';
+import { SectionEmptyState } from '../../common';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type DeadlineVariant = 'urgent' | 'normal' | 'open';
@@ -63,18 +63,6 @@ const BookmarkItem = ({ job }: { job: BookmarkedJob }) => (
   </Link>
 );
 
-// ── 빈 상태 ────────────────────────────────────────────────────────────────────
-const EmptyState = () => (
-  <div className="flex items-center justify-center w-full h-full">
-    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
-      <img src={mypageImg} alt="북마크 없음" className="w-24 h-24 object-contain" />
-      <p className="text-[13px] font-bold text-text-brown text-center">
-        북마크한 채용공고가 없습니다.
-      </p>
-    </div>
-  </div>
-);
-
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const BookmarkedJobs = () => (
   <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
@@ -102,7 +90,7 @@ const BookmarkedJobs = () => (
           ))}
         </div>
       ) : (
-        <EmptyState />
+        <SectionEmptyState message="북마크한 채용공고가 없습니다." />
       )}
     </div>
   </div>

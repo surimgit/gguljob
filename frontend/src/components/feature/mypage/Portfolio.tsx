@@ -1,5 +1,5 @@
 import { Briefcase, FilePlus } from 'lucide-react';
-import mypageImg from '../../../assets/images/mypage.png';
+import { SectionEmptyState } from '../../common';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface PortfolioItem {
@@ -29,18 +29,6 @@ const PortfolioCard = ({ item }: { item: PortfolioItem }) => (
     <span className="self-start mt-4 px-2.5 py-1 rounded-md text-[10px] text-text-secondary border border-border bg-[#f9fafb]">
       {item.theme}
     </span>
-  </div>
-);
-
-// ── 빈 상태 ────────────────────────────────────────────────────────────────────
-const EmptyState = () => (
-  <div className="flex items-center justify-center w-full h-full">
-    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
-      <img src={mypageImg} alt="포트폴리오 없음" className="w-24 h-24 object-contain" />
-      <p className="text-[13px] font-bold text-text-brown text-center">
-        등록된 포트폴리오가 없습니다.
-      </p>
-    </div>
   </div>
 );
 
@@ -76,7 +64,7 @@ const Portfolio = () => (
           <NewPortfolioButton />
         </div>
       ) : (
-        <EmptyState />
+        <SectionEmptyState message="등록된 포트폴리오가 없습니다." />
       )}
     </div>
   </div>

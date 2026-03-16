@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ProjectSimple } from '../../../types/project';
-import mypageImg from '../../../assets/images/mypage.png';
+import { SectionEmptyState } from '../../common';
 
 // ── 태그 색상 (기술스택 순서 기반으로 blue/yellow/gray 번갈아 적용) ──────────────
 const TAG_PALETTE = [
@@ -53,18 +53,6 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => (
   </Link>
 );
 
-// ── 빈 상태 ────────────────────────────────────────────────────────────────────
-const EmptyState = () => (
-  <div className="flex items-center justify-center w-full h-full">
-    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
-      <img src={mypageImg} alt="등록된 프로젝트 없음" className="w-24 h-24 object-contain" />
-      <p className="text-[13px] font-bold text-text-brown text-center">
-        등록된 프로젝트가 없어요.
-      </p>
-    </div>
-  </div>
-);
-
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 interface ProjectSummaryProps {
   projects: ProjectSimple[];
@@ -95,7 +83,7 @@ const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
 
       {/* 최신 진행 중 프로젝트 or 빈 상태 — 남은 공간 채움 */}
       <div className="flex-1">
-        {latestProject ? <ProjectCard project={latestProject} /> : <EmptyState />}
+        {latestProject ? <ProjectCard project={latestProject} /> : <SectionEmptyState message="등록된 프로젝트가 없어요." />}
       </div>
     </div>
   );
