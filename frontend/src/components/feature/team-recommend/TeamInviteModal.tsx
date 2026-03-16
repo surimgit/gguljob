@@ -55,7 +55,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName }: TeamInviteModalProps) 
 
       {/* 콘텐츠 */}
       <div className="px-8 py-5">
-        <h2 className="text-lg font-bold text-text-primary mb-1">팀 초대하기</h2>
+        <h2 className="text-lg font-bold text-text-primary mb-1">{memberName}님을 팀에 초대하기</h2>
         <p className="text-sm text-text-secondary mb-4">초대할 프로젝트와 직무를 선택하세요</p>
 
         {/* 프로젝트 선택 */}
