@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.notification.controller;
 
 import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto;
+import com.ssafy.gguljob.backend.domain.notification.dto.UnreadCountResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
@@ -79,5 +80,15 @@ public class NotificationController {
 
         notificationService.deleteAllNotifications(userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "모든 알림이 삭제되었습니다.", null));
+    }
+
+    // 안 읽은 알림 개수 조회
+    @Operation(summary = "안 읽은 알림 개수 조회", description = "사용자의 확인하지 않은 알림 총 개수를 조회합니다. (GNB 종 모양 아이콘 뱃지용)")
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponseDto<UnreadCountResponseDto>> getUnreadCount(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        UnreadCountResponseDto response = notificationService.getUnreadCount(userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "안 읽은 알림 개수 조회 성공", response));
     }
 }
