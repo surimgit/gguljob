@@ -52,6 +52,13 @@ public class JoinRequestService {
             .build();
 
         joinRequestRepository.save(joinRequest);
+
+        eventPublisher.publishEvent(new JoinRequestEvent(
+            project.getLeader().getId(),
+            projectId,
+            user.getUserName() + "님이 " + project.getTitle() + " 프로젝트에 지원했습니다.",
+            "JOIN_APPLY"
+        ));
     }
 
     // 팀 리더 -> 유저 초대
@@ -79,6 +86,13 @@ public class JoinRequestService {
             .build();
 
         joinRequestRepository.save(joinRequest);
+
+        eventPublisher.publishEvent(new JoinRequestEvent(
+            targetUserId,
+            projectId,
+            project.getTitle() + " 프로젝트에 초대되었습니다.",
+            "JOIN_INVITE"
+        ));
     }
 
     // 프로젝트 합류/초대 수락 로직
