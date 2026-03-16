@@ -1,4 +1,5 @@
 import { Bookmark, ChevronRight } from 'lucide-react';
+import mypageImg from '../../../assets/images/mypage.png';
 import { Link } from 'react-router-dom';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -64,15 +65,19 @@ const BookmarkItem = ({ job }: { job: BookmarkedJob }) => (
 
 // ── 빈 상태 ────────────────────────────────────────────────────────────────────
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-tertiary">
-    <Bookmark className="w-8 h-8 opacity-30" />
-    <p className="text-sm">북마크한 채용공고가 없습니다.</p>
+  <div className="flex items-center justify-center w-full h-full">
+    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
+      <img src={mypageImg} alt="북마크 없음" className="w-24 h-24 object-contain" />
+      <p className="text-[13px] font-bold text-[#705401] text-center">
+        북마크한 채용공고가 없습니다.
+      </p>
+    </div>
   </div>
 );
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const BookmarkedJobs = () => (
-  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full">
+  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
     {/* 섹션 헤더 */}
     <div className="flex items-center justify-between mb-6">
       <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
@@ -89,15 +94,17 @@ const BookmarkedJobs = () => (
     </div>
 
     {/* 북마크 목록 */}
-    {MOCK_BOOKMARKS.length > 0 ? (
-      <div className="flex flex-col gap-3">
-        {MOCK_BOOKMARKS.slice(0, 2).map((job) => (
-          <BookmarkItem key={job.id} job={job} />
-        ))}
-      </div>
-    ) : (
-      <EmptyState />
-    )}
+    <div className="flex-1">
+      {MOCK_BOOKMARKS.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {MOCK_BOOKMARKS.slice(0, 2).map((job) => (
+            <BookmarkItem key={job.id} job={job} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState />
+      )}
+    </div>
   </div>
 );
 

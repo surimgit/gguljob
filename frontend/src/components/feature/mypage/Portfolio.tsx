@@ -1,4 +1,5 @@
 import { Briefcase, FilePlus } from 'lucide-react';
+import mypageImg from '../../../assets/images/mypage.png';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface PortfolioItem {
@@ -31,6 +32,18 @@ const PortfolioCard = ({ item }: { item: PortfolioItem }) => (
   </div>
 );
 
+// ── 빈 상태 ────────────────────────────────────────────────────────────────────
+const EmptyState = () => (
+  <div className="flex items-center justify-center w-full h-full">
+    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
+      <img src={mypageImg} alt="포트폴리오 없음" className="w-24 h-24 object-contain" />
+      <p className="text-[13px] font-bold text-[#705401] text-center">
+        등록된 포트폴리오가 없습니다.
+      </p>
+    </div>
+  </div>
+);
+
 // ── 새 포트폴리오 버튼 ─────────────────────────────────────────────────────────
 const NewPortfolioButton = () => (
   <button
@@ -44,7 +57,7 @@ const NewPortfolioButton = () => (
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const Portfolio = () => (
-  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full">
+  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
     {/* 섹션 헤더 */}
     <div className="flex items-center mb-6">
       <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
@@ -54,11 +67,17 @@ const Portfolio = () => (
     </div>
 
     {/* 카드 그리드 */}
-    <div className="flex gap-4">
-      {MOCK_PORTFOLIOS.map((item) => (
-        <PortfolioCard key={item.id} item={item} />
-      ))}
-      <NewPortfolioButton />
+    <div className="flex-1">
+      {MOCK_PORTFOLIOS.length > 0 ? (
+        <div className="flex gap-4 h-full">
+          {MOCK_PORTFOLIOS.map((item) => (
+            <PortfolioCard key={item.id} item={item} />
+          ))}
+          <NewPortfolioButton />
+        </div>
+      ) : (
+        <EmptyState />
+      )}
     </div>
   </div>
 );

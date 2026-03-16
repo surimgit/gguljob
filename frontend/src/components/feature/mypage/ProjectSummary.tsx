@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ProjectSimple } from '../../../types/project';
+import mypageImg from '../../../assets/images/mypage.png';
 
 // ── 태그 색상 (기술스택 순서 기반으로 blue/yellow/gray 번갈아 적용) ──────────────
 const TAG_PALETTE = [
@@ -54,9 +55,13 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => (
 
 // ── 빈 상태 ────────────────────────────────────────────────────────────────────
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-tertiary">
-    <span className="text-3xl">📂</span>
-    <p className="text-sm">진행 중인 프로젝트가 없습니다.</p>
+  <div className="flex items-center justify-center w-full h-full">
+    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
+      <img src={mypageImg} alt="등록된 프로젝트 없음" className="w-24 h-24 object-contain" />
+      <p className="text-[13px] font-bold text-[#705401] text-center">
+        등록된 프로젝트가 없어요.
+      </p>
+    </div>
   </div>
 );
 
