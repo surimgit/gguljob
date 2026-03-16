@@ -14,6 +14,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,5 +34,16 @@ public class NotificationController {
 
         Page<NotificationResponseDto> response = notificationService.getMyNotifications(userDetails.getId(), pageable);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "알림 목록 조회 성공", response));
+    }
+
+    // 특정 알림 읽음 처리 API 구현
+    @Operation(summary = "특정 알림 읽음 처리", description = "단일 알림을 읽음 상태로 변경합니다.")
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<ApiResponseDto<Void>> readNotification(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long notificationId) {
+
+        notificationService.readNotification(userDetails.getId(), notificationId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 읽음 처리되었습니다.", null));
     }
 }
