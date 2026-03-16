@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.notification.service;
 
 import com.ssafy.gguljob.backend.domain.notification.dto.NotificationReadStatusResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto;
+import com.ssafy.gguljob.backend.domain.notification.dto.UnreadCountResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
 import com.ssafy.gguljob.backend.domain.notification.repository.NotificationRepository;
 import com.ssafy.gguljob.backend.global.exception.NotificationAccessDeniedException;
@@ -71,5 +72,12 @@ public class NotificationService {
     @Transactional
     public void deleteAllNotifications(Long userId) {
         notificationRepository.deleteAllByUserId(userId);
+    }
+
+    // 안 읽은 알림 개수 조회
+    @Transactional(readOnly = true)
+    public UnreadCountResponseDto getUnreadCount(Long userId) {
+        long count = notificationRepository.countByUserIdAndIsReadFalse(userId);
+        return new UnreadCountResponseDto(count);
     }
 }
