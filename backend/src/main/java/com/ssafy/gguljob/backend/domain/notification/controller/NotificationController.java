@@ -37,7 +37,7 @@ public class NotificationController {
         return ResponseEntity.ok(new ApiResponseDto<>(200, "알림 목록 조회 성공", response));
     }
 
-    // 특정 알림 읽음 처리 API 구현
+    // 특정 알림 읽음 처리
     @Operation(summary = "특정 알림 읽음 처리", description = "단일 알림을 읽음 상태로 변경합니다.")
     @PatchMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponseDto<NotificationReadStatusResponseDto>> readNotification(
@@ -47,5 +47,15 @@ public class NotificationController {
         NotificationReadStatusResponseDto responseDto = notificationService.readNotification(userDetails.getId(), notificationId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 읽음 처리되었습니다.", responseDto));
+    }
+
+    // 전체 알림 읽음 처리
+    @Operation(summary = "전체 알림 읽음 처리", description = "내 모든 미확인 알림을 한 번에 읽음 상태로 변경합니다.")
+    @PatchMapping("/read-all")
+    public ResponseEntity<ApiResponseDto<Void>> readAllNotifications(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        notificationService.readAllNotifications(userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "모든 알림이 읽음 처리되었습니다.", null));
     }
 }

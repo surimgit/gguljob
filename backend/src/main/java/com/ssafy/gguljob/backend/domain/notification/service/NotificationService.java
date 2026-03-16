@@ -44,4 +44,10 @@ public class NotificationService {
             .isRead(notification.getIsRead())
             .build();
     }
+
+    // 전체 알림 읽음 처리
+    @Transactional
+    public void readAllNotifications(Long userId) {
+        notificationRepository.markAllAsReadByUserId(userId);
+    }
 }
