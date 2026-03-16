@@ -66,4 +66,10 @@ public class NotificationService {
         // 삭제 처리
         notificationRepository.delete(notification);
     }
+
+    // 전체 알림 삭제
+    @Transactional
+    public void deleteAllNotifications(Long userId) {
+        notificationRepository.deleteAllByUserId(userId);
+    }
 }

@@ -70,4 +70,14 @@ public class NotificationController {
         notificationService.deleteNotification(userDetails.getId(), notificationId);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 삭제되었습니다.", null));
     }
+
+    // 전체 알림 삭제
+    @Operation(summary = "전체 알림 삭제", description = "내 모든 알림을 삭제합니다. (모두 지우기 버튼 클릭 시)")
+    @DeleteMapping("/all")
+    public ResponseEntity<ApiResponseDto<Void>> deleteAllNotifications(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        notificationService.deleteAllNotifications(userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "모든 알림이 삭제되었습니다.", null));
+    }
 }
