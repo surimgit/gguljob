@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,5 +58,16 @@ public class NotificationController {
 
         notificationService.readAllNotifications(userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "모든 알림이 읽음 처리되었습니다.", null));
+    }
+
+    // 특정 알림 삭제
+    @Operation(summary = "특정 알림 삭제", description = "단일 알림을 삭제합니다. (알림창에서 개별 X 버튼 클릭 시)")
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteNotification(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long notificationId) {
+
+        notificationService.deleteNotification(userDetails.getId(), notificationId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 삭제되었습니다.", null));
     }
 }
