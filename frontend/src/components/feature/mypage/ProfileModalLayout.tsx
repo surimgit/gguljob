@@ -45,6 +45,7 @@ interface ProfileModalLayoutProps {
   onClose: () => void;
   user: ProfileUser;
   actionButton: ReactNode;
+  containerClassName?: string;
 }
 
 type StackState = { page: number; pages: string[][] };
@@ -61,7 +62,7 @@ const stackReducer = (state: StackState, action: StackAction): StackState => {
   }
 };
 
-const ProfileModalLayout = ({ isOpen, onClose, user, actionButton }: ProfileModalLayoutProps) => {
+const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClassName = "bg-white rounded-3xl w-[900px] overflow-hidden shadow-2xl" }: ProfileModalLayoutProps) => {
   const [{ page: stackPage, pages }, dispatch] = useReducer(stackReducer, { page: 0, pages: [[]] });
   const containerHeight = MAX_ROWS_PER_PAGE * 40 + (MAX_ROWS_PER_PAGE - 1) * 8;
   const measureRef = useRef<HTMLDivElement>(null);
@@ -94,7 +95,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton }: ProfileModa
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      containerClassName="bg-white rounded-3xl w-[720px] overflow-hidden shadow-2xl"
+      containerClassName={containerClassName}
     >
       {/* 상단 바 */}
       <div className="h-14 bg-primary w-full relative flex items-center justify-end px-5">
@@ -139,7 +140,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton }: ProfileModa
             <div
               ref={measureRef}
               className="flex flex-wrap gap-2 invisible absolute"
-              style={{ width: 'calc(720px - 360px - 24px - 48px - 16px)' }}
+              style={{ width: 'calc(900px - 580px - 24px - 48px - 16px)' }}
               aria-hidden="true"
             >
               {user.techStacks.map((stack, i) => (
@@ -206,7 +207,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton }: ProfileModa
           </div>
 
           {/* 대표 프로젝트 섹션 */}
-          <div className="w-[360px] flex-shrink-0">
+          <div className="w-[580px] flex-shrink-0">
             <h3 className="flex items-center gap-2 text-base font-bold text-text-primary mb-4">
               🚀 대표 프로젝트
             </h3>
