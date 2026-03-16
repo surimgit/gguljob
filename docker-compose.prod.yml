@@ -150,7 +150,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
 
       - AI_SERVICE_URL=http://gguljob-ai-prod:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
@@ -194,7 +194,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
 
       - AI_SERVICE_URL=http://gguljob-ai-prod:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}

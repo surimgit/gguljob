@@ -6,6 +6,10 @@ spring:
   profiles:
     active: local
 
+  threads:
+      virtual:
+        enabled: true
+
   security:
     oauth2:
       client:
@@ -41,3 +45,7 @@ springdoc:
     operations-sorter: method
   api-docs:
     path: /api-docs
+
+gms:
+  api:
+    key: ${GMS_API_KEY}
