@@ -1,15 +1,30 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { logoutApi } from '../../api/user';
 import Container from '../common/Container';
 import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
 import gguljobLogo from '../../assets/images/gguljob_logo.png';
+import NotificationPanel from '../feature/notification/NotificationPanel';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotification(false);
+      }
+    };
+    if (showNotification) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotification]);
 
   const handleLogout = async () => {
     try {
@@ -71,11 +86,18 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <div className="flex items-center gap-5">
-              <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </button>
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setShowNotification(prev => !prev)}
+                  className="text-icon hover:text-text-primary transition-colors"
+                  aria-label="알림"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                {showNotification && <NotificationPanel />}
+              </div>
               <button className="text-icon hover:text-text-primary transition-colors" aria-label="프로필">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
