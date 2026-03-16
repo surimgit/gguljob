@@ -4,9 +4,11 @@ import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
+import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectDashboardService;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
+import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -102,5 +104,15 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
+    // 팀원 관리 (모집 현황, 현재 팀원, 참가 신청 현황)
+    @Operation(summary = "팀원 관리 페이지 상세 조회", description = "프로젝트 리더가 팀원 관리 페이지의 모든 정보(모집, 멤버, 신청)를 조회합니다.")
+    @GetMapping("/{projectId}/members/detail")
+    public ResponseEntity<ApiResponseDto<TeamManagementResponseDto>> getTeamManagementDetail(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
 
+        TeamManagementResponseDto response = projectService.getTeamManagementDetail(userDetails.getId(), projectId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 관리 페이지 조회가 완료되었습니다.", response));
+    }
 }

@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.join.controller;
 
+import com.ssafy.gguljob.backend.domain.join.dto.InviteUserRequestDto;
 import com.ssafy.gguljob.backend.domain.join.dto.JoinSubmitRequestDto;
 import com.ssafy.gguljob.backend.domain.join.service.JoinRequestService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
@@ -47,9 +48,9 @@ public class JoinRequestController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long projectId,
         @PathVariable("userId") Long targetUserId,
-        @RequestBody JoinSubmitRequestDto requestDto) {
+        @RequestBody InviteUserRequestDto requestDto) {
 
-        joinRequestService.inviteUser(userDetails.getId(), projectId, targetUserId, requestDto.getPositionId());
+        joinRequestService.inviteUser(userDetails.getId(), projectId, targetUserId, requestDto.getRole(), requestDto.getAppealContent());
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "사용자 초대 요청이 전송되었습니다.", null));
     }

@@ -1,7 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.service;
 
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
-import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
 import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
@@ -99,7 +98,7 @@ public class UserService {
             .userId(user.getId())
             .email(user.getEmail())
             .userName(user.getUserName())
-            .imageUrl(user.getImageUrl())
+            .imageUrl(user.getProfileImageUrl())
             .description(user.getDescription())
             .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
             .experience(user.getExperience() != null ? user.getExperience().name() : null)
@@ -187,7 +186,7 @@ public class UserService {
         return ProfileResponseDto.builder()
             .userId(user.getId())
             .userName(user.getUserName())
-            .imageUrl(user.getImageUrl())
+            .imageUrl(user.getProfileImageUrl())
             .description(user.getDescription())
             .roles(user.getRoles() != null
                 ? user.getRoles().stream().map(Enum::name).toList()

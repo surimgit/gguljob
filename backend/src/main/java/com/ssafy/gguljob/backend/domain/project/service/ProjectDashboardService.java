@@ -124,7 +124,7 @@ public class ProjectDashboardService {
             .stream()
             .map(pr -> new ProjectResponse.ActivityLogDto(
                 pr.getUser().getUserName(),
-                pr.getUser().getImageUrl(),
+                pr.getUser().getProfileImageUrl(),
                 pr.getTitle(),
                 pr.getBranchName(),
                 pr.getCreatedAt(),
