@@ -5,14 +5,24 @@ import { logoutApi } from '../../api/user';
 import Container from '../common/Container';
 import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
 import gguljobLogo from '../../assets/images/gguljob_logo.png';
-import NotificationPanel from '../feature/notification/NotificationPanel';
+import NotificationPanel, { INITIAL_NOTIFICATIONS } from '../feature/notification/NotificationPanel';
+import type { Notification } from '../feature/notification/NotificationPanel';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const handleDeleteNotif = (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleClearAllNotifs = () => {
+    setNotifications([]);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -96,7 +106,14 @@ const Navbar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </button>
-                {showNotification && <NotificationPanel />}
+                {showNotification && (
+                  <NotificationPanel
+                    notifications={notifications}
+                    onDelete={handleDeleteNotif}
+                    onClearAll={handleClearAllNotifs}
+                    onClose={() => setShowNotification(false)}
+                  />
+                )}
               </div>
               <Link to="/mypage" className="text-icon hover:text-text-primary transition-colors" aria-label="마이페이지">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
