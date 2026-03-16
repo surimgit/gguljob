@@ -1,5 +1,5 @@
-import goldMedalImg from '../../../assets/images/gold medal.png';
-import silverMedalImg from '../../../assets/images/silver medal.png';
+import goldMedalImg from '../../../assets/images/goldMedal.png';
+import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
 
@@ -99,7 +99,7 @@ const JobCard = ({
     }}
   >
     {/* 랭킹 메달 — 원이 카드 위로 돌출, 리본이 원 하단부를 가로지름 */}
-    <div className="absolute" style={{ top: '-48px', left: '6px' }}>
+    <div className="absolute" style={{ top: rank === 3 ? '-44px' : '-48px', left: '6px' }}>
       <RankMedal rank={rank} />
     </div>
 
