@@ -20,6 +20,10 @@ const Navbar = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  const handleMarkReadNotif = (id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
   const handleClearAllNotifs = () => {
     setNotifications([]);
   };
@@ -99,17 +103,23 @@ const Navbar = () => {
               <div className="relative flex items-center" ref={notifRef}>
                 <button
                   onClick={() => setShowNotification(prev => !prev)}
-                  className="text-icon hover:text-text-primary transition-colors"
+                  className="relative text-icon hover:text-text-primary transition-colors"
                   aria-label="알림"
                 >
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-error text-white text-[10px] font-bold leading-none">
+                      {notifications.filter(n => !n.isRead).length}
+                    </span>
+                  )}
                 </button>
                 {showNotification && (
                   <NotificationPanel
                     notifications={notifications}
                     onDelete={handleDeleteNotif}
+                    onMarkRead={handleMarkReadNotif}
                     onClearAll={handleClearAllNotifs}
                     onClose={() => setShowNotification(false)}
                   />
