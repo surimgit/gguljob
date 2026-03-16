@@ -19,7 +19,6 @@ interface JobListing {
   deadline: string;
   match: MatchType;
   techStacks: string[];
-  isBookmarked?: boolean;
 }
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
@@ -66,7 +65,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-04-30',
     match: 'suitable',
     techStacks: ['React', 'TypeScript', 'Next.js'],
-    isBookmarked: true,
   },
   {
     id: 2,
@@ -82,7 +80,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-04-15',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
-    isBookmarked: false,
   },
   {
     id: 3,
@@ -98,7 +95,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-05-10',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
-    isBookmarked: true,
   },
   {
     id: 4,
@@ -115,7 +111,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-03-31',
     match: 'insufficient',
     techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
-    isBookmarked: false,
   },
   {
     id: 5,
@@ -131,7 +126,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-04-20',
     match: 'average',
     techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
-    isBookmarked: false,
   },
   {
     id: 6,
@@ -147,7 +141,6 @@ const MOCK_JOBS: JobListing[] = [
     deadline: '2026-04-25',
     match: 'average',
     techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
-    isBookmarked: true,
   },
 ];
 
@@ -315,9 +308,7 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(
-    new Set(MOCK_JOBS.filter(j => j.isBookmarked).map(j => j.id))
-  );
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set([1, 3, 6]));
 
   const toggleBookmark = (id: number) => {
     setBookmarkedIds(prev => {
@@ -328,16 +319,16 @@ const JobListingSection = () => {
   };
 
   // 필터링 → 정렬 → 페이지네이션
-  const byStack =
+  const jobsFilteredByStack =
     activeFilter === '전체'
       ? MOCK_JOBS
       : MOCK_JOBS.filter(job => job.techStacks.includes(activeFilter));
 
-  const filtered = showBookmarked
-    ? byStack.filter(job => bookmarkedIds.has(job.id))
-    : byStack;
+  const finalFilteredJobs = showBookmarked
+    ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
+    : jobsFilteredByStack;
 
-  const sorted = sortJobs(filtered, activeSort);
+  const sorted = sortJobs(finalFilteredJobs, activeSort);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / JOBS_PER_PAGE));
   const pagedJobs = sorted.slice(
