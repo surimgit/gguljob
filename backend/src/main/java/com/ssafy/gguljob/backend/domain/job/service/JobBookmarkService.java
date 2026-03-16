@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.job.service;
 
+import com.ssafy.gguljob.backend.domain.job.dto.JobBookmarkResponseDto;
 import com.ssafy.gguljob.backend.domain.job.entity.JobBookmark;
 import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
 import com.ssafy.gguljob.backend.domain.job.repository.JobBookmarkRepository;
@@ -7,6 +8,8 @@ import com.ssafy.gguljob.backend.domain.job.repository.JobPostingRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,5 +44,12 @@ public class JobBookmarkService {
             jobBookmarkRepository.save(newBookmark);
             return true;
         }
+    }
+
+    // 내 채용공고 북마크 목록 조회
+    @Transactional(readOnly = true)
+    public Page<JobBookmarkResponseDto> getMyBookmarkedJobs(Long userId, Pageable pageable) {
+        return jobBookmarkRepository.findByUserIdWithJobPosting(userId, pageable)
+            .map(bookmark -> JobBookmarkResponseDto.from(bookmark.getJobPosting()));
     }
 }
