@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
+import com.ssafy.gguljob.backend.domain.notification.dto.NotificationReadStatusResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +40,12 @@ public class NotificationController {
     // 특정 알림 읽음 처리 API 구현
     @Operation(summary = "특정 알림 읽음 처리", description = "단일 알림을 읽음 상태로 변경합니다.")
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<ApiResponseDto<Void>> readNotification(
+    public ResponseEntity<ApiResponseDto<NotificationReadStatusResponseDto>> readNotification(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long notificationId) {
 
-        notificationService.readNotification(userDetails.getId(), notificationId);
-        return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 읽음 처리되었습니다.", null));
+        NotificationReadStatusResponseDto responseDto = notificationService.readNotification(userDetails.getId(), notificationId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "알림이 읽음 처리되었습니다.", responseDto));
     }
 }
