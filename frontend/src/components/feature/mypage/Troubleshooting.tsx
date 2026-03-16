@@ -1,5 +1,6 @@
 import { Wrench, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SectionEmptyState } from '../../common';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type TroubleshootingStatus = 'resolved' | 'in_progress';
@@ -50,17 +51,9 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => (
   </div>
 );
 
-// ── 빈 상태 ────────────────────────────────────────────────────────────────────
-const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-tertiary">
-    <Wrench className="w-8 h-8 opacity-30" />
-    <p className="text-sm">등록된 트러블슈팅이 없습니다.</p>
-  </div>
-);
-
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const Troubleshooting = () => (
-  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full">
+  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
     {/* 섹션 헤더 */}
     <div className="flex items-center justify-between mb-6">
       <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
@@ -77,15 +70,17 @@ const Troubleshooting = () => (
     </div>
 
     {/* 목록 */}
-    {MOCK_TROUBLESHOOTINGS.length > 0 ? (
-      <div className="flex flex-col gap-3">
-        {MOCK_TROUBLESHOOTINGS.map((item) => (
-          <TroubleshootingCard key={item.id} item={item} />
-        ))}
-      </div>
-    ) : (
-      <EmptyState />
-    )}
+    <div className="flex-1">
+      {MOCK_TROUBLESHOOTINGS.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {MOCK_TROUBLESHOOTINGS.map((item) => (
+            <TroubleshootingCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <SectionEmptyState message="등록된 트러블슈팅이 없습니다." />
+      )}
+    </div>
   </div>
 );
 

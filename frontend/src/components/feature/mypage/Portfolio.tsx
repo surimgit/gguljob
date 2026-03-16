@@ -1,4 +1,5 @@
 import { Briefcase, FilePlus } from 'lucide-react';
+import { SectionEmptyState } from '../../common';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface PortfolioItem {
@@ -44,7 +45,7 @@ const NewPortfolioButton = () => (
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const Portfolio = () => (
-  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full">
+  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
     {/* 섹션 헤더 */}
     <div className="flex items-center mb-6">
       <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
@@ -54,11 +55,17 @@ const Portfolio = () => (
     </div>
 
     {/* 카드 그리드 */}
-    <div className="flex gap-4">
-      {MOCK_PORTFOLIOS.map((item) => (
-        <PortfolioCard key={item.id} item={item} />
-      ))}
-      <NewPortfolioButton />
+    <div className="flex-1">
+      {MOCK_PORTFOLIOS.length > 0 ? (
+        <div className="flex gap-4 h-full">
+          {MOCK_PORTFOLIOS.map((item) => (
+            <PortfolioCard key={item.id} item={item} />
+          ))}
+          <NewPortfolioButton />
+        </div>
+      ) : (
+        <SectionEmptyState message="등록된 포트폴리오가 없습니다." />
+      )}
     </div>
   </div>
 );
