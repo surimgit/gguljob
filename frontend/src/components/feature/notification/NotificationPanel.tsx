@@ -6,15 +6,16 @@ export interface Notification {
   type: NotifType;
   message: string;
   time: string;
+  isRead: boolean;
 }
 
 // ── 초기 더미 데이터 (Navbar에서 state 초기값으로 사용) ──────────────────────
 export const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: 1, type: 'team_accept',  message: "'DevMatch' 팀원으로 수락되었습니다.",                 time: '10분 전' },
-  { id: 2, type: 'join_request', message: "'React 스터디'에 새로운 참가 요청이 도착했습니다.",   time: '1시간 전' },
-  { id: 3, type: 'job_posting',  message: "'토스(Toss)'의 프론트엔드 새 공고가 등록되었습니다.", time: '3시간 전' },
-  { id: 4, type: 'team_reject',  message: "'사이드 프로젝트 A' 팀 합류가 거절되었습니다.",       time: '1일 전' },
-  { id: 5, type: 'join_request', message: "'알고리즘 스터디'에 새로운 참가 요청이 도착했습니다.", time: '2일 전' },
+  { id: 1, type: 'team_accept',  message: "'DevMatch' 팀원으로 수락되었습니다.",                  time: '10분 전',  isRead: false },
+  { id: 2, type: 'join_request', message: "'React 스터디'에 새로운 참가 요청이 도착했습니다.",    time: '1시간 전', isRead: false },
+  { id: 3, type: 'job_posting',  message: "'토스(Toss)'의 프론트엔드 새 공고가 등록되었습니다.",  time: '3시간 전', isRead: true  },
+  { id: 4, type: 'team_reject',  message: "'사이드 프로젝트 A' 팀 합류가 거절되었습니다.",        time: '1일 전',   isRead: true  },
+  { id: 5, type: 'join_request', message: "'알고리즘 스터디'에 새로운 참가 요청이 도착했습니다.", time: '2일 전',   isRead: false },
 ];
 
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
@@ -70,23 +71,50 @@ const NotifIcon = ({ type }: { type: NotifType }) => {
 };
 
 // ── 알림 아이템 ───────────────────────────────────────────────────────────────
-const NotificationItem = ({ notif, onDelete }: { notif: Notification; onDelete: (id: number) => void }) => (
-  <div className="group flex items-start gap-3.5 bg-surface rounded-xl px-5 pt-4 pb-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+const NotificationItem = ({
+  notif,
+  onDelete,
+  onMarkRead,
+}: {
+  notif: Notification;
+  onDelete: (id: number) => void;
+  onMarkRead: (id: number) => void;
+}) => (
+  <div
+    onClick={() => !notif.isRead && onMarkRead(notif.id)}
+    className={`group flex items-start gap-3.5 rounded-xl px-5 pt-4 pb-4 transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${
+      notif.isRead
+        ? 'bg-[#f9fafb] shadow-none cursor-default'
+        : 'bg-surface shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] cursor-pointer'
+    }`}
+  >
     <NotifIcon type={notif.type} />
+
     <div className="flex flex-col gap-1 flex-1 min-w-0">
-      <p className="text-[14px] text-text-primary leading-[21px]">{notif.message}</p>
+      <p className={`text-[14px] leading-[21px] ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
+        {notif.message}
+      </p>
       <p className="text-[12px] text-text-tertiary leading-[19px]">{notif.time}</p>
     </div>
-    <button
-      onClick={() => onDelete(notif.id)}
-      aria-label="알림 삭제"
-      className="flex-shrink-0 mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-text-primary transition-all duration-150"
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    </button>
+
+    {/* 오른쪽: 안 읽은 파란 점 (hover 시 삭제 버튼으로 교체) */}
+    <div className="flex-shrink-0 flex items-center self-stretch">
+      {!notif.isRead && (
+        <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
+      )}
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
+        aria-label="알림 삭제"
+        className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
+          notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
+        }`}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
   </div>
 );
 
@@ -108,11 +136,12 @@ const EmptyState = () => (
 interface NotificationPanelProps {
   notifications: Notification[];
   onDelete: (id: number) => void;
+  onMarkRead: (id: number) => void;
   onClearAll: () => void;
   onClose: () => void;
 }
 
-const NotificationPanel = ({ notifications, onDelete, onClearAll, onClose }: NotificationPanelProps) => (
+const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => (
   <div className="absolute right-0 top-full mt-2 flex flex-col overflow-hidden z-50 w-[360px] bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)]">
     {/* 헤더 */}
     <div className="flex items-center justify-between px-5 h-[57px] bg-primary-hover">
@@ -122,6 +151,11 @@ const NotificationPanel = ({ notifications, onDelete, onClearAll, onClose }: Not
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         <span className="text-white font-bold text-[16px]">알림</span>
+        {notifications.some(n => !n.isRead) && (
+          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white text-primary-hover text-[11px] font-bold">
+            {notifications.filter(n => !n.isRead).length}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-3">
         {notifications.length > 0 && (
@@ -145,12 +179,14 @@ const NotificationPanel = ({ notifications, onDelete, onClearAll, onClose }: Not
       </div>
     </div>
 
-    {/* 알림 목록 or 빈 상태 */}
+    {/* 알림 목록 or 빈 상태 (안 읽은 알림 먼저) */}
     <div className="flex flex-col gap-1.5 p-3 overflow-y-auto max-h-[420px]">
       {notifications.length > 0 ? (
-        notifications.map(notif => (
-          <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} />
-        ))
+        [...notifications]
+          .sort((a, b) => Number(a.isRead) - Number(b.isRead))
+          .map(notif => (
+            <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
+          ))
       ) : (
         <EmptyState />
       )}
