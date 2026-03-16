@@ -74,7 +74,7 @@ public class GithubOAuthService {
             User newUser = User.builder()
                 .email(finalEmail)
                 .userName(finalName)
-                .imageUrl(userInfo.getAvatar_url())
+                .profileImageUrl(userInfo.getAvatar_url())
                 .authority(RoleType.ROLE_USER)
                 .build();
             user = userRepository.save(newUser);

@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.join.type.JoinRequestStatus;
 import com.ssafy.gguljob.backend.domain.join.type.JoinRequestType;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -30,8 +31,12 @@ public class JoinRequest extends BaseTimeEntity {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "position_id", nullable = false)
+    @Column(name = "position_id")
     private Long positionId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 50)
+    private PositionType role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "request_type", length = 20, nullable = false)
@@ -45,10 +50,11 @@ public class JoinRequest extends BaseTimeEntity {
     private JoinRequestStatus status;
 
     @Builder
-    public JoinRequest(User user, Project project, Long positionId, JoinRequestType requestType, String appealContent) {
+    public JoinRequest(User user, Project project, Long positionId, JoinRequestType requestType,PositionType role, String appealContent) {
         this.user = user;
         this.project = project;
         this.positionId = positionId;
+        this.role = role;
         this.requestType = requestType;
         this.appealContent = appealContent;
         this.status = JoinRequestStatus.PENDING;

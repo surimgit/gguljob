@@ -19,7 +19,7 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
     List<PullRequest> findTop5ByProject_IdOrderByCreatedAtDesc(Long projectId);
 
     // MR 가장 많이 올린 사람 조회
-    @Query("SELECT pr.user.id as userId, pr.user.userName as userName, pr.user.imageUrl as profileImageUrl, COUNT(pr.id) as mrCount " +
+    @Query("SELECT pr.user.id as userId, pr.user.userName as userName, pr.user.profileImageUrl as profileImageUrl, COUNT(pr.id) as mrCount " +
         "FROM PullRequest pr WHERE pr.project.id = :projectId " +
         "GROUP BY pr.user.id ORDER BY COUNT(pr.id) DESC")
     List<MrRankingProjection> findMrRankingByProjectId(@Param("projectId") Long projectId, Pageable pageable);

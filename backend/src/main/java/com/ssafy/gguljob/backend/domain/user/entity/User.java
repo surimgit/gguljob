@@ -17,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "users")
@@ -68,23 +70,28 @@ public class User extends BaseTimeEntity {
     private TeamTendency teamTendency;
 
     @Column(name = "profile_image_url", length = 255)
-    private String imageUrl;
+    private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private RoleType authority;
 
+    // 유저의 기술 스택 조회를 위한 OneToMany 매핑
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<com.ssafy.gguljob.backend.domain.skill.entity.UserSkill> userSkills = new ArrayList<>();
+
     @Builder
-    public User(String userName, String email, String imageUrl, RoleType authority) {
+    public User(String userName, String email, String profileImageUrl, RoleType authority) {
         this.userName = userName;
         this.email = email;
-        this.imageUrl = imageUrl;
+        this.profileImageUrl = profileImageUrl;
         this.authority = authority;
     }
 
     public void updateGithubProfile(String userName, String imageUrl) {
         this.userName = userName;
-        this.imageUrl = imageUrl;
+        this.profileImageUrl = imageUrl;
     }
 
     public void updateOnboarding(String description, List<PositionType> roles, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
@@ -111,6 +118,6 @@ public class User extends BaseTimeEntity {
     }
 
     public void updateImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        this.profileImageUrl = imageUrl;
     }
 }
