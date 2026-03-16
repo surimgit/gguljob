@@ -86,7 +86,7 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <div className="flex items-center gap-5">
-              <div className="relative" ref={notifRef}>
+              <div className="relative flex items-center" ref={notifRef}>
                 <button
                   onClick={() => setShowNotification(prev => !prev)}
                   className="text-icon hover:text-text-primary transition-colors"
