@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 interface ProjectApplyModalProps {
   project: Project;
   onClose: () => void;
-  onApply?: (project: Project, position: 'fe' | 'be') => void;
+  onApply?: (project: Project, position: 'fe' | 'be', intro: string) => void;
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -233,7 +233,7 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
           subtitle="프로젝트에 지원이 완료되었습니다."
           confirmText="확인"
           onConfirm={() => {
-            onApply?.(project, selectedPosition);
+            onApply?.(project, selectedPosition, intro);
             setShowConfirm(false);
           }}
           onClose={() => setShowConfirm(false)}
