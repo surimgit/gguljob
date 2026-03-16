@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -47,4 +48,19 @@ public class Notification extends BaseTimeEntity {
 
     @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT")
     private Boolean isRead = false;
+
+    @Builder
+    public Notification(User user, NotificationCategory category, String content, Long referenceId, String referenceUrl) {
+        this.user = user;
+        this.category = category;
+        this.content = content;
+        this.referenceId = referenceId;
+        this.referenceUrl = referenceUrl;
+        this.isRead = false;
+    }
+
+    // 읽음 처리용
+    public void markAsRead() {
+        this.isRead = true;
+    }
 }
