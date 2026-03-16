@@ -1,16 +1,26 @@
 package com.ssafy.gguljob.backend.domain.ai.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
-import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_logs")
@@ -53,7 +63,7 @@ public class ChatLog {
         this.content = content;
     }
 
-    // 트러블슈팅 생성 후 호출할 메서드
+    // 트러블슈팅 생성 후 호출 메서드
     public void markAsProcessed() {
         this.isProcessed = true;
     }
