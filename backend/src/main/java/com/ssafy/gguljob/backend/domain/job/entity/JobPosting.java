@@ -35,6 +35,12 @@ public class JobPosting extends BaseTimeEntity {
     @Column(nullable = false, length = 200)
     private String title;
 
+    @Column(name = "experience_level", length = 100)
+    private String experienceLevel;
+
+    @Column(length = 100)
+    private String salary;
+
     @Column(length = 200)
     private String hyperlink;
 
@@ -55,7 +61,7 @@ public class JobPosting extends BaseTimeEntity {
     @Column(name = "origin_job_id", length = 100)
     private String originJobId;
 
-    @Column(name = "job_category", length = 50)
+    @Column(name = "job_category", length = 255)
     private String jobCategory;
 
     @Column(name = "tech_stacks", columnDefinition = "TEXT")
