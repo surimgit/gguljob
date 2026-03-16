@@ -116,17 +116,7 @@ const RecommendCard = ({
       {/* 프로필 보기 버튼 */}
       <button
         onClick={onClickProfile}
-        className="mt-auto mx-auto px-13 py-3 rounded-xl text-base font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-        style={{
-          background: "var(--color-primary)",
-          color: "white",
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "var(--color-primary-hover)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.background = "var(--color-primary)")
-        }
+        className="mt-auto mx-auto px-13 py-3 rounded-xl text-base font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer bg-primary hover:bg-primary-hover text-white"
       >
         프로필 보기
         <ChevronRight className="w-4 h-4" />

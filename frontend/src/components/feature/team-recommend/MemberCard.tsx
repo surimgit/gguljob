@@ -41,16 +41,7 @@ const MemberCard = ({
   return (
     <button
       onClick={onClickProfile}
-      className="flex flex-col w-full rounded-2xl p-5 text-left transition-all cursor-pointer shadow-md"
-      style={{
-        background: "var(--color-surface)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--color-primary-soft)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--color-surface)";
-      }}
+      className="flex flex-col w-full rounded-2xl p-5 text-left transition-all cursor-pointer shadow-md bg-surface hover:bg-primary-soft"
     >
       {/* 1행: 프로필 이미지 + 이름/포지션/숙련도 + 적합도 배지 */}
       <div className="flex items-center gap-3 mb-3">
