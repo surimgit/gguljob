@@ -2,45 +2,91 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
 import MemberCard from "../components/feature/team-recommend/MemberCard";
+import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
+import type { ProfileUser, ProfileProject } from "../components/feature/mypage/ProfileModalLayout";
 import beeImg from "../assets/images/memberfind.png";
+
+/* ── 타입 정의 ── */
+interface MemberData {
+  id: string;
+  name: string;
+  position: string;
+  level: string;
+  matchRate: number;
+  introduction: string;
+  techStacks: string[];
+  profileImage: string;
+  projects: ProfileProject[];
+}
 
 /* ── 필터 옵션 ── */
 const POSITION_FILTERS = ["전체", "Frontend", "Backend", "Full Stack", "DevOps"];
 const LEVEL_FILTERS = ["전체", "초급", "중급", "고급"];
 
-/* ── 목 데이터 ── */
-const MOCK_RECOMMENDED = [
+/* ── 목 프로젝트 데이터 ── */
+const MOCK_PROJECTS: ProfileProject[] = [
   {
-    name: "이서준",
-    position: "Backend",
-    level: "고급",
-    matchRate: 95,
-    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
-    techStacks: ["Spring Boot", "MySQL", "Docker"],
-    profileImage: "",
+    id: "p1",
+    name: "MatchUp",
+    description: "AI 기반 실시간 매칭 플랫폼 서비스",
+    emoji: "🎯",
+    bgColor: "amber" as const,
+    myRole: "프론트엔드 리드",
+    period: "2025.01 - 2025.03",
+    techStacks: ["React", "TypeScript", "Next.js"],
   },
   {
-    name: "이서준",
-    position: "Backend",
-    level: "고급",
-    matchRate: 95,
-    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
-    techStacks: ["Spring Boot", "MySQL", "Docker"],
-    profileImage: "",
-  },
-  {
-    name: "이서준",
-    position: "Backend",
-    level: "고급",
-    matchRate: 95,
-    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
-    techStacks: ["Spring Boot", "MySQL", "Docker"],
-    profileImage: "",
+    id: "p2",
+    name: "StudyMate",
+    description: "스터디 그룹 매칭 및 학습 관리 플랫폼",
+    emoji: "🚀",
+    bgColor: "green" as const,
+    myRole: "프론트엔드 개발",
+    period: "2024.09 - 2024.12",
+    techStacks: ["Next.js", "Python"],
   },
 ];
 
-const MOCK_MEMBERS = [
+/* ── 목 데이터 ── */
+const MOCK_RECOMMENDED: MemberData[] = [
   {
+    id: "r1",
+    name: "이서준",
+    position: "Backend",
+    level: "고급",
+    matchRate: 95,
+    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
+    techStacks: ["Spring Boot", "MySQL", "Docker"],
+    profileImage: "",
+    projects: MOCK_PROJECTS,
+  },
+  {
+    id: "r2",
+    name: "이서준",
+    position: "Backend",
+    level: "고급",
+    matchRate: 95,
+    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
+    techStacks: ["Spring Boot", "MySQL", "Docker"],
+    profileImage: "",
+    projects: MOCK_PROJECTS,
+  },
+  {
+    id: "r3",
+    name: "이서준",
+    position: "Backend",
+    level: "고급",
+    matchRate: 95,
+    introduction: "Spring Boot와 JPA 기반 API 설계 경험 2년\n최근 MSA 전환 프로젝트에 참여",
+    techStacks: ["Spring Boot", "MySQL", "Docker"],
+    profileImage: "",
+    projects: MOCK_PROJECTS,
+  },
+];
+
+const MOCK_MEMBERS: MemberData[] = [
+  {
+    id: "m1",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -48,17 +94,21 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m2",
     name: "박도현",
     position: "Frontend",
     level: "고급",
     matchRate: 89,
-    introduction: "대규모 트래픽 처리 경험 보유\n실시간 데이터 파이프라인 및 검색 넣단 최적화 전문",
+    introduction: "대규모 트래픽 처리 경험 보유\n실시간 데이터 파이프라인 및 데이터 최적화 전문",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m3",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -66,8 +116,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m4",
     name: "박도현",
     position: "Frontend",
     level: "고급",
@@ -75,8 +127,10 @@ const MOCK_MEMBERS = [
     introduction: "대규모 트래픽 처리 경험 보유\n실시간 데이터 파이프라인 및 검색 넣단 최적화 전문",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m5",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -84,8 +138,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m6",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -93,8 +149,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m7",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -102,8 +160,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m8",
     name: "박도현",
     position: "Frontend",
     level: "고급",
@@ -111,8 +171,10 @@ const MOCK_MEMBERS = [
     introduction: "대규모 트래픽 처리 경험 보유\n실시간 데이터 파이프라인 및 검색 넣단 최적화 전문",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m9",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -120,8 +182,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m10",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -129,8 +193,10 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m11",
     name: "박도현",
     position: "Frontend",
     level: "고급",
@@ -138,8 +204,10 @@ const MOCK_MEMBERS = [
     introduction: "대규모 트래픽 처리 경험 보유\n실시간 데이터 파이프라인 및 검색 넣단 최적화 전문",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
   {
+    id: "m12",
     name: "강선관",
     position: "Frontend",
     level: "고급",
@@ -147,6 +215,7 @@ const MOCK_MEMBERS = [
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
     techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
+    projects: MOCK_PROJECTS,
   },
 ];
 
@@ -156,6 +225,7 @@ const MemberRecommend = () => {
   const [positionFilter, setPositionFilter] = useState("전체");
   const [levelFilter, setLevelFilter] = useState("전체");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
 
   // 필터 적용
   const filtered = MOCK_MEMBERS.filter((m) => {
@@ -174,8 +244,15 @@ const MemberRecommend = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleClickProfile = (name: string) => {
-    console.log("프로필 클릭:", name);
+  const handleClickProfile = (member: typeof MOCK_MEMBERS[0]) => {
+    setSelectedUser({
+      id: member.id,
+      name: member.name,
+      role: member.position,
+      bio: member.introduction,
+      techStacks: member.techStacks,
+      projects: member.projects,
+    });
   };
 
   return (
@@ -287,7 +364,7 @@ const MemberRecommend = () => {
             <RecommendCard
               key={`recommend-${idx}`}
               {...m}
-              onClickProfile={() => handleClickProfile(m.name)}
+              onClickProfile={() => handleClickProfile(m)}
             />
           ))}
         </div>
@@ -305,7 +382,7 @@ const MemberRecommend = () => {
             <MemberCard
               key={`${m.name}-${idx}`}
               {...m}
-              onClickProfile={() => handleClickProfile(m.name)}
+              onClickProfile={() => handleClickProfile(m)}
             />
           ))}
         </div>
@@ -349,6 +426,15 @@ const MemberRecommend = () => {
           </div>
         )}
       </div>
+
+      {/* ── 프로필 모달 ── */}
+      {selectedUser && (
+        <MemberProfileModal
+          isOpen={!!selectedUser}
+          onClose={() => setSelectedUser(null)}
+          user={selectedUser}
+        />
+      )}
     </div>
   );
 };
