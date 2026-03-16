@@ -10,10 +10,9 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import type { PositionType } from '../types/user';
-import type { ProjectSimple } from '../types/project';
 import { useAuthStore } from '../stores/authStore';
+import { useProjectStore } from '../stores/projectStore';
 import { getMe } from '../api/user';
-import { getMyProjects } from '../api/projects';
 
 interface Project {
   id: string;
@@ -50,7 +49,7 @@ const MyPage = () => {
     techStacks: [],
     projects: [],
   });
-  const [myProjects, setMyProjects] = useState<ProjectSimple[]>([]);
+  const { myProjects, fetchMyProjects } = useProjectStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -69,14 +68,10 @@ const MyPage = () => {
     }));
   }, [user]);
 
-  // 내 프로젝트 목록 가져오기 (프로필 수정 모달의 대표 프로젝트 선택용)
+  // 내 프로젝트 목록 가져오기
   useEffect(() => {
-    getMyProjects()
-      .then((res) => {
-        setMyProjects(res.data ?? []);
-      })
-      .catch(() => setMyProjects([]));
-  }, []);
+    fetchMyProjects();
+  }, [fetchMyProjects]);
 
   const handleWithdrawConfirm = () => {
     setIsWithdrawOpen(false);
@@ -95,20 +90,25 @@ const MyPage = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <ProfileHeader
-        name={profile.name}
-        role={profile.role}
-        bio={profile.bio}
-        techStacks={profile.techStacks}
-        avatarUrl={profile.avatarUrl}
-        onAvatarClick={() => setIsProfileModalOpen(true)}
-        onWithdraw={() => setIsWithdrawOpen(true)}
-      />
-      <ProjectSummary />
-      <BookmarkedJobs />
-      <Troubleshooting />
-      <Portfolio />
+    <div className="min-h-screen bg-[#f5f6f8] px-4 py-12">
+      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+        <ProfileHeader
+          name={profile.name}
+          role={profile.role}
+          bio={profile.bio}
+          techStacks={profile.techStacks}
+          avatarUrl={profile.avatarUrl}
+          onAvatarClick={() => setIsProfileModalOpen(true)}
+          onWithdraw={() => setIsWithdrawOpen(true)}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ProjectSummary projects={myProjects} />
+          <BookmarkedJobs />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Troubleshooting />
+          <Portfolio />
+        </div>
 
       <MyProfileModal
         isOpen={isProfileModalOpen}
@@ -140,6 +140,7 @@ const MyPage = () => {
         isOpen={isCompleteOpen}
         onClose={() => setIsCompleteOpen(false)}
       />
+      </div>
     </div>
   );
 };
