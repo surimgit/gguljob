@@ -40,7 +40,7 @@ const OAuthCallback = () => {
           logout();
           navigate('/login', { replace: true });
         } else {
-          setError('로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+          setError('로그인 처리 중 오류 발생했습니다. 잠시 후 다시 시도 해주세요.');
           setIsLoading(false);
         }
       });
@@ -76,7 +76,8 @@ const OAuthCallback = () => {
         isOpen={showProfileModal}
         onClose={() => {
           setShowProfileModal(false);
-          navigate('/', { replace: true });
+          logout();
+          navigate('/login', { replace: true });
         }}
         onComplete={(_formData) => {
           // TODO: 서버에 프로필 데이터 저장 API 연동

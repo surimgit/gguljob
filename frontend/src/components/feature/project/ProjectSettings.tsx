@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import {
   BarChart2,
   Info,
@@ -11,7 +11,17 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Bold,
+  Italic,
+  Heading2,
+  List,
+  ListOrdered,
+  Code,
+  Link,
+  Eye,
+  Pencil,
 } from "lucide-react";
+import Markdown from "react-markdown";
 
 import type { TeamDashboard } from "../../../types/project";
 
@@ -255,6 +265,26 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [name, setName] = useState(info?.title ?? "");
   const [description, setDescription] = useState(info?.description ?? "");
+  const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
+  const descRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertMd = useCallback((prefix: string, suffix = "") => {
+    const ta = descRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = description.slice(start, end);
+    const replacement = `${prefix}${selected || "텍스트"}${suffix}`;
+    const next = description.slice(0, start) + replacement + description.slice(end);
+    setDescription(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const cursorPos = start + prefix.length;
+      const cursorEnd = cursorPos + (selected || "텍스트").length;
+      ta.setSelectionRange(cursorPos, cursorEnd);
+    });
+  }, [description]);
+
   const [domains, setDomains] = useState<string[]>(info?.domain ? [info.domain] : []);
   const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
@@ -458,34 +488,131 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
           </p>
         </div>
 
-        {/* 프로젝트 설명 */}
+        {/* 프로젝트 설명 (마크다운 에디터) */}
         <div className="mb-4">
-          <label
-            className="text-sm font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            프로젝트 설명
-          </label>
-          <textarea
-            maxLength={500}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="프로젝트에 대해 설명해주세요"
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none h-24 resize-none"
-            style={inputStyle(!!description)}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-primary)")
-            }
-            onBlur={(e) => {
-              if (!description)
-                e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          />
+          <div className="flex items-center justify-between mb-1.5">
+            <label
+              className="text-sm font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              프로젝트 설명
+            </label>
+            <div
+              className="flex rounded-lg overflow-hidden"
+              style={{ border: "1px solid var(--color-border)" }}
+            >
+              <button
+                onClick={() => setDescTab("edit")}
+                className="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors"
+                style={{
+                  background: descTab === "edit" ? "var(--color-primary)" : "transparent",
+                  color: descTab === "edit" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                }}
+              >
+                <Pencil className="w-3 h-3" />
+                편집
+              </button>
+              <button
+                onClick={() => setDescTab("preview")}
+                className="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors"
+                style={{
+                  background: descTab === "preview" ? "var(--color-primary)" : "transparent",
+                  color: descTab === "preview" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                }}
+              >
+                <Eye className="w-3 h-3" />
+                프리뷰
+              </button>
+            </div>
+          </div>
+
+          {descTab === "edit" ? (
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{ border: "1px solid var(--color-border)" }}
+            >
+              {/* 툴바 */}
+              <div
+                className="flex items-center gap-0.5 px-2 py-1.5 border-b"
+                style={{ background: "var(--color-background)", borderColor: "var(--color-border)" }}
+              >
+                {[
+                  { icon: Heading2, action: () => insertMd("## "), title: "제목" },
+                  { icon: Bold, action: () => insertMd("**", "**"), title: "굵게" },
+                  { icon: Italic, action: () => insertMd("*", "*"), title: "기울임" },
+                  { icon: Code, action: () => insertMd("`", "`"), title: "인라인 코드" },
+                  { icon: List, action: () => insertMd("- "), title: "목록" },
+                  { icon: ListOrdered, action: () => insertMd("1. "), title: "순서 목록" },
+                  { icon: Link, action: () => insertMd("[", "](url)"), title: "링크" },
+                ].map(({ icon: Icon, action, title }) => (
+                  <button
+                    key={title}
+                    type="button"
+                    onClick={action}
+                    title={title}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-white transition-colors"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
+              {/* 편집 영역 */}
+              <textarea
+                ref={descRef}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="마크다운으로 프로젝트를 설명해주세요&#10;&#10;예: ## 개요&#10;이 프로젝트는..."
+                className="w-full px-4 py-3 text-sm outline-none h-48 resize-none font-mono"
+                style={{ background: "var(--color-surface)", color: "var(--color-text-primary)" }}
+              />
+            </div>
+          ) : (
+            <div
+              className="rounded-xl px-5 py-4 h-48 overflow-y-auto prose prose-sm max-w-none"
+              style={{
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              {description ? (
+                <Markdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-xl font-bold mt-3 mb-2" style={{ color: "var(--color-text-primary)" }}>{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-1.5" style={{ color: "var(--color-text-primary)" }}>{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1" style={{ color: "var(--color-text-primary)" }}>{children}</h3>,
+                    p: ({ children }) => <p className="text-sm leading-relaxed mb-2" style={{ color: "var(--color-text-secondary)" }}>{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 mb-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>{children}</ol>,
+                    li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                    code: ({ children }) => (
+                      <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: "var(--color-background)", color: "var(--color-primary-hover)" }}>
+                        {children}
+                      </code>
+                    ),
+                    a: ({ href, children }) => (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "var(--color-blue)" }}>
+                        {children}
+                      </a>
+                    ),
+                    strong: ({ children }) => <strong className="font-bold" style={{ color: "var(--color-text-primary)" }}>{children}</strong>,
+                  }}
+                >
+                  {description}
+                </Markdown>
+              ) : (
+                <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+                  프리뷰할 내용이 없습니다.
+                </p>
+              )}
+            </div>
+          )}
           <p
             className="text-xs text-right mt-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            {description.length}/500
+            {description.length} 자
           </p>
         </div>
 

@@ -102,27 +102,6 @@ services:
   #       max-file: "3"
 
   # =======================================================
-  # [FastAPI AI Service]
-  # =======================================================
-  ai-service:
-    build:
-      context: ./ai
-    container_name: gguljob-ai-prod
-    environment:
-      - REDIS_HOST=gguljob-redis-prod
-      - REDIS_PORT=6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - gguljob-network
-    depends_on:
-      - redis
-      - neo4j
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # =======================================================
   # [Frontend - React + Nginx]
@@ -182,7 +161,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
@@ -227,7 +205,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
@@ -246,6 +223,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/auth/.htpasswd:/etc/nginx/auth/.htpasswd:ro
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
     # depends_on:
@@ -286,7 +264,29 @@ services:
         max-size: "20m"
         max-file: "5"
 
+  # =======================================================
+  # [Portainer] Docker 관리 UI
+  # =======================================================
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: gguljob-portainer
+    command: [ "-H", "unix:///var/run/docker.sock", "--base-url", "/portainer" ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   gguljob-network:
     external: true
     name: gguljob-network
+
+volumes:
+  portainer_data:

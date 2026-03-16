@@ -41,21 +41,21 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
-      <Container className="h-14 flex items-center justify-between px-4">
+      <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={gguljobLogo} alt="꿀잡" className="h-16" />
+          <img src={gguljobLogo} alt="꿀잡" className="h-18" />
         </Link>
 
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+          <Link to="/my-projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트
           </Link>
-          <Link to="/projects" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+          <Link to="/projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" className="text-text-primary hover:text-text-secondary font-medium text-sm whitespace-nowrap transition-colors">
+          <Link to="/recruitment" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
@@ -92,19 +92,19 @@ const Navbar = () => {
                   className="text-icon hover:text-text-primary transition-colors"
                   aria-label="알림"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </button>
                 {showNotification && <NotificationPanel />}
               </div>
-              <button className="text-icon hover:text-text-primary transition-colors" aria-label="프로필">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <Link to="/mypage" className="text-icon hover:text-text-primary transition-colors" aria-label="마이페이지">
+                <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-              </button>
+              </Link>
               <button onClick={handleLogout} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </button>
@@ -185,17 +185,17 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </button>
-                <button className="text-icon hover:text-text-primary transition-colors" aria-label="프로필">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <Link to="/mypage" onClick={closeMobileMenu} className="text-icon hover:text-text-primary transition-colors" aria-label="마이페이지">
+                  <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                </button>
+                </Link>
                 <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                 </button>

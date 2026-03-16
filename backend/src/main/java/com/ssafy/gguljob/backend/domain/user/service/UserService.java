@@ -1,6 +1,10 @@
 package com.ssafy.gguljob.backend.domain.user.service;
 
+import com.ssafy.gguljob.backend.domain.project.entity.Project;
+import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.UserRepProjectRepository;
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
@@ -12,6 +16,8 @@ import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +37,8 @@ public class UserService {
     private final RedisService redisService;
     private final ProjectMemberRepository projectMemberRepository;
     private final S3ImageService s3ImageService;
+    private final UserRepProjectRepository userRepProjectRepository;
+    private final ProjectSkillRepository projectSkillRepository;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -87,9 +95,10 @@ public class UserService {
             .toList();
 
         return ProfileResponseDto.builder()
+            .userId(user.getId())
             .email(user.getEmail())
             .userName(user.getUserName())
-            .imageUrl(user.getImageUrl())
+            .imageUrl(user.getProfileImageUrl())
             .description(user.getDescription())
             .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
             .experience(user.getExperience() != null ? user.getExperience().name() : null)
@@ -113,5 +122,77 @@ public class UserService {
 
         // 4. 업로드된 URL 반환 (프론트엔드에서 바로 화면에 띄울 수 있게)
         return uploadedImageUrl;
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileResponseDto getOtherProfile(Long targetUserId) {
+
+        User user = userRepository.findById(targetUserId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        List<ProfileResponseDto.SkillDto> skillDtoList = userSkillRepository.findAllByUser(user).stream()
+            .map(userSkill -> ProfileResponseDto.SkillDto.builder()
+                .name(userSkill.getSkill().getName())
+                .category(userSkill.getSkill().getCategory().name())
+                .iconUrl(userSkill.getSkill().getIconUrl())
+                .build())
+            .toList();
+
+        List<UserRepProject> repProjectEntities = userRepProjectRepository.findByUserIdWithProject(targetUserId)
+            .stream().limit(2).toList();
+
+        List<ProfileResponseDto.RepProjectDto> repProjectDtoList = Collections.emptyList();
+
+        if (!repProjectEntities.isEmpty()) {
+            List<Long> projectIds = repProjectEntities.stream()
+                .map(rep -> rep.getProject().getId())
+                .toList();
+
+            Map<Long, String> roleMap = projectMemberRepository.findByUserIdAndProjectIdIn(targetUserId, projectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    pm -> pm.getProject().getId(),
+                    pm -> pm.getRole().name()
+                ));
+
+            Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                    ps -> ps.getProject().getId(),
+                    Collectors.mapping(ps -> ps.getSkill().getName(), Collectors.toList())
+                ));
+
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+
+            repProjectDtoList = repProjectEntities.stream().map(rep -> {
+                Project project = rep.getProject();
+                Long pId = project.getId();
+
+                String startStr = project.getCreatedAt() != null ? project.getCreatedAt().format(formatter) : "미상";
+                String endStr = project.getFinishedAt() != null ? project.getFinishedAt().format(formatter) : "진행중";
+                String period = startStr + " ~ " + endStr;
+
+                return ProfileResponseDto.RepProjectDto.builder()
+                    .projectId(pId)
+                    .title(project.getTitle())
+                    .description(project.getDescription())
+                    .role(roleMap.getOrDefault(pId, "참여자"))
+                    .period(period)
+                    .skills(skillMap.getOrDefault(pId, Collections.emptyList()))
+                    .build();
+            }).toList();
+        }
+
+        return ProfileResponseDto.builder()
+            .userId(user.getId())
+            .userName(user.getUserName())
+            .imageUrl(user.getProfileImageUrl())
+            .description(user.getDescription())
+            .roles(user.getRoles() != null
+                ? user.getRoles().stream().map(Enum::name).toList()
+                : java.util.Collections.emptyList())
+            .skills(skillDtoList)
+            .repProjects(repProjectDtoList)
+            .build();
     }
 }

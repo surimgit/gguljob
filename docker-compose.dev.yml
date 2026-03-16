@@ -79,24 +79,6 @@ services:
   #   restart: always
 
   # =======================================================
-  # [FastAPI AI Service]
-  # =======================================================
-  ai-service-dev:
-    build:
-      context: ./ai
-    container_name: gguljob-ai-dev
-    ports:
-      - "127.0.0.1:8002:8000"
-    environment:
-      - REDIS_HOST=gguljob-redis-dev
-      - REDIS_PORT=6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - gguljob-network-dev
-    depends_on:
-      - redis-dev
-      - neo4j-dev
-    restart: always
 
   # =======================================================
   # [Frontend - React + Nginx (Development Build)]
@@ -159,7 +141,6 @@ services:
       - db-dev
       - redis-dev
       - neo4j-dev
-      - ai-service-dev
     networks:
       - gguljob-network-dev
     restart: always
@@ -205,7 +186,6 @@ services:
       - db-dev
       - redis-dev
       - neo4j-dev
-      - ai-service-dev
     networks:
       - gguljob-network-dev
     restart: always

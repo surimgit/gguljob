@@ -95,4 +95,36 @@ public class ProjectResponse {
         String activityType
     ) {}
 
+    // 수정 폼 초기 세팅용 데이터
+    public record UpdateFormInfo(
+        String status,
+        String title,
+        String teamName,
+        String description,
+        String domain,
+        List<Long> skillIds,
+        List<MemberDto> members
+    ) {
+        public record MemberDto(
+            Long userId,
+            String userName,
+            com.ssafy.gguljob.backend.domain.user.type.PositionType role
+        ) {}
+    }
+
+    public record ProjectUpdateResponse(
+        Long projectId,
+        String teamName,
+        String title,
+        ProjectStatus status
+    ) {
+        public static ProjectUpdateResponse from(Project project) {
+            return new ProjectUpdateResponse(
+                project.getId(),
+                project.getTeamName(),
+                project.getTitle(),
+                project.getStatus()
+            );
+        }
+    }
 }

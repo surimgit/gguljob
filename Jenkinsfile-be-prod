@@ -44,33 +44,6 @@ pipeline {
             }
         }
 
-        // [Prod용] AI 서비스 배포
-        stage('Deploy AI Service (Prod)') {
-            when {
-                changeset "ai/**"
-            }
-            steps {
-                echo '=== 1.5 Deploy AI Service Prod (Changes Detected) ==='
-                dir("${DOCKER_COMPOSE_DIR}") {
-                    withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
-                        script {
-                            try {
-                                sh 'cp $ENV_FILE .env'
-                                // [변경 3] 프로젝트 이름 prod, 파일 yml 사용
-                                sh 'docker compose -p prod -f docker-compose.prod.yml up -d --build ai-service'
-                                echo "✅ AI Service (Prod) Deployed Successfully"
-                            } catch (Exception e) {
-                                echo "❌ AI Service Deploy Failed"
-                                throw e
-                            } finally {
-                                sh 'rm -f .env'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Build Backend') {
             when {
                 changeset "backend/**"
