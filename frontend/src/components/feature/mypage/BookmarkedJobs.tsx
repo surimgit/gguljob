@@ -47,7 +47,7 @@ const DEADLINE_CLASSES: Record<DeadlineVariant, string> = {
 // ── 북마크 아이템 카드 ─────────────────────────────────────────────────────────
 const BookmarkItem = ({ job }: { job: BookmarkedJob }) => (
   <Link
-    to={`/recruitment`}
+    to={`/recruitment/${job.id}`}
     className="flex flex-col gap-2 border-2 border-border rounded-2xl px-4 py-4 hover:shadow-md transition-shadow"
   >
     <h3 className="text-[14px] font-bold text-text-primary leading-snug">
