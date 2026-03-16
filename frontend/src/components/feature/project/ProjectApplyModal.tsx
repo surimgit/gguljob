@@ -87,9 +87,12 @@ function PositionCard({
   );
 }
 
+const MAX_INTRO_LENGTH = 200;
+
 const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps) => {
   const [selectedPosition, setSelectedPosition] = useState<'fe' | 'be' | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [intro, setIntro] = useState('');
 
   const catColor = CATEGORY_COLORS[project.category] ?? DEFAULT_CATEGORY_COLOR;
   const avatarColor = project.author.avatarColor ?? '#43b581';
@@ -186,6 +189,27 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
               requirements="Spring Boot 경험자, REST API 설계 경험"
             />
           )}
+        </div>
+
+        {/* 자기소개 */}
+        <div className="mt-[20px]">
+          <label className="block text-[14px] font-black text-[#111827] mb-[8px]">
+            자기소개
+          </label>
+          <textarea
+            value={intro}
+            onChange={(e) => {
+              if (e.target.value.length <= MAX_INTRO_LENGTH) {
+                setIntro(e.target.value);
+              }
+            }}
+            placeholder="본인을 간략하게 소개해 주세요"
+            rows={3}
+            className="w-full rounded-[12px] border-2 border-[#e5e7eb] bg-white px-[16px] py-[12px] text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-primary focus:outline-none resize-none transition-colors"
+          />
+          <p className="text-[12px] text-[#9ca3af] text-right mt-[4px]">
+            {intro.length}/{MAX_INTRO_LENGTH}
+          </p>
         </div>
 
         {/* 지원 버튼 */}
