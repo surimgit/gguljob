@@ -308,7 +308,7 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set([1, 3, 6]));
 
   const toggleBookmark = (id: number) => {
     setBookmarkedIds(prev => {
@@ -319,12 +319,16 @@ const JobListingSection = () => {
   };
 
   // 필터링 → 정렬 → 페이지네이션
-  const filtered =
+  const jobsFilteredByStack =
     activeFilter === '전체'
       ? MOCK_JOBS
       : MOCK_JOBS.filter(job => job.techStacks.includes(activeFilter));
 
-  const sorted = sortJobs(filtered, activeSort);
+  const finalFilteredJobs = showBookmarked
+    ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
+    : jobsFilteredByStack;
+
+  const sorted = sortJobs(finalFilteredJobs, activeSort);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / JOBS_PER_PAGE));
   const pagedJobs = sorted.slice(
@@ -412,6 +416,14 @@ const JobListingSection = () => {
               onToggleBookmark={toggleBookmark}
             />
           ))
+        ) : showBookmarked ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <svg className="w-12 h-12 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            <p className="text-[15px] font-bold text-text-secondary">북마크한 공고가 없습니다.</p>
+            <p className="text-[13px] text-text-tertiary">관심 있는 공고를 북마크해 보세요.</p>
+          </div>
         ) : (
           <p className="text-center text-text-secondary py-12 text-[15px]">
             해당 기술스택의 채용 공고가 없습니다.
