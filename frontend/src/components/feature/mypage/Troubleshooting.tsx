@@ -56,7 +56,7 @@ const EmptyState = () => (
   <div className="flex items-center justify-center w-full h-full">
     <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl w-full h-full gap-4 py-10">
       <img src={mypageImg} alt="트러블슈팅 없음" className="w-24 h-24 object-contain" />
-      <p className="text-[13px] font-bold text-[#705401] text-center">
+      <p className="text-[13px] font-bold text-text-brown text-center">
         등록된 트러블슈팅이 없습니다.
       </p>
     </div>
