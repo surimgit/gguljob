@@ -13,10 +13,10 @@ const TAG_PALETTE = [
 const ProjectCard = ({ project }: { project: ProjectSimple }) => (
   <Link
     to={`/projects/${project.projectId}`}
-    className="flex gap-5 border-2 border-border rounded-2xl p-5 hover:shadow-md transition-shadow"
+    className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:shadow-md transition-shadow h-full"
   >
     {/* 썸네일 */}
-    <div className="w-28 h-28 flex-shrink-0 bg-[#f3f4f6] rounded-xl flex items-center justify-center overflow-hidden">
+    <div className="w-36 h-full min-h-[9rem] flex-shrink-0 bg-[#f3f4f6] rounded-xl flex items-center justify-center overflow-hidden">
       {project.imageUrl ? (
         <img
           src={project.imageUrl}
@@ -29,19 +29,19 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => (
     </div>
 
     {/* 콘텐츠 */}
-    <div className="flex flex-col gap-2 flex-1 min-w-0">
-      <h3 className="text-[16px] font-bold text-text-primary leading-snug">
+    <div className="flex flex-col gap-3 flex-1 min-w-0">
+      <h3 className="text-[18px] font-bold text-text-primary leading-snug">
         {project.title}
       </h3>
-      <p className="text-[12px] text-text-secondary leading-[18px]">
+      <p className="text-[13px] text-text-secondary leading-[20px]">
         {project.teamName} · {project.domain}
       </p>
       {(project.skills ?? []).length > 0 && (
-        <div className="flex gap-2 flex-wrap mt-auto">
+        <div className="flex gap-2 flex-wrap">
           {project.skills.slice(0, 4).map((skill, i) => (
             <span
               key={skill}
-              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${TAG_PALETTE[i % TAG_PALETTE.length]}`}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${TAG_PALETTE[i % TAG_PALETTE.length]}`}
             >
               {skill}
             </span>
@@ -72,7 +72,7 @@ const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
     .at(-1) ?? null;
 
   return (
-    <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full">
+    <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
@@ -88,8 +88,10 @@ const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
         </Link>
       </div>
 
-      {/* 최신 진행 중 프로젝트 or 빈 상태 */}
-      {latestProject ? <ProjectCard project={latestProject} /> : <EmptyState />}
+      {/* 최신 진행 중 프로젝트 or 빈 상태 — 남은 공간 채움 */}
+      <div className="flex-1">
+        {latestProject ? <ProjectCard project={latestProject} /> : <EmptyState />}
+      </div>
     </div>
   );
 };

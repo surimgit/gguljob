@@ -101,7 +101,7 @@ const MyPage = () => {
           onAvatarClick={() => setIsProfileModalOpen(true)}
           onWithdraw={() => setIsWithdrawOpen(true)}
         />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           <ProjectSummary projects={myProjects} />
           <BookmarkedJobs />
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -300,9 +301,12 @@ const Pagination = ({
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 const JobListingSection = () => {
+  const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState('전체');
   const [activeSort, setActiveSort] = useState('매칭순');
-  const [showBookmarked, setShowBookmarked] = useState(false);
+  const [showBookmarked, setShowBookmarked] = useState(
+    searchParams.get('filter') === 'bookmarked'
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
 
