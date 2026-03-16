@@ -184,8 +184,8 @@ const ProjectFind = () => {
         <ProjectApplyModal
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
-          onApply={(p, pos) => {
-            console.log('지원:', p.title, pos);
+          onApply={(p, pos, intro) => {
+            console.log('지원:', p.title, pos, intro);
             setSelectedProject(null);
           }}
         />
