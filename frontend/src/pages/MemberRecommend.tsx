@@ -3,15 +3,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
 import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
-import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayout";
+import type { ProfileUser, ProfileProject } from "../components/feature/mypage/ProfileModalLayout";
 import beeImg from "../assets/images/memberfind.png";
+
+/* ── 타입 정의 ── */
+interface MemberData {
+  id: string;
+  name: string;
+  position: string;
+  level: string;
+  matchRate: number;
+  introduction: string;
+  techStacks: string[];
+  profileImage: string;
+  projects: ProfileProject[];
+}
 
 /* ── 필터 옵션 ── */
 const POSITION_FILTERS = ["전체", "Frontend", "Backend", "Full Stack", "DevOps"];
 const LEVEL_FILTERS = ["전체", "초급", "중급", "고급"];
 
 /* ── 목 프로젝트 데이터 ── */
-const MOCK_PROJECTS = [
+const MOCK_PROJECTS: ProfileProject[] = [
   {
     id: "p1",
     name: "MatchUp",
@@ -35,7 +48,7 @@ const MOCK_PROJECTS = [
 ];
 
 /* ── 목 데이터 ── */
-const MOCK_RECOMMENDED = [
+const MOCK_RECOMMENDED: MemberData[] = [
   {
     id: "r1",
     name: "이서준",
@@ -71,7 +84,7 @@ const MOCK_RECOMMENDED = [
   },
 ];
 
-const MOCK_MEMBERS = [
+const MOCK_MEMBERS: MemberData[] = [
   {
     id: "m1",
     name: "강선관",
