@@ -15,7 +15,7 @@ import UserProfileTest from './pages/UserProfileTest';
 import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
-import TeamRecommend from './pages/TeamRecommend';
+import MemberRecommend from './pages/MemberRecommend';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -72,7 +72,7 @@ const AppRoutes = () => {
         <Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
-        <Route path="/team-recommend" element={<TeamRecommend />} />
+        <Route path="/team-recommend" element={<MemberRecommend />} />
         <Route path="/user-profile-test" element={<UserProfileTest />} />
 
         {/* 로그인 필요 라우트 */}

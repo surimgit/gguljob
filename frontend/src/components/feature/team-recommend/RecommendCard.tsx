@@ -49,9 +49,11 @@ const RecommendCard = ({
       {/* 적합도 배지 + 프로필 아바타/이름/포지션 */}
       <div className="flex items-center gap-3 mt-3 mb-5">
         <div
-          className="w-12 h-12 rounded-full flex-shrink-0"
+          className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
           style={{ background: "var(--color-primary-hover)" }}
-        />
+        >
+          {name.charAt(0)}
+        </div>
         <div className="flex flex-col flex-1">
           <span
             className="text-lg font-bold"
