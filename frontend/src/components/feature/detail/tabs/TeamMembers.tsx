@@ -1083,14 +1083,16 @@ const TeamManagement = ({
         </div>
       </div>
 
-      {/* ── 하단: 합류 신청 목록 ── */}
-      <div
-        className="rounded-2xl p-5 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
+      {/* ── 하단 2열: 합류 신청 목록 + 팀원 추가하기 버튼 ── */}
+      <div className="grid grid-cols-[1fr_360px] gap-5">
+        {/* 좌측: 합류 신청 목록 */}
+        <div
+          className="rounded-2xl p-5 shadow-sm"
+          style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
         <div className="flex items-center justify-between mb-4">
           <h3
             className="text-base font-bold"
@@ -1222,6 +1224,20 @@ const TeamManagement = ({
             );
           })}
         </div>
+        </div>
+
+        {/* 우측: 팀원 추가하기 버튼 */}
+        <button
+          onClick={() => window.location.href = "/team-recommend"}
+          className="self-start w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+          style={{
+            background: "var(--color-primary-hover)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <Plus className="w-4 h-4" />
+          팀원 추가하기
+        </button>
       </div>
 
       {/* ── 팀원 모집하기 모달 ── */}
