@@ -50,4 +50,20 @@ public class NotificationService {
     public void readAllNotifications(Long userId) {
         notificationRepository.markAllAsReadByUserId(userId);
     }
+
+    // 특정 알림 삭제
+    @Transactional
+    public void deleteNotification(Long userId, Long notificationId) {
+        // 404 에러 처리
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(NotificationNotFoundException::new);
+
+        // 403 에러 처리
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new NotificationAccessDeniedException();
+        }
+
+        // 삭제 처리
+        notificationRepository.delete(notification);
+    }
 }
