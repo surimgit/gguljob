@@ -26,6 +26,34 @@
 ;
 
 --
+-- Table structure for table `chat_logs`
+--
+
+DROP TABLE IF EXISTS `chat_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */
+;
+/*!50503 SET character_set_client = utf8mb4 */
+;
+CREATE TABLE `chat_logs` (
+    `log_id` bigint NOT NULL AUTO_INCREMENT COMMENT '채팅 로그 고유 ID',
+    `user_id` bigint NOT NULL COMMENT '사용자 ID',
+    `project_id` bigint NOT NULL COMMENT '프로젝트 ID',
+    `pr_id` bigint DEFAULT NULL COMMENT '관련 PR ID (미리 엮어둠)',
+    `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '질문 및 답변 텍스트',
+    `is_processed` tinyint(1) NOT NULL DEFAULT '0' COMMENT '트러블슈팅 변환 완료 플래그 (0: 미처리, 1: 처리완료)',
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
+    PRIMARY KEY (`log_id`),
+    KEY `fk_chat_logs_user` (`user_id`),
+    KEY `fk_chat_logs_project` (`project_id`),
+    KEY `fk_chat_logs_pr` (`pr_id`),
+    CONSTRAINT `fk_chat_logs_pr` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`pr_id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_chat_logs_project` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_chat_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */
+;
+
+--
 -- Table structure for table `git_repositories`
 --
 
@@ -42,7 +70,7 @@ CREATE TABLE `git_repositories` (
     PRIMARY KEY (`repo_id`),
     KEY `project_id` (`project_id`),
     CONSTRAINT `git_repositories_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -65,7 +93,7 @@ CREATE TABLE `job_bookmark` (
     KEY `posting_id` (`posting_id`),
     CONSTRAINT `job_bookmark_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `job_bookmark_ibfk_2` FOREIGN KEY (`posting_id`) REFERENCES `job_posting` (`posting_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -93,10 +121,10 @@ CREATE TABLE `job_posting` (
     `job_category` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '직무 카테고리 (백엔드, 프론트엔드 등)',
     `tech_stacks` text COLLATE utf8mb4_unicode_ci COMMENT '정규화된 기술스택(JSON 문자열)',
     `experience_level` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '경력',
-    `salary` varchar(100) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS (NULL) VIRTUAL COMMENT '급여',
+    `salary` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '급여',
     PRIMARY KEY (`posting_id`),
     UNIQUE KEY `uq_job_posting_origin_job_id` (`origin_job_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 12671 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 18856 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -161,7 +189,8 @@ CREATE TABLE `join_requests` (
     `request_id` bigint NOT NULL AUTO_INCREMENT COMMENT '합류 요청 고유 ID',
     `user_id` bigint NOT NULL COMMENT '사용자 고유 식별번호',
     `project_id` bigint NOT NULL,
-    `position_id` bigint NOT NULL COMMENT '모집 포지션 식별자 ID',
+    `position_id` bigint DEFAULT NULL,
+    `role` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '팀 내 역할',
     `request_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '요청 방향 (APPLY, INVITE)',
     `appeal_content` text COLLATE utf8mb4_unicode_ci COMMENT '어필 내용 및 인사말',
     `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PENDING' COMMENT '처리 상태 (PENDING, ACCEPTED, REJECTED)',
@@ -174,7 +203,7 @@ CREATE TABLE `join_requests` (
     CONSTRAINT `join_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `join_requests_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `join_requests_ibfk_3` FOREIGN KEY (`position_id`) REFERENCES `project_positions` (`position_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -199,7 +228,7 @@ CREATE TABLE `notifications` (
     PRIMARY KEY (`notification_id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -298,7 +327,7 @@ CREATE TABLE `project_members` (
     CONSTRAINT `project_members_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `project_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `project_members_ibfk_3` FOREIGN KEY (`position_id`) REFERENCES `project_positions` (`position_id`) ON DELETE SET NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -396,13 +425,13 @@ CREATE TABLE `projects` (
     `status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'RECRUITING' COMMENT 'RECRUITING, PROCEEDING, DONE',
     `is_public` tinyint(1) NOT NULL DEFAULT '0' COMMENT '프로젝트 공개/비공개',
     `image_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '프로젝트 대표 이미지 url',
-    `document_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '요구사항 명세서 url',
+    `readme` text COLLATE utf8mb4_unicode_ci COMMENT 'README 마크다운 텍스트',
     `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
     `finished_at` datetime DEFAULT NULL COMMENT '프로젝트 종료 시간 (DONE)',
     PRIMARY KEY (`project_id`),
     KEY `leader_id` (`leader_id`),
     CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`leader_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -437,7 +466,7 @@ CREATE TABLE `pull_requests` (
     CONSTRAINT `pull_requests_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `git_repositories` (`repo_id`) ON DELETE CASCADE,
     CONSTRAINT `pull_requests_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `pull_requests_ibfk_3` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 86 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -491,6 +520,27 @@ CREATE TABLE `troubleshootings` (
     CONSTRAINT `troubleshootings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `troubleshootings_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `troubleshootings_ibfk_3` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`pr_id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */
+;
+
+--
+-- Table structure for table `user_goals`
+--
+
+DROP TABLE IF EXISTS `user_goals`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */
+;
+/*!50503 SET character_set_client = utf8mb4 */
+;
+CREATE TABLE `user_goals` (
+    `user_goal_id` bigint NOT NULL AUTO_INCREMENT COMMENT '유저-목표 매핑 고유 ID',
+    `user_id` bigint NOT NULL COMMENT '사용자 고유 식별번호',
+    `goal` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '사용자 목표 (예: 사이드 프로젝트, 취업 준비 등)',
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_goal_id`),
+    KEY `user_id` (`user_id`),
+    CONSTRAINT `user_goals_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
@@ -558,7 +608,7 @@ CREATE TABLE `user_skill` (
     KEY `skill_id` (`skill_id`),
     CONSTRAINT `user_skill_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `user_skill_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skill` (`skill_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 30 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -584,13 +634,9 @@ CREATE TABLE `users` (
     `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '계정 생성 시간',
     `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '계정 수정 시간',
     PRIMARY KEY (`user_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 55 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
-
---
--- Dumping events for database 'gguljob_dev'
---
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */
 ;
 
@@ -609,4 +655,4 @@ CREATE TABLE `users` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */
 ;
 
--- Dump completed on 2026-03-16  9:23:57
+-- Dump completed on 2026-03-17 10:04:29

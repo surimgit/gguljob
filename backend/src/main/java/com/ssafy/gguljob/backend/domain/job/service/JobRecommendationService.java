@@ -32,11 +32,11 @@ public class JobRecommendationService {
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip) {
-    Collection<JobRecommendationResponse> neo4jResults = jobRecommendationRepository.recommendJobsForUser(userId, limit, skip);
+    Collection<JobRecommendationResponse> neo4jResults =
+        jobRecommendationRepository.recommendJobsForUser(userId, limit, skip);
 
-    List<Long> jobIds = neo4jResults.stream()
-        .map(JobRecommendationResponse::getJobId)
-        .collect(Collectors.toList());
+    List<Long> jobIds =
+        neo4jResults.stream().map(JobRecommendationResponse::getJobId).collect(Collectors.toList());
 
     if (jobIds.isEmpty()) {
       return List.of();
@@ -44,37 +44,31 @@ public class JobRecommendationService {
 
     List<JobPosting> jobPostings = jobPostingRepository.findByIdIn(jobIds);
 
-    Map<Long, JobPosting> jobMap = jobPostings.stream()
-        .collect(Collectors.toMap(JobPosting::getId, Function.identity()));
+    Map<Long, JobPosting> jobMap =
+        jobPostings.stream().collect(Collectors.toMap(JobPosting::getId, Function.identity()));
 
-    return neo4jResults.stream()
-        .filter(neo -> jobMap.containsKey(neo.getJobId()))
-        .map(neo -> {
-          JobPosting dbJob = jobMap.get(neo.getJobId());
-          
-          double matchPercentage = neo.getFinalScore() * 100.0;
-          
-          String matchStatus;
-          if (matchPercentage >= 70) {
-            matchStatus = "적합";
-          } else if (matchPercentage >= 40) {
-            matchStatus = "보통";
-          } else {
-            matchStatus = "부족";
-          }
+    return neo4jResults.stream().filter(neo -> jobMap.containsKey(neo.getJobId())).map(neo -> {
+      JobPosting dbJob = jobMap.get(neo.getJobId());
 
-          return RecommendedJobDto.builder()
-              .jobId(dbJob.getId())
-              .companyName(dbJob.getCompanyName() != null ? dbJob.getCompanyName() : "회사명 미상")
-              .title(dbJob.getTitle())
-              .region("위치정보 없음") // 엔티티에 위치 정보가 명확하지 않아 임시 처리
-              .experience(dbJob.getExperienceLevel() != null ? dbJob.getExperienceLevel() : "경력무관")
-              .contractType("정규직") // 계약형태도 명확하지 않아 임시 처리
-              .salary(dbJob.getSalary() != null ? dbJob.getSalary() : "회사내규에 따름")
-              .matchStatus(matchStatus)
-              .matchPercentage(matchPercentage)
-              .build();
-        })
-        .collect(Collectors.toList());
+      double matchPercentage = neo.getFinalScore() * 100.0;
+
+      // 상대평가 로직: 하드코딩(70, 40) 대신 각 Job의 컷오프 점수를 기준으로 평가
+      String matchStatus;
+      if (matchPercentage >= neo.getCutoffHigh()) {
+        matchStatus = "적합";
+      } else if (matchPercentage >= neo.getCutoffMedium()) {
+        matchStatus = "보통";
+      } else {
+        matchStatus = "부족";
+      }
+
+      return RecommendedJobDto.builder().jobId(dbJob.getId())
+          .companyName(dbJob.getCompanyName() != null ? dbJob.getCompanyName() : "회사명 미상")
+          .title(dbJob.getTitle()).region("위치정보 없음")
+          .experience(dbJob.getExperienceLevel() != null ? dbJob.getExperienceLevel() : "경력무관")
+          .contractType("정규직").salary(dbJob.getSalary() != null ? dbJob.getSalary() : "회사내규에 따름")
+          .matchStatus(matchStatus).matchPercentage(matchPercentage).cutoffHigh(neo.getCutoffHigh())
+          .cutoffMedium(neo.getCutoffMedium()).averageScore(neo.getAverageScore()).build();
+    }).collect(Collectors.toList());
   }
 }
