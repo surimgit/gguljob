@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.user.dto;
 
 import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
+import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import jakarta.validation.constraints.NotNull;
@@ -26,4 +27,6 @@ public class ProfileUpdateRequestDto {
     private ExperienceLevel experience;
 
     private List<String> skills;
+
+    private List<GoalType> goals;
 }
