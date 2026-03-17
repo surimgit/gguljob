@@ -133,7 +133,10 @@ const OAuthCallback = () => {
             const updatedUser = await getMe();
             setUser(updatedUser);
             navigate('/', { replace: true });
-          } catch {
+          } catch (err) {
+            if (axios.isAxiosError(err)) {
+              console.error('[온보딩] API 에러:', err.response?.status, err.response?.data);
+            }
             setError('프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
           }
         }}
