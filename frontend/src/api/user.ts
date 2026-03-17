@@ -1,6 +1,18 @@
 import api from './index';
 import type { User, PositionType } from '../types/user';
 
+export interface OnboardingRequest {
+  description: string;
+  roles: PositionType[];
+  experience: 'BEGINNER' | 'JUNIOR' | 'MID_LEVEL' | 'SENIOR';
+  skills: string[];
+  mbti: string;
+  teamTendency: 'LEADER' | 'FOLLOWER';
+}
+
+export const onboardApi = (data: OnboardingRequest) =>
+  api.post('/v1/user/onboarding', data);
+
 /** GET /v1/user/me → ApiResponseDto<ProfileResponseDto> 를 User로 매핑 */
 export const getMe = async (): Promise<User> => {
   const res = await api.get('/v1/user/me');
