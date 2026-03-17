@@ -79,7 +79,7 @@ const TroubleshootingList = () => {
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
-    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getPageNumbers = () => {
