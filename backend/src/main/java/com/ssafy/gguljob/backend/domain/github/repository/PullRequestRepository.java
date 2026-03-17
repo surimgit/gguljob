@@ -48,4 +48,15 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
         @org.springframework.data.repository.query.Param("userId") Long userId,
         org.springframework.data.domain.Pageable pageable
     );
+
+    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.PrItem(" +
+        "p.id, p.prNumber, p.title, p.status, p.githubCreatedAt, p.githubClosedAt) " +
+        "FROM PullRequest p " +
+        "WHERE p.project.id = :projectId AND p.user.id = :userId " +
+        "ORDER BY COALESCE(p.githubClosedAt, p.githubCreatedAt) DESC")
+    org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.project.dto.PrItem> findPagedMyPrItems(
+        @org.springframework.data.repository.query.Param("projectId") Long projectId,
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        org.springframework.data.domain.Pageable pageable
+    );
 }

@@ -31,4 +31,15 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
         @org.springframework.data.repository.query.Param("userId") Long userId,
         org.springframework.data.domain.Pageable pageable
     );
+
+    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem(" +
+        "t.id, t.title, t.situation, t.createdAt) " +
+        "FROM Troubleshooting t " +
+        "WHERE t.project.id = :projectId AND t.user.id = :userId " +
+        "ORDER BY t.createdAt DESC")
+    org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem> findPagedMyTsItems(
+        @org.springframework.data.repository.query.Param("projectId") Long projectId,
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        org.springframework.data.domain.Pageable pageable
+    );
 }
