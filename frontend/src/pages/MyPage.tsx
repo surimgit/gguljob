@@ -79,6 +79,7 @@ const MyPage = () => {
   const handleWithdrawConfirm = async () => {
     try {
       await withdrawApi();
+      logout();
       setIsWithdrawOpen(false);
       setIsCompleteOpen(true);
     } catch {
@@ -149,7 +150,6 @@ const MyPage = () => {
         isOpen={isCompleteOpen}
         onClose={() => {
           setIsCompleteOpen(false);
-          logout();
           navigate('/', { replace: true });
         }}
       />
