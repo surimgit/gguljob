@@ -79,6 +79,18 @@ public class UserService {
         if(requestDto.getSkills() != null) {
             skillService.saveUserSkills(user, requestDto.getSkills());
         }
+
+        userGoalRepository.deleteAllByUserId(userId);
+
+        if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
+            List<UserGoal> newGoals = requestDto.getGoals().stream()
+                .map(goalType -> UserGoal.builder()
+                    .user(user)
+                    .goal(goalType)
+                    .build())
+                .toList();
+            userGoalRepository.saveAll(newGoals);
+        }
     }
 
     public void withdrawUser(Long userId) {
