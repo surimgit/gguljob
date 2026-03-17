@@ -754,14 +754,17 @@ const TeamManagement = ({
   onReject,
 }: TeamManagementProps) => {
   const [roles, setRoles] = useState(initialRoles);
+  const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
+  const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
+  const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
   const pendingCount = applications.filter((a) => a.status === "pending").length;
 
-  const membersByRole = members.reduce<Record<string, Member[]>>((acc, m) => {
+  const membersByRole = localMembers.reduce<Record<string, Member[]>>((acc, m) => {
     (acc[m.role] ??= []).push(m);
     return acc;
   }, {});
@@ -797,10 +800,17 @@ const TeamManagement = ({
 
   const handleAccept = (appId: string) => {
     const app = applications.find((a) => a.id === appId);
-    setApplications((prev) =>
-      prev.map((a) => (a.id === appId ? { ...a, status: "accepted" as const } : a)),
-    );
     if (app) {
+      setLocalMembers((prev) => [
+        ...prev,
+        {
+          id: appId,
+          name: app.name,
+          role: app.role,
+          joinDate: new Date().toISOString().slice(0, 10),
+          contribution: 0,
+        },
+      ]);
       setRoles((prev) =>
         prev.map((r) => {
           if (r.name !== app.role) return r;
@@ -813,13 +823,12 @@ const TeamManagement = ({
         }),
       );
     }
+    setApplications((prev) => prev.filter((a) => a.id !== appId));
     onAccept(appId);
   };
 
   const handleReject = (appId: string) => {
-    setApplications((prev) =>
-      prev.map((a) => (a.id === appId ? { ...a, status: "rejected" as const } : a)),
-    );
+    setApplications((prev) => prev.filter((a) => a.id !== appId));
     onReject(appId);
   };
 
@@ -1083,7 +1092,7 @@ const TeamManagement = ({
         </div>
       </div>
 
-      {/* ── 하단 2열: 합류 신청 목록 + 팀원 추가하기 버튼 ── */}
+      {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
       <div className="grid grid-cols-[1fr_360px] gap-5">
         {/* 좌측: 합류 신청 목록 */}
         <div
@@ -1176,22 +1185,46 @@ const TeamManagement = ({
                   {isPending ? (
                     <>
                       <button
-                        onClick={() => handleAccept(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-bold text-white cursor-pointer"
-                        style={{ background: "var(--color-success)" }}
-                      >
-                        수락
-                      </button>
-                      <button
-                        onClick={() => handleReject(app.id)}
+                        onClick={() => setConfirmAcceptId(app.id)}
                         className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
                         style={{
                           background: "var(--color-surface)",
                           border: "1px solid var(--color-border)",
                           color: "var(--color-text-secondary)",
                         }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--color-success)";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.borderColor = "var(--color-success)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "var(--color-surface)";
+                          e.currentTarget.style.color = "var(--color-text-secondary)";
+                          e.currentTarget.style.borderColor = "var(--color-border)";
+                        }}
                       >
-                        거절
+                        ✓ 수락
+                      </button>
+                      <button
+                        onClick={() => setConfirmRejectId(app.id)}
+                        className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                          color: "var(--color-text-secondary)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--color-error)";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.borderColor = "var(--color-error)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "var(--color-surface)";
+                          e.currentTarget.style.color = "var(--color-text-secondary)";
+                          e.currentTarget.style.borderColor = "var(--color-border)";
+                        }}
+                      >
+                        × 거절
                       </button>
                     </>
                   ) : isAccepted ? (
@@ -1247,6 +1280,126 @@ const TeamManagement = ({
         onConfirm={handleRecruitConfirm}
         addedRoles={addedRoles}
       />
+
+      {/* ── 수락 확인 모달 ── */}
+      {confirmAcceptId && (() => {
+        const app = applications.find((a) => a.id === confirmAcceptId);
+        if (!app) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+            onClick={() => setConfirmAcceptId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 체크 아이콘 */}
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "#dcfce7" }}
+              >
+                <Check className="w-8 h-8" style={{ color: "var(--color-success)" }} />
+              </div>
+
+              {/* 텍스트 */}
+              <div className="text-center">
+                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  {app.name}님 수락
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                  팀원으로 수락하시겠습니까?
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 w-full mt-1">
+                <button
+                  onClick={() => setConfirmAcceptId(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    handleAccept(confirmAcceptId);
+                    setConfirmAcceptId(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: "var(--color-success)" }}
+                >
+                  수락하기
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 거절 확인 모달 ── */}
+      {confirmRejectId && (() => {
+        const app = applications.find((a) => a.id === confirmRejectId);
+        if (!app) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+            onClick={() => setConfirmRejectId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* X 아이콘 */}
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "#fee2e2" }}
+              >
+                <X className="w-8 h-8" style={{ color: "var(--color-error)" }} />
+              </div>
+
+              {/* 텍스트 */}
+              <div className="text-center">
+                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  {app.name}님 거절
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                  참가 신청을 거절하시겠습니까?
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 w-full mt-1">
+                <button
+                  onClick={() => setConfirmRejectId(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    handleReject(confirmRejectId);
+                    setConfirmRejectId(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: "var(--color-error)" }}
+                >
+                  거절하기
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -1267,7 +1420,10 @@ const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
       roles={roles}
       members={members}
-      applications={[]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
+      applications={[
+        { id: '1', name: '박지훈', role: 'Backend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
+        { id: '2', name: '김서영', role: 'Frontend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
+      ]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
