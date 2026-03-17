@@ -81,7 +81,6 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
   const handleComplete = () => {
     setShowComplete(false);
     onComplete(formData);
-    onClose();
   };
 
   const update = <K extends keyof FormData>(key: K, value: FormData[K]) => {
