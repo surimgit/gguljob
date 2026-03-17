@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
+import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
@@ -114,5 +115,15 @@ public class ProjectController {
         TeamManagementResponseDto response = projectService.getTeamManagementDetail(userDetails.getId(), projectId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 관리 페이지 조회가 완료되었습니다.", response));
+    }
+
+    @Operation(summary = "프로젝트 개인 페이지", description = "내 PR/MR과 트러블슈팅 조회")
+    @GetMapping("/{projectId}/personal-space")
+    public ResponseEntity<PersonalSpaceResponse.Dashboard> getProjectForEdit(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        PersonalSpaceResponse.Dashboard response = dashboardService.getPersonalSpace(projectId, userDetails.getId());
+        return ResponseEntity.ok(response);
     }
 }
