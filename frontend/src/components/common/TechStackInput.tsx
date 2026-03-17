@@ -2,12 +2,13 @@ import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 
 const CATEGORIES = {
-  FE: ['React', 'Vue', 'Angular', 'Next.js', 'Nuxt.js', 'TypeScript', 'JavaScript', 'TailwindCSS', 'Svelte'],
-  BE: ['Spring', 'Django', 'FastAPI', 'Express', 'NestJS', 'Node.js', 'Java', 'Python', 'Go', 'Rust', 'Kotlin'],
-  DB: ['MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase', 'Oracle', 'SQLite'],
-  Infra: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins', 'Nginx', 'Linux'],
-  AI: ['PyTorch', 'TensorFlow', 'Scikit-learn', 'Pandas', 'NumPy', 'OpenCV', 'HuggingFace'],
-  Mobile: ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Android', 'iOS'],
+  FE: ['React', 'Vue.js', 'Next.js', 'TypeScript', 'JavaScript', 'HTML/CSS', 'jQuery', 'Swift'],
+  BE: ['Spring Boot', 'Java', 'Python', 'Node.js', 'Django', 'FastAPI', 'Flask', 'Nest.js', 'Kotlin', 'C', 'C++', 'C#', 'PHP', '.NET', 'JPA', 'MyBatis', 'MSA'],
+  DB: ['MySQL', 'PostgreSQL', 'MongoDB', 'MariaDB', 'Oracle DB', 'MSSQL', 'Redis'],
+  Infra: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins', 'Nginx', 'Linux', 'Git', 'Kafka', 'Airflow'],
+  AI: ['AI', 'PyTorch', 'TensorFlow', 'OpenCV', 'RAG', 'LLM', 'MLOps', 'Hadoop'],
+  Mobile: ['React Native', 'Flutter', 'Android', 'iOS', 'Kotlin', 'Unity'],
+  Tools: ['Jira', 'Figma'],
 } as const;
 
 type Category = keyof typeof CATEGORIES;
