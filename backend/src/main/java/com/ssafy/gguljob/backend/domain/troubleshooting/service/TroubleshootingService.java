@@ -140,4 +140,24 @@ public class TroubleshootingService {
             "{\"title\": \"...\", \"trouble\": \"...\", \"shooting\": \"...\", \"result\": \"...\"}";
     }
 
+    @Transactional
+    public void updateTroubleshooting(Long userId, Long troubleshootingId, TroubleshootingRequest.Update request) {
+
+        Troubleshooting troubleshooting = troubleshootingRepository.findById(troubleshootingId)
+            .orElseThrow(() -> new IllegalArgumentException("해당 트러블슈팅을 찾을 수 없습니다."));
+
+        if (!troubleshooting.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("트러블슈팅을 수정할 권한이 없습니다.");
+        }
+
+        troubleshooting.updateContent(
+            request.title(),
+            request.role(),
+            request.language(),
+            request.framework(),
+            request.situation(),
+            request.solution()
+        );
+    }
+
 }
