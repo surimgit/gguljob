@@ -15,7 +15,7 @@ import java.util.Set;
 public class UserNode {
 
     @Id
-    private Long id; // MySQL의 users.user_id
+    private String id; // MySQL의 users.user_id
 
     private String userName; // MySQL의 user_name
 

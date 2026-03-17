@@ -10,6 +10,6 @@ import lombok.Getter;
 @Builder
 public class SkillNode {
     @Id
-    private Long id;
+    private String id;
     private String name; // 예: "Java", "Spring Boot"
 }
