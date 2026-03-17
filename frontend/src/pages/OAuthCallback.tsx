@@ -2,8 +2,35 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
-import { getMe } from '../api/user';
+import { getMe, onboardApi } from '../api/user';
+import type { OnboardingRequest } from '../api/user';
+import type { PositionType } from '../types/user';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
+
+const ROLE_MAP: Record<string, PositionType> = {
+  frontend: 'FE',
+  backend: 'BE',
+  designer: 'DESIGN',
+  pm: 'PM',
+  data: 'AI',
+  infra: 'INFRA',
+};
+
+const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
+  beginner: 'BEGINNER',
+  junior: 'JUNIOR',
+  mid: 'MID_LEVEL',
+  senior: 'SENIOR',
+};
+
+const GOAL_LABELS: Record<string, string> = {
+  'side-project': '사이드 프로젝트',
+  portfolio: '포트폴리오',
+  study: '스터디',
+  startup: '창업 준비',
+  competition: '공모전',
+  job: '취업 준비',
+};
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
@@ -16,8 +43,6 @@ const OAuthCallback = () => {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
-    const isNewUser = params.get('isNewUser') === 'true';
-
     if (!accessToken || !refreshToken) {
       navigate('/login', { replace: true });
       return;
@@ -29,7 +54,8 @@ const OAuthCallback = () => {
       .then((user) => {
         setUser(user);
         setIsLoading(false);
-        if (isNewUser) {
+        const needsOnboarding = !user.position || !user.experience || !user.mbti;
+        if (needsOnboarding) {
           setShowProfileModal(true);
         } else {
           navigate('/', { replace: true });
@@ -79,9 +105,33 @@ const OAuthCallback = () => {
           logout();
           navigate('/login', { replace: true });
         }}
-        onComplete={(_formData) => {
-          // TODO: 서버에 프로필 데이터 저장 API 연동
-          navigate('/', { replace: true });
+        onComplete={async (formData) => {
+          try {
+            const mappedRole = ROLE_MAP[formData.role];
+            const mappedExp = EXPERIENCE_MAP[formData.experience];
+            if (!mappedRole || !mappedExp) {
+              console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
+              setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
+              return;
+            }
+            const goalsSummary = formData.goals
+              .map((g) => GOAL_LABELS[g] ?? g)
+              .join(', ');
+            const payload: OnboardingRequest = {
+              description: `${goalsSummary}에 관심이 있습니다.`,
+              roles: [mappedRole],
+              experience: mappedExp,
+              skills: formData.languages,
+              mbti: formData.mbti,
+              teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
+            };
+            await onboardApi(payload);
+            const updatedUser = await getMe();
+            setUser(updatedUser);
+            navigate('/', { replace: true });
+          } catch {
+            setError('프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+          }
         }}
       />
     </>
