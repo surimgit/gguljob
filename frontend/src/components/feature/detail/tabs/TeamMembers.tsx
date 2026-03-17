@@ -1406,7 +1406,7 @@ const TeamManagement = ({
 };
 
 /* ── 기본 export ── */
-const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
+const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
   const roles = useMemo(
     () => (dashboard ? dashboardToRoles(dashboard) : []),
     [dashboard],
@@ -1418,7 +1418,7 @@ const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
 
   return (
     <TeamManagement
-      key={dashboard?.projectInfo.title ?? "default"}
+      key={projectId ?? dashboard?.projectInfo.title ?? "default"}
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
       roles={roles}
       members={members}
