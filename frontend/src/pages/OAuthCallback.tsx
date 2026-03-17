@@ -44,7 +44,7 @@ const OAuthCallback = () => {
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
     if (!accessToken || !refreshToken) {
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -64,7 +64,7 @@ const OAuthCallback = () => {
       .catch((err) => {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
           logout();
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         } else {
           setError('로그인 처리 중 오류 발생했습니다. 잠시 후 다시 시도 해주세요.');
           setIsLoading(false);
@@ -78,10 +78,10 @@ const OAuthCallback = () => {
         <div className="text-center">
           <p className="text-gray-700 text-sm mb-4">{error}</p>
           <button
-            onClick={() => navigate('/login', { replace: true })}
+            onClick={() => navigate('/', { replace: true })}
             className="text-sm text-primary underline"
           >
-            로그인 페이지로 돌아가기
+            메인으로 돌아가기
           </button>
         </div>
       </div>
@@ -103,7 +103,7 @@ const OAuthCallback = () => {
         onClose={() => {
           setShowProfileModal(false);
           logout();
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         }}
         onComplete={async (formData) => {
           try {

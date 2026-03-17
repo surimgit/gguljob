@@ -31,7 +31,7 @@ const AppRoutes = () => {
   useEffect(() => {
     const handleUnauthorized = () => {
       logout();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
