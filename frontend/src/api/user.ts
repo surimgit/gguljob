@@ -8,6 +8,7 @@ export interface OnboardingRequest {
   skills: string[];
   mbti: string;
   teamTendency: 'LEADER' | 'FOLLOWER';
+  goals: string[];
 }
 
 export const onboardApi = (data: OnboardingRequest) =>

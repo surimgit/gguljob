@@ -23,13 +23,13 @@ const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
   senior: 'SENIOR',
 };
 
-const GOAL_LABELS: Record<string, string> = {
-  'side-project': '사이드 프로젝트',
-  portfolio: '포트폴리오',
-  study: '스터디',
-  startup: '창업 준비',
-  competition: '공모전',
-  job: '취업 준비',
+const GOAL_MAP: Record<string, { label: string; type: string }> = {
+  'side-project': { label: '사이드 프로젝트', type: 'SIDE_PROJECT' },
+  portfolio: { label: '포트폴리오', type: 'PORTFOLIO' },
+  study: { label: '스터디', type: 'STUDY' },
+  startup: { label: '창업 준비', type: 'STARTUP' },
+  competition: { label: '공모전', type: 'COMPETITION' },
+  job: { label: '취업 준비', type: 'EMPLOYMENT' },
 };
 
 const OAuthCallback = () => {
@@ -115,8 +115,11 @@ const OAuthCallback = () => {
               return;
             }
             const goalsSummary = formData.goals
-              .map((g) => GOAL_LABELS[g] ?? g)
+              .map((g) => GOAL_MAP[g]?.label ?? g)
               .join(', ');
+            const goalTypes = formData.goals
+              .map((g) => GOAL_MAP[g]?.type)
+              .filter((t): t is string => !!t);
             const payload: OnboardingRequest = {
               description: `${goalsSummary}에 관심이 있습니다.`,
               roles: [mappedRole],
@@ -124,6 +127,7 @@ const OAuthCallback = () => {
               skills: formData.languages,
               mbti: formData.mbti,
               teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
+              goals: goalTypes,
             };
             await onboardApi(payload);
             const updatedUser = await getMe();
