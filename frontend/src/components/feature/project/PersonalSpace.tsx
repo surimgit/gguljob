@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
+import chatbotImg from '../../../assets/images/chatbot.png';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
@@ -148,7 +149,7 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
       {/* 좌측: 번호 원 + 세로 라인 + 끝 점 */}
       <div className="flex flex-col items-center w-6 flex-shrink-0 mr-2">
         <span
-          className="w-8 h-8 rounded-full text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
           style={{ background: statusColor }}
         >
           {mr.id}
@@ -207,71 +208,100 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
   );
 };
 
-const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => (
+const CIRCLE_COLORS = ['#E11D48', '#2563EB', '#16A34A', '#E8B931', '#9333EA', '#F97316', '#0EA5E9', '#6D28D9'];
+
+const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => {
+  const [editing, setEditing] = useState(false);
+  const [problemDesc, setProblemDesc] = useState(item.problemDesc);
+  const [solutionDesc, setSolutionDesc] = useState(item.solutionDesc);
+  const [codeSnippet, setCodeSnippet] = useState(item.codeSnippet);
+
+  return (
   <div className="flex flex-col border border-border rounded-2xl bg-surface overflow-hidden" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07), 0 1px 2px 0 rgba(0,0,0,0.04)' }}>
     {/* 번호 + 제목 */}
-    <div className="flex items-center gap-3 px-4 py-4">
-      <span className="w-7 h-7 rounded-full bg-[#1e1e2e] text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0">
+    <div className="flex items-center gap-3 px-5 py-5">
+      <span className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0" style={{ backgroundColor: CIRCLE_COLORS[(item.id - 1) % CIRCLE_COLORS.length] }}>
         {item.id}
       </span>
-      <h4 className="text-[15px] font-bold tracking-tight text-text-primary leading-snug">{item.title}</h4>
+      <h4 className="text-xl font-bold tracking-tight text-text-primary leading-snug">{item.title}</h4>
     </div>
 
     {/* 문제 상황 */}
-    <div className="flex flex-col gap-2 px-4 py-3 border-t border-border bg-background">
-      <p className="text-[12px] font-semibold tracking-wide text-text-secondary flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    <div className="flex flex-col gap-2 px-5 py-4 border-t border-border bg-[#FAF9F6]">
+      <p className="text-lg font-bold tracking-wide text-text-primary flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
         문제 상황
       </p>
-      <p className="text-[13px] tracking-wide text-text-secondary leading-relaxed">{item.problemDesc}</p>
+      {editing ? (
+        <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} className="text-lg text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
+      ) : (
+        <p className="text-lg text-semibold text-text-secondary leading-relaxed">{problemDesc}</p>
+      )}
     </div>
 
     {/* 해결 방법 */}
-    <div className="flex flex-col gap-2 px-4 py-3 border-t border-border bg-background">
-      <p className="text-[12px] font-semibold tracking-wide text-text-secondary flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <div className="flex flex-col gap-2 px-5 py-4 bg-[#FAF9F6]">
+      <p className="text-lg font-semibold tracking-wide text-text-primary flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         해결 방법
       </p>
-      <p className="text-[13px] tracking-wide text-text-secondary leading-relaxed">{item.solutionDesc}</p>
-      <pre className="bg-[#1e1e2e] text-[#a6e3a1] text-[12px] rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed">
-        {item.codeSnippet}
-      </pre>
+      {editing ? (
+        <textarea value={solutionDesc} onChange={(e) => setSolutionDesc(e.target.value)} className="text-lg text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
+      ) : (
+        <p className="text-lg text-text-secondary leading-relaxed mb-3">{solutionDesc}</p>
+      )}
+      {editing ? (
+        <textarea value={codeSnippet} onChange={(e) => setCodeSnippet(e.target.value)} className="bg-[#1e1e2e] text-[#a6e3a1] text-sm rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed w-full resize-none focus:outline-none focus:ring-2 focus:ring-primary mt-4" rows={5} />
+      ) : (
+        <pre className="bg-[#1e1e2e] text-[#a6e3a1] text-sm rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed">
+          {codeSnippet}
+        </pre>
+      )}
     </div>
 
     {/* 출처 */}
-    <div className="flex flex-col gap-2 px-4 py-3 border-t border-border bg-background">
-      <p className="text-[12px] font-semibold tracking-wide text-text-secondary flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    <div className="flex flex-col gap-2 px-5 pt-4 pb-8 bg-[#FAF9F6]">
+      <p className="text-lg font-semibold tracking-wide text-text-primary flex items-center gap-1.5 mb-2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
         출처
       </p>
       <div className="flex items-center gap-4">
         {item.sources.map((s, i) => (
-          <span key={s.label} className="flex items-center gap-1.5 text-[13px] font-semibold text-text-primary">
-            <span className="text-sm leading-none">{i === 0 ? '💛' : '🔄'}</span>
+          <span key={s.label} className="flex items-center gap-1.5 text-base font-semibold text-text-primary">
+            <span className="text-lg leading-none">{i === 0 ? '💛' : '🔄'}</span>
             {s.label}
           </span>
         ))}
-        <span className="flex items-center gap-1.5 text-[13px] font-semibold text-text-primary">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span className="flex items-center gap-1.5 text-base font-semibold text-text-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           오준혁 리뷰
         </span>
       </div>
     </div>
 
     {/* 하단 버튼 */}
-    <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border bg-surface">
-      <span className="text-[12px] tracking-wide text-text-tertiary">3분 전 생성</span>
+    <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-border bg-surface">
+      <span className="text-sm tracking-wide text-text-tertiary">3분 전 생성</span>
       <div className="flex gap-2 flex-shrink-0">
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold border border-border text-text-secondary bg-surface hover:bg-background transition-colors">
-          ✏️ 수정
-        </button>
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold bg-[#1e1e2e] text-white hover:bg-[#2d2d3e] transition-colors">
-          📤 포트폴리오
-        </button>
+        {editing ? (
+          <>
+            <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-secondary border border-border bg-surface hover:bg-background transition-colors">
+              취소
+            </button>
+            <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-primary bg-primary-hover hover:opacity-90 transition-opacity">
+              저장
+            </button>
+          </>
+        ) : (
+          <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-primary bg-primary-hover hover:opacity-90 transition-opacity">
+            수정
+          </button>
+        )}
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export type PersonalSubTab = 'troubleshooting' | 'mr-review';
@@ -279,10 +309,23 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTitle?: string; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
+  const chatbotRef = useRef<HTMLDivElement>(null);
   const MR_PER_PAGE = 3;
-  const stats = { mrCount: 12, autoGenCount: 5 };
-  const mrMessages = 12;
-  const codeReviews = 34;
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatbotRef.current && !chatbotRef.current.contains(e.target as Node)) {
+        setChatbotOpen(false);
+      }
+    };
+    if (chatbotOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [chatbotOpen]);
+  const mrCount = MOCK_MR_LIST.length;
+  const codeReviews = MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
+  const stats = { mrCount: mrCount, autoGenCount: MOCK_TROUBLESHOOTINGS.length };
+  const mrMessages = mrCount;
 
   return (
     <div className="flex flex-col gap-10">
@@ -309,67 +352,86 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
 
       {/* ── 트러블슈팅 탭 ── */}
       {subTab === 'troubleshooting' && (
-        <div className="grid grid-cols-[3fr_2fr] gap-5 items-start">
-          {/* 좌측: AI 자동 생성 카드 */}
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl px-5 py-5 border border-[#c7d2fe]" style={{ background: '#f5f7ff', boxShadow: '0 4px 16px 0 rgba(99,102,241,0.10), 0 1px 3px 0 rgba(0,0,0,0.06)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-[#6366f1]" />
-                  </div>
-                  <span className="text-[16px] font-bold tracking-tight text-text-primary">AI 트러블슈팅 자동 생성</span>
-                  <span className="text-[11px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
+        <div className="flex flex-col gap-6 relative">
+          <div className="rounded-2xl px-8 py-8 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 mt-3">
+                <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-[#6366f1]" />
                 </div>
-                <span className="text-[13px] tracking-wide text-text-tertiary">마지막 분석: 3분 전</span>
+                <span className="text-xl font-bold tracking-tight text-text-primary">트러블슈팅</span>
               </div>
-
-              <p className="text-[14px] tracking-wide text-text-secondary leading-[2] mb-6">
-                내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
-                <br />생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
-              </p>
-
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                  </svg>
-                  <span className="text-[14px] font-semibold tracking-wide text-text-secondary">MR 메시지</span>
-                  <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{mrMessages}건</span>
-                </div>
-                <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span className="text-[14px] font-semibold tracking-wide text-text-secondary">코드 리뷰</span>
-                  <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{codeReviews}건</span>
-                </div>
-              </div>
-
-              <button
-                className="w-full py-3.5 rounded-xl text-[15px] font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-              >
-                <Sparkles className="w-4 h-4" />
-                트러블슈팅 자동 생성하기
-              </button>
+              <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
             </div>
-          </div>
-
-          {/* 우측: 자동 생성 트러블슈팅 */}
-          <div className="rounded-2xl px-3 py-4 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center justify-between mb-3 gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Sparkles className="w-3.5 h-3.5 text-[#6366f1] flex-shrink-0" />
-                <span className="text-[14px] font-bold tracking-tight text-text-primary whitespace-nowrap">자동 생성 트러블슈팅</span>
-                <span className="text-[11px] font-semibold bg-[#f3f4f6] text-text-secondary px-1.5 py-0.5 rounded-full flex-shrink-0">{stats.autoGenCount}건</span>
-              </div>
-              <span className="text-[11px] font-bold tracking-wider bg-primary text-text-primary px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">AI 생성</span>
-            </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               {MOCK_TROUBLESHOOTINGS.map(item => <TroubleshootingCard key={item.id} item={item} />)}
             </div>
           </div>
+
+          {/* 챗봇 캐릭터 버튼 */}
+          <button
+            onClick={() => setChatbotOpen(prev => !prev)}
+            className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
+          >
+            <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
+          </button>
+
+          {/* 챗봇 팝업 */}
+          {chatbotOpen && (
+            <div ref={chatbotRef} className="fixed bottom-28 right-8 w-[400px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl" style={{ background: '#f5f7ff' }}>
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[#c7d2fe]" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span className="text-base font-bold text-white">AI 트러블슈팅 자동 생성</span>
+                  <span className="text-[10px] font-bold tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full">Beta</span>
+                </div>
+                <button onClick={() => setChatbotOpen(false)} className="text-white/70 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 본문 */}
+              <div className="px-5 py-5 flex flex-col gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-[#c7d2fe]">
+                    <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 border border-border">
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
+                      <br />생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-white border border-border rounded-full px-3 py-1.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
+                      <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                    <span className="text-[13px] font-semibold text-text-secondary">MR 메시지</span>
+                    <span className="text-[12px] font-bold text-[#6366f1] bg-[#eef2ff] px-1.5 py-0.5 rounded-full leading-none">{mrMessages}건</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white border border-border rounded-full px-3 py-1.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span className="text-[13px] font-semibold text-text-secondary">코드 리뷰</span>
+                    <span className="text-[12px] font-bold text-[#6366f1] bg-[#eef2ff] px-1.5 py-0.5 rounded-full leading-none">{codeReviews}건</span>
+                  </div>
+                </div>
+
+                <button
+                  className="w-full py-3 rounded-xl text-sm font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  트러블슈팅 자동 생성하기
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
