@@ -61,7 +61,7 @@ const Troubleshooting = () => (
         <span>트러블슈팅</span>
       </h2>
       <Link
-        to="/my-projects"
+        to="/mypage/troubleshooting"
         className="text-text-tertiary hover:text-text-primary transition-colors"
         aria-label="트러블슈팅 전체보기"
       >
