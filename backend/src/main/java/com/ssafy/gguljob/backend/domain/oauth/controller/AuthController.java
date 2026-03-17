@@ -57,7 +57,24 @@ public class AuthController {
     @Operation(summary = "깃허브 로그인 콜백", description = "깃허브에서 인가 코드를 받아와 JWT 토큰을 발급합니다.")
     @SecurityRequirements()
     @GetMapping("/github/callback")
-    public void githubCallback(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
+    public void githubCallback(
+        @RequestParam(value = "code", required = false) String code,
+        @RequestParam(value = "error", required = false) String error,
+        @RequestParam(value = "error_description", required = false) String errorDescription,
+        HttpServletResponse response) throws IOException {
+
+        if (error != null) {
+            log.warn("GitHub 로그인 취소: {}", errorDescription);
+            response.sendRedirect(frontendRedirectUrl + "?error=access_denied");
+            return;
+        }
+
+        if (code == null) {
+            log.error("GitHub 인가 코드가 존재하지 않습니다.");
+            response.sendRedirect(frontendRedirectUrl + "?error=no_code");
+            return;
+        }
+
         log.info("깃허브에서 받아온 인가 코드: {}", code);
 
         TokenResponseDto tokenDto = githubOAuthService.loginWithGithub(code);
