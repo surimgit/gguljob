@@ -1,11 +1,13 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
+import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectDashboardService;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
@@ -13,8 +15,12 @@ import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -124,6 +130,28 @@ public class ProjectController {
         @PathVariable Long projectId) {
 
         PersonalSpaceResponse.Dashboard response = dashboardService.getPersonalSpace(projectId, userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 PR 목록조회", description = "해당 프로젝트의 내 PR 목록 전체 조회")
+    @GetMapping("/{projectId}/personal-space/pull-requests")
+    public ResponseEntity<Page<PrItem>> getMyPullRequests(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @ParameterObject @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        Page<PrItem> response = dashboardService.getPagedMyPullRequests(projectId, userDetails.getId(), pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 트러블슈팅 목록조회", description = "해당 프로젝트의 내 트러블슈팅 목록 전체 조회")
+    @GetMapping("/{projectId}/personal-space/troubleshootings")
+    public ResponseEntity<Page<TroubleshootingItem>> getMyTroubleshootings(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @ParameterObject @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        Page<TroubleshootingItem> response = dashboardService.getPagedMyTroubleshootings(projectId, userDetails.getId(), pageable);
         return ResponseEntity.ok(response);
     }
 }
