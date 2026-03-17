@@ -43,8 +43,6 @@ const OAuthCallback = () => {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
-    const isNewUser = params.get('isNewUser') === 'true';
-
     if (!accessToken || !refreshToken) {
       navigate('/login', { replace: true });
       return;
@@ -56,7 +54,8 @@ const OAuthCallback = () => {
       .then((user) => {
         setUser(user);
         setIsLoading(false);
-        if (isNewUser) {
+        const needsOnboarding = !user.position || !user.experience || !user.mbti;
+        if (needsOnboarding) {
           setShowProfileModal(true);
         } else {
           navigate('/', { replace: true });
