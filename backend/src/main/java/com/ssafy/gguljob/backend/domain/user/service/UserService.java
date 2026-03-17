@@ -1,7 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.service;
 
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
-import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
 import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
@@ -11,6 +10,8 @@ import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.entity.UserGoal;
+import com.ssafy.gguljob.backend.domain.user.repository.UserGoalRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
@@ -40,6 +41,7 @@ public class UserService {
     private final S3ImageService s3ImageService;
     private final UserRepProjectRepository userRepProjectRepository;
     private final ProjectSkillRepository projectSkillRepository;
+    private final UserGoalRepository userGoalRepository;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -55,6 +57,16 @@ public class UserService {
 
         skillService.saveUserSkills(user, requestDto.getSkills());
 
+        if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
+            List<UserGoal> newGoals = requestDto.getGoals().stream()
+                .map(goalType -> UserGoal.builder()
+                    .user(user)
+                    .goal(goalType)
+                    .build())
+                .toList();
+            userGoalRepository.saveAll(newGoals);
+        }
+
         log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
     }
 
@@ -66,6 +78,18 @@ public class UserService {
 
         if(requestDto.getSkills() != null) {
             skillService.saveUserSkills(user, requestDto.getSkills());
+        }
+
+        userGoalRepository.deleteAllByUserId(userId);
+
+        if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
+            List<UserGoal> newGoals = requestDto.getGoals().stream()
+                .map(goalType -> UserGoal.builder()
+                    .user(user)
+                    .goal(goalType)
+                    .build())
+                .toList();
+            userGoalRepository.saveAll(newGoals);
         }
     }
 
@@ -99,7 +123,7 @@ public class UserService {
             .userId(user.getId())
             .email(user.getEmail())
             .userName(user.getUserName())
-            .imageUrl(user.getImageUrl())
+            .imageUrl(user.getProfileImageUrl())
             .description(user.getDescription())
             .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
             .experience(user.getExperience() != null ? user.getExperience().name() : null)
@@ -187,7 +211,7 @@ public class UserService {
         return ProfileResponseDto.builder()
             .userId(user.getId())
             .userName(user.getUserName())
-            .imageUrl(user.getImageUrl())
+            .imageUrl(user.getProfileImageUrl())
             .description(user.getDescription())
             .roles(user.getRoles() != null
                 ? user.getRoles().stream().map(Enum::name).toList()

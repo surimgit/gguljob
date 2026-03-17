@@ -61,8 +61,8 @@ public class Project extends BaseTimeEntity {
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
-    @Column(name = "document_url", length = 255)
-    private String documentUrl;
+    @Column(columnDefinition = "TEXT")
+    private String readme;
 
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
@@ -71,7 +71,7 @@ public class Project extends BaseTimeEntity {
     private List<ProjectSkill> projectSkills = new ArrayList<>();
 
     @Builder
-    public Project(User leader, String teamName, String title, String domain, String description, Boolean isPublic, String imageUrl, String documentUrl) {
+    public Project(User leader, String teamName, String title, String domain, String description, Boolean isPublic, String imageUrl, String readme) {
         this.leader = leader;
         this.teamName = teamName;
         this.title = title;
@@ -80,7 +80,7 @@ public class Project extends BaseTimeEntity {
         this.status = ProjectStatus.RECRUITING;
         this.isPublic = isPublic != null ? isPublic : false;
         this.imageUrl = imageUrl;
-        this.documentUrl = documentUrl;
+        this.readme = readme;
     }
 
     public void updateBasicInfo(String title, String teamName, String description, String domain, String status) {
@@ -99,5 +99,9 @@ public class Project extends BaseTimeEntity {
         if (domain != null) {
             this.domain = domain;
         }
+    }
+
+    public void updateReadme(String readme) {
+        this.readme = readme;
     }
 }

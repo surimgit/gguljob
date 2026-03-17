@@ -21,7 +21,7 @@ public class SwaggerConfig {
                                 new SecurityRequirement().addList(schemeName);
 
                 return new OpenAPI()
-                                .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이이이잉")
+                                .info(new Info().title("🐝🍯 꿀잡 API 명세서").description("위잉이이잉")
                                                 .version("v1.0.0"))
                                 .addServersItem(new Server().url("http://localhost:8080")
                                                 .description("Local 서버"))

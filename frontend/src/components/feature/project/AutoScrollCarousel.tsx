@@ -4,9 +4,10 @@ import ProjectCarouselCard from './ProjectCarouselCard';
 interface AutoScrollCarouselProps {
   direction: 'left' | 'right';
   cards: Project[];
+  onCardClick?: (project: Project) => void;
 }
 
-const AutoScrollCarousel = ({ direction, cards }: AutoScrollCarouselProps) => {
+const AutoScrollCarousel = ({ direction, cards, onCardClick }: AutoScrollCarouselProps) => {
   const duplicated = [...cards, ...cards];
 
   return (
@@ -18,7 +19,7 @@ const AutoScrollCarousel = ({ direction, cards }: AutoScrollCarouselProps) => {
         style={{ display: 'flex', gap: '16px', width: 'max-content' }}
       >
         {duplicated.map((project, index) => (
-          <ProjectCarouselCard key={`${project.id}-${index}`} project={project} />
+          <ProjectCarouselCard key={`${project.id}-${index}`} project={project} onClick={onCardClick} />
         ))}
       </div>
     </div>

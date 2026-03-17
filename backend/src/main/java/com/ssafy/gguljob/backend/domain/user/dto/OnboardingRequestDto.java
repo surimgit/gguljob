@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.user.dto;
 
 import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
+import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import jakarta.validation.constraints.NotBlank;
@@ -34,4 +35,6 @@ public class OnboardingRequestDto {
 
     @NotNull(message = "팀 성향을 선택해주세요.")
     private TeamTendency teamTendency;
+
+    private List<GoalType> goals;
 }
