@@ -1,13 +1,13 @@
 import { type FC } from 'react';
-import { Monitor, Server, Smartphone, Pen, Briefcase, Database } from 'lucide-react';
+import { Monitor, Server, Pen, Briefcase, Database, Shield } from 'lucide-react';
 
 const ROLES = [
   { id: 'frontend', Icon: Monitor, label: '프론트엔드' },
   { id: 'backend', Icon: Server, label: '백엔드' },
-  { id: 'mobile', Icon: Smartphone, label: '모바일 앱' },
   { id: 'designer', Icon: Pen, label: '디자이너' },
   { id: 'pm', Icon: Briefcase, label: '기획자 / PM' },
   { id: 'data', Icon: Database, label: '데이터 / AI' },
+  { id: 'infra', Icon: Shield, label: '인프라' },
 ];
 
 interface Props {

@@ -10,10 +10,10 @@ import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
 const ROLE_MAP: Record<string, PositionType> = {
   frontend: 'FE',
   backend: 'BE',
-  mobile: 'FE',
   designer: 'DESIGN',
   pm: 'PM',
   data: 'AI',
+  infra: 'INFRA',
 };
 
 const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
@@ -108,12 +108,18 @@ const OAuthCallback = () => {
         }}
         onComplete={async (formData) => {
           try {
+            const mappedRole = ROLE_MAP[formData.role];
+            const mappedExp = EXPERIENCE_MAP[formData.experience];
+            if (!mappedRole || !mappedExp) {
+              setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
+              return;
+            }
             const payload: OnboardingRequest = {
               description: formData.goals
                 .map((g) => GOAL_LABELS[g] ?? g)
                 .join(', ') + '에 관심이 있습니다.',
-              roles: [ROLE_MAP[formData.role] ?? 'BE'],
-              experience: EXPERIENCE_MAP[formData.experience] ?? 'BEGINNER',
+              roles: [mappedRole],
+              experience: mappedExp,
               skills: formData.languages,
               mbti: formData.mbti,
               teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
