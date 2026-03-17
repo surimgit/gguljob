@@ -38,4 +38,4 @@ export const updateProfile = (data: Partial<Pick<User, 'name' | 'techStacks'>>) 
 
 export const logoutApi = () => api.post('/v1/auth/logout');
 
-export const withdrawApi = () => api.delete('/v1/user/me');
+export const withdrawApi = () => api.delete('/v1/user/withdraw');
