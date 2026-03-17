@@ -42,6 +42,7 @@ public class ProjectController {
     private final ProjectService projectService;
     private final ProjectDashboardService dashboardService;
 
+    @Operation(summary = "프로젝트 생성 API", description = "새로운 프로젝트를 생성합니다")
     @PostMapping
     public ResponseEntity<ProjectResponse.Id> createProject(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -51,6 +52,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "프로젝트 네비바 클릭 시 뜨는 내 프로젝트들", description = "진행중/완료 프로젝트 리스트 조회")
     @GetMapping("/me")
     public ResponseEntity<List<Simple>> getMyProjects(
         @AuthenticationPrincipal CustomUserDetails userDetails){
@@ -70,6 +72,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "프로젝트 수정 API", description = "프로젝트 기본 정보 수정")
     @PatchMapping("/{projectId}")
     public ResponseEntity<ProjectUpdateResponse> updateProject(
         @PathVariable Long projectId,
@@ -80,6 +83,8 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+
+    @Operation(summary = "프로젝트 상세 페이지(팀프로젝트 탭)", description = "프로젝트 기본 정보 가져오기")
     @GetMapping("/{projectId}/team-dashboard")
     public ResponseEntity<ProjectResponse.TeamDashboard> getTeamDashboard(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -90,6 +95,7 @@ public class ProjectController {
         return ResponseEntity.ok(dashboardService.getTeamDashboard(userId, projectId));
     }
 
+    @Operation(summary = "팀프로젝트 상세 페이지(git 관련 랭킹, 최근 내역)", description = "git 관련 랭킹, 최근 내역)")
     @GetMapping("/{projectId}/gitlog")
     public ResponseEntity<ProjectResponse.GitLog> getGitLog(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -100,6 +106,7 @@ public class ProjectController {
         return ResponseEntity.ok(dashboardService.getGitLog(userId, projectId));
     }
 
+    @Operation(summary = "팀프로젝트 상세 페이지 (깃 레포 등록하기)", description = "깃 레포 등록하기")
     @PutMapping("/{projectId}/git-repo")
     public ResponseEntity<Void> registerGitRepository(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -123,7 +130,7 @@ public class ProjectController {
         return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 관리 페이지 조회가 완료되었습니다.", response));
     }
 
-    @Operation(summary = "프로젝트 개인 페이지", description = "내 PR/MR과 트러블슈팅 조회")
+    @Operation(summary = "프로젝트 상세 개인 페이지(나만의 공간 탭)", description = "내 PR/MR과 트러블슈팅 조회")
     @GetMapping("/{projectId}/personal-space")
     public ResponseEntity<PersonalSpaceResponse.Dashboard> getProjectForEdit(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -133,7 +140,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "내 PR 목록조회", description = "해당 프로젝트의 내 PR 목록 전체 조회")
+    @Operation(summary = "나만의 공간 탭 (내 PR 목록조회)", description = "해당 프로젝트의 내 PR 목록 전체 조회")
     @GetMapping("/{projectId}/personal-space/pull-requests")
     public ResponseEntity<Page<PrItem>> getMyPullRequests(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -144,7 +151,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "내 트러블슈팅 목록조회", description = "해당 프로젝트의 내 트러블슈팅 목록 전체 조회")
+    @Operation(summary = "내 트러블슈팅 목록조회(프로젝트 상세 개인 페이지)", description = "해당 프로젝트의 내 트러블슈팅 목록 전체 조회")
     @GetMapping("/{projectId}/personal-space/troubleshootings")
     public ResponseEntity<Page<TroubleshootingItem>> getMyTroubleshootings(
         @AuthenticationPrincipal CustomUserDetails userDetails,
