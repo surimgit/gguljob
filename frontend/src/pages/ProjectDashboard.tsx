@@ -186,7 +186,7 @@ const ProjectDashboard = () => {
           })}
         </div>
 
-        {activeTab === "members" && <TeamMembers dashboard={dashboard} projectId={Number(id)} />}
+        {activeTab === "members" && <TeamMembers dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
         {activeTab === "settings" && <ProjectSettings dashboard={dashboard} />}
 
         {activeTab === "team" && (
