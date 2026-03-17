@@ -760,6 +760,11 @@ const TeamManagement = ({
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
 
+  // prop이 변경될 때 로컬 state 동기화 (derived state 문제 방지)
+  useEffect(() => { setRoles(initialRoles); }, [initialRoles]);
+  useEffect(() => { setLocalMembers(members); }, [members]);
+  useEffect(() => { setApplications(initialApps); }, [initialApps]);
+
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
   const pendingCount = applications.filter((a) => a.status === "pending").length;
