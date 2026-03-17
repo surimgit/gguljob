@@ -293,6 +293,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   const [members, setMembers] = useState<TeamMember[]>(membersFromDashboard);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
+  const kickTarget = members.find((m) => m.id === kickMemberId) ?? null;
 
   // 새 팀원 추가 폼
   const [newName, setNewName] = useState("");
@@ -1073,66 +1074,62 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </button>
       </div>
       {/* ── 내보내기 확인 모달 ── */}
-      {kickMemberId && (() => {
-        const target = members.find((m) => m.id === kickMemberId);
-        if (!target) return null;
-        return (
+      {kickMemberId && kickTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setKickMemberId(null)}
+        >
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.4)" }}
-            onClick={() => setKickMemberId(null)}
+            className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* 아이콘 */}
             <div
-              className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: "#FEE2E2" }}
             >
-              {/* 아이콘 */}
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ background: "#FEE2E2" }}
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+                <line x1="18" y1="8" x2="23" y2="13"/>
+                <line x1="23" y1="8" x2="18" y2="13"/>
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <div className="text-center">
+              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                {kickTarget.name}님 내보내기
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                팀에서 내보내시겠습니까?<br />되돌릴 수 없습니다.
+              </p>
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-1">
+              <button
+                onClick={() => setKickMemberId(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                  <line x1="18" y1="8" x2="23" y2="13"/>
-                  <line x1="23" y1="8" x2="18" y2="13"/>
-                </svg>
-              </div>
-
-              {/* 텍스트 */}
-              <div className="text-center">
-                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
-                  {target.name}님 내보내기
-                </p>
-                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                  팀에서 내보내시겠습니까?<br />되돌릴 수 없습니다.
-                </p>
-              </div>
-
-              {/* 버튼 */}
-              <div className="flex gap-3 w-full mt-1">
-                <button
-                  onClick={() => setKickMemberId(null)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-                  style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={() => {
-                    removeMember(kickMemberId);
-                    setKickMemberId(null);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                  style={{ background: "var(--color-error)" }}
-                >
-                  내보내기
-                </button>
-              </div>
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  removeMember(kickMemberId);
+                  setKickMemberId(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: "var(--color-error)" }}
+              >
+                내보내기
+              </button>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
     </div>
   );
 };
