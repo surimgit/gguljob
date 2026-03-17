@@ -10,6 +10,8 @@ import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.entity.UserGoal;
+import com.ssafy.gguljob.backend.domain.user.repository.UserGoalRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
@@ -39,6 +41,7 @@ public class UserService {
     private final S3ImageService s3ImageService;
     private final UserRepProjectRepository userRepProjectRepository;
     private final ProjectSkillRepository projectSkillRepository;
+    private final UserGoalRepository userGoalRepository;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -53,6 +56,16 @@ public class UserService {
         );
 
         skillService.saveUserSkills(user, requestDto.getSkills());
+
+        if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
+            List<UserGoal> newGoals = requestDto.getGoals().stream()
+                .map(goalType -> UserGoal.builder()
+                    .user(user)
+                    .goal(goalType)
+                    .build())
+                .toList();
+            userGoalRepository.saveAll(newGoals);
+        }
 
         log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
     }
