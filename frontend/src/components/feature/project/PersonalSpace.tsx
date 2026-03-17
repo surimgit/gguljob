@@ -1,4 +1,6 @@
-import { Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { useAuthStore } from '../../../stores/authStore';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
@@ -58,6 +60,44 @@ const MOCK_MR_LIST: MrItem[] = [
       { author: '정서윤', role: 'Frontend', comment: 'useRef 플래그 방식 좋은데, useSWR이나 react-query 쓰면 이런 중복 요청 처리가 내장되어 있어서 추후 리팩토링 고려해봐요.', avatarColor: '#ec4899' },
     ],
   },
+  {
+    id: 3,
+    title: 'refactor: API 호출 로직 커스텀 훅으로 분리',
+    status: 'Open',
+    description: '컴포넌트에 직접 작성되어 있던 fetch 로직을 useApi 커스텀 훅으로 분리했습니다. 로딩, 에러, 데이터 상태를 통합 관리하고 재사용성을 높였습니다.',
+    branch: 'refactor/custom-hook-api',
+    commits: 3,
+    time: '2시간 전',
+    reviews: [
+      { author: '오준혁', role: 'Backend', comment: 'API 에러 핸들링 시 HTTP 상태 코드별 분기 처리도 훅 내부에서 해주면 좋겠어요.', avatarColor: '#6366f1' },
+      { author: '정서윤', role: 'Frontend', comment: '제네릭 타입 적용 깔끔하네요. AbortController도 cleanup에 추가하면 더 안정적일 것 같아요.', avatarColor: '#ec4899' },
+    ],
+  },
+  {
+    id: 4,
+    title: 'feat: 다크모드 토글 및 테마 시스템 구현',
+    status: 'Merged',
+    description: 'CSS 변수 기반 테마 시스템을 구축하고, localStorage에 사용자 테마 설정을 저장하는 다크모드 토글 기능을 구현했습니다. prefers-color-scheme 미디어 쿼리로 시스템 설정도 반영됩니다.',
+    branch: 'feature/dark-mode',
+    commits: 5,
+    time: '2일 전 병합',
+    reviews: [
+      { author: '이준혁', role: 'Frontend', comment: 'CSS 변수 네이밍이 일관성 있어서 좋아요. transition 추가하면 테마 전환이 더 부드러울 것 같아요.', avatarColor: '#22c55e' },
+    ],
+  },
+  {
+    id: 5,
+    title: 'fix: 로그인 토큰 만료 시 자동 리다이렉트 미동작 수정',
+    status: 'Closed',
+    description: 'Axios interceptor에서 401 응답을 받았을 때 로그인 페이지로 리다이렉트가 되지 않는 버그를 수정했습니다. response interceptor의 에러 핸들링 순서가 잘못되어 있었습니다.',
+    branch: 'fix/auth-redirect',
+    commits: 1,
+    time: '3일 전 닫힘',
+    reviews: [
+      { author: '오준혁', role: 'Backend', comment: 'refresh token 로직도 같이 추가하면 사용자 경험이 더 좋아질 것 같아요.', avatarColor: '#6366f1' },
+      { author: '김도현', role: '본인 · 답변', comment: 'refresh token은 별도 MR로 진행하겠습니다. 우선 리다이렉트 버그만 수정했어요.', avatarColor: '#f59e0b' },
+    ],
+  },
 ];
 
 const MOCK_TROUBLESHOOTINGS: TroubleshootingItem[] = [
@@ -93,63 +133,70 @@ const StatusBadge = ({ status }: { status: MrStatus }) => {
     Closed: 'bg-[#f3f4f6] text-[#6b7280] border-transparent',
   };
   return (
-    <span className={`text-[13px] font-bold tracking-wide px-3 py-1 rounded-full border flex-shrink-0 ${styles[status]}`}>
+    <span className={`text-sm font-bold tracking-wide px-4 py-1.5 rounded-full border flex-shrink-0 ${styles[status]}`}>
       {status}
     </span>
   );
 };
 
-const MrCard = ({ mr }: { mr: MrItem }) => (
-  <div className="flex flex-col gap-0 border border-border rounded-2xl bg-surface overflow-hidden" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07), 0 1px 2px 0 rgba(0,0,0,0.04)' }}>
-    {/* 번호 + 제목 + 뱃지 */}
-    <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="w-6 h-6 rounded-full bg-[#6366f1] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+const MrCard = ({ mr }: { mr: MrItem }) => {
+  const statusColor = mr.status === 'Open' ? '#16A34A' : mr.status === 'Merged' ? '#E11D48' : '#6B7280';
+  return (
+  <div className="flex flex-col gap-0 border border-border rounded-2xl overflow-hidden" style={{ background: '#FAF9F6' }}>
+    {/* 번호 + 제목 + 뱃지 + 세로라인 + 설명/메타 */}
+    <div className="flex px-5 pt-5 pb-4">
+      {/* 좌측: 번호 원 + 세로 라인 + 끝 점 */}
+      <div className="flex flex-col items-center w-6 flex-shrink-0 mr-2">
+        <span
+          className="w-8 h-8 rounded-full text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0"
+          style={{ background: statusColor }}
+        >
           {mr.id}
         </span>
-        <p className="text-[15px] font-bold text-text-primary leading-snug">{mr.title}</p>
+        <div className="w-px flex-1 -mt-px" style={{ background: statusColor }} />
+        <div className="w-2 h-2 rounded-full flex-shrink-0 -mt-px" style={{ background: statusColor }} />
       </div>
-      <StatusBadge status={mr.status} />
-    </div>
-
-    {/* 설명 */}
-    <p className="text-[13px] text-text-secondary leading-relaxed px-5 pb-3">{mr.description}</p>
-
-    {/* 메타 */}
-    <div className="flex items-center gap-1.5 px-5 pb-4">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-success flex-shrink-0">
-        <line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
-      </svg>
-      <span className="text-[12px] text-text-tertiary font-mono">{mr.branch}</span>
-      <span className="text-[12px] text-text-tertiary">·</span>
-      <span className="text-[12px] text-text-tertiary">커밋 {mr.commits}개</span>
-      <span className="text-[12px] text-text-tertiary">·</span>
-      <span className="text-[12px] text-text-tertiary">{mr.time}</span>
+      {/* 우측: 제목 + 뱃지 + 설명 + 메타 */}
+      <div className="flex flex-col gap-2 flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-lg font-bold text-text-primary leading-snug ml-3 mt-1">{mr.title}</p>
+          <StatusBadge status={mr.status} />
+        </div>
+        <p className="text-base font-semibold text-text-secondary leading-relaxed mt-3 ml-3">{mr.description}</p>
+        <div className="flex items-center gap-1.5 mt-3 ml-4">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-success flex-shrink-0">
+            <line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
+          </svg>
+          <span className="text-sm text-text-tertiary font-mono">{mr.branch}</span>
+          <span className="text-sm text-text-tertiary">·</span>
+          <span className="text-sm text-text-tertiary">커밋 {mr.commits}개</span>
+          <span className="text-sm text-text-tertiary">·</span>
+          <span className="text-sm text-text-tertiary">{mr.time}</span>
+        </div>
+      </div>
     </div>
 
     {/* 코드 리뷰 */}
     {mr.reviews.length > 0 && (
       <div className="flex flex-col gap-0 border-t border-border">
-        {/* 헤더 */}
-        <div className="flex items-center gap-1.5 px-5 py-3 bg-background">
+        <div className="flex items-center gap-1.5 px-5 py-3 bg-background my-3">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
-          <p className="text-[13px] font-bold text-text-primary">코드 리뷰 ({mr.reviews.length}건)</p>
+          <p className="text-base font-bold text-text-primary">코드 리뷰 ({mr.reviews.length}건)</p>
         </div>
-        {/* 리뷰 목록 */}
         <div className="flex flex-col gap-0">
           {mr.reviews.map((r, i) => (
-            <div key={i} className={`flex items-start gap-3 px-5 py-3 ${i < mr.reviews.length - 1 ? 'border-b border-border' : ''}`}>
+            <div key={i} className={`flex items-start gap-3 px-5 py-3 my-2 ${i < mr.reviews.length - 1 ? 'border-b border-border' : ''}`}>
               <div
-                className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold mt-0.5"
+                className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold mt-0.5"
                 style={{ backgroundColor: r.avatarColor }}
               >
                 {r.author[0]}
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <span className="text-[13px] font-bold text-text-primary">{r.author} · {r.role}</span>
-                <p className="text-[13px] text-text-secondary leading-relaxed">{r.comment}</p>
+                <span className="text-base font-bold text-text-primary">{r.author} · {r.role}</span>
+                <p className="text-base font-medium text-text-secondary leading-relaxed">{r.comment}</p>
               </div>
             </div>
           ))}
@@ -157,7 +204,8 @@ const MrCard = ({ mr }: { mr: MrItem }) => (
       </div>
     )}
   </div>
-);
+  );
+};
 
 const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => (
   <div className="flex flex-col border border-border rounded-2xl bg-surface overflow-hidden" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07), 0 1px 2px 0 rgba(0,0,0,0.04)' }}>
@@ -226,139 +274,159 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => (
 );
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-const PersonalSpace = () => {
+export type PersonalSubTab = 'troubleshooting' | 'mr-review';
+
+const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTitle?: string; subTab?: PersonalSubTab }) => {
+  const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
+  const [mrPage, setMrPage] = useState(0);
+  const MR_PER_PAGE = 3;
   const stats = { mrCount: 12, autoGenCount: 5 };
   const mrMessages = 12;
   const codeReviews = 34;
 
   return (
     <div className="flex flex-col gap-10">
-      {/* 히어로 헤더 — 아래 그리드와 동일한 열 구조로 정렬 */}
-      <div className="grid grid-cols-[3fr_2fr] gap-5 items-center">
-        {/* 좌: 제목 + 프로필 */}
-        <div className="flex flex-col gap-10">
-          <h2 className="text-[32px] font-black tracking-tight text-text-brown leading-tight">DevLog 트러블슈팅 플랫폼</h2>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-primary-hover flex items-center justify-center flex-shrink-0 shadow-sm">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[22px] font-bold tracking-wide text-text-primary leading-tight">김도현</p>
-              <p className="text-[16px] tracking-wide text-text-secondary leading-tight">Frontend Developer · DevLog 트러블슈팅 플랫폼</p>
-            </div>
+
+      {/* 프로필 */}
+      <div className="flex items-center justify-between gap-5 mt-4">
+        {/* 프로필 */}
+        <div className="flex items-center gap-3">
+          <div className="w-20 h-20 rounded-full bg-primary-hover flex items-center justify-center flex-shrink-0 shadow-sm">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
           </div>
-        </div>
-
-        {/* 우: 스탯 카드 3개 — 320px 컬럼 안에서 균등 분할 */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'MR / PR',   value: String(stats.mrCount),    sub: '평균 10건',    valueColor: 'text-text-primary' },
-            { label: '받은 리뷰',  value: String(codeReviews),       sub: '평균 28건',    valueColor: 'text-text-primary' },
-            { label: '자동 생성', value: `${stats.autoGenCount}건`, sub: '초안 3건 포함', valueColor: 'text-[#6366f1]' },
-          ].map(({ label, value, sub, valueColor }) => (
-            <div
-              key={label}
-              className="bg-primary-soft rounded-xl px-3 py-3 flex flex-col gap-0.5 shadow-[0_4px_16px_0_rgba(0,0,0,0.10),0_1px_3px_0_rgba(0,0,0,0.06)]"
-            >
-              <p className="text-[11px] tracking-wider text-text-tertiary font-medium leading-tight">{label}</p>
-              <p className={`text-[24px] font-black tracking-tight leading-tight ${valueColor}`}>{value}</p>
-              <p className="text-[11px] tracking-wider text-text-tertiary leading-tight">{sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 2열 레이아웃 */}
-      <div className="grid grid-cols-[3fr_2fr] gap-5 items-start">
-
-        {/* ── 좌측 ── */}
-        <div className="flex flex-col gap-4">
-
-          {/* AI 자동 생성 카드 */}
-          <div className="rounded-2xl px-5 py-5 border border-[#c7d2fe]" style={{ background: '#f5f7ff', boxShadow: '0 4px 16px 0 rgba(99,102,241,0.10), 0 1px 3px 0 rgba(0,0,0,0.06)' }}>
-            {/* 헤더 */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-[#6366f1]" />
-                </div>
-                <span className="text-[16px] font-bold tracking-tight text-text-primary">AI 트러블슈팅 자동 생성</span>
-                <span className="text-[11px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
-              </div>
-              <span className="text-[13px] tracking-wide text-text-tertiary">마지막 분석: 3분 전</span>
-            </div>
-
-            {/* 설명 */}
-            <p className="text-[14px] tracking-wide text-text-secondary leading-[2] mb-6">
-              내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
-              <br />생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
+          <div className="flex flex-col gap-0.5">
+            <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
+            <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
+              <span className="text-text-secondary">Frontend Developer · </span>
+              <span className="text-text-brown">{projectTitle ?? 'DevLog 트러블슈팅 플랫폼'}</span>
             </p>
-
-            {/* 태그 */}
-            <div className="flex items-center gap-3 mb-5">
-              {/* MR 메시지 */}
-              <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-                <span className="text-[14px] font-semibold tracking-wide text-text-secondary">MR 메시지</span>
-                <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{mrMessages}건</span>
-              </div>
-              {/* 코드 리뷰 */}
-              <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span className="text-[14px] font-semibold tracking-wide text-text-secondary">코드 리뷰</span>
-                <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{codeReviews}건</span>
-              </div>
-            </div>
-
-            {/* 버튼 */}
-            <button
-              className="w-full py-3.5 rounded-xl text-[15px] font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-            >
-              <Sparkles className="w-4 h-4" />
-              트러블슈팅 자동 생성하기
-            </button>
-          </div>
-
-          {/* 내 MR / 코드 리뷰 */}
-          <div className="rounded-2xl px-4 py-5 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
-                  <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
-                </svg>
-                <span className="text-[18px] font-bold tracking-tight text-text-primary">내 MR / 코드 리뷰</span>
-              </div>
-              <span className="text-[13px] tracking-wider text-text-tertiary">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {MOCK_MR_LIST.map(mr => <MrCard key={mr.id} mr={mr} />)}
-            </div>
-          </div>
-        </div>
-
-        {/* ── 우측: 자동 생성 트러블슈팅 ── */}
-        <div className="rounded-2xl px-3 py-4 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
-          <div className="flex items-center justify-between mb-3 gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Sparkles className="w-3.5 h-3.5 text-[#6366f1] flex-shrink-0" />
-              <span className="text-[14px] font-bold tracking-tight text-text-primary whitespace-nowrap">자동 생성 트러블슈팅</span>
-              <span className="text-[11px] font-semibold bg-[#f3f4f6] text-text-secondary px-1.5 py-0.5 rounded-full flex-shrink-0">{stats.autoGenCount}건</span>
-            </div>
-            <span className="text-[11px] font-bold tracking-wider bg-primary text-text-primary px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">AI 생성</span>
-          </div>
-          <div className="flex flex-col gap-4">
-            {MOCK_TROUBLESHOOTINGS.map(item => <TroubleshootingCard key={item.id} item={item} />)}
           </div>
         </div>
       </div>
+
+      {/* ── 트러블슈팅 탭 ── */}
+      {subTab === 'troubleshooting' && (
+        <div className="grid grid-cols-[3fr_2fr] gap-5 items-start">
+          {/* 좌측: AI 자동 생성 카드 */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl px-5 py-5 border border-[#c7d2fe]" style={{ background: '#f5f7ff', boxShadow: '0 4px 16px 0 rgba(99,102,241,0.10), 0 1px 3px 0 rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-[#6366f1]" />
+                  </div>
+                  <span className="text-[16px] font-bold tracking-tight text-text-primary">AI 트러블슈팅 자동 생성</span>
+                  <span className="text-[11px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
+                </div>
+                <span className="text-[13px] tracking-wide text-text-tertiary">마지막 분석: 3분 전</span>
+              </div>
+
+              <p className="text-[14px] tracking-wide text-text-secondary leading-[2] mb-6">
+                내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
+                <br />생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
+              </p>
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  <span className="text-[14px] font-semibold tracking-wide text-text-secondary">MR 메시지</span>
+                  <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{mrMessages}건</span>
+                </div>
+                <div className="flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span className="text-[14px] font-semibold tracking-wide text-text-secondary">코드 리뷰</span>
+                  <span className="text-[13px] font-bold tracking-wider text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full leading-none">{codeReviews}건</span>
+                </div>
+              </div>
+
+              <button
+                className="w-full py-3.5 rounded-xl text-[15px] font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+              >
+                <Sparkles className="w-4 h-4" />
+                트러블슈팅 자동 생성하기
+              </button>
+            </div>
+          </div>
+
+          {/* 우측: 자동 생성 트러블슈팅 */}
+          <div className="rounded-2xl px-3 py-4 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Sparkles className="w-3.5 h-3.5 text-[#6366f1] flex-shrink-0" />
+                <span className="text-[14px] font-bold tracking-tight text-text-primary whitespace-nowrap">자동 생성 트러블슈팅</span>
+                <span className="text-[11px] font-semibold bg-[#f3f4f6] text-text-secondary px-1.5 py-0.5 rounded-full flex-shrink-0">{stats.autoGenCount}건</span>
+              </div>
+              <span className="text-[11px] font-bold tracking-wider bg-primary text-text-primary px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">AI 생성</span>
+            </div>
+            <div className="flex flex-col gap-4">
+              {MOCK_TROUBLESHOOTINGS.map(item => <TroubleshootingCard key={item.id} item={item} />)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MR 리뷰 탭 ── */}
+      {subTab === 'mr-review' && (
+        <div className="flex flex-col gap-6">
+          <div className="rounded-2xl px-8 py-8 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 mt-3">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary-soft)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
+                    <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
+                  </svg>
+                </div>
+                <span className="text-xl font-bold tracking-tight text-text-primary">내 MR / 코드 리뷰</span>
+              </div>
+              <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
+            </div>
+            <div className="flex flex-col gap-10">
+              {MOCK_MR_LIST.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
+            </div>
+
+            {/* 페이지네이션 */}
+            {MOCK_MR_LIST.length > MR_PER_PAGE && (
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button
+                  onClick={() => setMrPage(p => Math.max(0, p - 1))}
+                  disabled={mrPage === 0}
+                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+                {Array.from({ length: Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMrPage(i)}
+                    className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
+                      mrPage === i
+                        ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
+                        : 'text-text-tertiary hover:text-text-primary'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setMrPage(p => Math.min(Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) - 1, p + 1))}
+                  disabled={mrPage >= Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) - 1}
+                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

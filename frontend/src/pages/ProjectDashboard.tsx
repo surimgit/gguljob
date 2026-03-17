@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
   FolderOpen,
@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
-import PersonalSpace from "../components/feature/project/PersonalSpace";
+import PersonalSpace, { type PersonalSubTab } from "../components/feature/project/PersonalSpace";
+import { ChevronDown } from "lucide-react";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog } from "../types/project";
@@ -179,12 +180,15 @@ const formatTime = (dateStr: string) => {
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<string>("team");
+  const [personalSubTab, setPersonalSubTab] = useState<PersonalSubTab>("troubleshooting");
+  const [personalDropdownOpen, setPersonalDropdownOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
   const [editingRepo, setEditingRepo] = useState(false);
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
@@ -192,6 +196,18 @@ const ProjectDashboard = () => {
   useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (personalDropdownRef.current && !personalDropdownRef.current.contains(e.target as Node)) {
+        setPersonalDropdownOpen(false);
+      }
+    };
+    if (personalDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [personalDropdownOpen]);
 
   if (dashboardLoading) {
     return (
@@ -220,7 +236,7 @@ const ProjectDashboard = () => {
       className="min-h-screen"
       style={{ background: "var(--color-background)" }}
     >
-      <div className={`mx-auto py-6 flex flex-col gap-5 ${activeTab === "personal" ? "max-w-[1400px] px-3" : "max-w-5xl px-8"}`}>
+      <div className={`mx-auto py-6 flex flex-col gap-8 ${activeTab === "personal" ? "max-w-[1400px] px-3" : "max-w-5xl px-8"}`}>
         {/* ── 상단 탭 네비게이션 ── */}
         <div
           className="flex gap-1 rounded-2xl px-2 py-1.5 w-fit"
@@ -232,10 +248,99 @@ const ProjectDashboard = () => {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
+            const isPersonal = tab.key === "personal";
+            const isPersonalActive = isPersonal && activeTab === "personal";
+
+            if (isPersonal) {
+              return (
+                <div key={tab.key} className="relative" ref={personalDropdownRef}>
+                  <button
+                    onClick={() => {
+                      if (isPersonalActive) {
+                        setPersonalDropdownOpen((prev) => !prev);
+                      } else {
+                        setActiveTab("personal");
+                        setPersonalDropdownOpen(true);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
+                      isActive ? "font-bold" : "font-medium"
+                    }`}
+                    style={
+                      isActive
+                        ? {
+                            background: "var(--color-primary)",
+                            color: "var(--color-text-primary)",
+                          }
+                        : { color: "var(--color-text-secondary)" }
+                    }
+                    onMouseEnter={(e) => {
+                      if (!isActive)
+                        e.currentTarget.style.background = "var(--color-background)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.background = "";
+                    }}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        personalDropdownOpen && isPersonalActive ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* 드롭다운 메뉴 */}
+                  {personalDropdownOpen && isPersonalActive && (
+                    <div
+                      className="absolute top-full left-0 mt-2 rounded-xl py-1 min-w-[140px] z-50 shadow-lg"
+                      style={{
+                        background: "var(--color-surface)",
+                        border: "1px solid var(--color-border)",
+                      }}
+                    >
+                      {([
+                        { key: "troubleshooting" as PersonalSubTab, label: "트러블슈팅" },
+                        { key: "mr-review" as PersonalSubTab, label: "MR 리뷰" },
+                      ]).map((item) => (
+                        <button
+                          key={item.key}
+                          onClick={() => {
+                            setPersonalSubTab(item.key);
+                            setPersonalDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                          style={{
+                            color:
+                              personalSubTab === item.key
+                                ? "var(--color-primary-hover)"
+                                : "var(--color-text-secondary)",
+                            fontWeight: personalSubTab === item.key ? 700 : 500,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "var(--color-background)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "";
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setPersonalDropdownOpen(false);
+                }}
                 className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
                   isActive ? "font-bold" : "font-medium"
                 }`}
@@ -265,7 +370,7 @@ const ProjectDashboard = () => {
 
         {activeTab === "members" && <TeamMembers dashboard={dashboard} />}
         {activeTab === "settings" && <ProjectSettings dashboard={dashboard} />}
-        {activeTab === "personal" && <PersonalSpace />}
+        {activeTab === "personal" && <PersonalSpace projectTitle={projectInfo.title} subTab={personalSubTab} />}
 
         {activeTab === "team" && (
         <>
