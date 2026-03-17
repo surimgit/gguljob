@@ -98,4 +98,8 @@ public class PullRequest extends BaseTimeEntity {
         this.status = status;
         this.githubClosedAt = closedAt;
     }
+
+    public void updateDiffContent(String diffContent) {
+        this.diffContent = diffContent;
+    }
 }
