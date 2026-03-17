@@ -7,7 +7,6 @@ import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.type.PrStatus;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
-import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
@@ -16,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -87,7 +85,7 @@ public class GithubSyncService {
             .map(PullRequest::getPrNumber)
             .collect(Collectors.toSet());
 
-        // 이메일 <-> MR 유저 매칭을 위한 Map 만들기 (쿼리 1번)
+        // 이메일 <-> MR 유저 매칭을 위한 Map 만들기
         Set<String> targetEmails = prList.stream()
             .map(pr -> {
                 Map<String, Object> userMap = (Map<String, Object>) pr.get("user");
@@ -156,6 +154,29 @@ public class GithubSyncService {
             log.info("성공적으로 필터링 및 매칭된 {}개의 새 PR을 DB에 저장했습니다.", pullRequestEntities.size());
         } else {
             log.info("새로 저장할 PR이 없습니다. (모두 중복이거나 미가입자의 PR)");
+        }
+    }
+    public String fetchDiffFromGithub(String diffUrl) {
+        if (diffUrl == null || diffUrl.isBlank()) return null;
+
+        String cleanUrl = diffUrl.replaceAll("\\[|\\]|\\(.*?\\)", "").trim();
+        String apiUrl = cleanUrl;
+        if (cleanUrl.contains("github.com") && !cleanUrl.contains("api.github.com")) {
+            apiUrl = cleanUrl.replace("https://github.com/", "https://api.github.com/repos/")
+                .replace("/pull/", "/pulls/");
+        }
+
+        log.info("🎯 최종 확정 API 주소: [{}]", apiUrl);
+
+        try {
+            return restClient.get()
+                .uri(apiUrl)
+                .header("Accept", "application/vnd.github.v3.diff") // Diff 형식 요청
+                .retrieve()
+                .body(String.class);
+        } catch (Exception e) {
+            log.error("❌ Github API 호출 실패 (주소 문제 가능성): {} | 주소: {}", e.getMessage(), apiUrl);
+            return null;
         }
     }
 }

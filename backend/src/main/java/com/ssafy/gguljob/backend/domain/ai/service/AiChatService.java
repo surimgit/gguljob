@@ -103,7 +103,7 @@ public class AiChatService {
         }
     }
 
-    private String callClaudeApi(String message) {
+    public String callClaudeApi(String message) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", gmsKey);

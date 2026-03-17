@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.troubleshooting.dto;
 
+import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
 import com.ssafy.gguljob.backend.domain.troubleshooting.entity.Troubleshooting;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -24,4 +25,12 @@ public class TroubleshootingResponse {
                 .build();
         }
     }
+
+    public record GenerateResult(
+        String title,
+        String trouble,
+        String shooting,
+        String prTitle,
+        Integer prNumber
+    ) {}
 }
