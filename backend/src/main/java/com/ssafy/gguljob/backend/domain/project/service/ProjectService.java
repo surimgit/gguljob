@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
@@ -54,6 +55,7 @@ public class ProjectService {
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectPositionRepository projectPositionRepository;
     private final JoinRequestRepository joinRequestRepository;
+    private final GithubSyncService githubSyncService;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -68,8 +70,6 @@ public class ProjectService {
             .domain(request.domain())
             .description(request.description())
             .isPublic(request.isPublic())
-            .imageUrl(request.imageUrl())
-            .documentUrl(request.documentUrl())
             .build();
 
         Project savedProject = projectRepository.save(project);
@@ -174,6 +174,24 @@ public class ProjectService {
         Optional<GitRepository> existingRepoOpt = gitRepositoryRepository.findByProject_Id(projectId);
         if (existingRepoOpt.isPresent() && existingRepoOpt.get().getRepoUrl().equals(request.repoUrl())) {
             throw new IllegalArgumentException("이미 동일한 깃허브 레포지토리가 등록되어 있습니다.");
+        }
+
+        try {
+            String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
+            if (urlParts.length >= 2) {
+                String owner = urlParts[0];
+                String repo = urlParts[1].replace(".git", "");
+
+                // 리드미 텍스트 긁어오기
+                String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
+
+                if (readme != null && !readme.isBlank()) {
+                    project.updateReadme(readme);
+                    log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("❌ README 가져오기 실패 (등록은 계속 진행): {}", e.getMessage());
         }
 
         // 서버 시크릿 키 생성
