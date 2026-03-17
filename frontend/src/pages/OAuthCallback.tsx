@@ -110,13 +110,15 @@ const OAuthCallback = () => {
             const mappedRole = ROLE_MAP[formData.role];
             const mappedExp = EXPERIENCE_MAP[formData.experience];
             if (!mappedRole || !mappedExp) {
+              console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
               setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
               return;
             }
+            const goalsSummary = formData.goals
+              .map((g) => GOAL_LABELS[g] ?? g)
+              .join(', ');
             const payload: OnboardingRequest = {
-              description: formData.goals
-                .map((g) => GOAL_LABELS[g] ?? g)
-                .join(', ') + '에 관심이 있습니다.',
+              description: `${goalsSummary}에 관심이 있습니다.`,
               roles: [mappedRole],
               experience: mappedExp,
               skills: formData.languages,
