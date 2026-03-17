@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ProfileHeader,
   ProjectSummary,
@@ -12,7 +13,7 @@ import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth
 import type { PositionType } from '../types/user';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import { getMe } from '../api/user';
+import { getMe, withdrawApi } from '../api/user';
 
 interface Project {
   id: string;
@@ -39,8 +40,10 @@ const POSITION_LABEL: Record<PositionType, string> = {
 };
 
 const MyPage = () => {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
 
   const [profile, setProfile] = useState<ProfileData>({
     name: '',
@@ -73,9 +76,15 @@ const MyPage = () => {
     fetchMyProjects();
   }, [fetchMyProjects]);
 
-  const handleWithdrawConfirm = () => {
-    setIsWithdrawOpen(false);
-    setIsCompleteOpen(true);
+  const handleWithdrawConfirm = async () => {
+    try {
+      await withdrawApi();
+      setIsWithdrawOpen(false);
+      setIsCompleteOpen(true);
+    } catch {
+      setIsWithdrawOpen(false);
+      alert('회원 탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleOpenEdit = () => {
@@ -138,7 +147,11 @@ const MyPage = () => {
       />
       <WithdrawCompleteModal
         isOpen={isCompleteOpen}
-        onClose={() => setIsCompleteOpen(false)}
+        onClose={() => {
+          setIsCompleteOpen(false);
+          logout();
+          navigate('/login', { replace: true });
+        }}
       />
       </div>
     </div>
