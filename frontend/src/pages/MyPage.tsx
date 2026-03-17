@@ -150,7 +150,7 @@ const MyPage = () => {
         onClose={() => {
           setIsCompleteOpen(false);
           logout();
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         }}
       />
       </div>
