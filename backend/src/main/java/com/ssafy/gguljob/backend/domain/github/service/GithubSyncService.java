@@ -179,4 +179,26 @@ public class GithubSyncService {
             return null;
         }
     }
+
+    public String fetchReadmeFromGithub(String owner, String repo, String token) {
+        String apiUrl = String.format("https://api.github.com/repos/%s/%s/readme", owner, repo);
+
+        log.info("🚀 Github에서 README 데이터를 가져오는 중: {}", apiUrl);
+
+        try {
+            var request = restClient.get()
+                .uri(apiUrl)
+                .header("Accept", "application/vnd.github.v3.raw");
+
+            if (token != null && !token.isBlank()) {
+                request.header("Authorization", "Bearer " + token);
+            }
+
+            return request.retrieve().body(String.class);
+
+        } catch (Exception e) {
+            log.error("❌ Github README 가져오기 실패: {}", e.getMessage());
+            return "README 정보가 없거나 가져올 수 없습니다.";
+        }
+    }
 }
