@@ -2,6 +2,8 @@ package com.ssafy.gguljob.backend.domain.project.repository;
 
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
+import java.util.List;
 import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +19,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         @Param("userId") Long userId,
         @Param("status") MemberStatus status
     );
+
+    List<Project> findAllByStatusOrderByCreatedAtDesc(ProjectStatus status);
+
+    List<Project> findAllByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus status, List<Long> joinedProjectIds);
 }

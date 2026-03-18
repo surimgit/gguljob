@@ -370,4 +370,36 @@ public class ProjectService {
             )
         ));
     }
+
+    public List<ProjectResponse.ProjectCardDto> getTopProjects(Long userId) {
+        List<Project> topProjects;
+
+        if (userId != null) {
+            List<Long> joinedProjectIds = projectMemberRepository
+                .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
+                .stream()
+                .map(pm -> pm.getProject().getId())
+                .toList();
+
+            if (!joinedProjectIds.isEmpty()) {
+                topProjects = projectRepository.findAllByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus.RECRUITING, joinedProjectIds);
+            } else {
+                topProjects = projectRepository.findAllByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+            }
+        } else {
+            topProjects = projectRepository.findAllByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+        }
+
+        if (topProjects.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<Long> projectIds = topProjects.stream().map(Project::getId).toList();
+        Map<Long, ProjectResponse.ProjectCardDto> cardMap = getProjectCardsMap(projectIds);
+
+        return topProjects.stream()
+            .map(p -> cardMap.get(p.getId()))
+            .filter(java.util.Objects::nonNull)
+            .toList();
+    }
 }
