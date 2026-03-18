@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
 import chatbotImg from '../assets/images/chatbot.png';
@@ -189,6 +189,15 @@ const PortfolioCreate = () => {
   const [generating, setGenerating] = useState(false);
   const [generatedMd, setGeneratedMd] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const generateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (generateTimerRef.current) clearTimeout(generateTimerRef.current);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const toggleProject = (id: number) => {
     // 항상 해당 프로젝트의 트러블슈팅 목록을 보여줌
@@ -212,7 +221,7 @@ const PortfolioCreate = () => {
   const handleGenerate = () => {
     setGenerating(true);
     // TODO: 실제 API 연결 시 이 setTimeout을 교체
-    setTimeout(() => {
+    generateTimerRef.current = setTimeout(() => {
       setGenerating(false);
       setGeneratedMd(MOCK_PORTFOLIO_MD);
     }, 2000);
@@ -222,7 +231,7 @@ const PortfolioCreate = () => {
     if (!generatedMd) return;
     navigator.clipboard.writeText(generatedMd);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handleReset = () => {
