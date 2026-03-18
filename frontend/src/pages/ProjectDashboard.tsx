@@ -249,20 +249,13 @@ const ProjectDashboard = () => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             const isPersonal = tab.key === "personal";
-            const isPersonalActive = isPersonal && activeTab === "personal";
+
 
             if (isPersonal) {
               return (
-                <div key={tab.key} className="relative" ref={personalDropdownRef}>
+                <div key={tab.key} className="relative" ref={personalDropdownRef} onMouseLeave={() => setPersonalDropdownOpen(false)}>
                   <button
-                    onClick={() => {
-                      if (isPersonalActive) {
-                        setPersonalDropdownOpen((prev) => !prev);
-                      } else {
-                        setActiveTab("personal");
-                        setPersonalDropdownOpen(true);
-                      }
-                    }}
+                    onMouseEnter={() => setPersonalDropdownOpen(true)}
                     className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
                       isActive ? "font-bold" : "font-medium"
                     }`}
@@ -274,60 +267,61 @@ const ProjectDashboard = () => {
                           }
                         : { color: "var(--color-text-secondary)" }
                     }
-                    onMouseEnter={(e) => {
-                      if (!isActive)
-                        e.currentTarget.style.background = "var(--color-background)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.background = "";
-                    }}
                   >
                     <Icon className="w-4 h-4" />
                     {tab.label}
                     <ChevronDown
                       className={`w-3.5 h-3.5 transition-transform ${
-                        personalDropdownOpen && isPersonalActive ? "rotate-180" : ""
+                        personalDropdownOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
                   {/* 드롭다운 메뉴 */}
-                  {personalDropdownOpen && isPersonalActive && (
-                    <div
-                      className="absolute top-full left-0 mt-2 rounded-xl py-1 min-w-[140px] z-50 shadow-lg"
-                      style={{
-                        background: "var(--color-surface)",
-                        border: "1px solid var(--color-border)",
-                      }}
-                    >
-                      {([
-                        { key: "troubleshooting" as PersonalSubTab, label: "트러블슈팅" },
-                        { key: "mr-review" as PersonalSubTab, label: "MR 리뷰" },
-                      ]).map((item) => (
-                        <button
-                          key={item.key}
-                          onClick={() => {
-                            setPersonalSubTab(item.key);
-                            setPersonalDropdownOpen(false);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm transition-colors"
-                          style={{
-                            color:
-                              personalSubTab === item.key
-                                ? "var(--color-primary-hover)"
-                                : "var(--color-text-secondary)",
-                            fontWeight: personalSubTab === item.key ? 700 : 500,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "var(--color-background)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "";
-                          }}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
+                  {personalDropdownOpen && (
+                    <div className="absolute top-full left-0 pt-2 min-w-[140px] z-50">
+                      <div
+                        className="rounded-xl py-1 shadow-lg"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {([
+                          { key: "troubleshooting" as PersonalSubTab, label: "트러블슈팅" },
+                          { key: "mr-review" as PersonalSubTab, label: "MR 리뷰" },
+                        ]).map((item) => (
+                          <button
+                            key={item.key}
+                            onClick={() => {
+                              setActiveTab("personal");
+                              setPersonalSubTab(item.key);
+                              setPersonalDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                            style={{
+                              color:
+                                activeTab === "personal" && personalSubTab === item.key
+                                  ? "var(--color-primary-hover)"
+                                  : "var(--color-text-secondary)",
+                              fontWeight: activeTab === "personal" && personalSubTab === item.key ? 700 : 500,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "var(--color-background)";
+                              e.currentTarget.style.color = "var(--color-primary-hover)";
+                              e.currentTarget.style.fontWeight = "700";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                              const isSelected = activeTab === "personal" && personalSubTab === item.key;
+                              e.currentTarget.style.color = isSelected ? "var(--color-primary-hover)" : "var(--color-text-secondary)";
+                              e.currentTarget.style.fontWeight = isSelected ? "700" : "500";
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
