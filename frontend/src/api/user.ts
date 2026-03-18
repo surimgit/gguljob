@@ -31,6 +31,7 @@ export const getMe = async (): Promise<User> => {
     teamTendency: d.teamTendency ?? null,
     skills: d.skills ?? [],
     techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
+    goals: (d.goals ?? []) as string[],
     role: firstRole ?? null,
   };
 };
