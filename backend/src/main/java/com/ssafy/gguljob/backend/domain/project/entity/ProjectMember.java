@@ -62,4 +62,9 @@ public class ProjectMember extends BaseTimeEntity {
         this.role = role;
         this.projectPosition = projectPosition;
     }
+
+    public void leaveProject() {
+        this.status = MemberStatus.LEAVE;
+        this.deletedAt = LocalDateTime.now();
+    }
 }
