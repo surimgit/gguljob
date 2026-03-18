@@ -24,7 +24,7 @@ const ProjectDetail = () => {
     setLoading(true);
     getTeamDashboard(projectId)
       .then(({ data }) => {
-        setDashboard(data.data ?? data);
+        setDashboard(data);
         setError(null);
       })
       .catch((err) => {

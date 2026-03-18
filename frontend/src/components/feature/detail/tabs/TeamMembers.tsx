@@ -9,7 +9,7 @@ import {
   Check,
   Crown,
 } from "lucide-react";
-import type { TeamDashboard, TeamManagement } from "../../../../types/project";
+import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
 import { acceptRequest, rejectRequest, getTeamManagement } from "../../../../api/projects";
 
 /* ── 타입 ── */
@@ -1536,7 +1536,7 @@ const TeamManagement = ({
 
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
-  const [detail, setDetail] = useState<TeamManagement | null>(null);
+  const [detail, setDetail] = useState<TeamManagementData | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
