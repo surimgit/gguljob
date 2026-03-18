@@ -67,4 +67,9 @@ public class ProjectMember extends BaseTimeEntity {
         this.status = MemberStatus.LEAVE;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void revokeProject() {
+        this.status = MemberStatus.REVOKE;
+        this.deletedAt = LocalDateTime.now();
+    }
 }
