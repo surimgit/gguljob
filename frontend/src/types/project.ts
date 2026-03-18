@@ -139,6 +139,8 @@ export interface TeamManagement {
   pendingRequests: PendingJoinRequest[];
 }
 
+export type MembersDetail = TeamManagement;
+
 // GET /projects/{id}/gitlog 응답
 export interface GitLog {
   mrRankings: MrRanking[];

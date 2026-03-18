@@ -22,9 +22,6 @@ export const getProjects = (params?: ProjectQueryParams) =>
 export const getProjectById = (id: number) =>
   api.get<ProjectDetail>(`/projects/${id}`);
 
-export const applyToPosition = (projectId: number, positionId: number) =>
-  api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`);
-
 export const inviteUser = (projectId: number, userId: number) =>
   api.post(`/v1/projects/${projectId}/invites/${userId}`);
 
@@ -48,6 +45,9 @@ export const getGitLog = (projectId: number) =>
 
 export const getTeamManagement = (projectId: number) =>
   api.get<{ data: TeamManagement }>(`/v1/projects/${projectId}/members/detail`);
+
+export const getMembersDetail = (projectId: number) =>
+  api.get<{ data: MembersDetail }>(`/v1/projects/${projectId}/members/detail`);
 
 /* ── 합류 요청 ── */
 
