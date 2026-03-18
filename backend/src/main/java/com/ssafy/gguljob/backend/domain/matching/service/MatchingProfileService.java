@@ -22,7 +22,7 @@ public class MatchingProfileService {
     // 🚀 여기는 JPA 대장님 구역! (읽기 전용이라 성능도 빠름)
     @Transactional(readOnly = true)
     public void syncUserProfileToGraph(Long userId) {
-        log.info("🌐 Neo4j 그래프 DB 조립 시작: 유저 ID = {}", userId);
+        log.info("Neo4j 그래프 DB 조립 시작: 유저 ID = {}", userId);
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("동기화할 유저를 찾을 수 없습니다."));
@@ -39,7 +39,6 @@ public class MatchingProfileService {
             .map(goal -> GoalNode.builder().name(goal.getGoal().name()).build())
             .collect(Collectors.toSet());
 
-        // 🚀 완벽 방어된 MBTI
         var mbtiNode = StringUtils.hasText(user.getMbti()) ? MbtiNode.builder().type(user.getMbti()).build() : null;
         var tendencyNode = user.getTeamTendency() != null ? TendencyNode.builder().type(user.getTeamTendency().name()).build() : null;
         var expNode = user.getExperience() != null ? ExperienceNode.builder().level(user.getExperience().name()).build() : null;
