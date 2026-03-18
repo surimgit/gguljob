@@ -2,12 +2,26 @@ package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepository;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
+import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -15,15 +29,46 @@ import java.util.List;
 public class MatchingService {
 
     private final ProjectNodeRepository projectNodeRepository;
+    private final ProjectService projectService;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
-    public List<ProjectMatchResultDto> getRecommendedProjects(Long userId) {
-        log.info("유저 ID [{}] 맞춤형 프로젝트 추천 매칭 스코어 계산 시작!", userId);
+    public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        List<ProjectMatchResultDto> recommendedProjects =
-            projectNodeRepository.findRecommendedProjectsForUser(String.valueOf(userId));
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            throw new OnboardingRequiredException();
+        }
 
-        log.info("매칭된 프로젝트 총 {}개 발견!", recommendedProjects.size());
-        return recommendedProjects;
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+
+        List<String> joinedProjectIds = projectMemberRepository
+            .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
+            .stream()
+            .map(pm -> String.valueOf(pm.getProject().getId()))
+            .toList();
+
+        Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
+            String.valueOf(userId),
+            joinedProjectIds,
+            unsortedPageable
+        );
+
+        if (neo4jResults.isEmpty()) return Page.empty(pageable);
+
+        List<Long> projectIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.projectId())).toList();
+        Map<Long, ProjectResponse.ProjectCardDto> mysqlDataMap = projectService.getProjectCardsMap(projectIds);
+
+        List<ProjectResponse.ProjectCardDto> finalContent = neo4jResults.stream()
+            .map(neoDto -> {
+                ProjectResponse.ProjectCardDto card = mysqlDataMap.get(Long.valueOf(neoDto.projectId()));
+                return (card != null) ? card.withScore(neoDto.score()) : null;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
     }
 }

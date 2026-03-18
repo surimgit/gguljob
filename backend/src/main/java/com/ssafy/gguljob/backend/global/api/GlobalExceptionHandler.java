@@ -3,6 +3,7 @@ package com.ssafy.gguljob.backend.global.api;
 import com.ssafy.gguljob.backend.global.exception.BadRequestException;
 import com.ssafy.gguljob.backend.global.exception.DuplicateResourceException;
 import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import com.ssafy.gguljob.backend.global.exception.UnAuthorizedException;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException e) {
         return buildErrorResponse(GlobalErrorCode.ERR_CONFLICT, e.getMessage(), null);
+    }
+
+    @ExceptionHandler(OnboardingRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleOnboardingRequired(OnboardingRequiredException e) {
+        return buildErrorResponse(GlobalErrorCode.ERR_FORBIDDEN, "REQUIRE_ONBOARDING", null);
     }
 
     // 기존에 세팅했던 시스템 예외 낚아채기

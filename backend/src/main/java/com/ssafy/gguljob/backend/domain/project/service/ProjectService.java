@@ -336,4 +336,38 @@ public class ProjectService {
             .pendingRequests(pendingRequests)
             .build();
     }
+
+    // Neo4j에서 받은 ID 리스트로 화면에 뿌릴 카드 데이터들을 묶어주는 로직
+    public Map<Long, ProjectResponse.ProjectCardDto> getProjectCardsMap(List<Long> projectIds) {
+        if (projectIds.isEmpty()) return java.util.Collections.emptyMap();
+
+        // 프로젝트 기본 정보
+        List<Project> projects = projectRepository.findAllById(projectIds);
+
+        // 스킬 뱃지 정보 (IN 쿼리로 N+1 방지)
+        Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds).stream()
+            .collect(Collectors.groupingBy(
+                ps -> ps.getProject().getId(),
+                Collectors.mapping(ps -> ps.getSkill().getName(), Collectors.toList())
+            ));
+
+        // 포지션별 모집 인원 정보
+        Map<Long, List<ProjectResponse.PositionStatusDto>> positionMap = projectPositionRepository.findByProjectIdIn(projectIds).stream()
+            .collect(Collectors.groupingBy(
+                pp -> pp.getProject().getId(),
+                Collectors.mapping(pp -> new ProjectResponse.PositionStatusDto(
+                    pp.getRole().name(), pp.getCurrentCount(), pp.getTargetCount()), Collectors.toList())
+            ));
+
+        return projects.stream().collect(Collectors.toMap(
+            Project::getId,
+            p -> new ProjectResponse.ProjectCardDto(
+                p.getId(), p.getDomain(), p.getStatus(), p.getTitle(), p.getDescription(),
+                skillMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
+                positionMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
+                p.getLeader().getUserName(), p.getLeader().getProfileImageUrl(),
+                0L // 점수는 MatchingService에서 나중에 채움
+            )
+        ));
+    }
 }
