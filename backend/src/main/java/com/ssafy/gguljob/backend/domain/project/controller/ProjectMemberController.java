@@ -22,7 +22,7 @@ public class ProjectMemberController {
     private final ProjectMemberService projectMemberService;
 
     @Operation(summary = "본인 팀 나가기", description = "자발적으로 팀 나가는 API (팀장일 경우 젤 오래된 사람이 팀장 위임)")
-    @DeleteMapping("/members/me")
+    @DeleteMapping("/leave/me")
     public ResponseEntity<ProjectMemberResponse.ProjectLeaveResponse> leaveProject(
         @PathVariable("projectId") Long projectId,
         @AuthenticationPrincipal CustomUserDetails userDetails) {
