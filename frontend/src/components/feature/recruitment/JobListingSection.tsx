@@ -300,7 +300,7 @@ const Pagination = ({
 );
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-const JobListingSection = () => {
+const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: Set<number>; onToggleBookmark: (id: number) => void }) => {
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState('전체');
   const [activeSort, setActiveSort] = useState('매칭순');
@@ -308,15 +308,6 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set([1, 3, 6]));
-
-  const toggleBookmark = (id: number) => {
-    setBookmarkedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
 
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack =
@@ -413,7 +404,7 @@ const JobListingSection = () => {
               key={job.id}
               job={job}
               bookmarked={bookmarkedIds.has(job.id)}
-              onToggleBookmark={toggleBookmark}
+              onToggleBookmark={onToggleBookmark}
             />
           ))
         ) : showBookmarked ? (
