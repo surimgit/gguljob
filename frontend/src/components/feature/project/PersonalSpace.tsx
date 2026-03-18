@@ -309,6 +309,7 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTitle?: string; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
+  const [tsPage, setTsPage] = useState(0);
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -366,8 +367,41 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
               <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
             </div>
             <div className="flex flex-col gap-5">
-              {MOCK_TROUBLESHOOTINGS.map(item => <TroubleshootingCard key={item.id} item={item} />)}
+              {MOCK_TROUBLESHOOTINGS.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
             </div>
+
+            {/* 페이지네이션 */}
+            {(
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button
+                  onClick={() => setTsPage(p => Math.max(0, p - 1))}
+                  disabled={tsPage === 0}
+                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+                {Array.from({ length: Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTsPage(i)}
+                    className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
+                      tsPage === i
+                        ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
+                        : 'text-text-tertiary hover:text-text-primary'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setTsPage(p => Math.min(Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) - 1, p + 1))}
+                  disabled={tsPage >= Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) - 1}
+                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 챗봇 캐릭터 버튼 */}
@@ -489,7 +523,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
             </div>
 
             {/* 페이지네이션 */}
-            {MOCK_MR_LIST.length > MR_PER_PAGE && (
+            {(
               <div className="flex items-center justify-center gap-4 mt-6">
                 <button
                   onClick={() => setMrPage(p => Math.max(0, p - 1))}
