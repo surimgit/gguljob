@@ -1,14 +1,21 @@
 package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectMemberResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectRecruitmentDto;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
+import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.global.exception.BadRequestException;
 import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ProjectMemberService {
+
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectPositionRepository projectPositionRepository;
+    private final SkillRepository skillRepository;
 
     @Transactional
     public ProjectMemberResponse.ProjectLeaveResponse leaveProject(Long projectId, Long userId) {
@@ -86,6 +96,61 @@ public class ProjectMemberService {
             projectId,
             targetUserId,
             "해당 팀원을 성공적으로 내보냈습니다."
+        );
+    }
+
+    @Transactional
+    public ProjectRecruitmentDto.CreateResponse createRecruitment(
+        Long projectId, Long userId, ProjectRecruitmentDto.CreateRequest request) {
+
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("팀장만 모집 공고를 생성할 수 있습니다.");
+        }
+
+        // 배열 -> Skill 테이블의 키로 변경
+        String skillsString = null;
+        if (request.requireSkills() != null && !request.requireSkills().isEmpty()) {
+
+            List<String> cleanRequestedSkills = request.requireSkills().stream()
+                .map(String::trim)
+                .toList();
+
+            List<Skill> validSkills = skillRepository.findByNameIn(cleanRequestedSkills);
+
+            if (validSkills.size() != cleanRequestedSkills.size()) {
+                List<String> foundNames = validSkills.stream()
+                    .map(Skill::getName)
+                    .toList();
+
+                List<String> missingSkills = cleanRequestedSkills.stream()
+                    .filter(name -> !foundNames.contains(name))
+                    .toList();
+
+                throw new BadRequestException("DB에 등록되지 않은 스킬 이름이 포함되어 있습니다: " + missingSkills);
+            }
+
+            skillsString = validSkills.stream()
+                .map(skill -> String.valueOf(skill.getId()))
+                .collect(Collectors.joining(","));
+        }
+
+        ProjectPosition newPosition = ProjectPosition.builder()
+            .project(project)
+            .role(request.role())
+            .targetCount(request.targetCount() != null ? request.targetCount() : 1)
+            .requireSkills(skillsString)
+            .build();
+
+        ProjectPosition savedPosition = projectPositionRepository.save(newPosition);
+
+        return new ProjectRecruitmentDto.CreateResponse(
+            savedPosition.getId(),
+            savedPosition.getRole(),
+            savedPosition.getTargetCount(),
+            "성공적으로 팀원 모집 공고를 등록했습니다."
         );
     }
 }
