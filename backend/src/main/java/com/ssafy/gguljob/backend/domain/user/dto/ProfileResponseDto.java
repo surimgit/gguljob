@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.dto;
 
+import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +19,7 @@ public class ProfileResponseDto {
     private String teamTendency;
     private List<SkillDto> skills;
     private List<RepProjectDto> repProjects;
+    private List<GoalType> goals;
 
     @Getter
     @Builder
