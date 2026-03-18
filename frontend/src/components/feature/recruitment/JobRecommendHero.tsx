@@ -5,9 +5,10 @@ import jobMatchingImg from '../../../assets/images/jobmatching.png';
 
 const TECH_STACKS = ['React', 'TypeScript', 'Spring Boot', 'MySQL', 'Redis', 'Git'];
 
-type Badge = 'NEW' | 'HOT';
+type Badge = 'NEW';
 
 interface JobCardProps {
+  id: number;
   tint: string;
   rank: number;
   badges: Badge[];
@@ -19,6 +20,8 @@ interface JobCardProps {
   experience: string;
   employmentType: string;
   salary: string;
+  bookmarked: boolean;
+  onToggleBookmark: (id: number) => void;
 }
 
 const BadgeChip = ({ type }: { type: Badge }) => {
@@ -32,14 +35,7 @@ const BadgeChip = ({ type }: { type: Badge }) => {
       </span>
     );
   }
-  return (
-    <span
-      className="text-[11px] font-bold px-2 py-0.5 rounded"
-      style={{ background: 'rgba(239,68,68,0.23)', color: '#EF4444' }}
-    >
-      HOT
-    </span>
-  );
+  return null;
 };
 
 const medalImages: Record<number, string> = {
@@ -56,12 +52,11 @@ const RankMedal = ({ rank }: { rank: number }) => (
   />
 );
 
-const BookmarkIcon = () => (
+const BookmarkIcon = ({ active }: { active: boolean }) => (
   <svg
     className="w-5 h-5"
-    style={{ color: '#9CA3AF' }}
-    fill="none"
-    stroke="currentColor"
+    fill={active ? '#F2B705' : 'none'}
+    stroke={active ? '#F2B705' : '#9CA3AF'}
     viewBox="0 0 24 24"
   >
     <path
@@ -74,6 +69,7 @@ const BookmarkIcon = () => (
 );
 
 const JobCard = ({
+  id,
   tint,
   rank,
   badges,
@@ -85,6 +81,8 @@ const JobCard = ({
   experience,
   employmentType,
   salary,
+  bookmarked,
+  onToggleBookmark,
 }: JobCardProps) => (
   <div
     className="relative flex-shrink-0 flex flex-col"
@@ -104,8 +102,8 @@ const JobCard = ({
     </div>
 
     {/* 북마크 */}
-    <button className="absolute top-3 right-3" aria-label="북마크">
-      <BookmarkIcon />
+    <button className="absolute top-3 right-3" aria-label="북마크" onClick={(e) => { e.stopPropagation(); onToggleBookmark(id); }}>
+      <BookmarkIcon active={bookmarked} />
     </button>
 
     {/* 회사 로고 + 배지 + 회사명 */}
@@ -124,16 +122,14 @@ const JobCard = ({
         {logoText}
       </div>
 
-      {/* 배지 + 회사명 */}
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5">
-          {badges.map(b => (
-            <BadgeChip key={b} type={b} />
-          ))}
-        </div>
+      {/* 회사명 + 배지 */}
+      <div className="flex items-center gap-2">
         <p className="font-bold" style={{ fontSize: '20px', color: '#111827', lineHeight: '1.2' }}>
           {company}
         </p>
+        {badges.map(b => (
+          <BadgeChip key={b} type={b} />
+        ))}
       </div>
     </div>
 
@@ -161,7 +157,7 @@ const JobCard = ({
   </div>
 );
 
-const JobRecommendHero = () => {
+const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: Set<number>; onToggleBookmark: (id: number) => void }) => {
   return (
     <div style={{ width: '1103px', margin: '0 auto', background: '#F7F8FA', fontFamily: 'inherit' }}>
 
@@ -247,9 +243,10 @@ const JobRecommendHero = () => {
         {/* 카드 3개 */}
         <div className="flex gap-[45px]" style={{ marginTop: '75px' }}>
           <JobCard
+            id={101}
             tint="rgba(255,239,156,0.21)"
             rank={1}
-            badges={['NEW', 'HOT']}
+            badges={['NEW']}
             company="토스"
             logoText="T"
             logoColor="#3B82F6"
@@ -258,8 +255,11 @@ const JobRecommendHero = () => {
             experience="신입·경력 1~3년"
             employmentType="정규직"
             salary="5,000~7,000만원"
+            bookmarked={bookmarkedIds.has(101)}
+            onToggleBookmark={onToggleBookmark}
           />
           <JobCard
+            id={102}
             tint="rgba(217,234,239,0.42)"
             rank={2}
             badges={['NEW']}
@@ -271,11 +271,14 @@ const JobRecommendHero = () => {
             experience="경력 2~5년"
             employmentType="정규직"
             salary="5,500~8,000만원"
+            bookmarked={bookmarkedIds.has(102)}
+            onToggleBookmark={onToggleBookmark}
           />
           <JobCard
+            id={103}
             tint="rgba(255,213,174,0.40)"
             rank={3}
-            badges={['HOT']}
+            badges={[]}
             company="네이버"
             logoText="N"
             logoColor="#22C55E"
@@ -284,6 +287,8 @@ const JobRecommendHero = () => {
             experience="경력 3~7년"
             employmentType="정규직"
             salary="5,000~7,500만원"
+            bookmarked={bookmarkedIds.has(103)}
+            onToggleBookmark={onToggleBookmark}
           />
         </div>
       </div>
