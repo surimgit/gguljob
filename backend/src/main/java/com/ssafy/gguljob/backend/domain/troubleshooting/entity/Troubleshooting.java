@@ -76,4 +76,15 @@ public class Troubleshooting extends BaseTimeEntity {
         this.situation = situation;
         this.solution = solution;
     }
+
+    public void updateContent(String title, PositionType role, String language,
+        String framework, String situation, String solution) {
+        this.title = title;
+        this.role = role;
+        this.language = language;
+        this.framework = framework;
+        this.situation = situation;
+        this.solution = solution;
+    }
+
 }

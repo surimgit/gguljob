@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,4 +34,17 @@ public class TroubleshootingController {
 
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "트러블슈팅 내용 수정", description = "작성자 본인만 트러블슈팅의 내용을 수정")
+    @PutMapping("/{troubleshootingId}")
+    public ResponseEntity<Void> updateTroubleshooting(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long troubleshootingId,
+        @RequestBody TroubleshootingRequest.Update request) {
+
+        troubleshootingService.updateTroubleshooting(userDetails.getId(), troubleshootingId, request);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

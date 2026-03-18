@@ -15,6 +15,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -161,5 +162,13 @@ public class ProjectDashboardService {
         List<PersonalSpaceResponse.ReviewItem> reviewItems = Collections.emptyList();
 
         return new PersonalSpaceResponse.Dashboard(stats, prItems, reviewItems, tsItems);
+    }
+
+    public org.springframework.data.domain.Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
+        return pullRequestRepository.findPagedMyPrItems(projectId, userId, pageable);
+    }
+
+    public org.springframework.data.domain.Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
+        return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable);
     }
 }
