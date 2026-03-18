@@ -106,8 +106,8 @@ public class Project extends BaseTimeEntity {
     }
 
     // 팀장 변경
-    public void changeLeader(Long newLeaderId) {
-        this.id = newLeaderId;
+    public void changeLeader(User newLeader) {
+        this.leader = newLeader;
     }
 
     // 남은 팀원 없을 때 프로젝트 종료

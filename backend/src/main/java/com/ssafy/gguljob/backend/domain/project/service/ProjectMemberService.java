@@ -35,7 +35,7 @@ public class ProjectMemberService {
                     MemberStatus.ATTEND, userId)
                 .ifPresentOrElse(
                     nextLeader -> {
-                        project.changeLeader(nextLeader.getId());
+                        project.changeLeader(nextLeader.getUser());
                     },
                     () -> {
                         // 남은 팀원이 없는 경우 DONE
