@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import chatbotImg from '../../../assets/images/chatbot.png';
+import type { PersonalSpaceData } from '../../../types/project';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
@@ -306,7 +307,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => {
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 
-const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTitle?: string; subTab?: PersonalSubTab }) => {
+const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' }: { projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
@@ -326,9 +327,34 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
     if (chatbotOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [chatbotOpen]);
-  const mrCount = MOCK_MR_LIST.length;
-  const codeReviews = MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
-  const stats = { mrCount: mrCount, autoGenCount: MOCK_TROUBLESHOOTINGS.length };
+
+  const mrList: MrItem[] = personalData
+    ? personalData.myPullRequests.map(pr => ({
+        id: pr.prId,
+        title: pr.title,
+        status: pr.status as MrStatus,
+        description: '',
+        branch: `#${pr.prNumber}`,
+        commits: 0,
+        time: new Date(pr.githubCreatedAt).toLocaleDateString(),
+        reviews: [],
+      }))
+    : MOCK_MR_LIST;
+
+  const tsList: TroubleshootingItem[] = personalData
+    ? personalData.myTroubleshootings.map(ts => ({
+        id: ts.tsId,
+        title: ts.title,
+        problemDesc: ts.situation,
+        solutionDesc: '',
+        codeSnippet: '',
+        sources: [],
+      }))
+    : MOCK_TROUBLESHOOTINGS;
+
+  const mrCount = personalData ? personalData.stats.prCount : MOCK_MR_LIST.length;
+  const codeReviews = personalData ? personalData.stats.reviewCount : MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
+  const stats = { mrCount, autoGenCount: personalData ? personalData.stats.troubleshootingCount : MOCK_TROUBLESHOOTINGS.length };
 
   return (
     <div className="flex flex-col gap-10">
@@ -367,7 +393,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
               <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
             </div>
             <div className="flex flex-col gap-5">
-              {MOCK_TROUBLESHOOTINGS.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
+              {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
             </div>
 
             {/* 페이지네이션 */}
@@ -380,7 +406,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                 >
                   <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                 </button>
-                {Array.from({ length: Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) }, (_, i) => (
+                {Array.from({ length: Math.ceil(tsList.length / MR_PER_PAGE) }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => setTsPage(i)}
@@ -394,8 +420,8 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                   </button>
                 ))}
                 <button
-                  onClick={() => setTsPage(p => Math.min(Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) - 1, p + 1))}
-                  disabled={tsPage >= Math.ceil(MOCK_TROUBLESHOOTINGS.length / MR_PER_PAGE) - 1}
+                  onClick={() => setTsPage(p => Math.min(Math.ceil(tsList.length / MR_PER_PAGE) - 1, p + 1))}
+                  disabled={tsPage >= Math.ceil(tsList.length / MR_PER_PAGE) - 1}
                   className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
@@ -466,7 +492,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
                     <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
-                      {MOCK_MR_LIST.map((mr) => (
+                      {mrList.map((mr) => (
                         <label
                           key={mr.id}
                           className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border ${
@@ -519,7 +545,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
               <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
             </div>
             <div className="flex flex-col gap-10">
-              {MOCK_MR_LIST.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
+              {mrList.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
             </div>
 
             {/* 페이지네이션 */}
@@ -532,7 +558,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                 >
                   <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                 </button>
-                {Array.from({ length: Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) }, (_, i) => (
+                {Array.from({ length: Math.ceil(mrList.length / MR_PER_PAGE) }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => setMrPage(i)}
@@ -546,8 +572,8 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                   </button>
                 ))}
                 <button
-                  onClick={() => setMrPage(p => Math.min(Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) - 1, p + 1))}
-                  disabled={mrPage >= Math.ceil(MOCK_MR_LIST.length / MR_PER_PAGE) - 1}
+                  onClick={() => setMrPage(p => Math.min(Math.ceil(mrList.length / MR_PER_PAGE) - 1, p + 1))}
+                  disabled={mrPage >= Math.ceil(mrList.length / MR_PER_PAGE) - 1}
                   className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-5 h-5" strokeWidth={2.5} />

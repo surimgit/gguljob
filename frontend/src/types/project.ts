@@ -152,3 +152,32 @@ export interface ActivityLog {
   createdAt: string;
   activityType: string;
 }
+
+/* ── 나만의 공간 ── */
+
+export interface PersonalSpaceData {
+  stats: {
+    prCount: number;
+    reviewCount: number;
+    troubleshootingCount: number;
+  };
+  myPullRequests: {
+    prId: number;
+    prNumber: number;
+    title: string;
+    status: string;
+    githubCreatedAt: string;
+    githubClosedAt: string | null;
+  }[];
+  myReviews: {
+    reviewId: number;
+    contentSnippet: string;
+    createdAt: string;
+  }[];
+  myTroubleshootings: {
+    tsId: number;
+    title: string;
+    situation: string;
+    createdAt: string;
+  }[];
+}

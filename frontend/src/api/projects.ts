@@ -60,3 +60,8 @@ export const acceptRequest = (requestId: number) =>
 
 export const rejectRequest = (requestId: number) =>
   api.post(`/v1/requests/${requestId}/reject`);
+
+/* 나만의 공간 */
+
+export const getPersonalSpace = (projectId: number) =>
+  api.get(`/v1/projects/${projectId}/personal-space`);
