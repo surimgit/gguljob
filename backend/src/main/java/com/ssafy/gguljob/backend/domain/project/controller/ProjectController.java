@@ -181,8 +181,11 @@ public class ProjectController {
 
     @Operation(summary = "메인 상단 표시 프로젝트 조회", description = "프로젝트 찾기 페이지 상단에 노출되는 프로젝트 목록을 최신순으로 조회합니다.")
     @GetMapping("/recommended/top")
-    public ResponseEntity<?> getTopProjects() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<ProjectResponse.ProjectCardDto>> getTopProjects(
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = (userDetails != null) ? userDetails.getId() : null;
+        return ResponseEntity.ok(projectService.getTopProjects(userId));
     }
 
     @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트 목록을 사용자와의 매칭 스코어(추천순) 기반으로 페이징하여 조회합니다.")
@@ -203,4 +206,5 @@ public class ProjectController {
 
         return ResponseEntity.ok(result);
     }
+
 }
