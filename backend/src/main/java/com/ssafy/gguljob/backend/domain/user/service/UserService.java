@@ -14,6 +14,7 @@ import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.entity.UserGoal;
 import com.ssafy.gguljob.backend.domain.user.repository.UserGoalRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
@@ -127,6 +128,10 @@ public class UserService {
                 .build())
             .toList();
 
+        List<GoalType> goalList = user.getGoals().stream()
+            .map(UserGoal::getGoal)
+            .toList();
+
         return ProfileResponseDto.builder()
             .userId(user.getId())
             .email(user.getEmail())
@@ -138,6 +143,7 @@ public class UserService {
             .mbti(user.getMbti())
             .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
             .skills(skillDtoList)
+            .goals(goalList)
             .build();
     }
 
