@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
@@ -186,7 +187,7 @@ public class ProjectController {
 
     @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트 목록을 사용자와의 매칭 스코어(추천순) 기반으로 페이징하여 조회합니다.")
     @GetMapping("/list")
-    public ResponseEntity<Page<ProjectMatchResultDto>> getProjectList(
+    public ResponseEntity<Page<ProjectCardDto>> getProjectList(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
 
         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -198,7 +199,7 @@ public class ProjectController {
         Pageable pageable = PageRequest.of(page, size);
 
         Long userId = (userDetails != null) ? userDetails.getId() : null;
-        Page<ProjectMatchResultDto> result = matchingService.getRecommendedProjects(userId, pageable);
+        Page<ProjectCardDto> result = matchingService.getRecommendedProjects(userId, pageable);
 
         return ResponseEntity.ok(result);
     }

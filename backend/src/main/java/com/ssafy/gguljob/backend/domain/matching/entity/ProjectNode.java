@@ -15,8 +15,8 @@ import java.util.Set;
 public class ProjectNode {
     @Id
     private String id;
-
     private String title;
+    private String status;
 
     // 프로젝트 -> (REQUIRES_SKILL) -> 요구 스킬
     @Relationship(type = "REQUIRES_SKILL", direction = Relationship.Direction.OUTGOING)
@@ -32,5 +32,6 @@ public class ProjectNode {
         this.title = newData.getTitle();
         this.skills = newData.getSkills();
         this.roles = newData.getRoles();
+        this.status = newData.getStatus();
     }
 }

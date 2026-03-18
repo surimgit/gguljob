@@ -38,6 +38,7 @@ public class MatchingProjectService {
         ProjectNode projectNode = ProjectNode.builder()
             .id(String.valueOf(project.getId()))
             .title(project.getTitle())
+            .status(project.getStatus().name())
             .skills(skillNodes)
             .roles(roleNodes)
             .build();

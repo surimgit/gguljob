@@ -127,4 +127,29 @@ public class ProjectResponse {
             );
         }
     }
+
+    // 추천 프로젝트 카드 디자인용
+    public record ProjectCardDto(
+        Long projectId,
+        String domain,
+        ProjectStatus status,
+        String title,
+        String description,
+        List<String> skills,
+        List<PositionStatusDto> positions,
+        String leaderName,
+        String leaderProfileImageUrl,
+        Long score // Neo4j 매칭 스코어
+    ) {
+        // Neo4j에서 계산된 점수를 덮어씌우기 위한 메서드
+        public ProjectCardDto withScore(Long score) {
+            return new ProjectCardDto(projectId, domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl, score);
+        }
+    }
+
+    public record PositionStatusDto(
+        String role,
+        int currentCount,
+        int targetCount
+    ) {}
 }
