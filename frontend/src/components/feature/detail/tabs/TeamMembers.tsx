@@ -7,6 +7,7 @@ import {
   UserPlus,
   X,
   Check,
+  Crown,
 } from "lucide-react";
 import type { TeamDashboard } from "../../../../types/project";
 
@@ -762,6 +763,8 @@ const TeamManagement = ({
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
+  const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
+  const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
 
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
@@ -1065,15 +1068,7 @@ const TeamManagement = ({
                             </span>
                           )}
                           {member.isLeader && (
-                            <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                              style={{
-                                background: "rgba(245,158,11,0.2)",
-                                color: "#F59E0B",
-                              }}
-                            >
-                              팀장
-                            </span>
+                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
                           )}
                         </div>
                         <span
@@ -1083,15 +1078,26 @@ const TeamManagement = ({
                           {member.contribution}c
                         </span>
                         {isCurrentUserLeader && !member.isLeader && (
-                          <button
-                            onClick={() => setKickMemberId(member.id)}
-                            className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => setDelegateMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; e.currentTarget.style.color = "#F59E0B"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setKickMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                       </div>
                     ))}
@@ -1460,6 +1466,64 @@ const TeamManagement = ({
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
               >
                 내보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 팀장 위임 확인 모달 ── */}
+      {delegateMemberId && delegateTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setDelegateMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="rounded-2xl p-4 mb-2" style={{ background: "rgba(245,158,11,0.15)" }}>
+              <Crown className="w-8 h-8" style={{ color: "#F59E0B" }} />
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              팀장 위임
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              {delegateTarget.name}님에게
+              <br />
+              팀장을 위임하시겠습니까?
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setDelegateMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setLocalMembers((prev) =>
+                    prev.map((m) => ({
+                      ...m,
+                      isLeader: m.id === delegateMemberId,
+                      isMe: m.isMe,
+                    }))
+                  );
+                  setDelegateMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "#F59E0B" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#D97706")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F59E0B")}
+              >
+                위임하기
               </button>
             </div>
           </div>
