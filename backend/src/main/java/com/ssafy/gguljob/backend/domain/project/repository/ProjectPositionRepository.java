@@ -10,4 +10,7 @@ public interface ProjectPositionRepository extends JpaRepository<ProjectPosition
     List<ProjectPosition> findAllByProjectId(Long projectId);
 
     Optional<ProjectPosition> findByIdAndProjectId(Long id, Long projectId);
+
+    // 여러 프로젝트의 포지션을 가져오기
+    List<ProjectPosition> findByProjectIdIn(List<Long> projectIds);
 }

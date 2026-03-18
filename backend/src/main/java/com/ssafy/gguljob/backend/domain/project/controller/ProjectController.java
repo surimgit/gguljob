@@ -1,9 +1,12 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
+import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
+import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
@@ -13,13 +16,16 @@ import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -41,6 +48,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final ProjectDashboardService dashboardService;
+    private final MatchingService matchingService;
 
     @Operation(summary = "프로젝트 생성 API", description = "새로운 프로젝트를 생성합니다")
     @PostMapping
@@ -160,5 +168,39 @@ public class ProjectController {
     ) {
         Page<TroubleshootingItem> response = dashboardService.getPagedMyTroubleshootings(projectId, userDetails.getId(), pageable);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "프로젝트 검색 필터 옵션 조회", description = "프로젝트 검색 시 필요한 기술스택, 도메인, 포지션 필터 목록을 제공합니다.")
+    @GetMapping("/filters")
+    public ResponseEntity<?> getProjectFilters() {
+
+        // TODO: 기술스택, 도메인, 포지션 필터 목록을 반환하는 로직 (Enum이나 DB에서 꺼내오기)
+        // return ResponseEntity.ok(projectService.getFilters());
+        return ResponseEntity.ok().build(); // 임시 리턴
+    }
+
+    @Operation(summary = "메인 상단 표시 프로젝트 조회", description = "프로젝트 찾기 페이지 상단에 노출되는 프로젝트 목록을 최신순으로 조회합니다.")
+    @GetMapping("/recommended/top")
+    public ResponseEntity<?> getTopProjects() {
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트 목록을 사용자와의 매칭 스코어(추천순) 기반으로 페이징하여 조회합니다.")
+    @GetMapping("/list")
+    public ResponseEntity<Page<ProjectCardDto>> getProjectList(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
+        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+        @RequestParam(defaultValue = "0") int page,
+
+        @Parameter(description = "한 페이지당 데이터 개수", example = "10")
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Long userId = (userDetails != null) ? userDetails.getId() : null;
+        Page<ProjectCardDto> result = matchingService.getRecommendedProjects(userId, pageable);
+
+        return ResponseEntity.ok(result);
     }
 }
