@@ -10,7 +10,6 @@ import type {
   TeamDashboard,
   TeamManagement,
   GitLog,
-  MembersDetail,
 } from '../types/project';
 import type { PageResponse } from '../types/common';
 
@@ -45,9 +44,6 @@ export const getGitLog = (projectId: number) =>
 
 export const getTeamManagement = (projectId: number) =>
   api.get<{ data: TeamManagement }>(`/v1/projects/${projectId}/members/detail`);
-
-export const getMembersDetail = (projectId: number) =>
-  api.get<{ data: MembersDetail }>(`/v1/projects/${projectId}/members/detail`);
 
 /* ── 합류 요청 ── */
 
