@@ -342,7 +342,7 @@ public class ProjectService {
         if (projectIds.isEmpty()) return java.util.Collections.emptyMap();
 
         // 프로젝트 기본 정보
-        List<Project> projects = projectRepository.findAllById(projectIds);
+        List<Project> projects = projectRepository.findAllWithLeaderByIdIn(projectIds);
 
         // 스킬 뱃지 정보 (IN 쿼리로 N+1 방지)
         Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds).stream()
@@ -369,5 +369,37 @@ public class ProjectService {
                 0L // 점수는 MatchingService에서 나중에 채움
             )
         ));
+    }
+
+    public List<ProjectResponse.ProjectCardDto> getTopProjects(Long userId) {
+        List<Project> topProjects;
+
+        if (userId != null) {
+            List<Long> joinedProjectIds = projectMemberRepository
+                .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
+                .stream()
+                .map(pm -> pm.getProject().getId())
+                .toList();
+
+            if (!joinedProjectIds.isEmpty()) {
+                topProjects = projectRepository.findTop50ByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus.RECRUITING, joinedProjectIds);
+            } else {
+                topProjects = projectRepository.findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+            }
+        } else {
+            topProjects = projectRepository.findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+        }
+
+        if (topProjects.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<Long> projectIds = topProjects.stream().map(Project::getId).toList();
+        Map<Long, ProjectResponse.ProjectCardDto> cardMap = getProjectCardsMap(projectIds);
+
+        return topProjects.stream()
+            .map(p -> cardMap.get(p.getId()))
+            .filter(java.util.Objects::nonNull)
+            .toList();
     }
 }
