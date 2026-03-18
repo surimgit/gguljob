@@ -10,6 +10,8 @@ import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
+import com.ssafy.gguljob.backend.domain.user.dto.UserResponse;
+import com.ssafy.gguljob.backend.domain.user.dto.UserResponse.UserSummary;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.entity.UserGoal;
 import com.ssafy.gguljob.backend.domain.user.repository.UserGoalRepository;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ssafy.gguljob.backend.domain.skill.service.SkillService;
@@ -233,5 +237,14 @@ public class UserService {
             .skills(skillDtoList)
             .repProjects(repProjectDtoList)
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse.UserPageResponse getUsers(Pageable pageable) {
+
+        Page<User> users = userRepository.findAll(pageable);
+        Page<UserSummary> userSummaries = users.map(UserResponse.UserSummary::from);
+
+        return UserResponse.UserPageResponse.of(userSummaries);
     }
 }
