@@ -5,7 +5,7 @@ import jobMatchingImg from '../../../assets/images/jobmatching.png';
 
 const TECH_STACKS = ['React', 'TypeScript', 'Spring Boot', 'MySQL', 'Redis', 'Git'];
 
-type Badge = 'NEW' | 'HOT';
+type Badge = 'NEW';
 
 interface JobCardProps {
   id: number;
@@ -35,14 +35,7 @@ const BadgeChip = ({ type }: { type: Badge }) => {
       </span>
     );
   }
-  return (
-    <span
-      className="text-[11px] font-bold px-2 py-0.5 rounded"
-      style={{ background: 'rgba(239,68,68,0.23)', color: '#EF4444' }}
-    >
-      HOT
-    </span>
-  );
+  return null;
 };
 
 const medalImages: Record<number, string> = {
@@ -129,16 +122,14 @@ const JobCard = ({
         {logoText}
       </div>
 
-      {/* 배지 + 회사명 */}
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5">
-          {badges.map(b => (
-            <BadgeChip key={b} type={b} />
-          ))}
-        </div>
+      {/* 회사명 + 배지 */}
+      <div className="flex items-center gap-2">
         <p className="font-bold" style={{ fontSize: '20px', color: '#111827', lineHeight: '1.2' }}>
           {company}
         </p>
+        {badges.map(b => (
+          <BadgeChip key={b} type={b} />
+        ))}
       </div>
     </div>
 
@@ -255,7 +246,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: 
             id={101}
             tint="rgba(255,239,156,0.21)"
             rank={1}
-            badges={['NEW', 'HOT']}
+            badges={['NEW']}
             company="토스"
             logoText="T"
             logoColor="#3B82F6"
@@ -287,7 +278,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: 
             id={103}
             tint="rgba(255,213,174,0.40)"
             rank={3}
-            badges={['HOT']}
+            badges={[]}
             company="네이버"
             logoText="N"
             logoColor="#22C55E"
