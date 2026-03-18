@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Briefcase, FilePlus } from 'lucide-react';
 import { SectionEmptyState } from '../../common';
 
@@ -21,7 +22,10 @@ const MOCK_PORTFOLIOS: PortfolioItem[] = [
 
 // ── 포트폴리오 카드 ────────────────────────────────────────────────────────────
 const PortfolioCard = ({ item }: { item: PortfolioItem }) => (
-  <div className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer flex-1 min-h-[10rem]">
+  <button
+    type="button"
+    className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer flex-1 min-h-[10rem] text-left"
+  >
     <div className="flex flex-col gap-1">
       <h3 className="text-[14px] font-bold text-text-primary">{item.title}</h3>
       <p className="text-[12px] text-text-secondary">수정: {item.updatedAt}</p>
@@ -29,19 +33,23 @@ const PortfolioCard = ({ item }: { item: PortfolioItem }) => (
     <span className="self-start mt-4 px-2.5 py-1 rounded-md text-[10px] text-text-secondary border border-border bg-[#f9fafb]">
       {item.theme}
     </span>
-  </div>
+  </button>
 );
 
 // ── 새 포트폴리오 버튼 ─────────────────────────────────────────────────────────
-const NewPortfolioButton = () => (
-  <button
-    type="button"
-    className="flex flex-col items-center justify-center gap-3 border-2 border-border rounded-2xl p-5 hover:shadow-md hover:border-primary transition-all cursor-pointer flex-1 min-h-[10rem] text-text-tertiary hover:text-primary"
-  >
-    <FilePlus className="w-6 h-6" />
-    <span className="text-[12px] font-bold">새 포트폴리오</span>
-  </button>
-);
+const NewPortfolioButton = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/mypage/portfolio/new')}
+      className="flex flex-col items-center justify-center gap-3 border-2 border-border rounded-2xl p-5 hover:shadow-md hover:border-primary transition-all cursor-pointer flex-1 min-h-[10rem] text-text-tertiary hover:text-primary"
+    >
+      <FilePlus className="w-6 h-6" />
+      <span className="text-[12px] font-bold">새 포트폴리오</span>
+    </button>
+  );
+};
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const Portfolio = () => (
