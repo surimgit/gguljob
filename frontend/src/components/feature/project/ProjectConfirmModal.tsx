@@ -6,7 +6,7 @@ interface ProjectConfirmModalProps {
   subtitle: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onClose: () => void;
 }
 

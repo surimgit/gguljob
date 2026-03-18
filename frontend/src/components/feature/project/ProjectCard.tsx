@@ -10,8 +10,8 @@ export interface Project {
   description: string;
   techStack: string[];
   slots: {
-    fe: { current: number; total: number };
-    be: { current: number; total: number };
+    fe: { current: number; total: number; positionId?: number };
+    be: { current: number; total: number; positionId?: number };
   };
   author: {
     initial: string;
