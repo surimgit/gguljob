@@ -1,7 +1,67 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, FolderOpen, CheckCircle2, Sparkles } from 'lucide-react';
+import { ChevronLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
 import chatbotImg from '../assets/images/chatbot.png';
+
+// ── 더미 마크다운 결과 ────────────────────────────────────────────────────────
+const MOCK_PORTFOLIO_MD = `# 프론트엔드 개발자 포트폴리오
+
+## 프로젝트 개요
+
+### DevLog 트러블슈팅 플랫폼
+- **기간**: 2026.01 ~ 진행중
+- **역할**: Frontend Developer
+- **기술 스택**: React, TypeScript, Spring Boot
+
+---
+
+## 트러블슈팅 경험
+
+### 1. SSR 환경 마크다운 렌더링 window 오류
+
+**문제 상황**
+react-markdown과 rehype-highlight를 적용하는 과정에서 SSR 환경에서 \`window is not defined\` 오류가 발생했습니다.
+
+**해결 과정**
+- SSR에서 브라우저 전용 API를 사용하는 라이브러리의 동작 방식을 분석
+- \`next/dynamic\`의 \`ssr: false\` 옵션을 활용하여 클라이언트 사이드에서만 렌더링되도록 처리
+
+\`\`\`typescript
+const ReactMarkdown = dynamic(
+  () => import('react-markdown'),
+  { ssr: false }
+)
+\`\`\`
+
+**성과**: SSR 빌드 에러 해결 및 마크다운 렌더링 안정화
+
+### 2. 무한 스크롤 Race Condition 해결
+
+**문제 상황**
+Intersection Observer 기반 무한 스크롤에서 중복 호출로 인한 Race Condition이 발생하여 동일한 데이터가 두 번 렌더링되는 문제가 있었습니다.
+
+**해결 과정**
+- \`useRef\`로 \`isFetching\` 플래그를 관리하여 중복 요청을 방지
+- Observer 콜백 내에서 플래그 체크 로직 추가
+
+\`\`\`typescript
+const isFetching = useRef(false)
+if (!isFetching.current) {
+  isFetching.current = true
+  await fetchNextPage()
+  isFetching.current = false
+}
+\`\`\`
+
+**성과**: 중복 API 호출 제거 및 안정적인 무한 스크롤 구현
+
+---
+
+## 핵심 역량
+- **문제 해결**: SSR/CSR 환경 차이를 이해하고 적절한 해결책 적용
+- **성능 최적화**: Race Condition 분석 및 효율적인 상태 관리 구현
+- **기술 학습**: 새로운 라이브러리 도입 시 발생하는 이슈를 체계적으로 분석하고 문서화
+`;
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface ProjectItem {
@@ -127,6 +187,17 @@ const PortfolioCreate = () => {
   const [activeProject, setActiveProject] = useState<number | null>(null);
   const [selectedTs, setSelectedTs] = useState<number[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [generatedMd, setGeneratedMd] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const generateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (generateTimerRef.current) clearTimeout(generateTimerRef.current);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const toggleProject = (id: number) => {
     // 항상 해당 프로젝트의 트러블슈팅 목록을 보여줌
@@ -149,7 +220,23 @@ const PortfolioCreate = () => {
 
   const handleGenerate = () => {
     setGenerating(true);
-    // TODO: API 연결
+    // TODO: 실제 API 연결 시 이 setTimeout을 교체
+    generateTimerRef.current = setTimeout(() => {
+      setGenerating(false);
+      setGeneratedMd(MOCK_PORTFOLIO_MD);
+    }, 2000);
+  };
+
+  const handleCopy = () => {
+    if (!generatedMd) return;
+    navigator.clipboard.writeText(generatedMd);
+    setCopied(true);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReset = () => {
+    setGeneratedMd(null);
+    setCopied(false);
   };
 
   return (
@@ -165,15 +252,96 @@ const PortfolioCreate = () => {
         <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
       </div>
 
-      {/* 3 섹션 */}
+      {generatedMd ? (
+        <div className="grid grid-cols-3 gap-6 items-start">
+          {/* Step3: AI 포트폴리오 생성 (왼쪽) */}
+          <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-[#6366f1]">Step 3.</span>
+              <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 생성</h2>
+            </div>
+            <p className="text-sm text-text-secondary -mt-2">선택한 트러블슈팅을 기반으로 포트폴리오를 생성합니다</p>
+
+            {/* 선택 요약 */}
+            <div className="flex flex-col gap-3 bg-[#FAF9F6] rounded-xl p-4 border border-border">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-text-primary">선택된 프로젝트</span>
+                <span className="text-sm font-bold text-[#6366f1]">{selectedProjects.length}개</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-text-primary">선택된 트러블슈팅</span>
+                <span className="text-sm font-bold text-[#6366f1]">{selectedTs.length}개</span>
+              </div>
+            </div>
+
+            {/* 선택된 트러블슈팅 목록 */}
+            {selectedTs.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-bold text-text-primary">포함된 트러블슈팅</span>
+                <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
+                  {selectedTs.map((tsId) => {
+                    const ts = MOCK_TROUBLESHOOTINGS.find((t) => t.id === tsId);
+                    if (!ts) return null;
+                    return (
+                      <div
+                        key={ts.id}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#eef2ff] border border-[#c7d2fe]"
+                      >
+                        <span
+                          className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: CIRCLE_COLORS[(ts.id - 1) % CIRCLE_COLORS.length] }}
+                        >
+                          {ts.id}
+                        </span>
+                        <span className="text-xs text-text-secondary truncate">{ts.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 다시 선택 버튼 */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full py-3 mt-auto rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              다시 선택하기
+            </button>
+          </div>
+
+          {/* 결과 섹션 (오른쪽 2칸) */}
+          <div className="col-span-2 flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-[#6366f1]">Result.</span>
+                <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 결과</h2>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? '복사됨' : '복사'}
+              </button>
+            </div>
+            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh]">
+              <pre className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed font-mono">{generatedMd}</pre>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-3 gap-6 items-start">
         {/* 섹션 1: 프로젝트 선택 */}
         <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary-hover">Step 1.</span>
+            <span className="text-base font-bold text-primary-hover">Step 1.</span>
             <h2 className="text-lg font-bold text-text-primary">프로젝트 선택</h2>
           </div>
-          <p className="text-xs text-text-secondary -mt-2">포트폴리오에 포함할 프로젝트를 선택하세요</p>
+          <p className="text-sm text-text-secondary -mt-2">포트폴리오에 포함할 프로젝트를 선택하세요</p>
           <div className="flex flex-col gap-3">
             {MOCK_PROJECTS.map((project) => (
               <ProjectCard
@@ -186,17 +354,17 @@ const PortfolioCreate = () => {
             ))}
           </div>
           {selectedProjects.length > 0 && (
-            <p className="text-xs font-bold text-[#6366f1] text-center">{selectedProjects.length}개 프로젝트 선택됨</p>
+            <p className="text-xs font-bold text-text-secondary text-center">{selectedProjects.length}개 프로젝트 선택됨</p>
           )}
         </div>
 
         {/* 섹션 2: 트러블슈팅 선택 */}
         <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary-hover">Step 2.</span>
+            <span className="text-base font-bold text-primary-hover">Step 2.</span>
             <h2 className="text-lg font-bold text-text-primary">트러블슈팅 선택</h2>
           </div>
-          <p className="text-xs text-text-secondary -mt-2">포트폴리오에 포함할 트러블슈팅을 선택하세요</p>
+          <p className="text-sm text-text-secondary -mt-2">포트폴리오에 포함할 트러블슈팅을 선택하세요</p>
 
           {selectedProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
@@ -220,17 +388,17 @@ const PortfolioCreate = () => {
             </div>
           )}
           {selectedTs.length > 0 && (
-            <p className="text-xs font-bold text-[#6366f1] text-center">{selectedTs.length}개 트러블슈팅 선택됨</p>
+            <p className="text-xs font-bold text-text-secondary text-center">{selectedTs.length}개 트러블슈팅 선택됨</p>
           )}
         </div>
 
         {/* 섹션 3: AI 포트폴리오 생성 */}
         <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[#6366f1]">Step 3.</span>
+            <span className="text-base font-bold text-[#6366f1]">Step 3.</span>
             <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 생성</h2>
           </div>
-          <p className="text-xs text-text-secondary -mt-2">선택한 트러블슈팅을 기반으로 포트폴리오를 생성합니다</p>
+          <p className="text-sm text-text-secondary -mt-2">선택한 트러블슈팅으로 포트폴리오를 생성합니다</p>
 
           {generating ? (
             <div className="flex flex-col items-center justify-center py-12 gap-5">
@@ -264,7 +432,7 @@ const PortfolioCreate = () => {
               {/* 선택된 트러블슈팅 목록 */}
               {selectedTs.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-bold text-text-primary">포함될 트러블슈팅</span>
+                  <span className="text-sm font-bold text-text-primary">포함될 트러블슈팅</span>
                   <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
                     {selectedTs.map((tsId) => {
                       const ts = MOCK_TROUBLESHOOTINGS.find((t) => t.id === tsId);
@@ -315,6 +483,7 @@ const PortfolioCreate = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };
