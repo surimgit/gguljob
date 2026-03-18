@@ -22,7 +22,7 @@ public class ProjectMemberController {
     private final ProjectMemberService projectMemberService;
 
     @Operation(summary = "본인 팀 나가기", description = "자발적으로 팀 나가는 API (팀장일 경우 젤 오래된 사람이 팀장 위임)")
-    @DeleteMapping("/leave/me")
+    @DeleteMapping("/members/leave")
     public ResponseEntity<ProjectMemberResponse.ProjectLeaveResponse> leaveProject(
         @PathVariable("projectId") Long projectId,
         @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -30,4 +30,18 @@ public class ProjectMemberController {
         ProjectMemberResponse.ProjectLeaveResponse response = projectMemberService.leaveProject(projectId, userDetails.getId());
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "팀원 내보내기", description = "팀장이 특정 팀원을 강제로 내보내는 API")
+    @DeleteMapping("/members/{targetUserId}")
+    public ResponseEntity<ProjectMemberResponse.ProjectKickResponse> kickMember(
+        @PathVariable("projectId") Long projectId,
+        @PathVariable("targetUserId") Long targetUserId,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        ProjectMemberResponse.ProjectKickResponse response =
+            projectMemberService.kickMember(projectId, userDetails.getId(), targetUserId);
+
+        return ResponseEntity.ok(response);
+    }
+
 }
