@@ -1414,7 +1414,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     if (!projectId) return;
     getTeamManagement(projectId)
       .then(({ data }) => setDetail(data.data))
-      .catch(() => {});
+      .catch((e) => console.error("팀원 정보 조회 실패", e));
   }, [projectId]);
 
   const roles: Role[] = useMemo(() => {
