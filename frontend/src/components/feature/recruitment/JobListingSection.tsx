@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs, getJobFilters } from '../../../api/jobs';
+import type { JobItem } from '../../../types/recruitment';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -24,7 +26,7 @@ interface JobListing {
 // ── 상수 ──────────────────────────────────────────────────────────────────────
 const JOBS_PER_PAGE = 5;
 
-const ALL_TECH_STACKS = [
+const DEFAULT_TECH_STACKS = [
   '전체', 'React', 'TypeScript', 'Next.js', 'GraphQL',
   'Spring Boot', 'MySQL', 'Kubernetes', 'Node.js', 'Redis',
   'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
@@ -49,7 +51,26 @@ const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
   return copy;
 };
 
-// ── 더미 데이터 ───────────────────────────────────────────────────────────────
+// ── API 데이터 매핑 ────────────────────────────────────────────────────────────
+const LOGO_COLORS = ['#F97316', '#00A63E', '#00D5BE', '#E7000B', '#155DFC', '#F2B705', '#8B5CF6', '#EC4899'];
+
+const mapToJobListing = (item: JobItem): JobListing => ({
+  id: item.jobId,
+  logoText: item.companyName.charAt(0),
+  logoColor: LOGO_COLORS[item.jobId % LOGO_COLORS.length],
+  company: item.companyName,
+  title: item.title,
+  location: item.region,
+  experience: item.experience,
+  employmentType: item.contractType,
+  salary: item.salary,
+  salaryMax: 0,
+  deadline: item.deadline,
+  match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
+  techStacks: [],
+});
+
+// ── 더미 데이터 (API 연결 전 fallback) ────────────────────────────────────────
 const MOCK_JOBS: JobListing[] = [
   {
     id: 1,
@@ -308,9 +329,33 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set([1, 3, 6]));
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+  const [jobs, setJobs] = useState<JobListing[]>(MOCK_JOBS);
+  const [techStacks, setTechStacks] = useState<string[]>(DEFAULT_TECH_STACKS);
+
+  useEffect(() => {
+    getJobFilters()
+      .then(({ data }) => {
+        if (data.techStacks?.length > 0)
+          setTechStacks(["전체", ...data.techStacks]);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getJobs({ page: currentPage })
+      .then(({ data }) => setJobs(data.map(mapToJobListing)))
+      .catch(() => {});
+  }, [currentPage]);
+
+  useEffect(() => {
+    getBookmarkedJobs()
+      .then(({ data }) => setBookmarkedIds(new Set(data.map(j => j.jobId))))
+      .catch(() => {});
+  }, []);
 
   const toggleBookmark = (id: number) => {
+    toggleBookmarkApi(id).catch(() => {});
     setBookmarkedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -321,8 +366,8 @@ const JobListingSection = () => {
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack =
     activeFilter === '전체'
-      ? MOCK_JOBS
-      : MOCK_JOBS.filter(job => job.techStacks.includes(activeFilter));
+      ? jobs
+      : jobs.filter(job => job.techStacks.includes(activeFilter));
 
   const finalFilteredJobs = showBookmarked
     ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
@@ -331,10 +376,7 @@ const JobListingSection = () => {
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / JOBS_PER_PAGE));
-  const pagedJobs = sorted.slice(
-    (currentPage - 1) * JOBS_PER_PAGE,
-    currentPage * JOBS_PER_PAGE,
-  );
+  const pagedJobs = sorted;
 
   const handleFilterChange = (stack: string) => {
     setActiveFilter(stack);
@@ -364,7 +406,7 @@ const JobListingSection = () => {
       {/* 기술스택 필터 */}
       <div className="px-[39px] pb-4">
         <div className="flex flex-wrap gap-2">
-          {ALL_TECH_STACKS.map(stack => (
+          {techStacks.map(stack => (
             <FilterPill
               key={stack}
               label={stack}
