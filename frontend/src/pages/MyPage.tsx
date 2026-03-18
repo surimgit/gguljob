@@ -11,7 +11,7 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
-import { buildOnboardingPayload } from '../components/feature/auth/utils/onboardingMappers';
+import { buildOnboardingPayload, userToFormData } from '../components/feature/auth/utils/onboardingMappers';
 import type { PositionType } from '../types/user';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
@@ -180,6 +180,7 @@ const MyPage = () => {
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
         onComplete={handleOnboardingComplete}
+        initialData={user ? userToFormData(user) : undefined}
       />
       <WithdrawModal
         isOpen={isWithdrawOpen}

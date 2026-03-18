@@ -26,7 +26,20 @@ export const GOAL_MAP: Record<string, { label: string; type: string }> = {
   job: { label: '취업 준비', type: 'EMPLOYMENT' },
 };
 
-interface OnboardingFormData {
+// 역매핑: 백엔드 값 → 프론트 폼 값
+const REVERSE_ROLE_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(ROLE_MAP).map(([k, v]) => [v, k])
+);
+
+const REVERSE_EXPERIENCE_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(EXPERIENCE_MAP).map(([k, v]) => [v, k])
+);
+
+const REVERSE_GOAL_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(GOAL_MAP).map(([k, v]) => [v.type, k])
+);
+
+export interface OnboardingFormData {
   goals: string[];
   role: string;
   experience: string;
@@ -34,6 +47,22 @@ interface OnboardingFormData {
   mbti: string;
   leaderScore: number;
 }
+
+export const userToFormData = (user: {
+  position?: string | null;
+  experience?: string | null;
+  techStacks?: string[];
+  mbti?: string | null;
+  teamTendency?: string | null;
+  goals?: string[];
+}): OnboardingFormData => ({
+  goals: (user.goals ?? []).map((g) => REVERSE_GOAL_MAP[g] ?? g).filter(Boolean),
+  role: user.position ? (REVERSE_ROLE_MAP[user.position] ?? '') : '',
+  experience: user.experience ? (REVERSE_EXPERIENCE_MAP[user.experience] ?? '') : '',
+  languages: user.techStacks ?? [],
+  mbti: user.mbti ?? '',
+  leaderScore: user.teamTendency === 'LEADER' ? 70 : 30,
+});
 
 export const buildOnboardingPayload = (
   formData: OnboardingFormData
