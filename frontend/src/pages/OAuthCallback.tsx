@@ -3,34 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { getMe, onboardApi } from '../api/user';
-import type { OnboardingRequest } from '../api/user';
-import type { PositionType } from '../types/user';
+import { buildOnboardingPayload } from '../components/feature/auth/utils/onboardingMappers';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
-
-const ROLE_MAP: Record<string, PositionType> = {
-  frontend: 'FE',
-  backend: 'BE',
-  designer: 'DESIGN',
-  pm: 'PM',
-  data: 'AI',
-  infra: 'INFRA',
-};
-
-const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
-  beginner: 'BEGINNER',
-  junior: 'JUNIOR',
-  mid: 'MID_LEVEL',
-  senior: 'SENIOR',
-};
-
-const GOAL_MAP: Record<string, { label: string; type: string }> = {
-  'side-project': { label: '사이드 프로젝트', type: 'SIDE_PROJECT' },
-  portfolio: { label: '포트폴리오', type: 'PORTFOLIO' },
-  study: { label: '스터디', type: 'STUDY' },
-  startup: { label: '창업 준비', type: 'STARTUP' },
-  competition: { label: '공모전', type: 'COMPETITION' },
-  job: { label: '취업 준비', type: 'EMPLOYMENT' },
-};
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
@@ -107,28 +81,12 @@ const OAuthCallback = () => {
         }}
         onComplete={async (formData) => {
           try {
-            const mappedRole = ROLE_MAP[formData.role];
-            const mappedExp = EXPERIENCE_MAP[formData.experience];
-            if (!mappedRole || !mappedExp) {
+            const payload = buildOnboardingPayload(formData);
+            if (!payload) {
               console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
               setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
               return;
             }
-            const goalsSummary = formData.goals
-              .map((g) => GOAL_MAP[g]?.label ?? g)
-              .join(', ');
-            const goalTypes = formData.goals
-              .map((g) => GOAL_MAP[g]?.type)
-              .filter((t): t is string => !!t);
-            const payload: OnboardingRequest = {
-              description: `${goalsSummary}에 관심이 있습니다.`,
-              roles: [mappedRole],
-              experience: mappedExp,
-              skills: formData.languages,
-              mbti: formData.mbti,
-              teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
-              goals: goalTypes,
-            };
             await onboardApi(payload);
             const updatedUser = await getMe();
             setUser(updatedUser);

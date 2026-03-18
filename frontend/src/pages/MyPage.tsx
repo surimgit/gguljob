@@ -10,10 +10,12 @@ import {
   ProfileEditModal,
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
+import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
+import { buildOnboardingPayload } from '../components/feature/auth/utils/onboardingMappers';
 import type { PositionType } from '../types/user';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import { getMe, withdrawApi } from '../api/user';
+import { getMe, withdrawApi, updateProfileApi } from '../api/user';
 
 interface Project {
   id: string;
@@ -55,6 +57,7 @@ const MyPage = () => {
   const { myProjects, fetchMyProjects } = useProjectStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
 
@@ -98,6 +101,38 @@ const MyPage = () => {
     getMe().then((u) => setUser(u)).catch(() => {});
   };
 
+  const handleOnboardingComplete = async (formData: {
+    goals: string[];
+    role: string;
+    experience: string;
+    languages: string[];
+    mbti: string;
+    leaderScore: number;
+  }) => {
+    try {
+      const payload = buildOnboardingPayload(formData);
+      if (!payload) {
+        alert('직무 또는 경험 수준 값이 올바르지 않습니다.');
+        return;
+      }
+      await updateProfileApi({
+        description: payload.description,
+        roles: payload.roles,
+        skills: payload.skills,
+        mbti: payload.mbti,
+        teamTendency: payload.teamTendency,
+        experience: payload.experience,
+        goals: payload.goals,
+      });
+      const updatedUser = await getMe();
+      setUser(updatedUser);
+      setIsOnboardingOpen(false);
+    } catch (err) {
+      console.error('[정보수정] 실패:', err);
+      alert('정보 수정에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f6f8] px-4 py-12">
       <div className="max-w-5xl mx-auto flex flex-col gap-6">
@@ -108,6 +143,7 @@ const MyPage = () => {
           techStacks={profile.techStacks}
           avatarUrl={profile.avatarUrl}
           onAvatarClick={() => setIsProfileModalOpen(true)}
+          onEditInfo={() => setIsOnboardingOpen(true)}
           onWithdraw={() => setIsWithdrawOpen(true)}
         />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
@@ -139,6 +175,11 @@ const MyPage = () => {
         onSave={handleSave}
         initialData={profile}
         availableProjects={myProjects}
+      />
+      <ProfileSetupModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onComplete={handleOnboardingComplete}
       />
       <WithdrawModal
         isOpen={isWithdrawOpen}
