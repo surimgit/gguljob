@@ -310,6 +310,8 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
+  const [generating, setGenerating] = useState(false);
   const chatbotRef = useRef<HTMLDivElement>(null);
   const MR_PER_PAGE = 3;
 
@@ -317,6 +319,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
     const handleClickOutside = (e: MouseEvent) => {
       if (chatbotRef.current && !chatbotRef.current.contains(e.target as Node)) {
         setChatbotOpen(false);
+        setGenerating(false);
       }
     };
     if (chatbotOpen) document.addEventListener('mousedown', handleClickOutside);
@@ -325,7 +328,6 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
   const mrCount = MOCK_MR_LIST.length;
   const codeReviews = MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
   const stats = { mrCount: mrCount, autoGenCount: MOCK_TROUBLESHOOTINGS.length };
-  const mrMessages = mrCount;
 
   return (
     <div className="flex flex-col gap-10">
@@ -378,7 +380,7 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
 
           {/* 챗봇 팝업 */}
           {chatbotOpen && (
-            <div ref={chatbotRef} className="fixed bottom-28 right-8 w-[400px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl" style={{ background: '#f5f7ff' }}>
+            <div ref={chatbotRef} className="fixed bottom-15 right-44 w-[440px] h-[520px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col" style={{ background: '#f5f7ff' }}>
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#c7d2fe]" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
                 <div className="flex items-center gap-2">
@@ -386,50 +388,82 @@ const PersonalSpace = ({ projectTitle, subTab = 'troubleshooting' }: { projectTi
                   <span className="text-base font-bold text-white">AI 트러블슈팅 자동 생성</span>
                   <span className="text-[10px] font-bold tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full">Beta</span>
                 </div>
-                <button onClick={() => setChatbotOpen(false)} className="text-white/70 hover:text-white transition-colors">
+                <button onClick={() => { setGenerating(false); setChatbotOpen(false); }} className="text-white/70 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* 본문 */}
-              <div className="px-5 py-5 flex flex-col gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-[#c7d2fe]">
+              {generating ? (
+                <div className="relative px-6 flex-1 flex flex-col items-center justify-center gap-5">
+                  <button
+                    onClick={() => setGenerating(false)}
+                    className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#f3f4f6] transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="w-36 h-36 overflow-hidden">
                     <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
                   </div>
-                  <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 border border-border">
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                      내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
-                      <br />생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
-                    </p>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-xl font-bold text-text-primary">트러블슈팅 생성 중...</span>
+                    <span className="text-base text-text-secondary">MR 리뷰를 분석하고 있습니다</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '300ms' }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '600ms' }} />
                   </div>
                 </div>
+              ) : (
+                <div className="px-6 pt-7 pb-6 flex-1 flex flex-col gap-5">
+                  <div className="flex items-start gap-0.5">
+                    <div className="w-20 h-14 overflow-hidden flex-shrink-0">
+                      <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-4 border border-border">
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        MR 리뷰를 AI가 분석하여 트러블슈팅 초안을 자동으로 생성합니다.
+                        <br />생성 후 직접 수정 · 보완하여 포트폴리오로 활용할 수 있습니다.
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-white border border-border rounded-full px-3 py-1.5">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                      <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                    </svg>
-                    <span className="text-[13px] font-semibold text-text-secondary">MR 메시지</span>
-                    <span className="text-[12px] font-bold text-[#6366f1] bg-[#eef2ff] px-1.5 py-0.5 rounded-full leading-none">{mrMessages}건</span>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
+                    <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
+                      {MOCK_MR_LIST.map((mr) => (
+                        <label
+                          key={mr.id}
+                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border ${
+                            selectedMrId === mr.id
+                              ? 'bg-[#eef2ff] border-[#c7d2fe]'
+                              : 'bg-white border-border hover:bg-[#f9fafb]'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="mr-select"
+                            checked={selectedMrId === mr.id}
+                            onChange={() => setSelectedMrId(mr.id)}
+                            className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
+                          />
+                          <span className="text-sm text-text-secondary truncate">{mr.title}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 bg-white border border-border rounded-full px-3 py-1.5">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary flex-shrink-0">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span className="text-[13px] font-semibold text-text-secondary">코드 리뷰</span>
-                    <span className="text-[12px] font-bold text-[#6366f1] bg-[#eef2ff] px-1.5 py-0.5 rounded-full leading-none">{codeReviews}건</span>
-                  </div>
+
+                  <button
+                    onClick={() => setGenerating(true)}
+                    className="w-full py-4 mt-2 rounded-xl text-sm font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    트러블슈팅 자동 생성하기
+                  </button>
                 </div>
-
-                <button
-                  className="w-full py-3 rounded-xl text-sm font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  트러블슈팅 자동 생성하기
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>
