@@ -1,14 +1,24 @@
+import { useState, useEffect } from 'react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
+import { getRecommendedTop3 } from '../../../api/jobs';
+import type { JobItem } from '../../../types/recruitment';
 
 const TECH_STACKS = ['React', 'TypeScript', 'Spring Boot', 'MySQL', 'Redis', 'Git'];
 
-type Badge = 'NEW';
+const RANK_TINTS = [
+  'rgba(255,239,156,0.21)',
+  'rgba(217,234,239,0.42)',
+  'rgba(255,213,174,0.40)',
+];
+
+const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
+
+type Badge = 'NEW' | 'HOT';
 
 interface JobCardProps {
-  id: number;
   tint: string;
   rank: number;
   badges: Badge[];
@@ -20,8 +30,6 @@ interface JobCardProps {
   experience: string;
   employmentType: string;
   salary: string;
-  bookmarked: boolean;
-  onToggleBookmark: (id: number) => void;
 }
 
 const BadgeChip = ({ type }: { type: Badge }) => {
@@ -35,7 +43,14 @@ const BadgeChip = ({ type }: { type: Badge }) => {
       </span>
     );
   }
-  return null;
+  return (
+    <span
+      className="text-[11px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(239,68,68,0.23)', color: '#EF4444' }}
+    >
+      HOT
+    </span>
+  );
 };
 
 const medalImages: Record<number, string> = {
@@ -52,11 +67,12 @@ const RankMedal = ({ rank }: { rank: number }) => (
   />
 );
 
-const BookmarkIcon = ({ active }: { active: boolean }) => (
+const BookmarkIcon = () => (
   <svg
     className="w-5 h-5"
-    fill={active ? '#F2B705' : 'none'}
-    stroke={active ? '#F2B705' : '#9CA3AF'}
+    style={{ color: '#9CA3AF' }}
+    fill="none"
+    stroke="currentColor"
     viewBox="0 0 24 24"
   >
     <path
@@ -69,7 +85,6 @@ const BookmarkIcon = ({ active }: { active: boolean }) => (
 );
 
 const JobCard = ({
-  id,
   tint,
   rank,
   badges,
@@ -81,8 +96,6 @@ const JobCard = ({
   experience,
   employmentType,
   salary,
-  bookmarked,
-  onToggleBookmark,
 }: JobCardProps) => (
   <div
     className="relative flex-shrink-0 flex flex-col"
@@ -102,8 +115,8 @@ const JobCard = ({
     </div>
 
     {/* 북마크 */}
-    <button className="absolute top-3 right-3" aria-label="북마크" onClick={(e) => { e.stopPropagation(); onToggleBookmark(id); }}>
-      <BookmarkIcon active={bookmarked} />
+    <button className="absolute top-3 right-3" aria-label="북마크">
+      <BookmarkIcon />
     </button>
 
     {/* 회사 로고 + 배지 + 회사명 */}
@@ -122,14 +135,16 @@ const JobCard = ({
         {logoText}
       </div>
 
-      {/* 회사명 + 배지 */}
-      <div className="flex items-center gap-2">
+      {/* 배지 + 회사명 */}
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5">
+          {badges.map(b => (
+            <BadgeChip key={b} type={b} />
+          ))}
+        </div>
         <p className="font-bold" style={{ fontSize: '20px', color: '#111827', lineHeight: '1.2' }}>
           {company}
         </p>
-        {badges.map(b => (
-          <BadgeChip key={b} type={b} />
-        ))}
       </div>
     </div>
 
@@ -157,7 +172,36 @@ const JobCard = ({
   </div>
 );
 
-const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: Set<number>; onToggleBookmark: (id: number) => void }) => {
+const MOCK_TOP3: JobItem[] = [
+  {
+    jobId: 1, companyName: '토스', title: 'Frontend Engineer (React)',
+    region: '서울 강남구', experience: '신입·경력 1~3년', contractType: '정규직',
+    salary: '5,000~7,000만원', url: '', deadline: '',
+    matchStatus: '적합', matchPercentage: 95, cutoffHigh: 80, cutoffMedium: 60, averageScore: 75,
+  },
+  {
+    jobId: 2, companyName: '카카오', title: '풀스택 개발자 (React + Spring)',
+    region: '경기 성남시', experience: '경력 2~5년', contractType: '정규직',
+    salary: '5,500~8,000만원', url: '', deadline: '',
+    matchStatus: '보통', matchPercentage: 80, cutoffHigh: 80, cutoffMedium: 60, averageScore: 70,
+  },
+  {
+    jobId: 3, companyName: '네이버', title: '프론트엔드 개발자',
+    region: '경기 성남시', experience: '경력 3~7년', contractType: '정규직',
+    salary: '5,000~7,500만원', url: '', deadline: '',
+    matchStatus: '보통', matchPercentage: 72, cutoffHigh: 80, cutoffMedium: 60, averageScore: 68,
+  },
+];
+
+const JobRecommendHero = () => {
+  const [top3, setTop3] = useState<JobItem[]>(MOCK_TOP3);
+
+  useEffect(() => {
+    getRecommendedTop3()
+      .then(({ data }) => { if (data.length > 0) setTop3(data.slice(0, 3)); })
+      .catch(() => {});
+  }, []);
+
   return (
     <div style={{ width: '1103px', margin: '0 auto', background: '#F7F8FA', fontFamily: 'inherit' }}>
 
@@ -242,54 +286,22 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: { bookmarkedIds: 
 
         {/* 카드 3개 */}
         <div className="flex gap-[45px]" style={{ marginTop: '75px' }}>
-          <JobCard
-            id={101}
-            tint="rgba(255,239,156,0.21)"
-            rank={1}
-            badges={['NEW']}
-            company="토스"
-            logoText="T"
-            logoColor="#3B82F6"
-            role="Frontend Engineer (React)"
-            location="서울 강남구"
-            experience="신입·경력 1~3년"
-            employmentType="정규직"
-            salary="5,000~7,000만원"
-            bookmarked={bookmarkedIds.has(101)}
-            onToggleBookmark={onToggleBookmark}
-          />
-          <JobCard
-            id={102}
-            tint="rgba(217,234,239,0.42)"
-            rank={2}
-            badges={['NEW']}
-            company="카카오"
-            logoText="K"
-            logoColor="#F2B705"
-            role="풀스택 개발자 (React + Spring)"
-            location="경기 성남시"
-            experience="경력 2~5년"
-            employmentType="정규직"
-            salary="5,500~8,000만원"
-            bookmarked={bookmarkedIds.has(102)}
-            onToggleBookmark={onToggleBookmark}
-          />
-          <JobCard
-            id={103}
-            tint="rgba(255,213,174,0.40)"
-            rank={3}
-            badges={[]}
-            company="네이버"
-            logoText="N"
-            logoColor="#22C55E"
-            role="프론트엔드 개발자"
-            location="경기 성남시"
-            experience="경력 3~7년"
-            employmentType="정규직"
-            salary="5,000~7,500만원"
-            bookmarked={bookmarkedIds.has(103)}
-            onToggleBookmark={onToggleBookmark}
-          />
+          {top3.map((job, idx) => (
+            <JobCard
+              key={job.jobId}
+              tint={RANK_TINTS[idx]}
+              rank={idx + 1}
+              badges={job.matchStatus === '적합' ? ['NEW', 'HOT'] : job.matchStatus === '보통' ? ['NEW'] : ['HOT']}
+              company={job.companyName}
+              logoText={job.companyName.charAt(0)}
+              logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
+              role={job.title}
+              location={job.region}
+              experience={job.experience}
+              employmentType={job.contractType}
+              salary={job.salary}
+            />
+          ))}
         </div>
       </div>
     </div>

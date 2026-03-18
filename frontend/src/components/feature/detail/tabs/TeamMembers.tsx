@@ -8,7 +8,8 @@ import {
   X,
   Check,
 } from "lucide-react";
-import type { TeamDashboard } from "../../../../types/project";
+import type { TeamDashboard, MembersDetail } from "../../../../types/project";
+import { acceptRequest, rejectRequest, getMembersDetail } from "../../../../api/projects";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -1407,14 +1408,54 @@ const TeamManagement = ({
 
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
-  const roles = useMemo(
-    () => (dashboard ? dashboardToRoles(dashboard) : []),
-    [dashboard],
-  );
-  const members = useMemo(
-    () => (dashboard ? dashboardToMembers(dashboard) : []),
-    [dashboard],
-  );
+  const [detail, setDetail] = useState<MembersDetail | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    getMembersDetail(projectId)
+      .then(({ data }) => setDetail(data.data))
+      .catch(() => {});
+  }, [projectId]);
+
+  const roles: Role[] = useMemo(() => {
+    if (detail) {
+      return detail.recruitments.map((r) => ({
+        id: r.positionId.toString(),
+        name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+        status: r.status === "RECRUITING" ? "open" : "closed",
+        current: r.currentCount,
+        total: r.targetCount,
+        stacks: r.requireSkills,
+      }));
+    }
+    return dashboard ? dashboardToRoles(dashboard) : [];
+  }, [detail, dashboard]);
+
+  const members: Member[] = useMemo(() => {
+    if (detail) {
+      return detail.currentMembers.map((m, i) => ({
+        id: m.memberId.toString(),
+        name: m.userName,
+        role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+        joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
+        contribution: 0,
+        isLeader: i === 0,
+      }));
+    }
+    return dashboard ? dashboardToMembers(dashboard) : [];
+  }, [detail, dashboard]);
+
+  const applications: Application[] = useMemo(() => {
+    if (!detail) return [];
+    return detail.pendingRequests.map((r) => ({
+      id: r.requestId.toString(),
+      name: r.userName,
+      role: r.positionName,
+      appliedAt: new Date(r.createdAt).toLocaleDateString("ko-KR"),
+      stacks: r.techStacks,
+      status: "pending" as const,
+    }));
+  }, [detail]);
 
   return (
     <TeamManagement
@@ -1422,16 +1463,13 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
       roles={roles}
       members={members}
-      applications={[
-        { id: '1', name: '박지훈', role: 'Backend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
-        { id: '2', name: '김서영', role: 'Frontend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
-      ]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
+      applications={applications}
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
       onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
-      onAccept={(id) => console.log("수락:", id)}
-      onReject={(id) => console.log("거절:", id)}
+      onAccept={(id) => acceptRequest(Number(id)).catch(() => {})}
+      onReject={(id) => rejectRequest(Number(id)).catch(() => {})}
     />
   );
 };

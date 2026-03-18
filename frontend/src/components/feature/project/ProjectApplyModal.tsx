@@ -3,6 +3,7 @@ import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
 import type { Project } from './ProjectCard';
 import { X } from 'lucide-react';
+import { applyToPosition } from '../../../api/projects';
 
 interface ProjectApplyModalProps {
   project: Project;
@@ -232,7 +233,17 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
           title="지원 완료"
           subtitle="프로젝트에 지원이 완료되었습니다."
           confirmText="확인"
-          onConfirm={() => {
+          onConfirm={async () => {
+            const positionId = selectedPosition === 'fe'
+              ? project.slots.fe.positionId
+              : project.slots.be.positionId;
+            if (positionId !== undefined) {
+              try {
+                await applyToPosition(project.id, positionId);
+              } catch {
+                // 에러 무시
+              }
+            }
             onApply?.(project, selectedPosition, intro);
             setShowConfirm(false);
           }}
