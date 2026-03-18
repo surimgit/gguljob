@@ -134,6 +134,7 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
+        isMe: members.length === 0,
       });
     }
   });
@@ -759,11 +760,15 @@ const TeamManagement = ({
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
+  const [kickMemberId, setKickMemberId] = useState<string | null>(null);
+  const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
 
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
   const pendingCount = applications.filter((a) => a.status === "pending").length;
+
+  const isCurrentUserLeader = localMembers.some((m) => m.isLeader && m.isMe);
 
   const membersByRole = localMembers.reduce<Record<string, Member[]>>((acc, m) => {
     (acc[m.role] ??= []).push(m);
@@ -1036,7 +1041,7 @@ const TeamManagement = ({
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1072,17 +1077,22 @@ const TeamManagement = ({
                           )}
                         </div>
                         <span
-                          className="text-xs flex-shrink-0"
-                          style={{ color: "var(--color-text-tertiary)" }}
-                        >
-                          {member.joinDate}
-                        </span>
-                        <span
                           className="text-xs font-bold flex-shrink-0 w-10 text-right"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
                           {member.contribution}c
                         </span>
+                        {isCurrentUserLeader && !member.isLeader && (
+                          <button
+                            onClick={() => setKickMemberId(member.id)}
+                            className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1401,6 +1411,60 @@ const TeamManagement = ({
           </div>
         );
       })()}
+
+      {/* ── 팀원 내보내기 확인 모달 ── */}
+      {kickMemberId && kickTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setKickMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="bg-red-100 rounded-2xl p-4 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+                <line x1="18" y1="8" x2="23" y2="13"/>
+                <line x1="23" y1="8" x2="18" y2="13"/>
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              {kickTarget.name}님 내보내기
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              팀에서 내보내시겠습니까?
+              <br />
+              되돌릴 수 없습니다.
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setKickMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setLocalMembers((prev) => prev.filter((m) => m.id !== kickMemberId));
+                  setKickMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                내보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

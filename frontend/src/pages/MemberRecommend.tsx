@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
 import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
@@ -88,11 +88,11 @@ const MOCK_MEMBERS: MemberData[] = [
   {
     id: "m1",
     name: "강선관",
-    position: "Frontend",
+    position: "Backend",
     level: "고급",
     matchRate: 95,
     introduction: "React/TypeScript 기반 SPA 개발 경험\nUI/UX에 관심이 많고 디자인 시스템 구축 경험 보유",
-    techStacks: ["Python", "FastAPI", "PostgreSQL", "BackEndTech"],
+    techStacks: ["Java", "FastAPI", "PostgreSQL", "BackEndTech"],
     profileImage: "",
     projects: MOCK_PROJECTS,
   },
@@ -225,12 +225,21 @@ const MemberRecommend = () => {
   const [positionFilter, setPositionFilter] = useState("전체");
   const [levelFilter, setLevelFilter] = useState("전체");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
 
   // 필터 적용
   const filtered = MOCK_MEMBERS.filter((m) => {
     if (positionFilter !== "전체" && m.position !== positionFilter) return false;
     if (levelFilter !== "전체" && m.level !== levelFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      return (
+        m.name.toLowerCase().includes(q) ||
+        m.position.toLowerCase() === q ||
+        m.techStacks.some((s) => s.toLowerCase() === q)
+      );
+    }
     return true;
   });
 
@@ -370,12 +379,32 @@ const MemberRecommend = () => {
         </div>
 
         {/* ── 하단 팀원 목록 ── */}
-        <h2
-          className="text-lg font-bold mb-4"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          팀원 목록
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2
+            className="text-lg font-bold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            팀원 목록
+          </h2>
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{
+              background: "var(--color-background)",
+              border: "1px solid var(--color-border)",
+              width: "240px",
+            }}
+          >
+            <Search className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              placeholder="이름, 포지션, 기술 검색"
+              className="flex-1 text-sm outline-none bg-transparent"
+              style={{ color: "var(--color-text-primary)" }}
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
           {paged.map((m, idx) => (
