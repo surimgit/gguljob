@@ -181,6 +181,7 @@ const MyPage = () => {
         onClose={() => setIsOnboardingOpen(false)}
         onComplete={handleOnboardingComplete}
         initialData={user ? userToFormData(user) : undefined}
+        mode="edit"
       />
       <WithdrawModal
         isOpen={isWithdrawOpen}

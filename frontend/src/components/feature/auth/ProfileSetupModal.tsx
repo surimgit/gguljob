@@ -8,6 +8,7 @@ import Step4Languages from "./steps/Step4Languages";
 import Step5MBTI from "./steps/Step5MBTI";
 import Step6Leadership from "./steps/Step6Leadership";
 import ProfileCompletePopup from "./ProfileCompletePopup";
+import ProfileEditCompletePopup from "./ProfileEditCompletePopup";
 
 interface FormData {
   goals: string[];
@@ -23,6 +24,8 @@ interface Props {
   onClose: () => void;
   onComplete: (formData: FormData) => void;
   initialData?: Partial<FormData>;
+  /** 'onboarding' = 최초 가입, 'edit' = 마이페이지 정보수정 */
+  mode?: 'onboarding' | 'edit';
 }
 
 const SHOW_PROGRESS = [true, true, true, true, true, true];
@@ -55,7 +58,7 @@ const DEFAULT_FORM: FormData = {
   leaderScore: 30,
 };
 
-const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData }) => {
+const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData, mode = 'onboarding' }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({ ...DEFAULT_FORM, ...initialData });
   const [showComplete, setShowComplete] = useState(false);
@@ -212,7 +215,9 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
       </div>
 
       {showComplete && (
-        <ProfileCompletePopup formData={formData} onClose={handleComplete} />
+        mode === 'edit'
+          ? <ProfileEditCompletePopup onClose={handleComplete} />
+          : <ProfileCompletePopup formData={formData} onClose={handleComplete} />
       )}
 
       {/* 이탈 경고 모달 */}
