@@ -51,8 +51,8 @@ const Navbar = () => {
     try {
       const { data } = await getUnreadCount();
       setUnreadCount(data.data.count);
-    } catch {
-      /* 무시 */
+    } catch (err) {
+      console.error('[알림] unread count 조회 실패:', err);
     }
   }, [isAuthenticated]);
 
@@ -62,8 +62,8 @@ const Navbar = () => {
     try {
       const { data } = await getNotifications(0, 20);
       setNotifications(data.data.content.map(toNotification));
-    } catch {
-      /* 무시 */
+    } catch (err) {
+      console.error('[알림] 목록 조회 실패:', err);
     }
   }, [isAuthenticated]);
 
