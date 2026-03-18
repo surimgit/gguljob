@@ -17,6 +17,7 @@ interface ProfileHeaderProps {
   techStacks: string[];
   avatarUrl?: string;
   onAvatarClick: () => void;
+  onEditInfo: () => void;
   onWithdraw: () => void;
 }
 
@@ -29,6 +30,7 @@ const ProfileHeader = ({
   techStacks,
   avatarUrl,
   onAvatarClick,
+  onEditInfo,
   onWithdraw,
 }: ProfileHeaderProps) => {
   return (
@@ -88,6 +90,7 @@ const ProfileHeader = ({
         <div className="flex items-center gap-3 ml-auto">
           <button
             type="button"
+            onClick={onEditInfo}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
