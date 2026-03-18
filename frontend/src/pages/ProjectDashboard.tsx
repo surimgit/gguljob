@@ -22,7 +22,8 @@ import PersonalSpace, { type PersonalSubTab } from "../components/feature/projec
 import { ChevronDown } from "lucide-react";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
-import type { TeamDashboard, GitLog } from "../types/project";
+import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
+import { getPersonalSpace } from "../api/projects";
 
 const AI_TOPICS = [
   "GitHub Actions CI/CD 파이프라인 구축",
@@ -192,10 +193,19 @@ const ProjectDashboard = () => {
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
+  const [personalData, setPersonalData] = useState<PersonalSpaceData | null>(null);
 
   useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
+
+  useEffect(() => {
+    if (id) {
+      getPersonalSpace(Number(id))
+        .then(({ data }) => setPersonalData(data as PersonalSpaceData))
+        .catch((err) => console.error('personal-space 로드 실패:', err));
+    }
+  }, [id]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -364,7 +374,7 @@ const ProjectDashboard = () => {
 
         {activeTab === "members" && <TeamMembers dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
         {activeTab === "settings" && <ProjectSettings dashboard={dashboard} />}
-        {activeTab === "personal" && <PersonalSpace projectTitle={projectInfo.title} subTab={personalSubTab} />}
+        {activeTab === "personal" && <PersonalSpace projectTitle={projectInfo.title} personalData={personalData} subTab={personalSubTab} />}
 
         {activeTab === "team" && (
         <>
