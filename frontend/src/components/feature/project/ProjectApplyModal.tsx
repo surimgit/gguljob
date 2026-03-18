@@ -240,8 +240,9 @@ const ProjectApplyModal = ({ project, onClose, onApply }: ProjectApplyModalProps
             if (positionId !== undefined) {
               try {
                 await applyToPosition(project.id, positionId);
-              } catch {
-                // 에러 무시
+              } catch (e) {
+                console.error("합류 요청 실패", e);
+                return;
               }
             }
             onApply?.(project, selectedPosition, intro);

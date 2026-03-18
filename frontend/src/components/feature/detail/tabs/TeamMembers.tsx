@@ -9,8 +9,8 @@ import {
   Check,
   Crown,
 } from "lucide-react";
-import type { TeamDashboard, MembersDetail } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getMembersDetail } from "../../../../api/projects";
+import type { TeamDashboard, TeamManagement } from "../../../../types/project";
+import { acceptRequest, rejectRequest, getTeamManagement } from "../../../../api/projects";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -1536,13 +1536,13 @@ const TeamManagement = ({
 
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
-  const [detail, setDetail] = useState<MembersDetail | null>(null);
+  const [detail, setDetail] = useState<TeamManagement | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
-    getMembersDetail(projectId)
+    getTeamManagement(projectId)
       .then(({ data }) => setDetail(data.data))
-      .catch(() => {});
+      .catch((e) => console.error("팀원 정보 조회 실패", e));
   }, [projectId]);
 
   const roles: Role[] = useMemo(() => {
