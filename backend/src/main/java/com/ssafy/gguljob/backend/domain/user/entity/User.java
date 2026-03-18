@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 import lombok.Builder;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "users")
@@ -81,6 +83,9 @@ public class User extends BaseTimeEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<com.ssafy.gguljob.backend.domain.skill.entity.UserSkill> userSkills = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserGoal> goals = new ArrayList<>();
+
     @Builder
     public User(String userName, String email, String profileImageUrl, RoleType authority) {
         this.userName = userName;
@@ -113,11 +118,17 @@ public class User extends BaseTimeEntity {
             this.roles.addAll(request.getRoles());
         }
         if (request.getExperience() != null) this.experience = request.getExperience();
-        if (request.getMbti() != null) this.mbti = request.getMbti();
+        if (!StringUtils.hasText(request.getMbti())) {
+            this.mbti = null;
+        } else {
+            this.mbti = request.getMbti().trim().toUpperCase();
+        }
         if (request.getTeamTendency() != null) this.teamTendency = request.getTeamTendency();
     }
 
     public void updateImageUrl(String imageUrl) {
         this.profileImageUrl = imageUrl;
     }
+
+
 }

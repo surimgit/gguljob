@@ -1,31 +1,112 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { logoutApi } from '../../api/user';
+import {
+  getNotifications,
+  getUnreadCount,
+  markNotificationRead,
+  deleteNotification as deleteNotifApi,
+  deleteAllNotifications,
+} from '../../api/notification';
+import type { NotificationDto } from '../../api/notification';
 import Container from '../common/Container';
 import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
 import gguljobLogo from '../../assets/images/gguljob_logo.png';
-import NotificationPanel, { INITIAL_NOTIFICATIONS } from '../feature/notification/NotificationPanel';
+import NotificationPanel from '../feature/notification/NotificationPanel';
 import type { Notification } from '../feature/notification/NotificationPanel';
+
+/** 백엔드 응답 → 프론트 Notification 변환 */
+const toNotification = (dto: NotificationDto): Notification => {
+  const now = Date.now();
+  const created = new Date(dto.createdAt).getTime();
+  const diffMin = Math.floor((now - created) / 60000);
+  let time: string;
+  if (diffMin < 1) time = '방금 전';
+  else if (diffMin < 60) time = `${diffMin}분 전`;
+  else if (diffMin < 1440) time = `${Math.floor(diffMin / 60)}시간 전`;
+  else time = `${Math.floor(diffMin / 1440)}일 전`;
+
+  return {
+    id: dto.notificationId,
+    type: dto.category,
+    message: dto.content,
+    time,
+    isRead: dto.isRead,
+  };
+};
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const handleDeleteNotif = (id: number) => {
+  // 안 읽은 알림 개수 조회
+  const fetchUnreadCount = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const { data } = await getUnreadCount();
+      setUnreadCount(data.data.count);
+    } catch (err) {
+      console.error('[알림] unread count 조회 실패:', err);
+    }
+  }, [isAuthenticated]);
+
+  // 알림 목록 조회
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const { data } = await getNotifications(0, 20);
+      setNotifications(data.data.content.map(toNotification));
+    } catch (err) {
+      console.error('[알림] 목록 조회 실패:', err);
+    }
+  }, [isAuthenticated]);
+
+  // 로그인 시 + 주기적으로 unread count 갱신
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  // 알림 패널 열 때 목록 조회
+  useEffect(() => {
+    if (showNotification) fetchNotifications();
+  }, [showNotification, fetchNotifications]);
+
+  const handleDeleteNotif = async (id: number) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+    try {
+      await deleteNotifApi(id);
+      fetchUnreadCount();
+    } catch {
+      fetchNotifications();
+    }
   };
 
-  const handleMarkReadNotif = (id: number) => {
+  const handleMarkReadNotif = async (id: number) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    try {
+      await markNotificationRead(id);
+      fetchUnreadCount();
+    } catch {
+      fetchNotifications();
+    }
   };
 
-  const handleClearAllNotifs = () => {
+  const handleClearAllNotifs = async () => {
     setNotifications([]);
+    try {
+      await deleteAllNotifications();
+      setUnreadCount(0);
+    } catch {
+      fetchNotifications();
+    }
   };
 
   useEffect(() => {
@@ -63,13 +144,13 @@ const Navbar = () => {
 
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트
           </Link>
-          <Link to="/projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
@@ -109,9 +190,9 @@ const Navbar = () => {
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  {notifications.filter(n => !n.isRead).length > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-error text-white text-[10px] font-bold leading-none">
-                      {notifications.filter(n => !n.isRead).length}
+                      {unreadCount}
                     </span>
                   )}
                 </button>
@@ -165,21 +246,21 @@ const Navbar = () => {
           <div className="px-4 py-3 space-y-1">
             <Link
               to="/my-projects"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               프로젝트
             </Link>
             <Link
               to="/projects"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               프로젝트 찾기
             </Link>
             <Link
               to="/recruitment"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               채용
@@ -211,11 +292,31 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <button className="text-icon hover:text-text-primary transition-colors" aria-label="알림">
-                  <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </button>
+                <div className="relative flex items-center" ref={notifRef}>
+                  <button
+                    onClick={() => setShowNotification(prev => !prev)}
+                    className="relative text-icon hover:text-text-primary transition-colors"
+                    aria-label="알림"
+                  >
+                    <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-error text-white text-[10px] font-bold leading-none">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {showNotification && (
+                    <NotificationPanel
+                      notifications={notifications}
+                      onDelete={handleDeleteNotif}
+                      onMarkRead={handleMarkReadNotif}
+                      onClearAll={handleClearAllNotifs}
+                      onClose={() => setShowNotification(false)}
+                    />
+                  )}
+                </div>
                 <Link to="/mypage" onClick={closeMobileMenu} className="text-icon hover:text-text-primary transition-colors" aria-label="마이페이지">
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
+import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.CurrentMemberDto;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
@@ -80,6 +81,9 @@ public class ProjectService {
             .build();
 
         projectMemberRepository.save(projectMember);
+
+        log.info("Neo4j로 전송 시작");
+        eventPublisher.publishEvent(new ProjectSyncEvent(savedProject.getId()));
 
         return ProjectResponse.Id.from(savedProject);
     }
@@ -232,6 +236,8 @@ public class ProjectService {
         syncProjectMembers(project, request.members());
 
         projectRepository.save(project);
+
+        eventPublisher.publishEvent(new ProjectSyncEvent(project.getId()));
 
         return ProjectUpdateResponse.from(project);
     }

@@ -28,14 +28,6 @@ import type { TeamDashboard } from "../../../types/project";
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  position: string;
-  email: string;
-  avatarColor?: string;
-}
-
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
 }
@@ -197,20 +189,6 @@ const TECH_CATEGORIES: {
   },
 ];
 
-const AVATAR_COLORS = [
-  "var(--color-primary)",
-  "var(--color-blue)",
-  "var(--color-success)",
-  "#EC4899",
-];
-
-const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
-  PM: { bg: "#EDE9FE", color: "#7C3AED" },
-  Backend: { bg: "#DCFCE7", color: "var(--color-success)" },
-  Frontend: { bg: "var(--color-primary-soft)", color: "var(--color-primary-hover)" },
-  "AI/ML": { bg: "#FEF3C7", color: "var(--color-warning)" },
-};
-
 /* ── 스킬을 카테고리에 매핑 ── */
 const SKILL_TO_CATEGORY: Record<string, string> = {};
 TECH_CATEGORIES.forEach((cat) => {
@@ -230,37 +208,10 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
   return result;
 };
 
-/* ── 역할 코드→표시명 ── */
-const ROLE_CODE_TO_LABEL: Record<string, string> = {
-  FE: "Frontend",
-  BE: "Backend",
-  AI: "AI/ML",
-  PM: "PM",
-  INFRA: "Infra",
-  DESIGN: "Design",
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-};
-
 /* ── 컴포넌트 ── */
 const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   const info = dashboard?.projectInfo;
-  const stats = dashboard?.teamStats;
   const gitRepo = dashboard?.gitRepoInfo;
-
-  // TODO: 팀원 목록 API 추가 후 실제 멤버 데이터로 교체 (현재 roleCounts 기반 임시 생성)
-  const membersFromDashboard: TeamMember[] = useMemo(() => {
-    if (!stats?.roleCounts) return [];
-    return Object.entries(stats.roleCounts).flatMap(([role, count]) => {
-      const label = ROLE_CODE_TO_LABEL[role] ?? role;
-      return Array.from({ length: count }, (_, i) => ({
-        id: `${role}-${i}`,
-        name: `${label} ${i + 1}`,
-        position: label,
-        email: "",
-      }));
-    });
-  }, [stats]);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [name, setName] = useState(info?.title ?? "");
@@ -290,13 +241,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
     skillsToTechStacks(info?.skills ?? [])
   );
-  const [members, setMembers] = useState<TeamMember[]>(membersFromDashboard);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-
-  // 새 팀원 추가 폼
-  const [newName, setNewName] = useState("");
-  const [newPosition, setNewPosition] = useState("");
-  const [newEmail, setNewEmail] = useState("");
 
   const allSelected = useMemo(
     () => Object.values(techStacks).flat(),
@@ -310,8 +255,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     domains: info?.domain ? [info.domain] : [],
     gitUrl: gitRepo?.repoUrl ?? "",
     techStacks: skillsToTechStacks(info?.skills ?? []),
-    members: membersFromDashboard,
-  }), [info, gitRepo, membersFromDashboard]);
+  }), [info, gitRepo]);
 
   const hasChanges = useMemo(() => {
     return (
@@ -320,10 +264,9 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
       description !== initialRef.description ||
       JSON.stringify(domains) !== JSON.stringify(initialRef.domains) ||
       gitUrl !== initialRef.gitUrl ||
-      JSON.stringify(techStacks) !== JSON.stringify(initialRef.techStacks) ||
-      JSON.stringify(members) !== JSON.stringify(initialRef.members)
+      JSON.stringify(techStacks) !== JSON.stringify(initialRef.techStacks)
     );
-  }, [status, name, description, domains, gitUrl, techStacks, members, initialRef]);
+  }, [status, name, description, domains, gitUrl, techStacks, initialRef]);
 
   const toggleDomain = (d: string) =>
     setDomains((prev) =>
@@ -350,25 +293,6 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     });
   };
 
-  const removeMember = (id: string) =>
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-
-  const addMember = () => {
-    if (!newName.trim() || !newPosition.trim()) return;
-    const member: TeamMember = {
-      id: Date.now().toString(),
-      name: newName.trim(),
-      position: newPosition.trim(),
-      email: newEmail.trim(),
-    };
-    setMembers((prev) => [...prev, member]);
-    setNewName("");
-    setNewPosition("");
-    setNewEmail("");
-  };
-
-  const canAddMember = newName.trim() && newPosition.trim();
-
   /* ── 공통 입력 스타일 ── */
   const inputStyle = (hasValue: boolean) => ({
     border: `2px solid ${hasValue ? "var(--color-primary)" : "var(--color-border)"}`,
@@ -388,12 +312,6 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
             프로젝트 설정
           </h1>
         </div>
-        <p
-          className="text-xs mt-0.5"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {info?.title ?? "프로젝트 설정"}
-        </p>
       </div>
 
       {/* ── 섹션 1: 프로젝트 상태 ── */}
@@ -836,177 +754,6 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
             </div>
           </div>
         )}
-      </section>
-
-      {/* ── 섹션 4: 팀원 관리 ── */}
-      <section
-        className="rounded-2xl p-6 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <div
-            className="flex items-center gap-2 text-base font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            👥 팀원 관리
-          </div>
-          <span
-            className="text-sm font-bold"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {members.length}명
-          </span>
-        </div>
-
-        {/* 팀원 목록 */}
-        <div className="flex flex-col gap-2">
-          {members.map((m, idx) => {
-            const color = m.avatarColor || AVATAR_COLORS[idx % AVATAR_COLORS.length];
-            const roleStyle = ROLE_STYLES[m.position] || {
-              bg: "var(--color-background)",
-              color: "var(--color-text-secondary)",
-            };
-            return (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                style={{ background: "var(--color-background)" }}
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                  style={{ background: color }}
-                >
-                  {m.name.charAt(0)}
-                </div>
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {m.name}
-                    </span>
-                    <span
-                      className="text-xs font-medium px-1.5 py-0.5 rounded-md"
-                      style={{
-                        background: roleStyle.bg,
-                        color: roleStyle.color,
-                      }}
-                    >
-                      {m.position}
-                    </span>
-                  </div>
-                  <span
-                    className="text-xs"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    {m.email}
-                  </span>
-                </div>
-                <button
-                  onClick={() => removeMember(m.id)}
-                  className="transition-opacity opacity-60 hover:opacity-100"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 새 팀원 추가 */}
-        <div
-          className="mt-3 rounded-xl p-4"
-          style={{
-            background: "var(--color-primary-soft)",
-            border: "1px solid var(--color-primary)",
-          }}
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="text"
-              placeholder="홍길동"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none"
-              style={{
-                background: "var(--color-surface)",
-                borderColor: "var(--color-border)",
-              }}
-              onFocus={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-primary)")
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-border)")
-              }
-            />
-            <input
-              type="text"
-              placeholder="포지션"
-              value={newPosition}
-              onChange={(e) => setNewPosition(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none"
-              style={{
-                background: "var(--color-surface)",
-                borderColor: "var(--color-border)",
-              }}
-              onFocus={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-primary)")
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-border)")
-              }
-            />
-          </div>
-          <input
-            type="email"
-            placeholder="example@email.com (초대 알림용)"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none mt-3"
-            style={{
-              background: "var(--color-surface)",
-              borderColor: "var(--color-border)",
-            }}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-primary)")
-            }
-            onBlur={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-border)")
-            }
-          />
-          <button
-            onClick={addMember}
-            disabled={!canAddMember}
-            className="w-full py-3 rounded-xl text-sm font-bold mt-3 transition-colors"
-            style={
-              canAddMember
-                ? {
-                    background: "var(--color-primary)",
-                    color: "white",
-                  }
-                : {
-                    background: "var(--color-border)",
-                    color: "var(--color-text-tertiary)",
-                    cursor: "not-allowed",
-                  }
-            }
-            onMouseEnter={(e) => {
-              if (canAddMember)
-                e.currentTarget.style.background = "var(--color-primary-hover)";
-            }}
-            onMouseLeave={(e) => {
-              if (canAddMember)
-                e.currentTarget.style.background = "var(--color-primary)";
-            }}
-          >
-            팀원 추가
-          </button>
-        </div>
       </section>
 
       {/* ── 위험 영역 배너 ── */}

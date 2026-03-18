@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.github.repository;
 
 import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
+import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import java.util.Optional;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
@@ -34,4 +35,28 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
     }
 
     Optional<PullRequest> findByGitRepository_IdAndPrNumber(Long repoId, Integer prNumber);
+
+    long countByProject_IdAndUser_Id(Long projectId, Long userId);
+
+    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.PrItem(" +
+        "p.id, p.prNumber, p.title, p.status, p.githubCreatedAt, p.githubClosedAt) " +
+        "FROM PullRequest p " +
+        "WHERE p.project.id = :projectId AND p.user.id = :userId " +
+        "ORDER BY COALESCE(p.githubClosedAt, p.githubCreatedAt) DESC")
+    List<PrItem> findMyPrItems(
+        @org.springframework.data.repository.query.Param("projectId") Long projectId,
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        org.springframework.data.domain.Pageable pageable
+    );
+
+    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.PrItem(" +
+        "p.id, p.prNumber, p.title, p.status, p.githubCreatedAt, p.githubClosedAt) " +
+        "FROM PullRequest p " +
+        "WHERE p.project.id = :projectId AND p.user.id = :userId " +
+        "ORDER BY COALESCE(p.githubClosedAt, p.githubCreatedAt) DESC")
+    org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.project.dto.PrItem> findPagedMyPrItems(
+        @org.springframework.data.repository.query.Param("projectId") Long projectId,
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        org.springframework.data.domain.Pageable pageable
+    );
 }

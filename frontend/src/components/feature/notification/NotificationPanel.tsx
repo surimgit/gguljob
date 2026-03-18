@@ -1,5 +1,7 @@
+import type { NotificationCategory } from '../../../api/notification';
+
 // ── 타입 ──────────────────────────────────────────────────────────────────────
-export type NotifType = 'team_accept' | 'join_request' | 'job_posting' | 'team_reject';
+export type NotifType = NotificationCategory;
 
 export interface Notification {
   id: number;
@@ -9,18 +11,9 @@ export interface Notification {
   isRead: boolean;
 }
 
-// ── 초기 더미 데이터 (Navbar에서 state 초기값으로 사용) ──────────────────────
-export const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: 1, type: 'team_accept',  message: "'DevMatch' 팀원으로 수락되었습니다.",                  time: '10분 전',  isRead: false },
-  { id: 2, type: 'join_request', message: "'React 스터디'에 새로운 참가 요청이 도착했습니다.",    time: '1시간 전', isRead: false },
-  { id: 3, type: 'job_posting',  message: "'토스(Toss)'의 프론트엔드 새 공고가 등록되었습니다.",  time: '3시간 전', isRead: true  },
-  { id: 4, type: 'team_reject',  message: "'사이드 프로젝트 A' 팀 합류가 거절되었습니다.",        time: '1일 전',   isRead: true  },
-  { id: 5, type: 'join_request', message: "'알고리즘 스터디'에 새로운 참가 요청이 도착했습니다.", time: '2일 전',   isRead: false },
-];
-
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
 const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }> = {
-  team_accept: {
+  TEAM: {
     wrapperClass: 'bg-[#e8e8f5]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -30,7 +23,7 @@ const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.React
       </svg>
     ),
   },
-  join_request: {
+  MEMBER: {
     wrapperClass: 'bg-[#f0e8f5]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +34,7 @@ const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.React
       </svg>
     ),
   },
-  job_posting: {
+  JOB_POSTING: {
     wrapperClass: 'bg-[#e8f5e8]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -50,12 +43,11 @@ const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.React
       </svg>
     ),
   },
-  team_reject: {
-    wrapperClass: 'border-2 border-[#e05555]',
+  TROUBLESHOOTING: {
+    wrapperClass: 'bg-[#fef3c7]',
     iconEl: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05555" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
       </svg>
     ),
   },

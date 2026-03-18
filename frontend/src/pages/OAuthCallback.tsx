@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
-import { getMe } from '../api/user';
+import { getMe, onboardApi } from '../api/user';
+import { buildOnboardingPayload } from '../components/feature/auth/utils/onboardingMappers';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
 
 const OAuthCallback = () => {
@@ -16,10 +17,8 @@ const OAuthCallback = () => {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
-    const isNewUser = params.get('isNewUser') === 'true';
-
     if (!accessToken || !refreshToken) {
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -29,7 +28,8 @@ const OAuthCallback = () => {
       .then((user) => {
         setUser(user);
         setIsLoading(false);
-        if (isNewUser) {
+        const needsOnboarding = !user.position || !user.experience || !user.mbti;
+        if (needsOnboarding) {
           setShowProfileModal(true);
         } else {
           navigate('/', { replace: true });
@@ -38,7 +38,7 @@ const OAuthCallback = () => {
       .catch((err) => {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
           logout();
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         } else {
           setError('로그인 처리 중 오류 발생했습니다. 잠시 후 다시 시도 해주세요.');
           setIsLoading(false);
@@ -52,10 +52,10 @@ const OAuthCallback = () => {
         <div className="text-center">
           <p className="text-gray-700 text-sm mb-4">{error}</p>
           <button
-            onClick={() => navigate('/login', { replace: true })}
+            onClick={() => navigate('/', { replace: true })}
             className="text-sm text-primary underline"
           >
-            로그인 페이지로 돌아가기
+            메인으로 돌아가기
           </button>
         </div>
       </div>
@@ -77,11 +77,26 @@ const OAuthCallback = () => {
         onClose={() => {
           setShowProfileModal(false);
           logout();
-          navigate('/login', { replace: true });
-        }}
-        onComplete={(_formData) => {
-          // TODO: 서버에 프로필 데이터 저장 API 연동
           navigate('/', { replace: true });
+        }}
+        onComplete={async (formData) => {
+          try {
+            const payload = buildOnboardingPayload(formData);
+            if (!payload) {
+              console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
+              setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
+              return;
+            }
+            await onboardApi(payload);
+            const updatedUser = await getMe();
+            setUser(updatedUser);
+            navigate('/', { replace: true });
+          } catch (err) {
+            if (axios.isAxiosError(err)) {
+              console.error('[온보딩] API 에러:', err.response?.status, err.response?.data);
+            }
+            setError('프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+          }
         }}
       />
     </>

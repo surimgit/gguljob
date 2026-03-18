@@ -1,10 +1,13 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
+import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
+import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectDashboardService;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
@@ -12,8 +15,12 @@ import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +42,7 @@ public class ProjectController {
     private final ProjectService projectService;
     private final ProjectDashboardService dashboardService;
 
+    @Operation(summary = "프로젝트 생성 API", description = "새로운 프로젝트를 생성합니다")
     @PostMapping
     public ResponseEntity<ProjectResponse.Id> createProject(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -44,6 +52,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "프로젝트 네비바 클릭 시 뜨는 내 프로젝트들", description = "진행중/완료 프로젝트 리스트 조회")
     @GetMapping("/me")
     public ResponseEntity<List<Simple>> getMyProjects(
         @AuthenticationPrincipal CustomUserDetails userDetails){
@@ -63,6 +72,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "프로젝트 수정 API", description = "프로젝트 기본 정보 수정")
     @PatchMapping("/{projectId}")
     public ResponseEntity<ProjectUpdateResponse> updateProject(
         @PathVariable Long projectId,
@@ -73,6 +83,8 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+
+    @Operation(summary = "프로젝트 상세 페이지(팀프로젝트 탭)", description = "프로젝트 기본 정보 가져오기")
     @GetMapping("/{projectId}/team-dashboard")
     public ResponseEntity<ProjectResponse.TeamDashboard> getTeamDashboard(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -83,6 +95,7 @@ public class ProjectController {
         return ResponseEntity.ok(dashboardService.getTeamDashboard(userId, projectId));
     }
 
+    @Operation(summary = "팀프로젝트 상세 페이지(git 관련 랭킹, 최근 내역)", description = "git 관련 랭킹, 최근 내역)")
     @GetMapping("/{projectId}/gitlog")
     public ResponseEntity<ProjectResponse.GitLog> getGitLog(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -93,6 +106,7 @@ public class ProjectController {
         return ResponseEntity.ok(dashboardService.getGitLog(userId, projectId));
     }
 
+    @Operation(summary = "팀프로젝트 상세 페이지 (깃 레포 등록하기)", description = "깃 레포 등록하기")
     @PutMapping("/{projectId}/git-repo")
     public ResponseEntity<Void> registerGitRepository(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -114,5 +128,37 @@ public class ProjectController {
         TeamManagementResponseDto response = projectService.getTeamManagementDetail(userDetails.getId(), projectId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 관리 페이지 조회가 완료되었습니다.", response));
+    }
+
+    @Operation(summary = "프로젝트 상세 개인 페이지(나만의 공간 탭)", description = "내 PR/MR과 트러블슈팅 조회")
+    @GetMapping("/{projectId}/personal-space")
+    public ResponseEntity<PersonalSpaceResponse.Dashboard> getProjectForEdit(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        PersonalSpaceResponse.Dashboard response = dashboardService.getPersonalSpace(projectId, userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "나만의 공간 탭 (내 PR 목록조회)", description = "해당 프로젝트의 내 PR 목록 전체 조회")
+    @GetMapping("/{projectId}/personal-space/pull-requests")
+    public ResponseEntity<Page<PrItem>> getMyPullRequests(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @ParameterObject @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        Page<PrItem> response = dashboardService.getPagedMyPullRequests(projectId, userDetails.getId(), pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 트러블슈팅 목록조회(프로젝트 상세 개인 페이지)", description = "해당 프로젝트의 내 트러블슈팅 목록 전체 조회")
+    @GetMapping("/{projectId}/personal-space/troubleshootings")
+    public ResponseEntity<Page<TroubleshootingItem>> getMyTroubleshootings(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @ParameterObject @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        Page<TroubleshootingItem> response = dashboardService.getPagedMyTroubleshootings(projectId, userDetails.getId(), pageable);
+        return ResponseEntity.ok(response);
     }
 }

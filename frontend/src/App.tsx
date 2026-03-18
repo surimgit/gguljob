@@ -17,6 +17,8 @@ import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
+import PortfolioCreate from './pages/PortfolioCreate';
+import ScrollToTop from './components/common/ScrollToTop';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -31,7 +33,7 @@ const AppRoutes = () => {
   useEffect(() => {
     const handleUnauthorized = () => {
       logout();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
@@ -61,6 +63,8 @@ const AppRoutes = () => {
   }, [searchParams, setTokens, setUser]);
 
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/oauth/callback" element={<OAuthCallback />} />
 
@@ -83,11 +87,13 @@ const AppRoutes = () => {
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
           <Route path="/mypage/troubleshooting" element={<TroubleshootingList />} />
+          <Route path="/mypage/portfolio/new" element={<PortfolioCreate />} />
         </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
 

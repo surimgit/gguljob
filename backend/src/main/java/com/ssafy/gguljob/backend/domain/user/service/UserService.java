@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.service;
 
+import com.ssafy.gguljob.backend.domain.matching.event.UserProfileSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
@@ -9,10 +10,13 @@ import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
+import com.ssafy.gguljob.backend.domain.user.dto.UserResponse;
+import com.ssafy.gguljob.backend.domain.user.dto.UserResponse.UserSummary;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.entity.UserGoal;
 import com.ssafy.gguljob.backend.domain.user.repository.UserGoalRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +26,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ssafy.gguljob.backend.domain.skill.service.SkillService;
@@ -42,6 +49,8 @@ public class UserService {
     private final UserRepProjectRepository userRepProjectRepository;
     private final ProjectSkillRepository projectSkillRepository;
     private final UserGoalRepository userGoalRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
@@ -68,6 +77,8 @@ public class UserService {
         }
 
         log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
+
+        eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
     }
 
     public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
@@ -91,6 +102,8 @@ public class UserService {
                 .toList();
             userGoalRepository.saveAll(newGoals);
         }
+
+        eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
     }
 
     public void withdrawUser(Long userId) {
@@ -119,6 +132,10 @@ public class UserService {
                 .build())
             .toList();
 
+        List<GoalType> goalList = user.getGoals().stream()
+            .map(UserGoal::getGoal)
+            .toList();
+
         return ProfileResponseDto.builder()
             .userId(user.getId())
             .email(user.getEmail())
@@ -130,6 +147,7 @@ public class UserService {
             .mbti(user.getMbti())
             .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
             .skills(skillDtoList)
+            .goals(goalList)
             .build();
     }
 
@@ -219,5 +237,14 @@ public class UserService {
             .skills(skillDtoList)
             .repProjects(repProjectDtoList)
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse.UserPageResponse getUsers(Pageable pageable) {
+
+        Page<User> users = userRepository.findAll(pageable);
+        Page<UserSummary> userSummaries = users.map(UserResponse.UserSummary::from);
+
+        return UserResponse.UserPageResponse.of(userSummaries);
     }
 }

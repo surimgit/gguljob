@@ -3,6 +3,9 @@ package com.ssafy.gguljob.backend.domain.project.service;
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
+import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
+import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
 import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.GitLog;
@@ -12,7 +15,9 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,5 +138,37 @@ public class ProjectDashboardService {
             .toList();
 
         return new GitLog(rankings, top5Activities);
+    }
+
+    @Transactional(readOnly = true)
+    public PersonalSpaceResponse.Dashboard getPersonalSpace(Long projectId, Long userId) {
+
+        // 상단 통계 조회
+        long prCount = pullRequestRepository.countByProject_IdAndUser_Id(projectId, userId);
+        long tsCount = troubleshootingRepository.countByProject_IdAndUser_Id(projectId, userId);
+        long reviewCount = 0;
+
+        PersonalSpaceResponse.Stats stats = new PersonalSpaceResponse.Stats(prCount, reviewCount, tsCount);
+
+        // 목록 조회 (최근 5개만 DTO로 직접 꽂아 넣기)
+        PageRequest top5 = PageRequest.of(0, 5);
+
+        List<PrItem> prItems =
+            pullRequestRepository.findMyPrItems(projectId, userId, top5);
+
+        List<TroubleshootingItem> tsItems =
+            troubleshootingRepository.findMyTsItems(projectId, userId, top5);
+
+        List<PersonalSpaceResponse.ReviewItem> reviewItems = Collections.emptyList();
+
+        return new PersonalSpaceResponse.Dashboard(stats, prItems, reviewItems, tsItems);
+    }
+
+    public org.springframework.data.domain.Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
+        return pullRequestRepository.findPagedMyPrItems(projectId, userId, pageable);
+    }
+
+    public org.springframework.data.domain.Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
+        return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable);
     }
 }

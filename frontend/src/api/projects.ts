@@ -9,6 +9,7 @@ import type {
   RegisterGitRepoRequest,
   TeamDashboard,
   GitLog,
+  MembersDetail,
 } from '../types/project';
 import type { PageResponse } from '../types/common';
 
@@ -20,8 +21,11 @@ export const getProjects = (params?: ProjectQueryParams) =>
 export const getProjectById = (id: number) =>
   api.get<ProjectDetail>(`/projects/${id}`);
 
-export const applyToProject = (projectId: number, positionId: number, message: string) =>
-  api.post(`/projects/${projectId}/apply`, { positionId, message });
+export const applyToPosition = (projectId: number, positionId: number) =>
+  api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`);
+
+export const inviteUser = (projectId: number, userId: number) =>
+  api.post(`/v1/projects/${projectId}/invites/${userId}`);
 
 /* ── 내 프로젝트 ── */
 
@@ -39,7 +43,25 @@ export const getTeamDashboard = (projectId: number) =>
 export const getGitLog = (projectId: number) =>
   api.get<GitLog>(`/v1/projects/${projectId}/gitlog`);
 
+/* ── 팀원 관리 ── */
+
+export const getMembersDetail = (projectId: number) =>
+  api.get<{ data: MembersDetail }>(`/v1/projects/${projectId}/members/detail`);
+
 /* ── 프로젝트 설정 ── */
 
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
+
+/* ── 프로젝트 참여 수락/거절 ── */
+
+export const acceptRequest = (requestId: number) =>
+  api.post(`/v1/requests/${requestId}/accept`);
+
+export const rejectRequest = (requestId: number) =>
+  api.post(`/v1/requests/${requestId}/reject`);
+
+/* 나만의 공간 */
+
+export const getPersonalSpace = (projectId: number) =>
+  api.get(`/v1/projects/${projectId}/personal-space`);

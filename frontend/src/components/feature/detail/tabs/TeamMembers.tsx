@@ -7,8 +7,10 @@ import {
   UserPlus,
   X,
   Check,
+  Crown,
 } from "lucide-react";
-import type { TeamDashboard } from "../../../../types/project";
+import type { TeamDashboard, MembersDetail } from "../../../../types/project";
+import { acceptRequest, rejectRequest, getMembersDetail } from "../../../../api/projects";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -134,6 +136,7 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
+        isMe: members.length === 0,
       });
     }
   });
@@ -754,14 +757,24 @@ const TeamManagement = ({
   onReject,
 }: TeamManagementProps) => {
   const [roles, setRoles] = useState(initialRoles);
+  const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
+  const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
+  const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
+  const [kickMemberId, setKickMemberId] = useState<string | null>(null);
+  const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
+  const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
+  const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
+
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
   const pendingCount = applications.filter((a) => a.status === "pending").length;
 
-  const membersByRole = members.reduce<Record<string, Member[]>>((acc, m) => {
+  const isCurrentUserLeader = localMembers.some((m) => m.isLeader && m.isMe);
+
+  const membersByRole = localMembers.reduce<Record<string, Member[]>>((acc, m) => {
     (acc[m.role] ??= []).push(m);
     return acc;
   }, {});
@@ -797,10 +810,17 @@ const TeamManagement = ({
 
   const handleAccept = (appId: string) => {
     const app = applications.find((a) => a.id === appId);
-    setApplications((prev) =>
-      prev.map((a) => (a.id === appId ? { ...a, status: "accepted" as const } : a)),
-    );
     if (app) {
+      setLocalMembers((prev) => [
+        ...prev,
+        {
+          id: appId,
+          name: app.name,
+          role: app.role,
+          joinDate: new Date().toISOString().slice(0, 10),
+          contribution: 0,
+        },
+      ]);
       setRoles((prev) =>
         prev.map((r) => {
           if (r.name !== app.role) return r;
@@ -813,13 +833,12 @@ const TeamManagement = ({
         }),
       );
     }
+    setApplications((prev) => prev.filter((a) => a.id !== appId));
     onAccept(appId);
   };
 
   const handleReject = (appId: string) => {
-    setApplications((prev) =>
-      prev.map((a) => (a.id === appId ? { ...a, status: "rejected" as const } : a)),
-    );
+    setApplications((prev) => prev.filter((a) => a.id !== appId));
     onReject(appId);
   };
 
@@ -1026,7 +1045,7 @@ const TeamManagement = ({
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1050,29 +1069,37 @@ const TeamManagement = ({
                             </span>
                           )}
                           {member.isLeader && (
-                            <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                              style={{
-                                background: "rgba(245,158,11,0.2)",
-                                color: "#F59E0B",
-                              }}
-                            >
-                              팀장
-                            </span>
+                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
                           )}
                         </div>
-                        <span
-                          className="text-xs flex-shrink-0"
-                          style={{ color: "var(--color-text-tertiary)" }}
-                        >
-                          {member.joinDate}
-                        </span>
                         <span
                           className="text-xs font-bold flex-shrink-0 w-10 text-right"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
                           {member.contribution}c
                         </span>
+                        {isCurrentUserLeader && !member.isLeader && (
+                          <>
+                            <button
+                              onClick={() => setDelegateMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; e.currentTarget.style.color = "#F59E0B"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setKickMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1083,7 +1110,7 @@ const TeamManagement = ({
         </div>
       </div>
 
-      {/* ── 하단 2열: 합류 신청 목록 + 팀원 추가하기 버튼 ── */}
+      {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
       <div className="grid grid-cols-[1fr_360px] gap-5">
         {/* 좌측: 합류 신청 목록 */}
         <div
@@ -1176,22 +1203,46 @@ const TeamManagement = ({
                   {isPending ? (
                     <>
                       <button
-                        onClick={() => handleAccept(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-bold text-white cursor-pointer"
-                        style={{ background: "var(--color-success)" }}
-                      >
-                        수락
-                      </button>
-                      <button
-                        onClick={() => handleReject(app.id)}
+                        onClick={() => setConfirmAcceptId(app.id)}
                         className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
                         style={{
                           background: "var(--color-surface)",
                           border: "1px solid var(--color-border)",
                           color: "var(--color-text-secondary)",
                         }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--color-success)";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.borderColor = "var(--color-success)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "var(--color-surface)";
+                          e.currentTarget.style.color = "var(--color-text-secondary)";
+                          e.currentTarget.style.borderColor = "var(--color-border)";
+                        }}
                       >
-                        거절
+                        ✓ 수락
+                      </button>
+                      <button
+                        onClick={() => setConfirmRejectId(app.id)}
+                        className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                          color: "var(--color-text-secondary)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--color-error)";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.borderColor = "var(--color-error)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "var(--color-surface)";
+                          e.currentTarget.style.color = "var(--color-text-secondary)";
+                          e.currentTarget.style.borderColor = "var(--color-border)";
+                        }}
+                      >
+                        × 거절
                       </button>
                     </>
                   ) : isAccepted ? (
@@ -1247,33 +1298,306 @@ const TeamManagement = ({
         onConfirm={handleRecruitConfirm}
         addedRoles={addedRoles}
       />
+
+      {/* ── 수락 확인 모달 ── */}
+      {confirmAcceptId && (() => {
+        const app = applications.find((a) => a.id === confirmAcceptId);
+        if (!app) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+            onClick={() => setConfirmAcceptId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 체크 아이콘 */}
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "#dcfce7" }}
+              >
+                <Check className="w-8 h-8" style={{ color: "var(--color-success)" }} />
+              </div>
+
+              {/* 텍스트 */}
+              <div className="text-center">
+                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  {app.name}님 수락
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                  팀원으로 수락하시겠습니까?
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 w-full mt-1">
+                <button
+                  onClick={() => setConfirmAcceptId(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    handleAccept(confirmAcceptId);
+                    setConfirmAcceptId(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: "var(--color-success)" }}
+                >
+                  수락하기
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 거절 확인 모달 ── */}
+      {confirmRejectId && (() => {
+        const app = applications.find((a) => a.id === confirmRejectId);
+        if (!app) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+            onClick={() => setConfirmRejectId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* X 아이콘 */}
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "#fee2e2" }}
+              >
+                <X className="w-8 h-8" style={{ color: "var(--color-error)" }} />
+              </div>
+
+              {/* 텍스트 */}
+              <div className="text-center">
+                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  {app.name}님 거절
+                </p>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                  참가 신청을 거절하시겠습니까?
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 w-full mt-1">
+                <button
+                  onClick={() => setConfirmRejectId(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    handleReject(confirmRejectId);
+                    setConfirmRejectId(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: "var(--color-error)" }}
+                >
+                  거절하기
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 팀원 내보내기 확인 모달 ── */}
+      {kickMemberId && kickTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setKickMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="bg-red-100 rounded-2xl p-4 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+                <line x1="18" y1="8" x2="23" y2="13"/>
+                <line x1="23" y1="8" x2="18" y2="13"/>
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              {kickTarget.name}님 내보내기
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              팀에서 내보내시겠습니까?
+              <br />
+              되돌릴 수 없습니다.
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setKickMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setLocalMembers((prev) => prev.filter((m) => m.id !== kickMemberId));
+                  setKickMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                내보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 팀장 위임 확인 모달 ── */}
+      {delegateMemberId && delegateTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setDelegateMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="rounded-2xl p-4 mb-2" style={{ background: "rgba(245,158,11,0.15)" }}>
+              <Crown className="w-8 h-8" style={{ color: "#F59E0B" }} />
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              팀장 위임
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              {delegateTarget.name}님에게
+              <br />
+              팀장을 위임하시겠습니까?
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setDelegateMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setLocalMembers((prev) =>
+                    prev.map((m) => ({
+                      ...m,
+                      isLeader: m.id === delegateMemberId,
+                      isMe: m.isMe,
+                    }))
+                  );
+                  setDelegateMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "#F59E0B" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#D97706")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F59E0B")}
+              >
+                위임하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 /* ── 기본 export ── */
-const TeamMembers = ({ dashboard }: { dashboard?: TeamDashboard | null }) => {
-  const roles = useMemo(
-    () => (dashboard ? dashboardToRoles(dashboard) : []),
-    [dashboard],
-  );
-  const members = useMemo(
-    () => (dashboard ? dashboardToMembers(dashboard) : []),
-    [dashboard],
-  );
+const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
+  const [detail, setDetail] = useState<MembersDetail | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    getMembersDetail(projectId)
+      .then(({ data }) => setDetail(data.data))
+      .catch(() => {});
+  }, [projectId]);
+
+  const roles: Role[] = useMemo(() => {
+    if (detail) {
+      return detail.recruitments.map((r) => ({
+        id: r.positionId.toString(),
+        name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+        status: r.status === "RECRUITING" ? "open" : "closed",
+        current: r.currentCount,
+        total: r.targetCount,
+        stacks: r.requireSkills,
+      }));
+    }
+    return dashboard ? dashboardToRoles(dashboard) : [];
+  }, [detail, dashboard]);
+
+  const members: Member[] = useMemo(() => {
+    if (detail) {
+      return detail.currentMembers.map((m, i) => ({
+        id: m.memberId.toString(),
+        name: m.userName,
+        role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+        joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
+        contribution: 0,
+        isLeader: i === 0,
+      }));
+    }
+    return dashboard ? dashboardToMembers(dashboard) : [];
+  }, [detail, dashboard]);
+
+  const applications: Application[] = useMemo(() => {
+    if (!detail) return [];
+    return detail.pendingRequests.map((r) => ({
+      id: r.requestId.toString(),
+      name: r.userName,
+      role: r.positionName,
+      appliedAt: new Date(r.createdAt).toLocaleDateString("ko-KR"),
+      stacks: r.techStacks,
+      status: "pending" as const,
+    }));
+  }, [detail]);
 
   return (
     <TeamManagement
+      key={projectId ?? dashboard?.projectInfo.title ?? "default"}
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
       roles={roles}
       members={members}
-      applications={[]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
+      applications={applications}
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
       onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
-      onAccept={(id) => console.log("수락:", id)}
-      onReject={(id) => console.log("거절:", id)}
+      onAccept={(id) => acceptRequest(Number(id)).catch(() => {})}
+      onReject={(id) => rejectRequest(Number(id)).catch(() => {})}
     />
   );
 };
