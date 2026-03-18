@@ -6,18 +6,18 @@ from dotenv import load_dotenv
 # 환경변수 로드
 load_dotenv()
 
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7688")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "default-neo4j-password-please-change-in-production")
+NEO4J_URI = "bolt://127.0.0.1:7688"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "default-neo4j-password-please-change-in-production"
 
 # 유저당 몇 개의 Job을 평가할 것인지 (배치 성능 조절용)
-EVAL_LIMIT_PER_USER = 200
+EVAL_LIMIT_PER_USER = 10000
 
 def get_users(tx):
     # 최근 접속했거나 유효한 유저들의 ID를 가져옴 (여기서는 최대 1000명 샘플링)
     query = """
     MATCH (u:User)
-    WHERE u.embedding IS NOT NULL
+
     RETURN u.id AS user_id
     LIMIT 1000
     """
@@ -38,26 +38,47 @@ def evaluate_user_jobs(tx, user_id):
       UNION
 
       WITH u
+      WITH u WHERE u.embedding IS NOT NULL
       CALL db.index.vector.queryNodes("job_embedding", $limit, u.embedding)
       YIELD node AS j, score
       RETURN j, 0.0 AS gScore, score AS vScore
     }
-    WITH j, sum(gScore) AS graphScore, sum(vScore) AS vectorScore
-    WITH j, (graphScore * 0.4) + (vectorScore * 10 * 0.6) AS finalScore
-    RETURN j.id AS job_id, finalScore * 100.0 AS match_percentage
+    WITH j, u, sum(gScore) AS graphScore, sum(vScore) AS vectorScore
+    WITH j, graphScore, vectorScore,
+         CASE
+           WHEN u.embedding IS NULL THEN
+             (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
+           ELSE
+             ((CASE WHEN vectorScore <= 0.55 THEN 0.0
+                    WHEN (vectorScore - 0.55) * 400.0 > 100.0 THEN 100.0 
+                    ELSE (vectorScore - 0.55) * 400.0 END) * 0.5) +
+             ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
+         END AS finalScore
+    RETURN j.id AS job_id, finalScore AS match_percentage
     """
     result = tx.run(query, user_id=user_id, limit=EVAL_LIMIT_PER_USER)
     return [{"job_id": record["job_id"], "score": record["match_percentage"]} for record in result]
 
-def update_job_cutoffs(tx, job_id, high_cutoff, medium_cutoff, avg_score):
+def update_job_cutoffs(tx, updates):
     # 계산된 커트라인과 평균을 Job 노드에 업데이트
     query = """
-    MATCH (j:Job {id: $job_id})
-    SET j.cutoff_high = $high_cutoff,
-        j.cutoff_medium = $medium_cutoff,
-        j.average_score = $avg_score
+    UNWIND $updates AS update
+    MATCH (j:Job {id: update.job_id})
+    SET j.cutoff_high = update.high_cutoff,
+        j.cutoff_medium = update.medium_cutoff,
+        j.average_score = update.avg_score
     """
-    tx.run(query, job_id=job_id, high_cutoff=high_cutoff, medium_cutoff=medium_cutoff, avg_score=avg_score)
+    tx.run(query, updates=updates)
+
+def update_global_stats(tx, global_avg, global_high, global_medium):
+    query = '''
+    MERGE (g:GlobalStats {id: "recommendation"})
+    SET g.global_average_score = $global_avg,
+        g.global_cutoff_high = $global_high,
+        g.global_cutoff_medium = $global_medium,
+        g.last_updated = datetime()
+    '''
+    tx.run(query, global_avg=global_avg, global_high=global_high, global_medium=global_medium)
 
 def main():
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
@@ -88,7 +109,7 @@ def main():
         global_high = np.percentile(all_scores, 70) if all_scores else 70.0
         global_medium = np.percentile(all_scores, 40) if all_scores else 40.0
         
-        update_count = 0
+        updates = []
         for job_id, scores in job_scores_map.items():
             # 평가된 유저 수가 너무 적으면(예: 5명 미만) 글로벌 평균을 사용하여 신뢰도 보정
             if len(scores) < 5:
@@ -101,10 +122,22 @@ def main():
                 high_cutoff = np.percentile(scores, 70)
                 medium_cutoff = np.percentile(scores, 40)
             
-            session.execute_write(update_job_cutoffs, job_id, float(high_cutoff), float(medium_cutoff), float(avg_score))
-            update_count += 1
+            updates.append({
+                "job_id": job_id,
+                "high_cutoff": float(high_cutoff),
+                "medium_cutoff": float(medium_cutoff),
+                "avg_score": float(avg_score)
+            })
+            
+        # batch update!
+        session.execute_write(update_job_cutoffs, updates)
+        update_count = len(updates)
             
         print(f" -> Successfully updated cutoffs for {update_count} jobs.")
+
+        print("4. Updating GlobalStats node...")
+        session.execute_write(update_global_stats, float(global_avg), float(global_high), float(global_medium))
+        print(f" -> Global stats updated (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")
         
     driver.close()
     print("Batch Processing Completed!")

@@ -15,4 +15,7 @@ public class JobRecommendationResponse {
   private Double cutoffHigh;
   private Double cutoffMedium;
   private Double averageScore;
+  private Double globalAverageScore;
+  private Double globalCutoffHigh;
+  private Double globalCutoffMedium;
 }

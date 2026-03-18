@@ -66,4 +66,10 @@ public class JobPosting extends BaseTimeEntity {
 
     @Column(name = "tech_stacks", columnDefinition = "TEXT")
     private String techStacks;
+
+    @Column(length = 255)
+    private String location;
+
+    @Column(name = "contract_type", length = 50)
+    private String contractType;
 }

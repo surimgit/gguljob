@@ -1,11 +1,13 @@
 package com.ssafy.gguljob.backend.domain.job.repository;
 
-import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.Collection;
+
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
+import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,16 +30,35 @@ public class JobRecommendationRepository {
           UNION
 
           WITH u
+          WITH u WHERE u.embedding IS NOT NULL
           CALL db.index.vector.queryNodes("job_embedding", 50, u.embedding)
           YIELD node AS j, score
           RETURN j, 0.0 AS gScore, score AS vScore
         }
-        WITH j, sum(gScore) AS graphScore, sum(vScore) AS vectorScore
-        WITH j, graphScore, vectorScore, (graphScore * 0.4) + (vectorScore * 10 * 0.6) AS finalScore
+        WITH j, u, sum(gScore) AS graphScore, sum(vScore) AS vectorScore
+        WHERE NOT j.title CONTAINS '국비'
+          AND NOT j.title CONTAINS '교육과정'
+          AND NOT j.title CONTAINS '부트캠프'
+          AND NOT j.title CONTAINS '수강생'
+          AND NOT j.title CONTAINS '훈련생'
+        WITH j, graphScore, vectorScore,
+             CASE
+               WHEN u.embedding IS NULL THEN
+                (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
+              ELSE
+                ((CASE WHEN vectorScore <= 0.55 THEN 0.0
+                       WHEN (vectorScore - 0.55) * 400.0 > 100.0 THEN 100.0
+                       ELSE (vectorScore - 0.55) * 400.0 END) * 0.5) +
+                ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
+             END AS finalScore
+        OPTIONAL MATCH (g:GlobalStats {id: 'recommendation'})
         RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
                coalesce(j.cutoff_high, 70.0) AS cutoffHigh,
                coalesce(j.cutoff_medium, 40.0) AS cutoffMedium,
-               coalesce(j.average_score, 50.0) AS averageScore
+               coalesce(j.average_score, 50.0) AS averageScore,
+               coalesce(g.global_average_score, 50.0) AS globalAverageScore,
+               coalesce(g.global_cutoff_high, 70.0) AS globalCutoffHigh,
+               coalesce(g.global_cutoff_medium, 40.0) AS globalCutoffMedium
         ORDER BY finalScore DESC
         SKIP $skip
         LIMIT $limit
@@ -51,7 +72,11 @@ public class JobRecommendationRepository {
             .vectorScore(record.get("vectorScore").asDouble())
             .finalScore(record.get("finalScore").asDouble())
             .cutoffHigh(record.get("cutoffHigh").asDouble())
-            .cutoffMedium(record.get("cutoffMedium").asDouble()).build())
+            .cutoffMedium(record.get("cutoffMedium").asDouble())
+            .averageScore(record.get("averageScore").asDouble())
+            .globalAverageScore(record.get("globalAverageScore").asDouble())
+            .globalCutoffHigh(record.get("globalCutoffHigh").asDouble())
+            .globalCutoffMedium(record.get("globalCutoffMedium").asDouble()).build())
         .all();
   }
 }

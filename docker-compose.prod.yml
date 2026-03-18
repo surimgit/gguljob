@@ -152,10 +152,6 @@ services:
 
       - AI_SERVICE_URL=http://gguljob-ai-prod:8000
       - GMS_API_KEY=${GMS_API_KEY}
-<<<<<<< HEAD
-
-=======
->>>>>>> 869c5fca1e54bfdff3dd8829d9117f880749b8be
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
