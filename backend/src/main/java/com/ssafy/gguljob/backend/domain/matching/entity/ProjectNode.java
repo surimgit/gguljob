@@ -27,4 +27,10 @@ public class ProjectNode {
     @Relationship(type = "REQUIRES_ROLE", direction = Relationship.Direction.OUTGOING)
     @Builder.Default
     private Set<RoleNode> roles = new HashSet<>();
+
+    public void updateFrom(ProjectNode newData) {
+        this.title = newData.getTitle();
+        this.skills = newData.getSkills();
+        this.roles = newData.getRoles();
+    }
 }

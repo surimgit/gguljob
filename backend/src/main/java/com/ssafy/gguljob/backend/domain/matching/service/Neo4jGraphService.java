@@ -18,16 +18,32 @@ public class Neo4jGraphService {
     private final ProjectNodeRepository projectNodeRepository;
 
     @Transactional(transactionManager = "neo4jTransactionManager")
-    public void saveUserNode(UserNode userNode, Long userId) {
-        userNodeRepository.deleteById(String.valueOf(userId));
-        userNodeRepository.save(userNode);
-        log.info("Neo4j 그래프 DB 동기화 완료: 유저 ID = {}", userId);
+    public void saveUserNode(UserNode newUserNode, Long userId) {
+        userNodeRepository.findById(String.valueOf(userId)).ifPresentOrElse(
+            existingNode -> {
+                existingNode.updateFrom(newUserNode);
+                userNodeRepository.save(existingNode);
+                log.info("Neo4j 유저 노드 '업데이트' 완료: ID = {}", userId);
+            },
+            () -> {
+                userNodeRepository.save(newUserNode);
+                log.info("Neo4j 유저 노드 '신규 생성' 완료: ID = {}", userId);
+            }
+        );
     }
 
     @Transactional(transactionManager = "neo4jTransactionManager")
-    public void saveProjectNode(ProjectNode projectNode, Long projectId) {
-        projectNodeRepository.deleteById(String.valueOf(projectId));
-        projectNodeRepository.save(projectNode);
-        log.info("Neo4j 그래프 DB 동기화 완료: 프로젝트 ID = {}", projectId);
+    public void saveProjectNode(ProjectNode newProjectNode, Long projectId) {
+        projectNodeRepository.findById(String.valueOf(projectId)).ifPresentOrElse(
+            existingNode -> {
+                existingNode.updateFrom(newProjectNode);
+                projectNodeRepository.save(existingNode);
+                log.info("Neo4j 프로젝트 노드 '업데이트' 완료: ID = {}", projectId);
+            },
+            () -> {
+                projectNodeRepository.save(newProjectNode);
+                log.info("Neo4j 프로젝트 노드 '신규 생성' 완료: ID = {}", projectId);
+            }
+        );
     }
 }
