@@ -41,9 +41,11 @@ const CIRCLE_COLORS = ['#E11D48', '#2563EB', '#16A34A', '#E8B931', '#9333EA', '#
 const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: ProjectItem; active: boolean; hasSelectedTs: boolean; onToggle: () => void }) => {
   const isActive = project.status !== 'DONE';
   return (
-    <div
+    <button
+      type="button"
       onClick={onToggle}
-      className={`rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all ${
+      aria-pressed={hasSelectedTs}
+      className={`rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all text-left w-full ${
         hasSelectedTs
           ? 'border-2 border-primary-hover bg-primary-soft shadow-md'
           : active
@@ -52,7 +54,7 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
       }`}
     >
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <span className="text-xs font-bold" style={{ color: 'var(--color-amber)' }}>
           {project.domain}
         </span>
@@ -83,21 +85,23 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
           </span>
         ))}
       </div>
-    </div>
+    </button>
   );
 };
 
 // ── 트러블슈팅 카드 ──────────────────────────────────────────────────────────
 const TsCard = ({ item, selected, onToggle }: { item: TroubleshootingItem; selected: boolean; onToggle: () => void }) => (
-  <div
+  <button
+    type="button"
     onClick={onToggle}
-    className={`flex flex-col border-2 rounded-2xl overflow-hidden cursor-pointer transition-all ${
+    aria-pressed={selected}
+    className={`flex flex-col border-2 rounded-2xl overflow-hidden cursor-pointer transition-all text-left w-full ${
       selected
         ? 'border-primary-hover bg-primary-soft shadow-md'
         : 'border-border bg-surface hover:shadow-md'
     }`}
   >
-    <div className="flex items-center gap-3 px-4 py-4">
+    <div className="flex items-center gap-3 px-4 py-4 w-full">
       <span
         className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: CIRCLE_COLORS[(item.id - 1) % CIRCLE_COLORS.length] }}
@@ -107,13 +111,13 @@ const TsCard = ({ item, selected, onToggle }: { item: TroubleshootingItem; selec
       <h4 className="text-sm font-bold text-text-primary leading-snug flex-1">{item.title}</h4>
       {selected && <CheckCircle2 className="w-5 h-5 text-primary-hover flex-shrink-0" />}
     </div>
-    <div className="flex flex-col gap-1 px-4 pb-4 border-t border-border pt-3" style={{ background: '#FAF9F6' }}>
+    <div className="flex flex-col gap-1 px-4 pb-4 border-t border-border pt-3 w-full" style={{ background: '#FAF9F6' }}>
       <p className="text-xs font-bold text-text-primary">문제 상황</p>
       <p className="text-xs text-text-secondary leading-relaxed">{item.problemDesc}</p>
       <p className="text-xs font-bold text-text-primary mt-2">해결 방법</p>
       <p className="text-xs text-text-secondary leading-relaxed">{item.solutionDesc}</p>
     </div>
-  </div>
+  </button>
 );
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
