@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useState, useEffect, type FC } from "react";
 import { X } from "lucide-react";
 import gguljobLogo from "../../../assets/images/gguljob_logo.png";
 import Step1Goals from "./steps/Step1Goals";
@@ -8,6 +8,7 @@ import Step4Languages from "./steps/Step4Languages";
 import Step5MBTI from "./steps/Step5MBTI";
 import Step6Leadership from "./steps/Step6Leadership";
 import ProfileCompletePopup from "./ProfileCompletePopup";
+import ProfileEditCompletePopup from "./ProfileEditCompletePopup";
 
 interface FormData {
   goals: string[];
@@ -22,6 +23,9 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onComplete: (formData: FormData) => void;
+  initialData?: Partial<FormData>;
+  /** 'onboarding' = 최초 가입, 'edit' = 마이페이지 정보수정 */
+  mode?: 'onboarding' | 'edit';
 }
 
 const SHOW_PROGRESS = [true, true, true, true, true, true];
@@ -45,18 +49,30 @@ const isStepValid = (step: number, formData: FormData): boolean => {
   }
 };
 
-const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
+const DEFAULT_FORM: FormData = {
+  goals: [],
+  role: "",
+  experience: "",
+  languages: [],
+  mbti: "",
+  leaderScore: 30,
+};
+
+const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData, mode = 'onboarding' }) => {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
-    goals: [],
-    role: "",
-    experience: "",
-    languages: [],
-    mbti: "",
-    leaderScore: 30,
-  });
+  const [formData, setFormData] = useState<FormData>({ ...DEFAULT_FORM, ...initialData });
   const [showComplete, setShowComplete] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
+
+  // 모달이 열릴 때마다 initialData로 동기화
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ ...DEFAULT_FORM, ...initialData });
+      setStep(1);
+      setShowComplete(false);
+      setShowExitWarning(false);
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -199,7 +215,9 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete }) => {
       </div>
 
       {showComplete && (
-        <ProfileCompletePopup formData={formData} onClose={handleComplete} />
+        mode === 'edit'
+          ? <ProfileEditCompletePopup onClose={handleComplete} />
+          : <ProfileCompletePopup formData={formData} onClose={handleComplete} />
       )}
 
       {/* 이탈 경고 모달 */}

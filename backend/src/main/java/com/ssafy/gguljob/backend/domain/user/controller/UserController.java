@@ -6,6 +6,7 @@ import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingRespo
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
+import com.ssafy.gguljob.backend.domain.user.dto.UserResponse;
 import com.ssafy.gguljob.backend.domain.user.service.UserService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
@@ -15,6 +16,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -141,5 +146,14 @@ public class UserController {
         ProfileResponseDto profileDto = userService.getOtherProfile(userId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "타 사용자 프로필 조회 성공", profileDto));
+    }
+
+    @Operation(summary = "사용자 전체 목록 조회", description = "페이지네이션을 적용하여 사용자 목록을 조회합니다.")
+    @GetMapping("/users")
+    public ResponseEntity<UserResponse.UserPageResponse> getUsers(
+        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        UserResponse.UserPageResponse response = userService.getUsers(pageable);
+        return ResponseEntity.ok(response);
     }
 }

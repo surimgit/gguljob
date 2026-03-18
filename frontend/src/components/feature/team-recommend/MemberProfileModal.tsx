@@ -34,6 +34,7 @@ const MemberProfileModal = ({ isOpen, onClose, user }: MemberProfileModalProps) 
         isOpen={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
         memberName={user.name}
+        userId={Number(user.id)}
       />
     </>
   );

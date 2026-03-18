@@ -18,6 +18,7 @@ export interface User {
   teamTendency: string | null;
   skills: UserSkill[];
   techStacks: string[];
+  goals: string[];
   /** @deprecated position 사용 권장 */
   role: PositionType | null;
 }

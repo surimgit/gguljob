@@ -390,12 +390,6 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
             프로젝트 설정
           </h1>
         </div>
-        <p
-          className="text-xs mt-0.5"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {info?.title ?? "프로젝트 설정"}
-        </p>
       </div>
 
       {/* ── 섹션 1: 프로젝트 상태 ── */}

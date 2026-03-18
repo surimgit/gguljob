@@ -101,6 +101,35 @@ export interface TeamDashboard {
   } | null;
 }
 
+// GET /projects/{id}/members/detail 응답
+export interface MembersDetail {
+  recruitments: {
+    positionId: number;
+    role: string;
+    status: string;
+    currentCount: number;
+    targetCount: number;
+    requireSkills: string[];
+  }[];
+  currentMembers: {
+    memberId: number;
+    userId: number;
+    role: string;
+    userName: string;
+    profileImageUrl: string | null;
+    joinedAt: string;
+  }[];
+  pendingRequests: {
+    requestId: number;
+    userId: number;
+    userName: string;
+    userProfileImageUrl: string | null;
+    positionName: string;
+    techStacks: string[];
+    createdAt: string;
+  }[];
+}
+
 // GET /projects/{id}/gitlog 응답
 export interface GitLog {
   mrRankings: MrRanking[];

@@ -104,4 +104,15 @@ public class Project extends BaseTimeEntity {
     public void updateReadme(String readme) {
         this.readme = readme;
     }
+
+    // 팀장 변경
+    public void changeLeader(User newLeader) {
+        this.leader = newLeader;
+    }
+
+    // 남은 팀원 없을 때 프로젝트 종료
+    public void markAsDone() {
+        this.status = ProjectStatus.DONE;
+        this.finishedAt = LocalDateTime.now();
+    }
 }

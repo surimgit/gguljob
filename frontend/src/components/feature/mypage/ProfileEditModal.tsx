@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
-import { X, Camera, Check } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { X, Camera, Check, Loader2 } from 'lucide-react';
 import { BaseModal, TechStackInput } from '../../common';
 import type { PositionType } from '../../../types/user';
 import type { ProjectSimple } from '../../../types/project';
+import { updateProfileApi, uploadProfileImageApi } from '../../../api/user';
+import type { ProfileUpdateRequest } from '../../../api/user';
 
 const POSITION_LABEL: Record<PositionType, string> = {
   FE: 'Frontend',
@@ -47,7 +49,17 @@ interface ProfileEditModalProps {
 
 const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProjects }: ProfileEditModalProps) => {
   const [form, setForm] = useState<ProfileEditForm>(initialData);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 모달이 열릴 때마다 최신 데이터로 동기화
+  useEffect(() => {
+    if (isOpen) {
+      setForm(initialData);
+      setImageFile(null);
+    }
+  }, [isOpen, initialData]);
 
   const eligibleProjects = availableProjects.filter(
     (p) => p.status === 'PROCEEDING' || p.status === 'DONE'
@@ -94,13 +106,42 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageFile(file);
     const url = URL.createObjectURL(file);
     setForm((prev) => ({ ...prev, avatarUrl: url }));
   };
 
-  const handleSave = () => {
-    onSave(form);
-    onClose();
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // 이미지 업로드
+      if (imageFile) {
+        const res = await uploadProfileImageApi(imageFile);
+        const imageUrl = res.data.data;
+        setForm((prev) => ({ ...prev, avatarUrl: imageUrl }));
+      }
+
+      // 프로필 정보 수정
+      if (!form.role) {
+        alert('역할을 선택해주세요.');
+        return;
+      }
+      const payload: ProfileUpdateRequest = {
+        description: form.bio,
+        roles: [form.role],
+        skills: form.techStacks,
+      };
+      await updateProfileApi(payload);
+
+      onSave(form);
+      onClose();
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: unknown } };
+      console.error('[프로필 수정] 실패:', axiosErr.response?.status, axiosErr.response?.data);
+      alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -292,9 +333,11 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-semibold transition-colors"
+            disabled={isSaving}
+            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            저장
+            {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isSaving ? '저장 중...' : '저장'}
           </button>
         </div>
       </div>
