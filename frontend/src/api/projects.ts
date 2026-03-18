@@ -43,3 +43,11 @@ export const getGitLog = (projectId: number) =>
 
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
+
+/* ── 프로젝트 참여 수락/거절 ── */
+
+export const acceptRequest = (requestId: number) =>
+  api.post(`/v1/requests/${requestId}/accept`);
+
+export const rejectRequest = (requestId: number) =>
+  api.post(`/v1/requests/${requestId}/reject`);

@@ -9,6 +9,7 @@ import {
   Check,
 } from "lucide-react";
 import type { TeamDashboard } from "../../../../types/project";
+import { acceptRequest, rejectRequest } from "../../../../api/projects";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -1430,8 +1431,8 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
       onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
-      onAccept={(id) => console.log("수락:", id)}
-      onReject={(id) => console.log("거절:", id)}
+      onAccept={(id) => acceptRequest(Number(id)).catch(() => {})}
+      onReject={(id) => rejectRequest(Number(id)).catch(() => {})}
     />
   );
 };

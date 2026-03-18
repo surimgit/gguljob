@@ -21,3 +21,5 @@ ai/crawler/*.xlsx
 ai/crawler/*.txt
 ai/crawler/job_images/
 ai/crawler/__pycache__/
+
+docs1/
