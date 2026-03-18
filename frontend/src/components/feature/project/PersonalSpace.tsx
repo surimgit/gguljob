@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import chatbotImg from '../../../assets/images/chatbot.png';
 import type { PersonalSpaceData } from '../../../types/project';
+import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
@@ -392,41 +393,47 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
               </div>
               <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
             </div>
-            <div className="flex flex-col gap-5">
-              {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
-            </div>
+            {tsList.length === 0 ? (
+              <EmptyState message="아직 등록된 트러블슈팅이 없습니다." />
+            ) : (
+              <>
+                <div className="flex flex-col gap-5">
+                  {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
+                </div>
 
-            {/* 페이지네이션 */}
-            {(
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <button
-                  onClick={() => setTsPage(p => Math.max(0, p - 1))}
-                  disabled={tsPage === 0}
-                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                </button>
-                {Array.from({ length: Math.ceil(tsList.length / MR_PER_PAGE) }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setTsPage(i)}
-                    className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                      tsPage === i
-                        ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                        : 'text-text-tertiary hover:text-text-primary'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setTsPage(p => Math.min(Math.ceil(tsList.length / MR_PER_PAGE) - 1, p + 1))}
-                  disabled={tsPage >= Math.ceil(tsList.length / MR_PER_PAGE) - 1}
-                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                </button>
-              </div>
+                {/* 페이지네이션 */}
+                {(
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={() => setTsPage(p => Math.max(0, p - 1))}
+                      disabled={tsPage === 0}
+                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                    {Array.from({ length: Math.ceil(tsList.length / MR_PER_PAGE) }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setTsPage(i)}
+                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
+                          tsPage === i
+                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
+                            : 'text-text-tertiary hover:text-text-primary'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setTsPage(p => Math.min(Math.ceil(tsList.length / MR_PER_PAGE) - 1, p + 1))}
+                      disabled={tsPage >= Math.ceil(tsList.length / MR_PER_PAGE) - 1}
+                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -544,41 +551,47 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
               </div>
               <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
             </div>
-            <div className="flex flex-col gap-10">
-              {mrList.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
-            </div>
+            {mrList.length === 0 ? (
+              <EmptyState message="아직 등록된 MR 리뷰가 없습니다." />
+            ) : (
+              <>
+                <div className="flex flex-col gap-10">
+                  {mrList.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
+                </div>
 
-            {/* 페이지네이션 */}
-            {(
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <button
-                  onClick={() => setMrPage(p => Math.max(0, p - 1))}
-                  disabled={mrPage === 0}
-                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                </button>
-                {Array.from({ length: Math.ceil(mrList.length / MR_PER_PAGE) }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMrPage(i)}
-                    className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                      mrPage === i
-                        ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                        : 'text-text-tertiary hover:text-text-primary'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setMrPage(p => Math.min(Math.ceil(mrList.length / MR_PER_PAGE) - 1, p + 1))}
-                  disabled={mrPage >= Math.ceil(mrList.length / MR_PER_PAGE) - 1}
-                  className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                </button>
-              </div>
+                {/* 페이지네이션 */}
+                {(
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={() => setMrPage(p => Math.max(0, p - 1))}
+                      disabled={mrPage === 0}
+                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                    {Array.from({ length: Math.ceil(mrList.length / MR_PER_PAGE) }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setMrPage(i)}
+                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
+                          mrPage === i
+                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
+                            : 'text-text-tertiary hover:text-text-primary'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setMrPage(p => Math.min(Math.ceil(mrList.length / MR_PER_PAGE) - 1, p + 1))}
+                      disabled={mrPage >= Math.ceil(mrList.length / MR_PER_PAGE) - 1}
+                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
