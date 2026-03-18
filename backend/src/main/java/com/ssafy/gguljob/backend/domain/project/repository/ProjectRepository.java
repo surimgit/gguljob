@@ -20,7 +20,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         @Param("status") MemberStatus status
     );
 
-    List<Project> findAllByStatusOrderByCreatedAtDesc(ProjectStatus status);
+    List<Project> findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus status);
 
-    List<Project> findAllByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus status, List<Long> joinedProjectIds);
+    List<Project> findTop50ByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus status, List<Long> joinedProjectIds);
+
+    @Query("SELECT p FROM Project p JOIN FETCH p.leader WHERE p.id IN :projectIds")
+    List<Project> findAllWithLeaderByIdIn(@Param("projectIds") List<Long> projectIds);
 }

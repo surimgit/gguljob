@@ -342,7 +342,7 @@ public class ProjectService {
         if (projectIds.isEmpty()) return java.util.Collections.emptyMap();
 
         // 프로젝트 기본 정보
-        List<Project> projects = projectRepository.findAllById(projectIds);
+        List<Project> projects = projectRepository.findAllWithLeaderByIdIn(projectIds);
 
         // 스킬 뱃지 정보 (IN 쿼리로 N+1 방지)
         Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds).stream()
@@ -382,12 +382,12 @@ public class ProjectService {
                 .toList();
 
             if (!joinedProjectIds.isEmpty()) {
-                topProjects = projectRepository.findAllByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus.RECRUITING, joinedProjectIds);
+                topProjects = projectRepository.findTop50ByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus.RECRUITING, joinedProjectIds);
             } else {
-                topProjects = projectRepository.findAllByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+                topProjects = projectRepository.findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
             }
         } else {
-            topProjects = projectRepository.findAllByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
+            topProjects = projectRepository.findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING);
         }
 
         if (topProjects.isEmpty()) {
