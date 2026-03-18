@@ -153,4 +153,47 @@ public class ProjectMemberService {
             "성공적으로 팀원 모집 공고를 등록했습니다."
         );
     }
+
+    @Transactional
+    public ProjectRecruitmentDto.UpdateResponse updateStatus(
+        Long projectId, Long positionId, Long userId, ProjectRecruitmentDto.UpdateStatusRequest request) {
+
+        // 자격 검증
+        ProjectPosition position = getValidPositionAndCheckLeader(projectId, positionId, userId);
+
+        // 상태 변경
+        position.changeStatus(request.status());
+
+        return new ProjectRecruitmentDto.UpdateResponse(
+            position.getId(), position.getStatus(), position.getTargetCount(), "모집 상태가 변경되었습니다."
+        );
+    }
+
+    @Transactional
+    public ProjectRecruitmentDto.UpdateResponse updateTargetCount(
+        Long projectId, Long positionId, Long userId, ProjectRecruitmentDto.UpdateCountRequest request) {
+
+        // 자격 검증
+        ProjectPosition position = getValidPositionAndCheckLeader(projectId, positionId, userId);
+        if (request.targetCount() < position.getCurrentCount()) {
+            throw new BadRequestException("목표 모집 인원은 현재 합류한 인원(" + position.getCurrentCount() + "명)보다 적을 수 없습니다.");
+        }
+
+        // 인원 변경
+        position.changeTargetCount(request.targetCount());
+
+        return new ProjectRecruitmentDto.UpdateResponse(
+            position.getId(), position.getStatus(), position.getTargetCount(), "모집 인원이 변경되었습니다."
+        );
+    }
+
+    private ProjectPosition getValidPositionAndCheckLeader(Long projectId, Long positionId, Long userId) {
+        ProjectPosition position = projectPositionRepository.findByIdAndProjectId(positionId, projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("해당 프로젝트에 존재하지 않는 모집 공고입니다."));
+
+        if (!position.getProject().getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("팀장만 모집 공고를 수정할 수 있습니다.");
+        }
+        return position;
+    }
 }

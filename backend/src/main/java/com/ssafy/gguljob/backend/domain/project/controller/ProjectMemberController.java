@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,6 +59,32 @@ public class ProjectMemberController {
         ProjectRecruitmentDto.CreateResponse response =
             projectMemberService.createRecruitment(projectId, userDetails.getId(), request);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "모집 상태 수정", description = "공고의 상태를 진행(RECRUITING) 또는 마감(DONE)으로 변경합니다.")
+    @PatchMapping("/recruitments/{positionId}/status")
+    public ResponseEntity<ProjectRecruitmentDto.UpdateResponse> updateStatus(
+        @PathVariable("projectId") Long projectId,
+        @PathVariable("positionId") Long positionId,
+        @RequestBody ProjectRecruitmentDto.UpdateStatusRequest request,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        ProjectRecruitmentDto.UpdateResponse response =
+            projectMemberService.updateStatus(projectId, positionId, userDetails.getId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "모집 인원 조정", description = "공고의 목표 모집 인원을 수정합니다.")
+    @PatchMapping("/recruitments/{positionId}/target-count")
+    public ResponseEntity<ProjectRecruitmentDto.UpdateResponse> updateTargetCount(
+        @PathVariable("projectId") Long projectId,
+        @PathVariable("positionId") Long positionId,
+        @RequestBody ProjectRecruitmentDto.UpdateCountRequest request,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        ProjectRecruitmentDto.UpdateResponse response =
+            projectMemberService.updateTargetCount(projectId, positionId, userDetails.getId(), request);
         return ResponseEntity.ok(response);
     }
 }
