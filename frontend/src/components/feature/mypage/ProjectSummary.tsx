@@ -13,7 +13,7 @@ const TAG_PALETTE = [
 // ── 프로젝트 카드 ──────────────────────────────────────────────────────────────
 const ProjectCard = ({ project }: { project: ProjectSimple }) => (
   <Link
-    to={`/projects/${project.projectId}`}
+    to={`/my-projects/${project.projectId}`}
     className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:shadow-md transition-shadow h-full"
   >
     {/* 썸네일 */}
