@@ -18,6 +18,8 @@ interface JobListing {
   salaryMax: number;
   deadline: string;
   match: MatchType;
+  matchScore: number;
+  topPercent: number;
   techStacks: string[];
 }
 
@@ -64,6 +66,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 7000,
     deadline: '2026-04-10',
     match: 'suitable',
+    matchScore: 92,
+    topPercent: 5,
     techStacks: ['React', 'TypeScript', 'Next.js'],
   },
   {
@@ -79,6 +83,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 8000,
     deadline: '2026-04-18',
     match: 'suitable',
+    matchScore: 88,
+    topPercent: 8,
     techStacks: ['React', 'TypeScript', 'Spring Boot', 'MySQL'],
   },
   {
@@ -94,6 +100,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 7500,
     deadline: '2026-05-01',
     match: 'average',
+    matchScore: 65,
+    topPercent: 22,
     techStacks: ['React', 'TypeScript', 'Next.js', 'Webpack'],
   },
   {
@@ -109,6 +117,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 7500,
     deadline: '2026-04-30',
     match: 'suitable',
+    matchScore: 85,
+    topPercent: 12,
     techStacks: ['React', 'TypeScript', 'Next.js'],
   },
   {
@@ -124,6 +134,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 7000,
     deadline: '2026-04-15',
     match: 'average',
+    matchScore: 62,
+    topPercent: 28,
     techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
   },
   {
@@ -139,6 +151,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 7000,
     deadline: '2026-05-10',
     match: 'average',
+    matchScore: 58,
+    topPercent: 35,
     techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
   },
   {
@@ -155,6 +169,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 9000,
     deadline: '2026-03-31',
     match: 'insufficient',
+    matchScore: 35,
+    topPercent: 68,
     techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
   },
   {
@@ -170,6 +186,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 9500,
     deadline: '2026-04-20',
     match: 'average',
+    matchScore: 55,
+    topPercent: 40,
     techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
   },
   {
@@ -185,6 +203,8 @@ const MOCK_JOBS: JobListing[] = [
     salaryMax: 8000,
     deadline: '2026-04-25',
     match: 'average',
+    matchScore: 60,
+    topPercent: 30,
     techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
   },
 ];
@@ -278,14 +298,22 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 매칭 뱃지 + 북마크 */}
+      {/* 매칭 게이지 + 북마크 */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        <span
-          className="text-[12px] font-bold px-3 py-1 rounded-full"
-          style={{ background: match.bg, color: match.color }}
-        >
-          {match.label}
+        <span className="text-xs font-semibold whitespace-nowrap text-text-secondary">
+          상위 {job.topPercent}%
         </span>
+        <div style={{ width: '80px' }}>
+          <div
+            className="w-full rounded-full"
+            style={{ height: '8px', background: '#E5E7EB' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${job.matchScore}%`, background: match.color }}
+            />
+          </div>
+        </div>
         <BookmarkBtn
           active={bookmarked}
           onClick={e => {
