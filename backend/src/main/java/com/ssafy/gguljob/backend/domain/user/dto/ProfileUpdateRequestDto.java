@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class ProfileUpdateRequestDto {
     @Size(min = 1, message = "직무는 비어있을 수 없습니다.")
     private List<PositionType> roles;
 
+    @Pattern(regexp = "^[A-Z]{4}$", message = "MBTI는 4자리 대문자여야 합니다.")
     private String mbti;
 
     private TeamTendency teamTendency;

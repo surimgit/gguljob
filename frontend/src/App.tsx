@@ -17,6 +17,7 @@ import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
+import PortfolioCreate from './pages/PortfolioCreate';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -83,6 +84,7 @@ const AppRoutes = () => {
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
           <Route path="/mypage/troubleshooting" element={<TroubleshootingList />} />
+          <Route path="/mypage/portfolio/new" element={<PortfolioCreate />} />
         </Route>
       </Route>
 
