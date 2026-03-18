@@ -1,29 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { BaseModal } from '../../common';
+import { getMyProjects, inviteUser } from '../../../api/projects';
+import type { ProjectSimple } from '../../../types/project';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
   onClose: () => void;
   memberName: string;
+  userId: number;
 }
 
 const JOB_OPTIONS = ['프론트엔드', '백엔드', '인프라/DevOps', '데이터/AI', '기획/PM', '디자인'];
 
 const MAX_MESSAGE_LENGTH = 200;
 
-const MOCK_PROJECTS = [
-  { id: 'p1', name: 'MatchUp - AI 기반 매칭 플랫폼' },
-  { id: 'p2', name: 'StudyMate - 스터디 매칭 플랫폼' },
-];
-
-const TeamInviteModal = ({ isOpen, onClose, memberName }: TeamInviteModalProps) => {
+const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModalProps) => {
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedJob, setSelectedJob] = useState('');
   const [message, setMessage] = useState('');
+  const [projects, setProjects] = useState<ProjectSimple[]>([]);
 
-  const handleSubmit = () => {
-    // TODO: API 연결
+  useEffect(() => {
+    if (isOpen) {
+      getMyProjects().then(({ data }) => setProjects(data)).catch(() => {});
+    }
+  }, [isOpen]);
+
+  const handleSubmit = async () => {
+    if (!selectedProject) return;
+    try {
+      await inviteUser(Number(selectedProject), userId);
+    } catch {
+      // 에러 무시 (이미 초대됐거나 서버 오류)
+    }
     onClose();
   };
 
@@ -70,8 +80,8 @@ const TeamInviteModal = ({ isOpen, onClose, memberName }: TeamInviteModalProps) 
               className="w-full appearance-none rounded-xl border-2 border-border bg-white px-4 py-2.5 pr-10 text-sm text-text-primary focus:border-primary focus:outline-none transition-colors"
             >
               <option value="">프로젝트를 선택하세요</option>
-              {MOCK_PROJECTS.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+              {projects.map((p) => (
+                <option key={p.projectId} value={p.projectId}>{p.title}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />

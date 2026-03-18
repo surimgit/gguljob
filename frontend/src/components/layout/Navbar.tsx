@@ -63,13 +63,13 @@ const Navbar = () => {
 
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트
           </Link>
-          <Link to="/projects" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
@@ -165,21 +165,21 @@ const Navbar = () => {
           <div className="px-4 py-3 space-y-1">
             <Link
               to="/my-projects"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               프로젝트
             </Link>
             <Link
               to="/projects"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               프로젝트 찾기
             </Link>
             <Link
               to="/recruitment"
-              onClick={closeMobileMenu}
+              onClick={() => { closeMobileMenu(); window.scrollTo(0, 0); }}
               className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
             >
               채용

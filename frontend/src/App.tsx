@@ -18,6 +18,7 @@ import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
+import ScrollToTop from './components/common/ScrollToTop';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -62,6 +63,8 @@ const AppRoutes = () => {
   }, [searchParams, setTokens, setUser]);
 
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/oauth/callback" element={<OAuthCallback />} />
 
@@ -90,6 +93,7 @@ const AppRoutes = () => {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
 
