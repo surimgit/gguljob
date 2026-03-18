@@ -203,7 +203,7 @@ const ProjectDashboard = () => {
     if (id) {
       getPersonalSpace(Number(id))
         .then(({ data }) => setPersonalData(data as PersonalSpaceData))
-        .catch(() => {});
+        .catch((err) => console.error('personal-space 로드 실패:', err));
     }
   }, [id]);
 
