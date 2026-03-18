@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Camera, Check, Loader2 } from 'lucide-react';
 import { BaseModal, TechStackInput } from '../../common';
 import type { PositionType } from '../../../types/user';
@@ -52,6 +52,14 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 모달이 열릴 때마다 최신 데이터로 동기화
+  useEffect(() => {
+    if (isOpen) {
+      setForm(initialData);
+      setImageFile(null);
+    }
+  }, [isOpen, initialData]);
 
   const eligibleProjects = availableProjects.filter(
     (p) => p.status === 'PROCEEDING' || p.status === 'DONE'
@@ -114,17 +122,22 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       }
 
       // 프로필 정보 수정
+      if (!form.role) {
+        alert('역할을 선택해주세요.');
+        return;
+      }
       const payload: ProfileUpdateRequest = {
         description: form.bio,
-        roles: form.role ? [form.role] : [],
+        roles: [form.role],
         skills: form.techStacks,
       };
       await updateProfileApi(payload);
 
       onSave(form);
       onClose();
-    } catch (err) {
-      console.error('[프로필 수정] 실패:', err);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: unknown } };
+      console.error('[프로필 수정] 실패:', axiosErr.response?.status, axiosErr.response?.data);
       alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSaving(false);
