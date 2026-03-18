@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -53,4 +54,14 @@ public class ProjectPosition extends BaseTimeEntity {
 
     @Column(name = "requirement", length = 255)
     private String requirement;
+
+    @Builder
+    public ProjectPosition(Project project, PositionType role, Integer targetCount, String requireSkills, String description, String requirement) {
+        this.project = project;
+        this.role = role;
+        this.targetCount = targetCount;
+        this.requireSkills = requireSkills;
+        this.description = description;
+        this.requirement = requirement;
+    }
 }
