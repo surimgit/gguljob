@@ -19,7 +19,7 @@ import type { PageResponse } from '../types/common';
 /* ── 기존 (프로젝트 찾기) ── */
 
 export const getProjects = (params?: ProjectQueryParams) =>
-  api.get<PageResponse<Project>>('/projects', { params });
+  api.get<PageResponse<Project>>('/v1/projects/list', { params });
 
 export const getProjectById = (id: number) =>
   api.get<ProjectDetail>(`/projects/${id}`);
@@ -67,10 +67,18 @@ export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest)
 /* ── 프로젝트 참여 수락/거절 ── */
 
 export const acceptRequest = (requestId: number) =>
-  api.post(`/v1/requests/${requestId}/accept`);
+  api.post(`/v1/projects/requests/${requestId}/accept`);
 
 export const rejectRequest = (requestId: number) =>
-  api.post(`/v1/requests/${requestId}/reject`);
+  api.post(`/v1/projects/requests/${requestId}/reject`);
+
+/* ── 팀원 내보내기 / 팀 나가기 ── */
+
+export const removeMember = (projectId: number, memberId: number) =>
+  api.delete(`/v1/projects/${projectId}/members/${memberId}`);
+
+export const leaveProject = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/members/me`);
 
 /* 나만의 공간 */
 
