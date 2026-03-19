@@ -137,7 +137,7 @@ const CreateProject = () => {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)' }} className="min-h-screen pb-24 sm:pb-28">
-      <div className="max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
         {/* 페이지 헤더 */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -507,7 +507,7 @@ const CreateProject = () => {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto block py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-bold transition-colors"
+          className="w-full max-w-[1400px] mx-auto block py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-bold transition-colors"
           style={{
             backgroundColor: canSubmit ? 'var(--color-primary)' : 'var(--color-border)',
             color: canSubmit ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',

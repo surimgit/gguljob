@@ -130,7 +130,7 @@ const MemberRecommend = () => {
       className="min-h-screen pb-16"
       style={{ background: "var(--color-background)" }}
     >
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 py-8">
         {/* 페이지 타이틀 */}
         <h1
           className="text-2xl font-bold mb-3"

@@ -390,7 +390,7 @@ const JobListingSection = () => {
   };
 
   return (
-    <div className="bg-background" style={{ width: '1103px', margin: '0 auto' }}>
+    <div className="bg-background max-w-[1400px] mx-auto px-3">
       {/* 섹션 제목 */}
       <div className="px-[42px] pt-8 pb-5">
         <h2 className="font-semibold text-[25px]">
