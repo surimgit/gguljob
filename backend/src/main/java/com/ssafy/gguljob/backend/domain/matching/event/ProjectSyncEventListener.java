@@ -34,6 +34,7 @@ public class ProjectSyncEventListener {
         Project project = projectRepository.findById(event.id()).orElse(null);
 
         if (project == null || project.getStatus() != ProjectStatus.RECRUITING) {
+            projectNodeRepository.deleteById(String.valueOf(event.id()));
             log.info("프로젝트 [{}]는 모집 중이 아니므로 Neo4j 동기화를 스킵합니다.", event.id());
             return;
         }
