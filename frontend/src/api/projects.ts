@@ -6,6 +6,9 @@ import type {
   ProjectSimple,
   CreateProjectRequest,
   CreateProjectResponse,
+  ProjectEditForm,
+  ProjectUpdateRequest,
+  ProjectUpdateResponse,
   RegisterGitRepoRequest,
   TeamDashboard,
   TeamManagement,
@@ -51,6 +54,12 @@ export const applyToPosition = (projectId: number, positionId: number, appealCon
   api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`, appealContent ? { appealContent } : undefined);
 
 /* ── 프로젝트 설정 ── */
+
+export const getProjectEditForm = (projectId: number) =>
+  api.get<{ data: ProjectEditForm }>(`/v1/projects/${projectId}/edit`);
+
+export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
+  api.patch<{ data: ProjectUpdateResponse }>(`/v1/projects/${projectId}`, data);
 
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
