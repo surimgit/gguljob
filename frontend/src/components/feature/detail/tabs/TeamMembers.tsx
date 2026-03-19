@@ -766,8 +766,14 @@ const TeamManagement = ({
   const [applications, setApplications] = useState(initialApps);
 
   useEffect(() => {
+    setRoles(initialRoles);
+  }, [initialRoles]);
+  useEffect(() => {
     setLocalMembers(members);
   }, [members]);
+  useEffect(() => {
+    setApplications(initialApps);
+  }, [initialApps]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
