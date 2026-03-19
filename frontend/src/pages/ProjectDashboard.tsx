@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import {
   FolderOpen,
@@ -18,14 +19,89 @@ import {
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
+import PersonalSpace, { type PersonalSubTab } from "../components/feature/project/PersonalSpace";
+import { ChevronDown } from "lucide-react";
+import chatbotImg from "../assets/images/chatbot.png";
+import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
+import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
+import { getPersonalSpace, recommendTopics, updateProjectTitle } from "../api/projects";
+import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
-const AI_TOPICS = [
-  "GitHub Actions CI/CD 파이프라인 구축",
-  "WebSocket 기반 실시간 알림 시스템",
-  "Redis 캐싱 전략 최적화",
-];
+/* ── 더미 데이터 ── */
+const MOCK_DASHBOARD: TeamDashboard = {
+  projectInfo: {
+    title: "DevLog 트러블슈팅 플랫폼",
+    teamName: "S14P21E107",
+    domain: "웹 풀스택",
+    description:
+      "개발자가 프로젝트 중 겪은 트러블슈팅 경험을 기록하고 AI가 자동으로 문서화해주는 협업 플랫폼입니다.",
+    skills: ["React", "TypeScript", "Spring Boot", "Redis", "Docker", "GitLab CI"],
+  },
+  teamStats: {
+    totalMembers: 6,
+    roleCounts: { FRONTEND: 3, BACKEND: 3 },
+    totalCommits: 248,
+    totalTroubleshootings: 17,
+  },
+  gitRepoInfo: {
+    repoUrl: "https://github.com/ssafy/s14p21e107",
+    lastSyncTime: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
+  },
+};
+
+const MOCK_GIT_LOG: GitLog = {
+  mrRankings: [
+    { rank: 1, userId: 1, userName: "김도현", profileImageUrl: null, mrCount: 18 },
+    { rank: 2, userId: 2, userName: "오준혁", profileImageUrl: null, mrCount: 14 },
+    { rank: 3, userId: 3, userName: "이준혁", profileImageUrl: null, mrCount: 11 },
+    { rank: 4, userId: 4, userName: "정서윤", profileImageUrl: null, mrCount: 9 },
+    { rank: 5, userId: 5, userName: "박민수", profileImageUrl: null, mrCount: 6 },
+  ],
+  recentActivities: [
+    {
+      userName: "김도현",
+      profileImageUrl: null,
+      content: "feat: 트러블슈팅 상세 페이지 UI 구현 및 마크다운 렌더링 연동",
+      label: "feat/troubleshoot-detail",
+      createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
+      activityType: "MR",
+    },
+    {
+      userName: "오준혁",
+      profileImageUrl: null,
+      content: "fix: WebSocket 연결 끊김 시 자동 재연결 로직 추가",
+      label: "fix/websocket-reconnect",
+      createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+      activityType: "MR",
+    },
+    {
+      userName: "이준혁",
+      profileImageUrl: null,
+      content: "refactor: 알림 컴포넌트 상태 관리 zustand로 마이그레이션",
+      label: "refactor/notification-store",
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      activityType: "COMMIT",
+    },
+    {
+      userName: "정서윤",
+      profileImageUrl: null,
+      content: "chore: Docker Compose 개발 환경 설정 최적화",
+      label: "chore/docker-dev",
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      activityType: "COMMIT",
+    },
+    {
+      userName: "박민수",
+      profileImageUrl: null,
+      content: "feat: Redis 캐싱 레이어 적용으로 API 응답속도 60% 개선",
+      label: "feat/redis-cache",
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      activityType: "MR",
+    },
+  ],
+};
 
 /* ── 탭 설정 ── */
 const TABS = [
@@ -103,50 +179,107 @@ const formatTime = (dateStr: string) => {
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<string>("team");
+  const [personalSubTab, setPersonalSubTab] = useState<PersonalSubTab>("troubleshooting");
+  const [personalDropdownOpen, setPersonalDropdownOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [topics, setTopics] = useState<string[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const [editingRepo, setEditingRepo] = useState(false);
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const personalDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
+  const [personalData, setPersonalData] = useState<PersonalSpaceData | null>(null);
 
   useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
 
-  if (dashboardLoading || !dashboard) {
+  useEffect(() => {
+    if (!id) return;
+    setTopicsLoading(true);
+    recommendTopics(Number(id), false)
+      .then(({ data }) => {
+        setTopics(data.recommendedTopics ?? []);
+      })
+      .catch(() => toast.error('주제 추천을 불러오지 못했습니다.'))
+      .finally(() => setTopicsLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      getPersonalSpace(Number(id))
+        .then(({ data }) => setPersonalData(data as PersonalSpaceData))
+        .catch((err) => console.error('personal-space 로드 실패:', err));
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (personalDropdownRef.current && !personalDropdownRef.current.contains(e.target as Node)) {
+        setPersonalDropdownOpen(false);
+      }
+    };
+    if (personalDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [personalDropdownOpen]);
+
+  // 챗봇 표시 조건: 팀 프로젝트 탭에서만
+  const showChatbot = activeTab === "team";
+
+  if (dashboardLoading) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
         style={{ background: "var(--color-background)" }}
       >
-        <p style={{ color: "var(--color-text-tertiary)" }}>
-          {dashboardLoading ? "불러오는 중..." : "프로젝트를 찾을 수 없습니다."}
-        </p>
+        <p style={{ color: "var(--color-text-tertiary)" }}>불러오는 중...</p>
       </div>
     );
   }
 
-  const { projectInfo, teamStats, gitRepoInfo } = dashboard;
-  const rankings = gitLog?.mrRankings ?? [];
-  const activities = gitLog?.recentActivities ?? [];
+  const handleRecommend = (isRefresh: boolean) => {
+    if (!id) return;
+    setTopicsLoading(true);
+    setSelectedTopic(null);
+    recommendTopics(Number(id), isRefresh, keyword || undefined)
+      .then(({ data }) => {
+        setTopics(data.recommendedTopics ?? []);
+      })
+      .catch(() => toast.error('주제 추천에 실패했습니다. 다시 시도해주세요.'))
+      .finally(() => setTopicsLoading(false));
+  };
+
+  const resolvedDashboard = dashboard ?? MOCK_DASHBOARD;
+  const resolvedGitLog = gitLog ?? MOCK_GIT_LOG;
+
+  const { projectInfo, teamStats, gitRepoInfo } = resolvedDashboard;
+  const rankings = resolvedGitLog.mrRankings;
+  const activities = resolvedGitLog.recentActivities;
   const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
 
   const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
 
   return (
+    <>
     <div
       className="min-h-screen"
       style={{ background: "var(--color-background)" }}
     >
-      <div className="max-w-5xl mx-auto px-8 py-6 flex flex-col gap-5">
+      <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-3">
         {/* ── 상단 탭 네비게이션 ── */}
         <div
-          className="flex gap-1 rounded-2xl px-2 py-1.5 w-fit"
+          className="flex flex-wrap gap-1 rounded-2xl px-2 py-1.5 w-fit"
           style={{
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
@@ -155,10 +288,93 @@ const ProjectDashboard = () => {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
+            const isPersonal = tab.key === "personal";
+
+
+            if (isPersonal) {
+              return (
+                <div key={tab.key} className="relative" ref={personalDropdownRef} onMouseLeave={() => setPersonalDropdownOpen(false)}>
+                  <button
+                    onMouseEnter={() => setPersonalDropdownOpen(true)}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
+                      isActive ? "font-bold" : "font-medium"
+                    }`}
+                    style={
+                      isActive
+                        ? {
+                            background: "var(--color-primary)",
+                            color: "var(--color-text-primary)",
+                          }
+                        : { color: "var(--color-text-secondary)" }
+                    }
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        personalDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* 드롭다운 메뉴 */}
+                  {personalDropdownOpen && (
+                    <div className="absolute top-full left-0 pt-2 min-w-[140px] z-50">
+                      <div
+                        className="rounded-xl py-1 shadow-lg"
+                        style={{
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {([
+                          { key: "troubleshooting" as PersonalSubTab, label: "트러블슈팅" },
+                          { key: "mr-review" as PersonalSubTab, label: "MR 리뷰" },
+                        ]).map((item) => (
+                          <button
+                            key={item.key}
+                            onClick={() => {
+                              setActiveTab("personal");
+                              setPersonalSubTab(item.key);
+                              setPersonalDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                            style={{
+                              color:
+                                activeTab === "personal" && personalSubTab === item.key
+                                  ? "var(--color-primary-hover)"
+                                  : "var(--color-text-secondary)",
+                              fontWeight: activeTab === "personal" && personalSubTab === item.key ? 700 : 500,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "var(--color-background)";
+                              e.currentTarget.style.color = "var(--color-primary-hover)";
+                              e.currentTarget.style.fontWeight = "700";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                              const isSelected = activeTab === "personal" && personalSubTab === item.key;
+                              e.currentTarget.style.color = isSelected ? "var(--color-primary-hover)" : "var(--color-text-secondary)";
+                              e.currentTarget.style.fontWeight = isSelected ? "700" : "500";
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setPersonalDropdownOpen(false);
+                }}
                 className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
                   isActive ? "font-bold" : "font-medium"
                 }`}
@@ -187,13 +403,14 @@ const ProjectDashboard = () => {
         </div>
 
         {activeTab === "members" && <TeamMembers dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
-        {activeTab === "settings" && <ProjectSettings dashboard={dashboard} />}
+        {activeTab === "settings" && <ProjectSettings dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
+        {activeTab === "personal" && <PersonalSpace projectTitle={projectInfo.title} personalData={personalData} subTab={personalSubTab} />}
 
         {activeTab === "team" && (
         <>
         {/* ── 프로젝트 히어로 배너 ── */}
         <div
-          className="rounded-2xl p-8 relative overflow-hidden"
+          className="rounded-2xl p-5 md:p-8 relative overflow-hidden"
           style={{
             background:
               "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-soft) 100%)",
@@ -256,7 +473,7 @@ const ProjectDashboard = () => {
             </div>
 
             {/* 우측 헥사곤 스탯 */}
-            <div className="flex flex-col items-center flex-shrink-0">
+            <div className="hidden md:flex flex-col items-center flex-shrink-0">
               <HexStat label="팀원" value={teamStats.totalMembers} large>
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span style={{ color: "var(--color-blue)" }}>
@@ -284,7 +501,7 @@ const ProjectDashboard = () => {
         </div>
 
         {/* ── 메인 2열 레이아웃 ── */}
-        <div className="grid grid-cols-[1fr_320px] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
           {/* ── 좌측 컬럼 ── */}
           <div className="flex flex-col gap-5">
             {/* Git 레포지토리 카드 */}
@@ -295,7 +512,7 @@ const ProjectDashboard = () => {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                 <div className="flex items-center gap-2">
                   <GitBranch
                     className="w-5 h-5"
@@ -361,7 +578,7 @@ const ProjectDashboard = () => {
                       onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="password"
                       value={tokenInput}
@@ -403,7 +620,7 @@ const ProjectDashboard = () => {
               )}
 
               <div
-                className="flex items-center justify-between px-4 py-3 rounded-xl"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 px-4 py-3 rounded-xl"
                 style={{
                   border: "1px solid var(--color-border)",
                   background: "var(--color-background)",
@@ -434,7 +651,7 @@ const ProjectDashboard = () => {
                       className="text-sm font-bold"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      연동된 레포 없음
+                      연동된 레포 없���
                     </span>
                   )}
                 </div>
@@ -524,13 +741,14 @@ const ProjectDashboard = () => {
                     </span>
                   </div>
                   <button
+                    onClick={() => handleRecommend(true)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={{
                       border: "1px solid var(--color-border)",
                       color: "var(--color-text-secondary)",
                     }}
                   >
-                    <RefreshCw className="w-3 h-3" />
+                    <RefreshCw className={`w-3 h-3 ${topicsLoading ? "animate-spin" : ""}`} />
                     새로 추천
                   </button>
                 </div>
@@ -554,6 +772,7 @@ const ProjectDashboard = () => {
                     }
                   />
                   <button
+                    onClick={() => handleRecommend(true)}
                     className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
                     style={{ background: "#7C3AED" }}
                   >
@@ -564,7 +783,17 @@ const ProjectDashboard = () => {
 
                 {/* 추천 주제 목록 */}
                 <div className="flex flex-col gap-2 mb-4">
-                  {AI_TOPICS.map((topic, idx) => {
+                  {topicsLoading ? (
+                    <div className="flex items-center justify-center py-6 gap-2" style={{ color: "var(--color-text-tertiary)" }}>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">AI가 주제를 추천하고 있어요...</span>
+                    </div>
+                  ) : topics.length === 0 ? (
+                    <p className="text-sm text-center py-4" style={{ color: "var(--color-text-tertiary)" }}>
+                      키워드를 입력하고 생성 버튼을 눌러보세요
+                    </p>
+                  ) : null}
+                  {!topicsLoading && topics.map((topic, idx) => {
                     const isSelected = selectedTopic === idx;
                     return (
                       <button
@@ -620,6 +849,15 @@ const ProjectDashboard = () => {
                       e.currentTarget.style.background = "#7C3AED";
                   }}
                   disabled={selectedTopic === null}
+                  onClick={() => {
+                    if (selectedTopic === null || !id) return;
+                    updateProjectTitle(Number(id), topics[selectedTopic])
+                      .then(() => {
+                        fetchDashboard(Number(id));
+                        setSelectedTopic(null);
+                      })
+                      .catch((err) => { console.error('주제 적용 실패:', err.response?.status, err.response?.data); alert('주제 적용에 실패했습니다. 다시 시도해주세요.'); });
+                  }}
                 >
                   선택한 주제 적용하기
                 </button>
@@ -799,8 +1037,35 @@ const ProjectDashboard = () => {
         </div>
         </>
         )}
+
+        {/* 챗봇 캐릭터 버튼 + 팝업 */}
+        {showChatbot && (
+          <>
+            <button
+              onClick={() => setChatbotOpen(prev => !prev)}
+              className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
+            >
+              <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
+            </button>
+
+            <ChatbotPopup
+              isOpen={chatbotOpen}
+              onClose={() => setChatbotOpen(false)}
+              mode="agent"
+            />
+          </>
+        )}
       </div>
     </div>
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen={true}
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
+      )}
+    </>
   );
 };
 

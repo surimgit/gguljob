@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Trash2,
   ChevronDown,
@@ -7,8 +8,12 @@ import {
   UserPlus,
   X,
   Check,
+  Crown,
 } from "lucide-react";
-import type { TeamDashboard } from "../../../../types/project";
+import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
+import { useAuthStore } from "../../../../stores/authStore";
+import UserProfileModal from "../../mypage/UserProfileModal";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -51,6 +56,7 @@ interface Application {
 
 interface TeamManagementProps {
   projectName: string;
+  projectId?: number;
   roles: Role[];
   members: Member[];
   applications: Application[];
@@ -134,6 +140,7 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
+        isMe: members.length === 0,
       });
     }
   });
@@ -746,6 +753,7 @@ const TeamManagement = ({
   roles: initialRoles,
   members,
   applications: initialApps,
+  projectId,
   onAddRole,
   onDeleteRole,
   onUpdateRoleCount,
@@ -753,17 +761,30 @@ const TeamManagement = ({
   onAccept,
   onReject,
 }: TeamManagementProps) => {
+  const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
   const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
+
+  useEffect(() => {
+    setLocalMembers(members);
+  }, [members]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
+  const [kickMemberId, setKickMemberId] = useState<string | null>(null);
+  const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
+  const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
+  const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
 
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
   const pendingCount = applications.filter((a) => a.status === "pending").length;
+
+  const isCurrentUserLeader = localMembers.some((m) => m.isLeader && m.isMe);
 
   const membersByRole = localMembers.reduce<Record<string, Member[]>>((acc, m) => {
     (acc[m.role] ??= []).push(m);
@@ -799,38 +820,48 @@ const TeamManagement = ({
     onDeleteRole(roleId);
   };
 
-  const handleAccept = (appId: string) => {
-    const app = applications.find((a) => a.id === appId);
-    if (app) {
-      setLocalMembers((prev) => [
-        ...prev,
-        {
-          id: appId,
-          name: app.name,
-          role: app.role,
-          joinDate: new Date().toISOString().slice(0, 10),
-          contribution: 0,
-        },
-      ]);
-      setRoles((prev) =>
-        prev.map((r) => {
-          if (r.name !== app.role) return r;
-          const newCurrent = r.current + 1;
-          return {
-            ...r,
-            current: newCurrent,
-            status: newCurrent >= r.total ? "closed" : r.status,
-          };
-        }),
-      );
+  const handleAccept = async (appId: string) => {
+    try {
+      await acceptRequest(Number(appId));
+      const app = applications.find((a) => a.id === appId);
+      if (app) {
+        setLocalMembers((prev) => [
+          ...prev,
+          {
+            id: appId,
+            name: app.name,
+            role: app.role,
+            joinDate: new Date().toISOString().slice(0, 10),
+            contribution: 0,
+          },
+        ]);
+        setRoles((prev) =>
+          prev.map((r) => {
+            if (r.name !== app.role) return r;
+            const newCurrent = r.current + 1;
+            return {
+              ...r,
+              current: newCurrent,
+              status: newCurrent >= r.total ? "closed" : r.status,
+            };
+          }),
+        );
+      }
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onAccept(appId);
+    } catch (err) {
+      console.error('참여 수락 실패:', err);
     }
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onAccept(appId);
   };
 
-  const handleReject = (appId: string) => {
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onReject(appId);
+  const handleReject = async (appId: string) => {
+    try {
+      await rejectRequest(Number(appId));
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onReject(appId);
+    } catch (err) {
+      console.error('참여 거절 실패:', err);
+    }
   };
 
   const handleRecruitConfirm = (data: { role: RoleType; count: number; stacks: string[] }) => {
@@ -850,7 +881,7 @@ const TeamManagement = ({
   return (
     <div className="flex flex-col gap-5">
       {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* ── 좌측: 팀원 모집 현황 ── */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -860,7 +891,7 @@ const TeamManagement = ({
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div className="flex items-center gap-3">
               <h3
                 className="text-base font-bold"
@@ -877,7 +908,7 @@ const TeamManagement = ({
             </div>
             <button
               onClick={() => setShowRecruitModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
               style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
               <UserPlus className="w-4 h-4" />
@@ -1036,7 +1067,7 @@ const TeamManagement = ({
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1060,29 +1091,37 @@ const TeamManagement = ({
                             </span>
                           )}
                           {member.isLeader && (
-                            <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                              style={{
-                                background: "rgba(245,158,11,0.2)",
-                                color: "#F59E0B",
-                              }}
-                            >
-                              팀장
-                            </span>
+                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
                           )}
                         </div>
-                        <span
-                          className="text-xs flex-shrink-0"
-                          style={{ color: "var(--color-text-tertiary)" }}
-                        >
-                          {member.joinDate}
-                        </span>
                         <span
                           className="text-xs font-bold flex-shrink-0 w-10 text-right"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
                           {member.contribution}c
                         </span>
+                        {isCurrentUserLeader && !member.isLeader && (
+                          <>
+                            <button
+                              onClick={() => setDelegateMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; e.currentTarget.style.color = "#F59E0B"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <Crown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setKickMemberId(member.id)}
+                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1094,7 +1133,7 @@ const TeamManagement = ({
       </div>
 
       {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* 좌측: 합류 신청 목록 */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -1132,7 +1171,7 @@ const TeamManagement = ({
             return (
               <div
                 key={app.id}
-                className="flex items-center gap-4 px-4 py-3.5 rounded-xl"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 py-3.5 rounded-xl"
                 style={{
                   background: "#fafafa",
                   border: "1px solid var(--color-border)",
@@ -1260,18 +1299,30 @@ const TeamManagement = ({
         </div>
         </div>
 
-        {/* 우측: 팀원 추가하기 버튼 */}
-        <button
-          onClick={() => window.location.href = "/team-recommend"}
-          className="self-start w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-          style={{
-            background: "var(--color-primary-hover)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          팀원 추가하기
-        </button>
+        {/* 우측: 팀원 추가하기 + 팀 나가기 버튼 */}
+        <div className="self-start w-full flex flex-col gap-2">
+          <button
+            onClick={() => window.location.href = "/team-recommend"}
+            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            style={{
+              background: "var(--color-primary-hover)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            팀원 추가하기
+          </button>
+          <button
+            onClick={() => setShowLeaveModal(true)}
+            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            style={{
+              background: "var(--color-surface-secondary, #e5e7eb)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            팀 나가기
+          </button>
+        </div>
       </div>
 
       {/* ── 팀원 모집하기 모달 ── */}
@@ -1401,37 +1452,261 @@ const TeamManagement = ({
           </div>
         );
       })()}
+
+      {/* ── 팀원 내보내기 확인 모달 ── */}
+      {kickMemberId && kickTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setKickMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="bg-red-100 rounded-2xl p-4 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+                <line x1="18" y1="8" x2="23" y2="13"/>
+                <line x1="23" y1="8" x2="18" y2="13"/>
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              {kickTarget.name}님 내보내기
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              팀에서 내보내시겠습니까?
+              <br />
+              되돌릴 수 없습니다.
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setKickMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  const numericMemberId = Number(kickMemberId);
+                  const targetId = kickMemberId;
+                  if (projectId && targetId && !isNaN(numericMemberId)) {
+                    removeMember(projectId, numericMemberId)
+                      .then(() => {
+                        setLocalMembers((prev) => prev.filter((m) => Number(m.id) !== numericMemberId));
+                      })
+                      .catch((err) => {
+                        console.error('팀원 내보내기 실패:', err);
+                        alert('팀원 내보내기에 실패했습니다. 다시 시도해주세요.');
+                      });
+                  }
+                  setKickMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                내보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 팀 나가기 확인 모달 ── */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowLeaveModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-red-100 rounded-2xl p-4 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">팀 나가기</h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              정말 팀을 나가시겠습니까?
+              <br />
+              되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (!projectId) return;
+                  leaveProject(projectId)
+                    .then(() => {
+                      setShowLeaveModal(false);
+                      navigate('/projects');
+                    })
+                    .catch(() => {
+                      alert('팀 나가기에 실패했습니다. 다시 시도해주세요.');
+                    });
+                }}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 팀장 위임 확인 모달 ── */}
+      {delegateMemberId && delegateTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setDelegateMemberId(null)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 아이콘 */}
+            <div className="rounded-2xl p-4 mb-2" style={{ background: "rgba(245,158,11,0.15)" }}>
+              <Crown className="w-8 h-8" style={{ color: "#F59E0B" }} />
+            </div>
+
+            {/* 텍스트 */}
+            <h2 className="text-xl font-bold text-gray-900">
+              팀장 위임
+            </h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              {delegateTarget.name}님에게
+              <br />
+              팀장을 위임하시겠습니까?
+            </p>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setDelegateMemberId(null)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setLocalMembers((prev) =>
+                    prev.map((m) => ({
+                      ...m,
+                      isLeader: m.id === delegateMemberId,
+                      isMe: m.isMe,
+                    }))
+                  );
+                  setDelegateMemberId(null);
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "#F59E0B" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#D97706")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F59E0B")}
+              >
+                위임하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen={true}
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
+      )}
     </div>
   );
 };
 
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
-  const roles = useMemo(
-    () => (dashboard ? dashboardToRoles(dashboard) : []),
-    [dashboard],
-  );
-  const members = useMemo(
-    () => (dashboard ? dashboardToMembers(dashboard) : []),
-    [dashboard],
-  );
+  const [detail, setDetail] = useState<TeamManagementData | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
+
+  useEffect(() => {
+    if (!projectId) return;
+    getTeamManagement(projectId)
+      .then(({ data }) => setDetail(data.data))
+      .catch((e) => console.error("팀원 정보 조회 실패", e));
+  }, [projectId]);
+
+  const roles: Role[] = useMemo(() => {
+    if (detail) {
+      return detail.recruitments.map((r) => ({
+        id: r.positionId.toString(),
+        name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+        status: r.status === "RECRUITING" ? "open" : "closed",
+        current: r.currentCount,
+        total: r.targetCount,
+        stacks: r.requireSkills,
+      }));
+    }
+    return dashboard ? dashboardToRoles(dashboard) : [];
+  }, [detail, dashboard]);
+
+  const members: Member[] = useMemo(() => {
+    if (detail) {
+      return detail.currentMembers.map((m, i) => ({
+        id: m.userId.toString(),
+        name: m.userName,
+        role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+        joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
+        contribution: 0,
+        isLeader: i === 0,
+        isMe: m.userId === currentUserId,
+      }));
+    }
+    return dashboard ? dashboardToMembers(dashboard) : [];
+  }, [detail, dashboard, currentUserId]);
+
+  const applications: Application[] = useMemo(() => {
+    if (!detail) return [];
+    return detail.pendingRequests.map((r) => ({
+      id: r.requestId.toString(),
+      name: r.userName,
+      role: r.positionName,
+      appliedAt: new Date(r.createdAt).toLocaleDateString("ko-KR"),
+      stacks: r.techStacks,
+      status: "pending" as const,
+    }));
+  }, [detail]);
 
   return (
     <TeamManagement
       key={projectId ?? dashboard?.projectInfo.title ?? "default"}
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
+      projectId={projectId}
       roles={roles}
       members={members}
-      applications={[
-        { id: '1', name: '박지훈', role: 'Backend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
-        { id: '2', name: '김서영', role: 'Frontend', appliedAt: '10분 전', stacks: ['Spring Boot', 'JPA', 'Docker'], status: 'pending' as const },
-      ]} // TODO: 합류 신청 API 연동 후 실제 데이터로 교체
+      applications={applications}
       onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
       onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
       onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
-      onAccept={(id) => console.log("수락:", id)}
-      onReject={(id) => console.log("거절:", id)}
+      onAccept={(id) => acceptRequest(Number(id)).catch(() => {})}
+      onReject={(id) => rejectRequest(Number(id)).catch(() => {})}
     />
   );
 };

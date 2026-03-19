@@ -17,6 +17,9 @@ import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
+import PortfolioCreate from './pages/PortfolioCreate';
+import ScrollToTop from './components/common/ScrollToTop';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -61,6 +64,8 @@ const AppRoutes = () => {
   }, [searchParams, setTokens, setUser]);
 
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/oauth/callback" element={<OAuthCallback />} />
 
@@ -83,11 +88,13 @@ const AppRoutes = () => {
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
           <Route path="/mypage/troubleshooting" element={<TroubleshootingList />} />
+          <Route path="/mypage/portfolio/new" element={<PortfolioCreate />} />
         </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
 
@@ -95,6 +102,13 @@ function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: { borderRadius: '12px', fontSize: '14px' },
+        }}
+      />
     </BrowserRouter>
   );
 }

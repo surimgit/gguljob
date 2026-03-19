@@ -22,3 +22,21 @@ spring:
       host: ${REDIS_HOST:gguljob-redis-dev}
       port: ${REDIS_PORT:6379}
 
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USERNAME}
+      password: ${NEO4J_PASSWORD}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    region:
+      static: ap-northeast-2
+
+cdn:
+  url: ${CDN_URL}

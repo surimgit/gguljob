@@ -52,6 +52,7 @@ services:
     volumes:
       - ./data/neo4j/data:/data
       - ./data/neo4j/logs:/logs
+      - ./data/neo4j/import:/var/lib/neo4j/import
     networks:
       - gguljob-network
     restart: always
@@ -180,6 +181,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_FORWARD_HEADERS_STRATEGY=native
       - SERVER_PORT=8080
+      - GMS_API_KEY=${GMS_API_KEY}
 
       - DB_HOST=gguljob-db-prod
       - DB_NAME=${DB_NAME}

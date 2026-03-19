@@ -41,6 +41,6 @@ public class SkillService {
             .toList();
 
         userSkillRepository.saveAll(userSkills);
-        log.info("✅ 유저(ID:{}) 스킬 매핑 완료! 저장된 스킬 갯수: {}", user.getId(), userSkills.size());
+        log.info("유저(ID:{}) 스킬 매핑 완료! 저장된 스킬 갯수: {}", user.getId(), userSkills.size());
     }
 }

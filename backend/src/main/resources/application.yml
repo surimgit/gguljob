@@ -7,8 +7,8 @@ spring:
     active: local
 
   threads:
-      virtual:
-        enabled: true
+    virtual:
+      enabled: true
 
   security:
     oauth2:
@@ -17,6 +17,8 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
+
+
 
 # Security (JWT)
 jwt:
@@ -49,3 +51,16 @@ springdoc:
 gms:
   api:
     key: ${GMS_API_KEY}
+
+cdn:
+  url: ${CDN_URL}
+
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    region:
+      static: ap-northeast-2
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}

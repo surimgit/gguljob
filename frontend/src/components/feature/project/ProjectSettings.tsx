@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   BarChart2,
   Info,
@@ -22,22 +22,53 @@ import {
   Pencil,
 } from "lucide-react";
 import Markdown from "react-markdown";
+import toast from "react-hot-toast";
 
-import type { TeamDashboard } from "../../../types/project";
+import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
+import { getProjectEditForm, updateProject } from "../../../api/projects";
 
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  position: string;
-  email: string;
-  avatarColor?: string;
-}
-
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
+  projectId?: number;
+}
+
+/* ── 상태 매핑 ── */
+const STATUS_TO_BACKEND: Record<ProjectStatus, BackendProjectEditStatus> = {
+  active: "PROCEEDING",
+  recruiting: "RECRUITING",
+  done: "DONE",
+  paused: "STOPPED",
+};
+const BACKEND_TO_STATUS: Record<BackendProjectEditStatus, ProjectStatus> = {
+  PROCEEDING: "active",
+  RECRUITING: "recruiting",
+  DONE: "done",
+  STOPPED: "paused",
+};
+
+/* ── 스킬 이름 ↔ ID 매핑 (DB 기준) ── */
+const SKILL_NAME_TO_ID: Record<string, number> = {
+  React: 1, "Vue.js": 2, "Vue": 2, "Next.js": 19, JavaScript: 16, TypeScript: 17,
+  "HTML/CSS": 18, Swift: 66, jQuery: 46,
+  Java: 3, "Spring Boot": 4, Python: 5, MySQL: 6, "Node.js": 20,
+  C: 13, "C#": 14, "C++": 15, PostgreSQL: 22, MariaDB: 23, MongoDB: 24,
+  PHP: 25, ".NET": 26, "Nest.js": 27, NestJS: 27, Kafka: 28, "Oracle DB": 21,
+  JPA: 43, MyBatis: 44, FastAPI: 45, Django: 63, Flask: 64, MSA: 59,
+  JSP: 42, MSSQL: 41,
+  "RDBMS/DBMS": 54, Tibero: 60,
+  AWS: 7, Docker: 8, Kubernetes: 9, Jenkins: 10, Git: 11, Redis: 12,
+  Linux: 29, Azure: 30, GCP: 31, Nginx: 65,
+  PyTorch: 37, TensorFlow: 38, OpenCV: 50, Hadoop: 51,
+  RAG: 56, LLM: 57, MLOps: 67, AI: 70,
+  Android: 32, iOS: 33, Kotlin: 34, Flutter: 35, "React Native": 36, Unity: 52,
+  Figma: 40, Jira: 39,
+};
+const SKILL_ID_TO_NAME: Record<number, string> = {};
+for (const [name, id] of Object.entries(SKILL_NAME_TO_ID)) {
+  if (!SKILL_ID_TO_NAME[id]) SKILL_ID_TO_NAME[id] = name;
 }
 
 /* ── 상수 ── */
@@ -197,20 +228,6 @@ const TECH_CATEGORIES: {
   },
 ];
 
-const AVATAR_COLORS = [
-  "var(--color-primary)",
-  "var(--color-blue)",
-  "var(--color-success)",
-  "#EC4899",
-];
-
-const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
-  PM: { bg: "#EDE9FE", color: "#7C3AED" },
-  Backend: { bg: "#DCFCE7", color: "var(--color-success)" },
-  Frontend: { bg: "var(--color-primary-soft)", color: "var(--color-primary-hover)" },
-  "AI/ML": { bg: "#FEF3C7", color: "var(--color-warning)" },
-};
-
 /* ── 스킬을 카테고리에 매핑 ── */
 const SKILL_TO_CATEGORY: Record<string, string> = {};
 TECH_CATEGORIES.forEach((cat) => {
@@ -230,41 +247,18 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
   return result;
 };
 
-/* ── 역할 코드→표시명 ── */
-const ROLE_CODE_TO_LABEL: Record<string, string> = {
-  FE: "Frontend",
-  BE: "Backend",
-  AI: "AI/ML",
-  PM: "PM",
-  INFRA: "Infra",
-  DESIGN: "Design",
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-};
-
 /* ── 컴포넌트 ── */
-const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
+const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
   const info = dashboard?.projectInfo;
-  const stats = dashboard?.teamStats;
   const gitRepo = dashboard?.gitRepoInfo;
 
-  // TODO: 팀원 목록 API 추가 후 실제 멤버 데이터로 교체 (현재 roleCounts 기반 임시 생성)
-  const membersFromDashboard: TeamMember[] = useMemo(() => {
-    if (!stats?.roleCounts) return [];
-    return Object.entries(stats.roleCounts).flatMap(([role, count]) => {
-      const label = ROLE_CODE_TO_LABEL[role] ?? role;
-      return Array.from({ length: count }, (_, i) => ({
-        id: `${role}-${i}`,
-        name: `${label} ${i + 1}`,
-        position: label,
-        email: "",
-      }));
-    });
-  }, [stats]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
-  const [name, setName] = useState(info?.title ?? "");
-  const [description, setDescription] = useState(info?.description ?? "");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
   const descRef = useRef<HTMLTextAreaElement>(null);
 
@@ -285,47 +279,66 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>(info?.domain ? [info.domain] : []);
+  const [domains, setDomains] = useState<string[]>([]);
   const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
-  const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
-    skillsToTechStacks(info?.skills ?? [])
-  );
-  const [members, setMembers] = useState<TeamMember[]>(membersFromDashboard);
+  const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-  const [kickMemberId, setKickMemberId] = useState<string | null>(null);
-  const kickTarget = members.find((m) => m.id === kickMemberId) ?? null;
-
-  // 새 팀원 추가 폼
-  const [newName, setNewName] = useState("");
-  const [newPosition, setNewPosition] = useState("");
-  const [newEmail, setNewEmail] = useState("");
 
   const allSelected = useMemo(
     () => Object.values(techStacks).flat(),
     [techStacks]
   );
 
-  const initialRef = useMemo(() => ({
-    status: "active" as ProjectStatus,
-    name: info?.title ?? "",
-    description: info?.description ?? "",
-    domains: info?.domain ? [info.domain] : [],
-    gitUrl: gitRepo?.repoUrl ?? "",
-    techStacks: skillsToTechStacks(info?.skills ?? []),
-    members: membersFromDashboard,
-  }), [info, gitRepo, membersFromDashboard]);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
+
+  // GET /edit → 폼 초기화
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    getProjectEditForm(projectId)
+      .then(({ data }) => {
+        const form = data.data;
+        const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
+        setStatus(mappedStatus);
+        setName(form.title ?? "");
+        setDescription(form.description ?? "");
+        setDomains(form.domain ? [form.domain] : []);
+        setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
+
+        // skillIds → 이름 → 카테고리별 분류
+        const skillNames = form.skillIds
+          .map(id => SKILL_ID_TO_NAME[id])
+          .filter(Boolean) as string[];
+        setTechStacks(skillsToTechStacks(skillNames));
+
+        // 초기 스냅샷 저장
+        setInitialSnapshot(JSON.stringify({
+          status: mappedStatus,
+          name: form.title ?? "",
+          description: form.description ?? "",
+          domains: form.domain ? [form.domain] : [],
+          techStacks: skillsToTechStacks(skillNames),
+        }));
+      })
+      .catch((err) => {
+        console.error("프로젝트 설정 로드 실패:", err);
+        // 폴백: dashboard 데이터 사용
+        setInitialSnapshot(JSON.stringify({
+          status: "active",
+          name: info?.title ?? "",
+          description: info?.description ?? "",
+          domains: info?.domain ? [info.domain] : [],
+          techStacks: skillsToTechStacks(info?.skills ?? []),
+        }));
+      })
+      .finally(() => setLoading(false));
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasChanges = useMemo(() => {
-    return (
-      status !== initialRef.status ||
-      name !== initialRef.name ||
-      description !== initialRef.description ||
-      JSON.stringify(domains) !== JSON.stringify(initialRef.domains) ||
-      gitUrl !== initialRef.gitUrl ||
-      JSON.stringify(techStacks) !== JSON.stringify(initialRef.techStacks) ||
-      JSON.stringify(members) !== JSON.stringify(initialRef.members)
-    );
-  }, [status, name, description, domains, gitUrl, techStacks, members, initialRef]);
+    if (!initialSnapshot) return false;
+    const current = JSON.stringify({ status, name, description, domains, techStacks });
+    return current !== initialSnapshot;
+  }, [status, name, description, domains, techStacks, initialSnapshot]);
 
   const toggleDomain = (d: string) =>
     setDomains((prev) =>
@@ -352,24 +365,35 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     });
   };
 
-  const removeMember = (id: string) =>
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+  // PATCH 저장
+  const handleSave = async () => {
+    if (!projectId || saving) return;
+    const allSkillNames = Object.values(techStacks).flat();
+    const skillIds = allSkillNames
+      .map(n => SKILL_NAME_TO_ID[n])
+      .filter((id): id is number => id != null);
 
-  const addMember = () => {
-    if (!newName.trim() || !newPosition.trim()) return;
-    const member: TeamMember = {
-      id: Date.now().toString(),
-      name: newName.trim(),
-      position: newPosition.trim(),
-      email: newEmail.trim(),
-    };
-    setMembers((prev) => [...prev, member]);
-    setNewName("");
-    setNewPosition("");
-    setNewEmail("");
+    setSaving(true);
+    try {
+      await updateProject(projectId, {
+        status: STATUS_TO_BACKEND[status],
+        title: name,
+        teamName: info?.teamName,
+        description,
+        domain: domains[0] ?? "",
+        skillIds,
+        members: editMembers,
+      });
+      toast.success("프로젝트 설정이 저장되었습니다.");
+      // 스냅샷 갱신
+      setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
+    } catch (err) {
+      console.error("프로젝트 설정 저장 실패:", err);
+      toast.error("저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const canAddMember = newName.trim() && newPosition.trim();
 
   /* ── 공통 입력 스타일 ── */
   const inputStyle = (hasValue: boolean) => ({
@@ -377,8 +401,16 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     color: "var(--color-text-primary)",
   });
 
+  if (loading) {
+    return (
+      <div className="py-20 flex items-center justify-center">
+        <p style={{ color: "var(--color-text-tertiary)" }}>설정을 불러오는 중...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 flex flex-col gap-5 pb-28">
+    <div className="py-6 flex flex-col gap-5 pb-28">
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
@@ -390,13 +422,13 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
             프로젝트 설정
           </h1>
         </div>
-        <p
-          className="text-xs mt-0.5"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {info?.title ?? "프로젝트 설정"}
-        </p>
       </div>
+
+      {/* ── 2컬럼 그리드 (데스크톱) / 1컬럼 (모바일) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5">
+
+      {/* ── 좌측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
 
       {/* ── 섹션 1: 프로젝트 상태 ── */}
       <section
@@ -689,6 +721,11 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </div>
       </section>
 
+      </div>{/* 좌측 컬럼 끝 */}
+
+      {/* ── 우측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
+
       {/* ── 섹션 3: 기술 스택 ── */}
       <section
         className="rounded-2xl p-6 shadow-sm"
@@ -840,177 +877,6 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         )}
       </section>
 
-      {/* ── 섹션 4: 팀원 관리 ── */}
-      <section
-        className="rounded-2xl p-6 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <div
-            className="flex items-center gap-2 text-base font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            👥 팀원 관리
-          </div>
-          <span
-            className="text-sm font-bold"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {members.length}명
-          </span>
-        </div>
-
-        {/* 팀원 목록 */}
-        <div className="flex flex-col gap-2">
-          {members.map((m, idx) => {
-            const color = m.avatarColor || AVATAR_COLORS[idx % AVATAR_COLORS.length];
-            const roleStyle = ROLE_STYLES[m.position] || {
-              bg: "var(--color-background)",
-              color: "var(--color-text-secondary)",
-            };
-            return (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                style={{ background: "var(--color-background)" }}
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                  style={{ background: color }}
-                >
-                  {m.name.charAt(0)}
-                </div>
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {m.name}
-                    </span>
-                    <span
-                      className="text-xs font-medium px-1.5 py-0.5 rounded-md"
-                      style={{
-                        background: roleStyle.bg,
-                        color: roleStyle.color,
-                      }}
-                    >
-                      {m.position}
-                    </span>
-                  </div>
-                  <span
-                    className="text-xs"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    {m.email}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setKickMemberId(m.id)}
-                  className="transition-opacity opacity-60 hover:opacity-100"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 새 팀원 추가 */}
-        <div
-          className="mt-3 rounded-xl p-4"
-          style={{
-            background: "var(--color-primary-soft)",
-            border: "1px solid var(--color-primary)",
-          }}
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="text"
-              placeholder="홍길동"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none"
-              style={{
-                background: "var(--color-surface)",
-                borderColor: "var(--color-border)",
-              }}
-              onFocus={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-primary)")
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-border)")
-              }
-            />
-            <input
-              type="text"
-              placeholder="포지션"
-              value={newPosition}
-              onChange={(e) => setNewPosition(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none"
-              style={{
-                background: "var(--color-surface)",
-                borderColor: "var(--color-border)",
-              }}
-              onFocus={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-primary)")
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--color-border)")
-              }
-            />
-          </div>
-          <input
-            type="email"
-            placeholder="example@email.com (초대 알림용)"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none mt-3"
-            style={{
-              background: "var(--color-surface)",
-              borderColor: "var(--color-border)",
-            }}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-primary)")
-            }
-            onBlur={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-border)")
-            }
-          />
-          <button
-            onClick={addMember}
-            disabled={!canAddMember}
-            className="w-full py-3 rounded-xl text-sm font-bold mt-3 transition-colors"
-            style={
-              canAddMember
-                ? {
-                    background: "var(--color-primary)",
-                    color: "white",
-                  }
-                : {
-                    background: "var(--color-border)",
-                    color: "var(--color-text-tertiary)",
-                    cursor: "not-allowed",
-                  }
-            }
-            onMouseEnter={(e) => {
-              if (canAddMember)
-                e.currentTarget.style.background = "var(--color-primary-hover)";
-            }}
-            onMouseLeave={(e) => {
-              if (canAddMember)
-                e.currentTarget.style.background = "var(--color-primary)";
-            }}
-          >
-            팀원 추가
-          </button>
-        </div>
-      </section>
-
       {/* ── 위험 영역 배너 ── */}
       <div
         className="rounded-2xl px-5 py-4 flex items-center justify-between"
@@ -1041,16 +907,20 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </button>
       </div>
 
+      </div>{/* 우측 컬럼 끝 */}
+      </div>{/* 그리드 끝 */}
+
       {/* ── 하단 고정 저장 버튼 ── */}
       <div
         className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3"
         style={{ background: "var(--color-background)" }}
       >
         <button
-          disabled={!hasChanges}
-          className="w-full max-w-xl mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
+          disabled={!hasChanges || saving}
+          onClick={handleSave}
+          className="w-full max-w-[1400px] mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
           style={
-            hasChanges
+            hasChanges && !saving
               ? {
                   background: "var(--color-primary)",
                   color: "var(--color-text-primary)",
@@ -1062,74 +932,17 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
                 }
           }
           onMouseEnter={(e) => {
-            if (hasChanges)
+            if (hasChanges && !saving)
               e.currentTarget.style.background = "var(--color-primary-hover)";
           }}
           onMouseLeave={(e) => {
-            if (hasChanges)
+            if (hasChanges && !saving)
               e.currentTarget.style.background = "var(--color-primary)";
           }}
         >
-          {hasChanges ? "저장하기" : "변경사항 없음"}
+          {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
         </button>
       </div>
-      {/* ── 내보내기 확인 모달 ── */}
-      {kickMemberId && kickTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => setKickMemberId(null)}
-        >
-          <div
-            className="bg-white rounded-2xl px-8 py-8 flex flex-col items-center gap-4 w-[320px] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 아이콘 */}
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ background: "#FEE2E2" }}
-            >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-                <line x1="18" y1="8" x2="23" y2="13"/>
-                <line x1="23" y1="8" x2="18" y2="13"/>
-              </svg>
-            </div>
-
-            {/* 텍스트 */}
-            <div className="text-center">
-              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
-                {kickTarget.name}님 내보내기
-              </p>
-              <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                팀에서 내보내시겠습니까?<br />되돌릴 수 없습니다.
-              </p>
-            </div>
-
-            {/* 버튼 */}
-            <div className="flex gap-3 w-full mt-1">
-              <button
-                onClick={() => setKickMemberId(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-                style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  removeMember(kickMemberId);
-                  setKickMemberId(null);
-                }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: "var(--color-error)" }}
-              >
-                내보내기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

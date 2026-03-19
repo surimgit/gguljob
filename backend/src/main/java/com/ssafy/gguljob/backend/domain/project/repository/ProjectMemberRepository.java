@@ -47,4 +47,17 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 
     @Query("SELECT pm FROM ProjectMember pm WHERE pm.user.id = :userId AND pm.project.id IN :projectIds")
     List<ProjectMember> findByUserIdAndProjectIdIn(@Param("userId") Long userId, @Param("projectIds") List<Long> projectIds);
+
+    // 특정 프로젝트에 속한 특정 유저 조회
+    Optional<ProjectMember> findByProjectIdAndUserId(Long projectId, Long userId);
+
+    // [성능 최적화] 특정 프로젝트에서 특정 유저(나가는 유저)를 제외하고, 상태가 일치하며, 가장 먼저 들어온 1명만 조회 (LIMIT 1)
+    Optional<ProjectMember> findFirstByProjectIdAndStatusAndUserIdNotOrderByCreatedAtAsc(
+        Long projectId,
+        MemberStatus status,
+        Long leavingUserId
+    );
+
+    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId")
+    List<Long> findUserIdsByProjectId(Long projectId);
 }

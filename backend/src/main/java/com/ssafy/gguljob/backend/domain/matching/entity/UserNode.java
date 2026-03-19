@@ -15,7 +15,7 @@ import java.util.Set;
 public class UserNode {
 
     @Id
-    private Long id; // MySQL의 users.user_id
+    private String id; // MySQL의 users.user_id
 
     private String userName; // MySQL의 user_name
 
@@ -45,4 +45,14 @@ public class UserNode {
     @Relationship(type = "PURSUES_GOAL", direction = Relationship.Direction.OUTGOING)
     @Builder.Default
     private Set<GoalNode> goals = new HashSet<>();
+
+    public void updateFrom(UserNode newData) {
+        this.userName = newData.getUserName();
+        this.skills = newData.getSkills();
+        this.roles = newData.getRoles();
+        this.mbti = newData.getMbti();
+        this.tendency = newData.getTendency();
+        this.experience = newData.getExperience();
+        this.goals = newData.getGoals();
+    }
 }

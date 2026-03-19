@@ -1,9 +1,12 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
+import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
+import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdateResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
@@ -13,13 +16,16 @@ import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -41,6 +48,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final ProjectDashboardService dashboardService;
+    private final MatchingService matchingService;
 
     @Operation(summary = "프로젝트 생성 API", description = "새로운 프로젝트를 생성합니다")
     @PostMapping
@@ -161,4 +169,62 @@ public class ProjectController {
         Page<TroubleshootingItem> response = dashboardService.getPagedMyTroubleshootings(projectId, userDetails.getId(), pageable);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "프로젝트 검색 필터 옵션 조회", description = "프로젝트 검색 시 필요한 기술스택, 도메인, 포지션 필터 목록을 제공합니다. 실제 필터링된 검색 결과는 /list API에 파라미터를 넘겨서 조회하세요")
+    @GetMapping("/filters")
+    public ResponseEntity<?> getProjectFilters() {
+        return ResponseEntity.ok(projectService.getProjectFilters());
+    }
+
+    @Operation(summary = "메인 상단 표시 프로젝트 조회", description = "프로젝트 찾기 페이지 상단에 노출되는 프로젝트 목록을 최신순으로 조회합니다.")
+    @GetMapping("/recommended/top")
+    public ResponseEntity<List<ProjectResponse.ProjectCardDto>> getTopProjects(
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = (userDetails != null) ? userDetails.getId() : null;
+        return ResponseEntity.ok(projectService.getTopProjects(userId));
+    }
+
+    @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트를 조회합니다.<br>" +
+        "- 검색어(제목), 도메인, 포지션, 기술스택 필터를 URL 파라미터로 넘기면 해당 조건에 맞게 필터링됩니다.<br>" +
+        "- 필터 조건에 맞는 프로젝트 중, 사용자와의 매칭 스코어가 높은 순(추천순)으로 정렬되어 반환됩니다.")
+    @GetMapping("/list")
+    public ResponseEntity<Page<ProjectCardDto>> getProjectList(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
+        @Parameter(description = "검색어 (제목 기준)", example = "감자")
+        @RequestParam(required = false) String keyword,
+        @Parameter(description = "도메인 필터", example = "IT")
+        @RequestParam(required = false) String domain,
+        @Parameter(description = "포지션(직무) 필터", example = "BACKEND")
+        @RequestParam(required = false) String role,
+        @Parameter(description = "기술 스택 ID 리스트", example = "1,2,3")
+        @RequestParam(required = false) List<Long> skillIds,
+
+        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+        @RequestParam(defaultValue = "0") int page,
+
+        @Parameter(description = "한 페이지당 데이터 개수", example = "10")
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Long userId = (userDetails != null) ? userDetails.getId() : null;
+
+        Page<ProjectCardDto> result = matchingService.getRecommendedProjects(userId, keyword, domain, role, skillIds, pageable);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 제목(Title)으로 덮어씁니다.")
+    @PatchMapping("/{projectId}/title")
+    public ResponseEntity<Void> applyRecommendedTopic(
+        @PathVariable Long projectId,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestBody @Valid ProjectRequest.ApplyTopicRequest request
+    ) {
+        projectService.applyRecommendedTopic(projectId, userDetails.getId(), request.selectedTopic());
+        return ResponseEntity.ok().build();
+    }
+
 }

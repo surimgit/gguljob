@@ -1,11 +1,19 @@
 package com.ssafy.gguljob.backend.domain.user.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.annotations.BatchSize;
+import org.springframework.util.StringUtils;
+
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -19,14 +27,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
-import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "users")
@@ -53,10 +58,7 @@ public class User extends BaseTimeEntity {
     private String mbti;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id")
-    )
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 20)
     private List<PositionType> roles = new ArrayList<>();
@@ -79,7 +81,11 @@ public class User extends BaseTimeEntity {
     // 유저의 기술 스택 조회를 위한 OneToMany 매핑
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<com.ssafy.gguljob.backend.domain.skill.entity.UserSkill> userSkills = new ArrayList<>();
+    private List<com.ssafy.gguljob.backend.domain.skill.entity.UserSkill> userSkills =
+            new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserGoal> goals = new ArrayList<>();
 
     @Builder
     public User(String userName, String email, String profileImageUrl, RoleType authority) {
@@ -94,10 +100,11 @@ public class User extends BaseTimeEntity {
         this.profileImageUrl = imageUrl;
     }
 
-    public void updateOnboarding(String description, List<PositionType> roles, ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
+    public void updateOnboarding(String description, List<PositionType> roles,
+            ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
         this.description = description;
         this.roles.clear();
-        if(roles != null) {
+        if (roles != null) {
             this.roles.addAll(roles);
         }
         this.experience = experience;
@@ -105,19 +112,36 @@ public class User extends BaseTimeEntity {
         this.teamTendency = teamTendency;
     }
 
-    //  프로필 정보 수정용
+    // 프로필 정보 수정용
     public void updateProfile(ProfileUpdateRequestDto request) {
-        if (request.getDescription() != null) this.description = request.getDescription();
+        if (request.getDescription() != null)
+            this.description = request.getDescription();
         if (request.getRoles() != null) {
             this.roles.clear();
             this.roles.addAll(request.getRoles());
         }
-        if (request.getExperience() != null) this.experience = request.getExperience();
-        if (request.getMbti() != null) this.mbti = request.getMbti();
-        if (request.getTeamTendency() != null) this.teamTendency = request.getTeamTendency();
+        if (request.getExperience() != null)
+            this.experience = request.getExperience();
+        if (!StringUtils.hasText(request.getMbti())) {
+            this.mbti = null;
+        } else {
+            this.mbti = request.getMbti().trim().toUpperCase();
+        }
+        if (request.getTeamTendency() != null)
+            this.teamTendency = request.getTeamTendency();
     }
 
     public void updateImageUrl(String imageUrl) {
         this.profileImageUrl = imageUrl;
     }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+
 }

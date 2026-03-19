@@ -135,7 +135,7 @@ const MyPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f6f8] px-4 py-12">
-      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+      <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         <ProfileHeader
           name={profile.name}
           role={profile.role}
@@ -181,6 +181,7 @@ const MyPage = () => {
         onClose={() => setIsOnboardingOpen(false)}
         onComplete={handleOnboardingComplete}
         initialData={user ? userToFormData(user) : undefined}
+        mode="edit"
       />
       <WithdrawModal
         isOpen={isWithdrawOpen}

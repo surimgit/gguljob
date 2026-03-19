@@ -1,9 +1,20 @@
+import { useState, useEffect } from 'react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
+import { getRecommendedTop3 } from '../../../api/jobs';
+import type { JobItem } from '../../../types/recruitment';
 
 const TECH_STACKS = ['React', 'TypeScript', 'Spring Boot', 'MySQL', 'Redis', 'Git'];
+
+const RANK_TINTS = [
+  'rgba(255,239,156,0.21)',
+  'rgba(217,234,239,0.42)',
+  'rgba(255,213,174,0.40)',
+];
+
+const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 
 type Badge = 'NEW' | 'HOT';
 
@@ -162,8 +173,16 @@ const JobCard = ({
 );
 
 const JobRecommendHero = () => {
+  const [top3, setTop3] = useState<JobItem[]>([]);
+
+  useEffect(() => {
+    getRecommendedTop3()
+      .then(({ data }) => { if (data.length > 0) setTop3(data.slice(0, 3)); })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div style={{ width: '1103px', margin: '0 auto', background: '#F7F8FA', fontFamily: 'inherit' }}>
+    <div style={{ width: '100%', background: '#F7F8FA', fontFamily: 'inherit' }}>
 
       {/* ── 히어로 배너 ── */}
       <div
@@ -246,45 +265,22 @@ const JobRecommendHero = () => {
 
         {/* 카드 3개 */}
         <div className="flex gap-[45px]" style={{ marginTop: '75px' }}>
-          <JobCard
-            tint="rgba(255,239,156,0.21)"
-            rank={1}
-            badges={['NEW', 'HOT']}
-            company="토스"
-            logoText="T"
-            logoColor="#3B82F6"
-            role="Frontend Engineer (React)"
-            location="서울 강남구"
-            experience="신입·경력 1~3년"
-            employmentType="정규직"
-            salary="5,000~7,000만원"
-          />
-          <JobCard
-            tint="rgba(217,234,239,0.42)"
-            rank={2}
-            badges={['NEW']}
-            company="카카오"
-            logoText="K"
-            logoColor="#F2B705"
-            role="풀스택 개발자 (React + Spring)"
-            location="경기 성남시"
-            experience="경력 2~5년"
-            employmentType="정규직"
-            salary="5,500~8,000만원"
-          />
-          <JobCard
-            tint="rgba(255,213,174,0.40)"
-            rank={3}
-            badges={['HOT']}
-            company="네이버"
-            logoText="N"
-            logoColor="#22C55E"
-            role="프론트엔드 개발자"
-            location="경기 성남시"
-            experience="경력 3~7년"
-            employmentType="정규직"
-            salary="5,000~7,500만원"
-          />
+          {top3.map((job, idx) => (
+            <JobCard
+              key={job.jobId}
+              tint={RANK_TINTS[idx]}
+              rank={idx + 1}
+              badges={job.matchStatus === '적합' ? ['NEW', 'HOT'] : job.matchStatus === '보통' ? ['NEW'] : ['HOT']}
+              company={job.companyName}
+              logoText={job.companyName.charAt(0)}
+              logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
+              role={job.title}
+              location={job.region}
+              experience={job.experience}
+              employmentType={job.contractType}
+              salary={job.salary}
+            />
+          ))}
         </div>
       </div>
     </div>

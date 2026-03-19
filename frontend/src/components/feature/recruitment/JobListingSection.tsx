@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs, getJobFilters } from '../../../api/jobs';
+import type { JobItem } from '../../../types/recruitment';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -15,7 +17,6 @@ interface JobListing {
   experience: string;
   employmentType: string;
   salary: string;
-  salaryMax: number;
   deadline: string;
   match: MatchType;
   techStacks: string[];
@@ -24,13 +25,13 @@ interface JobListing {
 // ── 상수 ──────────────────────────────────────────────────────────────────────
 const JOBS_PER_PAGE = 5;
 
-const ALL_TECH_STACKS = [
+const DEFAULT_TECH_STACKS = [
   '전체', 'React', 'TypeScript', 'Next.js', 'GraphQL',
   'Spring Boot', 'MySQL', 'Kubernetes', 'Node.js', 'Redis',
   'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
 ];
 
-const SORT_OPTIONS = ['매칭순', '마감순', '연봉순'];
+const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
   suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
@@ -44,105 +45,33 @@ const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insuffi
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
   const copy = [...jobs];
   if (sort === '매칭순') return copy.sort((a, b) => MATCH_RANK[b.match] - MATCH_RANK[a.match]);
-  if (sort === '마감순') return copy.sort((a, b) => a.deadline.localeCompare(b.deadline));
-  if (sort === '연봉순') return copy.sort((a, b) => b.salaryMax - a.salaryMax);
+  if (sort === '마감순') return copy.sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
+
   return copy;
 };
 
-// ── 더미 데이터 ───────────────────────────────────────────────────────────────
-const MOCK_JOBS: JobListing[] = [
-  {
-    id: 1,
-    logoText: '당',
-    logoColor: '#F97316',
-    company: '당근',
-    title: '프론트엔드 엔지니어 (웹)',
-    location: '서울 서초구',
-    experience: '신입·경력 1~3년',
-    employmentType: '정규직',
-    salary: '5,000~7,500만원',
-    salaryMax: 7500,
-    deadline: '2026-04-30',
-    match: 'suitable',
-    techStacks: ['React', 'TypeScript', 'Next.js'],
-  },
-  {
-    id: 2,
-    logoText: 'L',
-    logoColor: '#00A63E',
-    company: '라인',
-    title: 'Web Frontend Developer',
-    location: '경기 판교',
-    experience: '경력 1~4년',
-    employmentType: '정규직',
-    salary: '5,000~7,000만원',
-    salaryMax: 7000,
-    deadline: '2026-04-15',
-    match: 'average',
-    techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
-  },
-  {
-    id: 3,
-    logoText: 'B',
-    logoColor: '#00D5BE',
-    company: '배달의민족',
-    title: 'React 프론트엔드 개발자',
-    location: '서울 송파구',
-    experience: '경력 1~3년',
-    employmentType: '정규직',
-    salary: '5,000~7,000만원',
-    salaryMax: 7000,
-    deadline: '2026-05-10',
-    match: 'average',
-    techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
-  },
-  {
-    id: 4,
-    logoText: 'C',
-    logoColor: '#E7000B',
-    company: '쿠팡',
-    isNew: true,
-    title: 'Backend Engineer (Java/Spring)',
-    location: '서울 송파구',
-    experience: '경력 2~5년',
-    employmentType: '정규직',
-    salary: '6,000~9,000만원',
-    salaryMax: 9000,
-    deadline: '2026-03-31',
-    match: 'insufficient',
-    techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
-  },
-  {
-    id: 5,
-    logoText: 'V',
-    logoColor: '#155DFC',
-    company: '비바리퍼블리카',
-    title: 'Server Engineer (Spring Boot)',
-    location: '서울 강남구',
-    experience: '경력 3~7년',
-    employmentType: '정규직',
-    salary: '6,000~9,500만원',
-    salaryMax: 9500,
-    deadline: '2026-04-20',
-    match: 'average',
-    techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
-  },
-  {
-    id: 6,
-    logoText: 'K',
-    logoColor: '#F2B705',
-    company: '카카오',
-    title: 'Node.js 백엔드 개발자',
-    location: '경기 성남시',
-    experience: '경력 2~4년',
-    employmentType: '정규직',
-    salary: '5,500~8,000만원',
-    salaryMax: 8000,
-    deadline: '2026-04-25',
-    match: 'average',
-    techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
-  },
-];
+// ── API 데이터 매핑 ────────────────────────────────────────────────────────────
+const LOGO_COLORS = ['#F97316', '#00A63E', '#00D5BE', '#E7000B', '#155DFC', '#F2B705', '#8B5CF6', '#EC4899'];
+
+const mapToJobListing = (item: JobItem): JobListing => ({
+  id: item.jobId,
+  logoText: item.companyName.charAt(0),
+  logoColor: LOGO_COLORS[item.jobId % LOGO_COLORS.length],
+  company: item.companyName,
+  title: item.title,
+  location: item.region,
+  experience: item.experience,
+  employmentType: item.contractType,
+  salary: item.salary,
+  deadline: item.deadline ?? '',
+  match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
+  techStacks: [],
+});
+
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const BookmarkBtn = ({
@@ -308,9 +237,33 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set([1, 3, 6]));
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+  const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [techStacks, setTechStacks] = useState<string[]>(DEFAULT_TECH_STACKS);
+
+  useEffect(() => {
+    getJobFilters()
+      .then(({ data }) => {
+        if (data.techStacks?.length > 0)
+          setTechStacks(["전체", ...data.techStacks]);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getJobs({ page: currentPage })
+      .then(({ data }) => setJobs(data.map(mapToJobListing)))
+      .catch(() => {});
+  }, [currentPage]);
+
+  useEffect(() => {
+    getBookmarkedJobs()
+      .then(({ data }) => setBookmarkedIds(new Set(data.map(j => j.jobId))))
+      .catch(() => {});
+  }, []);
 
   const toggleBookmark = (id: number) => {
+    toggleBookmarkApi(id).catch(() => {});
     setBookmarkedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -321,8 +274,8 @@ const JobListingSection = () => {
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack =
     activeFilter === '전체'
-      ? MOCK_JOBS
-      : MOCK_JOBS.filter(job => job.techStacks.includes(activeFilter));
+      ? jobs
+      : jobs.filter(job => job.techStacks.includes(activeFilter));
 
   const finalFilteredJobs = showBookmarked
     ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
@@ -331,10 +284,7 @@ const JobListingSection = () => {
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / JOBS_PER_PAGE));
-  const pagedJobs = sorted.slice(
-    (currentPage - 1) * JOBS_PER_PAGE,
-    currentPage * JOBS_PER_PAGE,
-  );
+  const pagedJobs = sorted;
 
   const handleFilterChange = (stack: string) => {
     setActiveFilter(stack);
@@ -352,7 +302,7 @@ const JobListingSection = () => {
   };
 
   return (
-    <div className="bg-background" style={{ width: '1103px', margin: '0 auto' }}>
+    <div className="bg-background max-w-[1400px] mx-auto px-3">
       {/* 섹션 제목 */}
       <div className="px-[42px] pt-8 pb-5">
         <h2 className="font-semibold text-[25px]">
@@ -364,7 +314,7 @@ const JobListingSection = () => {
       {/* 기술스택 필터 */}
       <div className="px-[39px] pb-4">
         <div className="flex flex-wrap gap-2">
-          {ALL_TECH_STACKS.map(stack => (
+          {techStacks.map(stack => (
             <FilterPill
               key={stack}
               label={stack}
