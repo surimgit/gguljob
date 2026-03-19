@@ -26,6 +26,7 @@ import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
 import { getPersonalSpace } from "../api/projects";
+import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
 const AI_TOPICS = [
   "GitHub Actions CI/CD 파이프라인 구축",
@@ -194,6 +195,7 @@ const ProjectDashboard = () => {
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
@@ -249,6 +251,7 @@ const ProjectDashboard = () => {
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
 
   return (
+    <>
     <div
       className="min-h-screen"
       style={{ background: "var(--color-background)" }}
@@ -1013,6 +1016,15 @@ const ProjectDashboard = () => {
         )}
       </div>
     </div>
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen={true}
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
+      )}
+    </>
   );
 };
 
