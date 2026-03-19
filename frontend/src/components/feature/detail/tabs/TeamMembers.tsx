@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import toast from "react-hot-toast";
 import {
   Trash2,
   ChevronDown,
@@ -844,9 +843,8 @@ const TeamManagement = ({
           }),
         );
       }
-      toast.success("참여 요청을 수락했습니다.");
     } catch {
-      toast.error("수락에 실패했습니다.");
+      // API 실패 시 무시
     }
     setApplications((prev) => prev.filter((a) => a.id !== appId));
     onAccept(appId);
@@ -857,9 +855,8 @@ const TeamManagement = ({
       await rejectRequest(Number(appId));
       setApplications((prev) => prev.filter((a) => a.id !== appId));
       onReject(appId);
-      toast.success("참여 요청을 거절했습니다.");
     } catch {
-      toast.error("거절에 실패했습니다.");
+      // API 실패 시 무시
     }
   };
 
