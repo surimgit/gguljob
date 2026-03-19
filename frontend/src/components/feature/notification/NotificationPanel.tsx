@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { NotificationCategory } from '../../../api/notification';
+import { acceptRequest, rejectRequest } from '../../../api/projects';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 export type NotifType = NotificationCategory;
@@ -9,6 +11,7 @@ export interface Notification {
   message: string;
   time: string;
   isRead: boolean;
+  referenceId: number | null;
 }
 
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
@@ -71,44 +74,115 @@ const NotificationItem = ({
   notif: Notification;
   onDelete: (id: number) => void;
   onMarkRead: (id: number) => void;
-}) => (
-  <div
-    onClick={() => !notif.isRead && onMarkRead(notif.id)}
-    className={`group flex items-start gap-3.5 rounded-xl px-5 pt-4 pb-4 transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${
-      notif.isRead
-        ? 'bg-[#f9fafb] shadow-none cursor-default'
-        : 'bg-surface shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] cursor-pointer'
-    }`}
-  >
-    <NotifIcon type={notif.type} />
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(null);
+  const [loading, setLoading] = useState(false);
 
-    <div className="flex flex-col gap-1 flex-1 min-w-0">
-      <p className={`text-[14px] leading-[21px] ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
-        {notif.message}
-      </p>
-      <p className="text-[12px] text-text-tertiary leading-[19px]">{notif.time}</p>
-    </div>
+  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null;
 
-    {/* 오른쪽: 안 읽은 파란 점 (hover 시 삭제 버튼으로 교체) */}
-    <div className="flex-shrink-0 flex items-center self-stretch">
-      {!notif.isRead && (
-        <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
+  const handleClick = () => {
+    if (!notif.isRead) onMarkRead(notif.id);
+    if (isInvite && !actionDone) setExpanded(prev => !prev);
+  };
+
+  const handleAccept = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notif.referenceId || loading) return;
+    setLoading(true);
+    try {
+      await acceptRequest(notif.referenceId);
+      setActionDone('accepted');
+      setExpanded(false);
+    } catch (err) {
+      console.error('초대 수락 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notif.referenceId || loading) return;
+    setLoading(true);
+    try {
+      await rejectRequest(notif.referenceId);
+      setActionDone('rejected');
+      setExpanded(false);
+    } catch (err) {
+      console.error('초대 거절 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className={`group flex flex-col rounded-xl px-5 pt-4 pb-4 transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${
+        notif.isRead
+          ? 'bg-[#f9fafb] shadow-none cursor-default'
+          : 'bg-surface shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] cursor-pointer'
+      }`}
+    >
+      <div className="flex items-start gap-3.5">
+        <NotifIcon type={notif.type} />
+
+        <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <p className={`text-[14px] leading-[21px] ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
+            {notif.message}
+          </p>
+          <p className="text-[12px] text-text-tertiary leading-[19px]">{notif.time}</p>
+          {actionDone && (
+            <p className={`text-[12px] font-semibold mt-0.5 ${actionDone === 'accepted' ? 'text-[#16a34a]' : 'text-text-tertiary'}`}>
+              {actionDone === 'accepted' ? '수락됨' : '거절됨'}
+            </p>
+          )}
+        </div>
+
+        {/* 오른쪽: 안 읽은 파란 점 (hover 시 삭제 버튼으로 교체) */}
+        <div className="flex-shrink-0 flex items-center self-stretch">
+          {!notif.isRead && (
+            <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
+            aria-label="알림 삭제"
+            className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
+              notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
+            }`}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* 초대 수락/거절 버튼 */}
+      {isInvite && expanded && !actionDone && (
+        <div className="flex gap-2 mt-3 ml-[52px]">
+          <button
+            onClick={handleAccept}
+            disabled={loading}
+            className="flex-1 py-2 rounded-lg text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ background: '#16a34a' }}
+          >
+            수락
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={loading}
+            className="flex-1 py-2 rounded-lg text-[13px] font-bold text-text-secondary border border-border bg-white transition-colors hover:bg-[#f9fafb] disabled:opacity-50"
+          >
+            거절
+          </button>
+        </div>
       )}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
-        aria-label="알림 삭제"
-        className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
-          notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
-        }`}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 // ── 빈 상태 UI ────────────────────────────────────────────────────────────────
 const EmptyState = () => (
@@ -134,7 +208,7 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => (
-  <div className="absolute right-0 top-full mt-2 flex flex-col overflow-hidden z-50 w-[360px] bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)]">
+  <div className="absolute top-full mt-2 flex flex-col overflow-hidden z-50 bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)] w-[calc(100vw-32px)] max-w-[360px] right-0 sm:w-[360px]">
     {/* 헤더 */}
     <div className="flex items-center justify-between px-5 h-[57px] bg-primary-hover">
       <div className="flex items-center gap-2">

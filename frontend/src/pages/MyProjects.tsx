@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
 
-
 /* ── 상수 ── */
 
 const AVATAR_COLORS = [
@@ -165,7 +164,7 @@ const MyProjects = () => {
       style={{ backgroundColor: "var(--color-background)" }}
       className="min-h-screen"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
         {/* 헤더 */}
         <h1
           className="text-2xl sm:text-3xl font-bold"

@@ -25,7 +25,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "WITH p, matchedRole, COUNT(DISTINCT s) AS skillScore " +
             "WITH p, matchedRole, (CASE WHEN matchedRole IS NOT NULL THEN 10 ELSE 0 END + skillScore) AS score " +
             "RETURN p.id AS projectId, p.title AS projectTitle, coalesce(matchedRole, '무관') AS matchedRole, score " +
-            "ORDER BY score DESC, p.id DESC, p.id DESC SKIP $skip LIMIT $limit",
+            "ORDER BY score DESC, p.id DESC, SKIP $skip LIMIT $limit",
 
         countQuery = "MATCH (p:Project) WHERE p.status = 'RECRUITING' AND NOT p.id IN $joinedProjectIds " +
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +

@@ -172,29 +172,8 @@ const JobCard = ({
   </div>
 );
 
-const MOCK_TOP3: JobItem[] = [
-  {
-    jobId: 1, companyName: '토스', title: 'Frontend Engineer (React)',
-    region: '서울 강남구', experience: '신입·경력 1~3년', contractType: '정규직',
-    salary: '5,000~7,000만원', url: '', deadline: '',
-    matchStatus: '적합', matchPercentage: 95, cutoffHigh: 80, cutoffMedium: 60, averageScore: 75,
-  },
-  {
-    jobId: 2, companyName: '카카오', title: '풀스택 개발자 (React + Spring)',
-    region: '경기 성남시', experience: '경력 2~5년', contractType: '정규직',
-    salary: '5,500~8,000만원', url: '', deadline: '',
-    matchStatus: '보통', matchPercentage: 80, cutoffHigh: 80, cutoffMedium: 60, averageScore: 70,
-  },
-  {
-    jobId: 3, companyName: '네이버', title: '프론트엔드 개발자',
-    region: '경기 성남시', experience: '경력 3~7년', contractType: '정규직',
-    salary: '5,000~7,500만원', url: '', deadline: '',
-    matchStatus: '보통', matchPercentage: 72, cutoffHigh: 80, cutoffMedium: 60, averageScore: 68,
-  },
-];
-
 const JobRecommendHero = () => {
-  const [top3, setTop3] = useState<JobItem[]>(MOCK_TOP3);
+  const [top3, setTop3] = useState<JobItem[]>([]);
 
   useEffect(() => {
     getRecommendedTop3()
@@ -203,7 +182,7 @@ const JobRecommendHero = () => {
   }, []);
 
   return (
-    <div style={{ width: '1103px', margin: '0 auto', background: '#F7F8FA', fontFamily: 'inherit' }}>
+    <div style={{ width: '100%', background: '#F7F8FA', fontFamily: 'inherit' }}>
 
       {/* ── 히어로 배너 ── */}
       <div

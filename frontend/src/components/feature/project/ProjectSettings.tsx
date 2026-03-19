@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   BarChart2,
   Info,
@@ -22,14 +22,53 @@ import {
   Pencil,
 } from "lucide-react";
 import Markdown from "react-markdown";
+import toast from "react-hot-toast";
 
-import type { TeamDashboard } from "../../../types/project";
+import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
+import { getProjectEditForm, updateProject } from "../../../api/projects";
 
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
+  projectId?: number;
+}
+
+/* ── 상태 매핑 ── */
+const STATUS_TO_BACKEND: Record<ProjectStatus, BackendProjectEditStatus> = {
+  active: "PROCEEDING",
+  recruiting: "RECRUITING",
+  done: "DONE",
+  paused: "STOPPED",
+};
+const BACKEND_TO_STATUS: Record<BackendProjectEditStatus, ProjectStatus> = {
+  PROCEEDING: "active",
+  RECRUITING: "recruiting",
+  DONE: "done",
+  STOPPED: "paused",
+};
+
+/* ── 스킬 이름 ↔ ID 매핑 (DB 기준) ── */
+const SKILL_NAME_TO_ID: Record<string, number> = {
+  React: 1, "Vue.js": 2, "Vue": 2, "Next.js": 19, JavaScript: 16, TypeScript: 17,
+  "HTML/CSS": 18, Swift: 66, jQuery: 46,
+  Java: 3, "Spring Boot": 4, Python: 5, MySQL: 6, "Node.js": 20,
+  C: 13, "C#": 14, "C++": 15, PostgreSQL: 22, MariaDB: 23, MongoDB: 24,
+  PHP: 25, ".NET": 26, "Nest.js": 27, NestJS: 27, Kafka: 28, "Oracle DB": 21,
+  JPA: 43, MyBatis: 44, FastAPI: 45, Django: 63, Flask: 64, MSA: 59,
+  JSP: 42, MSSQL: 41,
+  "RDBMS/DBMS": 54, Tibero: 60,
+  AWS: 7, Docker: 8, Kubernetes: 9, Jenkins: 10, Git: 11, Redis: 12,
+  Linux: 29, Azure: 30, GCP: 31, Nginx: 65,
+  PyTorch: 37, TensorFlow: 38, OpenCV: 50, Hadoop: 51,
+  RAG: 56, LLM: 57, MLOps: 67, AI: 70,
+  Android: 32, iOS: 33, Kotlin: 34, Flutter: 35, "React Native": 36, Unity: 52,
+  Figma: 40, Jira: 39,
+};
+const SKILL_ID_TO_NAME: Record<number, string> = {};
+for (const [name, id] of Object.entries(SKILL_NAME_TO_ID)) {
+  if (!SKILL_ID_TO_NAME[id]) SKILL_ID_TO_NAME[id] = name;
 }
 
 /* ── 상수 ── */
@@ -209,13 +248,17 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 };
 
 /* ── 컴포넌트 ── */
-const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
+const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
   const info = dashboard?.projectInfo;
   const gitRepo = dashboard?.gitRepoInfo;
 
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
+
   const [status, setStatus] = useState<ProjectStatus>("active");
-  const [name, setName] = useState(info?.title ?? "");
-  const [description, setDescription] = useState(info?.description ?? "");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
   const descRef = useRef<HTMLTextAreaElement>(null);
 
@@ -236,11 +279,9 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>(info?.domain ? [info.domain] : []);
+  const [domains, setDomains] = useState<string[]>([]);
   const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
-  const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
-    skillsToTechStacks(info?.skills ?? [])
-  );
+  const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const allSelected = useMemo(
@@ -248,25 +289,56 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     [techStacks]
   );
 
-  const initialRef = useMemo(() => ({
-    status: "active" as ProjectStatus,
-    name: info?.title ?? "",
-    description: info?.description ?? "",
-    domains: info?.domain ? [info.domain] : [],
-    gitUrl: gitRepo?.repoUrl ?? "",
-    techStacks: skillsToTechStacks(info?.skills ?? []),
-  }), [info, gitRepo]);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
+
+  // GET /edit → 폼 초기화
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    getProjectEditForm(projectId)
+      .then(({ data }) => {
+        const form = data.data;
+        const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
+        setStatus(mappedStatus);
+        setName(form.title ?? "");
+        setDescription(form.description ?? "");
+        setDomains(form.domain ? [form.domain] : []);
+        setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
+
+        // skillIds → 이름 → 카테고리별 분류
+        const skillNames = form.skillIds
+          .map(id => SKILL_ID_TO_NAME[id])
+          .filter(Boolean) as string[];
+        setTechStacks(skillsToTechStacks(skillNames));
+
+        // 초기 스냅샷 저장
+        setInitialSnapshot(JSON.stringify({
+          status: mappedStatus,
+          name: form.title ?? "",
+          description: form.description ?? "",
+          domains: form.domain ? [form.domain] : [],
+          techStacks: skillsToTechStacks(skillNames),
+        }));
+      })
+      .catch((err) => {
+        console.error("프로젝트 설정 로드 실패:", err);
+        // 폴백: dashboard 데이터 사용
+        setInitialSnapshot(JSON.stringify({
+          status: "active",
+          name: info?.title ?? "",
+          description: info?.description ?? "",
+          domains: info?.domain ? [info.domain] : [],
+          techStacks: skillsToTechStacks(info?.skills ?? []),
+        }));
+      })
+      .finally(() => setLoading(false));
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasChanges = useMemo(() => {
-    return (
-      status !== initialRef.status ||
-      name !== initialRef.name ||
-      description !== initialRef.description ||
-      JSON.stringify(domains) !== JSON.stringify(initialRef.domains) ||
-      gitUrl !== initialRef.gitUrl ||
-      JSON.stringify(techStacks) !== JSON.stringify(initialRef.techStacks)
-    );
-  }, [status, name, description, domains, gitUrl, techStacks, initialRef]);
+    if (!initialSnapshot) return false;
+    const current = JSON.stringify({ status, name, description, domains, techStacks });
+    return current !== initialSnapshot;
+  }, [status, name, description, domains, techStacks, initialSnapshot]);
 
   const toggleDomain = (d: string) =>
     setDomains((prev) =>
@@ -293,14 +365,52 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
     });
   };
 
+  // PATCH 저장
+  const handleSave = async () => {
+    if (!projectId || saving) return;
+    const allSkillNames = Object.values(techStacks).flat();
+    const skillIds = allSkillNames
+      .map(n => SKILL_NAME_TO_ID[n])
+      .filter((id): id is number => id != null);
+
+    setSaving(true);
+    try {
+      await updateProject(projectId, {
+        status: STATUS_TO_BACKEND[status],
+        title: name,
+        teamName: info?.teamName,
+        description,
+        domain: domains[0] ?? "",
+        skillIds,
+        members: editMembers,
+      });
+      toast.success("프로젝트 설정이 저장되었습니다.");
+      // 스냅샷 갱신
+      setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
+    } catch (err) {
+      console.error("프로젝트 설정 저장 실패:", err);
+      toast.error("저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   /* ── 공통 입력 스타일 ── */
   const inputStyle = (hasValue: boolean) => ({
     border: `2px solid ${hasValue ? "var(--color-primary)" : "var(--color-border)"}`,
     color: "var(--color-text-primary)",
   });
 
+  if (loading) {
+    return (
+      <div className="py-20 flex items-center justify-center">
+        <p style={{ color: "var(--color-text-tertiary)" }}>설정을 불러오는 중...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 flex flex-col gap-5 pb-28">
+    <div className="py-6 flex flex-col gap-5 pb-28">
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
@@ -313,6 +423,12 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
           </h1>
         </div>
       </div>
+
+      {/* ── 2컬럼 그리드 (데스크톱) / 1컬럼 (모바일) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5">
+
+      {/* ── 좌측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
 
       {/* ── 섹션 1: 프로젝트 상태 ── */}
       <section
@@ -605,6 +721,11 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </div>
       </section>
 
+      </div>{/* 좌측 컬럼 끝 */}
+
+      {/* ── 우측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
+
       {/* ── 섹션 3: 기술 스택 ── */}
       <section
         className="rounded-2xl p-6 shadow-sm"
@@ -786,16 +907,20 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </button>
       </div>
 
+      </div>{/* 우측 컬럼 끝 */}
+      </div>{/* 그리드 끝 */}
+
       {/* ── 하단 고정 저장 버튼 ── */}
       <div
         className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3"
         style={{ background: "var(--color-background)" }}
       >
         <button
-          disabled={!hasChanges}
-          className="w-full max-w-xl mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
+          disabled={!hasChanges || saving}
+          onClick={handleSave}
+          className="w-full max-w-[1400px] mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
           style={
-            hasChanges
+            hasChanges && !saving
               ? {
                   background: "var(--color-primary)",
                   color: "var(--color-text-primary)",
@@ -807,15 +932,15 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
                 }
           }
           onMouseEnter={(e) => {
-            if (hasChanges)
+            if (hasChanges && !saving)
               e.currentTarget.style.background = "var(--color-primary-hover)";
           }}
           onMouseLeave={(e) => {
-            if (hasChanges)
+            if (hasChanges && !saving)
               e.currentTarget.style.background = "var(--color-primary)";
           }}
         >
-          {hasChanges ? "저장하기" : "변경사항 없음"}
+          {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
         </button>
       </div>
     </div>
