@@ -1,5 +1,7 @@
 package com.ssafy.gguljob.backend.domain.project.dto;
 
+import lombok.Builder;
+
 public class ProjectMemberResponse {
 
     // 본인 나가기 응답
@@ -17,4 +19,11 @@ public class ProjectMemberResponse {
         String message
     ) {}
 
+    // 팀장 위임 응답
+    @Builder
+    public record DelegateResponse (
+        Long projectId,
+        Long previousLeaderId,
+        Long newLeaderId
+    ) {}
 }

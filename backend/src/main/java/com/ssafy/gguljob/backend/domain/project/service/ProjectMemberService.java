@@ -11,6 +11,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
 import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.exception.BadRequestException;
 import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
@@ -195,5 +196,36 @@ public class ProjectMemberService {
             throw new ForbiddenException("팀장만 모집 공고를 수정할 수 있습니다.");
         }
         return position;
+    }
+
+    @Transactional
+    public ProjectMemberResponse.DelegateResponse delegateLeader(Long projectId, Long currentLeaderId, Long targetUserId) {
+
+        if (currentLeaderId.equals(targetUserId)) {
+            throw new IllegalArgumentException("자기 자신에게 팀장을 위임할 수 없습니다.");
+        }
+
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(currentLeaderId)) {
+            throw new IllegalStateException("팀장 위임 권한이 없습니다. (현재 팀장이 아님)");
+        }
+
+        ProjectMember targetMember = projectMemberRepository.findByProjectIdAndUserId(projectId, targetUserId)
+            .orElseThrow(() -> new IllegalArgumentException("위임 대상자가 프로젝트에 참여 중인 팀원이 아닙니다."));
+
+        if (targetMember.getStatus() != MemberStatus.ATTEND) {
+            throw new IllegalStateException("해당 팀원은 현재 프로젝트에 정상적으로 참여(ATTEND) 중인 상태가 아닙니다.");
+        }
+
+        User newLeader = targetMember.getUser();
+        project.changeLeader(newLeader);
+
+        return ProjectMemberResponse.DelegateResponse.builder()
+            .projectId(projectId)
+            .previousLeaderId(currentLeaderId)
+            .newLeaderId(targetUserId)
+            .build();
     }
 }
