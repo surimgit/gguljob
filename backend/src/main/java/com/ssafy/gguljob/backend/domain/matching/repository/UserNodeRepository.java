@@ -40,7 +40,7 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, String> {
             "       ELSE (CASE WHEN isRoleMatched THEN 40 ELSE 0 END) + toInteger((toFloat(matchedSkills) / totalSkills) * 60) " +
             "     END AS matchScore " +
 
-            "RETURN u.id AS userId, matchScore " +
+            "RETURN toString(u.id) AS userId, matchScore " +
             "ORDER BY matchScore DESC, u.id DESC " +
             "SKIP $skip LIMIT $limit",
 
