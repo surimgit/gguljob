@@ -1,8 +1,7 @@
 import api from './index';
 import type {
-  Project,
-  ProjectDetail,
-  ProjectQueryParams,
+  ProjectCardDto,
+  ProjectListParams,
   ProjectSimple,
   CreateProjectRequest,
   CreateProjectResponse,
@@ -12,16 +11,24 @@ import type {
 } from '../types/project';
 import type { PageResponse } from '../types/common';
 
-/* ── 기존 (프로젝트 찾기) ── */
+/* ── 프로젝트 찾기 ── */
 
-export const getProjects = (params?: ProjectQueryParams) =>
-  api.get<PageResponse<Project>>('/projects', { params });
+export const getProjects = (params?: ProjectListParams) =>
+  api.get<PageResponse<ProjectCardDto>>('/v1/projects/list', { params });
 
-export const getProjectById = (id: number) =>
-  api.get<ProjectDetail>(`/projects/${id}`);
+export const getRecommendedProjects = () =>
+  api.get<ProjectCardDto[]>('/v1/projects/recommended/top');
 
-export const applyToProject = (projectId: number, positionId: number, message: string) =>
-  api.post(`/projects/${projectId}/apply`, { positionId, message });
+export interface ProjectFilters {
+  domains: string[];
+  skills: string[];
+}
+
+export const getProjectFilters = () =>
+  api.get<ProjectFilters>('/v1/projects/filters');
+
+export const applyToPosition = (projectId: number, positionId: number, appealContent?: string) =>
+  api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`, appealContent ? { appealContent } : undefined);
 
 /* ── 내 프로젝트 ── */
 

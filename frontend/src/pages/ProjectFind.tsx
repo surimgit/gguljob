@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProjectCard from '../components/feature/project/ProjectCard';
-import type { Project } from '../components/feature/project/ProjectCard';
+import type { ProjectCardDto } from '../types/project';
 import ProjectFilter from '../components/feature/project/ProjectFilter';
 import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel';
 import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
-import { mockProjects } from '../mocks/mockProjects';
+import { useProjects, useRecommendedProjects, useProjectFilters } from '../hooks/useProjects';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -14,10 +14,41 @@ const ProjectFind = () => {
   const [domainFilter, setDomainFilter] = useState('전체');
   const [positionFilter, setPositionFilter] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectCardDto | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
 
+  // 디바운스된 검색어
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // 필터 변경 시 페이지 초기화
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, techFilter, domainFilter, positionFilter]);
+
+  // API 쿼리 파라미터 구성
+  const params = {
+    page: currentPage - 1,
+    size: ITEMS_PER_PAGE,
+    ...(debouncedSearch && { keyword: debouncedSearch }),
+    ...(domainFilter !== '전체' && { domain: domainFilter }),
+    ...(techFilter !== '전체' && { skill: techFilter }),
+    ...(positionFilter !== '전체' && { position: positionFilter === 'FE 모집중' ? 'FE' : 'BE' }),
+  };
+
+  const { data: pageData, isLoading, isError } = useProjects(params);
+  const { data: recommendedProjects } = useRecommendedProjects();
+  const { data: filters } = useProjectFilters();
+
+  const projects = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
+  const totalElements = pageData?.totalElements ?? 0;
+
+  // 히어로 패럴렉스
   useEffect(() => {
     const handleScroll = () => {
       if (!heroRef.current) return;
@@ -28,36 +59,6 @@ const ProjectFind = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const filteredProjects = useMemo(() => {
-    return mockProjects.filter((project) => {
-      const matchSearch =
-        searchQuery === '' || project.title.includes(searchQuery);
-      const matchTech =
-        techFilter === '전체' || project.techStack.includes(techFilter);
-      const matchDomain =
-        domainFilter === '전체' || project.category === domainFilter;
-      const matchPosition =
-        positionFilter === '전체' ||
-        (positionFilter === 'FE 모집중' &&
-          project.slots.fe.current < project.slots.fe.total) ||
-        (positionFilter === 'BE 모집중' &&
-          project.slots.be.current < project.slots.be.total);
-
-      return matchSearch && matchTech && matchDomain && matchPosition;
-    });
-  }, [searchQuery, techFilter, domainFilter, positionFilter]);
-
-  // 필터 변경 시 페이지 초기화
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, techFilter, domainFilter, positionFilter]);
-
-  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
@@ -71,10 +72,12 @@ const ProjectFind = () => {
     return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
   };
 
+  const carouselProjects = recommendedProjects ?? [];
+
   return (
     <div className="bg-[#f7f8fa] min-h-screen -mt-8">
 
-      {/* Hero 섹션 - full width */}
+      {/* Hero 섹션 */}
       <section
         ref={heroRef}
         className="pt-[64px] pb-[48px] text-center overflow-hidden"
@@ -95,13 +98,15 @@ const ProjectFind = () => {
           다양한 프로젝트를 살펴보세요.
         </p>
 
-        <div className="flex flex-col gap-[16px]">
-          <AutoScrollCarousel direction="left" cards={mockProjects} onCardClick={setSelectedProject} />
-          <AutoScrollCarousel direction="right" cards={mockProjects} onCardClick={setSelectedProject} />
-        </div>
+        {carouselProjects.length > 0 && (
+          <div className="flex flex-col gap-[16px]">
+            <AutoScrollCarousel direction="left" cards={carouselProjects} onCardClick={setSelectedProject} />
+            <AutoScrollCarousel direction="right" cards={carouselProjects} onCardClick={setSelectedProject} />
+          </div>
+        )}
       </section>
 
-      <div className="max-w-[1084px] mx-auto pt-[48px]">
+      <div className="max-w-[1400px] mx-auto px-3 pt-[48px]">
 
         {/* 필터 */}
         <ProjectFilter
@@ -113,24 +118,42 @@ const ProjectFind = () => {
           onTechChange={setTechFilter}
           onDomainChange={setDomainFilter}
           onPositionChange={setPositionFilter}
+          techOptions={filters?.skills}
+          domainOptions={filters?.domains}
         />
 
         {/* 결과 카운트 */}
         <p className="font-bold text-[#8a8073] text-[13px] mt-[32px] mb-[24px]">
-          총 <span className="font-black text-[#2d2a24]">{filteredProjects.length}</span>개 프로젝트
+          총 <span className="font-black text-[#2d2a24]">{totalElements}</span>개 프로젝트
         </p>
 
+        {/* 로딩 */}
+        {isLoading && (
+          <p className="text-center text-[#8a8073] text-sm py-20">프로젝트를 불러오는 중...</p>
+        )}
+
+        {/* 에러 */}
+        {isError && (
+          <p className="text-center text-red-500 text-sm py-20">프로젝트를 불러오지 못했습니다.</p>
+        )}
+
+        {/* 빈 상태 */}
+        {!isLoading && !isError && projects.length === 0 && (
+          <p className="text-center text-[#8a8073] text-sm py-20">검색 결과가 없습니다.</p>
+        )}
+
         {/* 카드 그리드 */}
-        <div ref={gridRef} className="grid grid-cols-3 gap-x-[16px] gap-y-[16px]">
-          {paginatedProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} onClick={setSelectedProject} />
-          ))}
-        </div>
+        {!isLoading && !isError && projects.length > 0 && (
+          <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-[16px] gap-y-[16px]">
+            {projects.map((project) => (
+              <ProjectCard key={project.projectId} project={project} onClick={setSelectedProject} />
+            ))}
+          </div>
+        )}
 
         {/* 페이지네이션 */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-[8px] py-[56px]">
-            {/* 이전 */}
             <button
               onClick={() => goToPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
@@ -141,7 +164,6 @@ const ProjectFind = () => {
               </svg>
             </button>
 
-            {/* 페이지 번호 */}
             {getPageNumbers().map((page, idx) =>
               page === '...'
                 ? (
@@ -165,7 +187,6 @@ const ProjectFind = () => {
                 )
             )}
 
-            {/* 다음 */}
             <button
               onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
@@ -184,10 +205,7 @@ const ProjectFind = () => {
         <ProjectApplyModal
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
-          onApply={(p, pos, intro) => {
-            console.log('지원:', p.title, pos, intro);
-            setSelectedProject(null);
-          }}
+          onApplied={() => setSelectedProject(null)}
         />
       )}
     </div>

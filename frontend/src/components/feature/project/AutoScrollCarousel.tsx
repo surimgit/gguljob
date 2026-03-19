@@ -1,10 +1,10 @@
-import type { Project } from './ProjectCard';
+import type { ProjectCardDto } from '../../../types/project';
 import ProjectCarouselCard from './ProjectCarouselCard';
 
 interface AutoScrollCarouselProps {
   direction: 'left' | 'right';
-  cards: Project[];
-  onCardClick?: (project: Project) => void;
+  cards: ProjectCardDto[];
+  onCardClick?: (project: ProjectCardDto) => void;
 }
 
 const AutoScrollCarousel = ({ direction, cards, onCardClick }: AutoScrollCarouselProps) => {
@@ -19,7 +19,7 @@ const AutoScrollCarousel = ({ direction, cards, onCardClick }: AutoScrollCarouse
         style={{ display: 'flex', gap: '16px', width: 'max-content' }}
       >
         {duplicated.map((project, index) => (
-          <ProjectCarouselCard key={`${project.id}-${index}`} project={project} onClick={onCardClick} />
+          <ProjectCarouselCard key={`${project.projectId}-${index}`} project={project} onClick={onCardClick} />
         ))}
       </div>
     </div>

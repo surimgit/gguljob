@@ -1,42 +1,37 @@
-/* ── 기존 (프로젝트 찾기 페이지용) ── */
+/* ── 프로젝트 찾기 페이지 (GET /projects/list) ── */
 
-export type ProjectStatus = 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED';
+export type ProjectDomain =
+  | '웹기술' | '웹디자인' | '모바일' | 'AIoT' | '인공지능'
+  | '빅데이터' | '블록체인' | '자율주행' | '핀테크' | '메타버스';
 
-export interface Project {
-  id: number;
-  title: string;
-  description: string;
-  techStacks: string[];
-  status: ProjectStatus;
-  teamSize: number;
-  currentMembers: number;
-  createdAt: string;
-}
-
-export interface ProjectDetail extends Project {
-  members: ProjectMember[];
-  positions: Position[];
-}
-
-export interface ProjectMember {
-  userId: number;
-  name: string;
-  profileImage: string | null;
+export interface ProjectPositionDto {
   role: string;
+  currentCount: number;
+  targetCount: number;
 }
 
-export interface Position {
-  id: number;
+export interface ProjectCardDto {
+  projectId: number;
+  domain: ProjectDomain;
+  status: BackendProjectStatus;
   title: string;
   description: string;
-  isOpen: boolean;
+  skills: string[];
+  positions: ProjectPositionDto[];
+  leaderName: string;
+  leaderProfileImageUrl: string | null;
+  score: number;
 }
 
-export interface ProjectQueryParams {
+export interface ProjectListParams {
   page?: number;
   size?: number;
-  techStack?: string;
-  status?: string;
+  keyword?: string;
+  domain?: string;
+  skill?: string;
+  position?: string;
+  sort?: string;
+  excludeTop?: boolean;
 }
 
 /* ── 백엔드 API 연동 타입 ── */

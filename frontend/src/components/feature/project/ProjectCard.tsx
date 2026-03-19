@@ -1,28 +1,11 @@
 import { useState } from 'react';
+import type { ProjectCardDto, BackendProjectStatus, ProjectDomain } from '../../../types/project';
 
-export type ProjectStatus = '모집중' | '마감' | `마감 D-${number}`;
-
-export interface Project {
-  id: number;
-  category: string;
-  status: ProjectStatus;
-  title: string;
-  description: string;
-  techStack: string[];
-  slots: {
-    fe: { current: number; total: number };
-    be: { current: number; total: number };
-  };
-  author: {
-    initial: string;
-    name: string;
-    avatarColor?: string;
-  };
-}
+export type { ProjectCardDto };
 
 export interface ProjectCardProps {
-  project: Project;
-  onClick?: (project: Project) => void;
+  project: ProjectCardDto;
+  onClick?: (project: ProjectCardDto) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -38,30 +21,42 @@ const CATEGORY_COLORS: Record<string, string> = {
   메타버스: '#a855f7',
 };
 
-const getCategoryColor = (category: string) =>
-  CATEGORY_COLORS[category] ?? '#6b7280';
+const AVATAR_COLORS = ['#6366f1', '#3b82f6', '#f97316', '#8b5cf6', '#14b8a6', '#ec4899', '#22c55e', '#f59e0b', '#06b6d4', '#a855f7'];
 
-function getStatusStyle(status: ProjectStatus) {
-  if (status === '모집중') return { dot: '#43b581', text: '#22c55e' };
-  if (status === '마감') return { dot: '#9ca3af', text: '#9ca3af' };
+const STATUS_LABEL: Record<BackendProjectStatus, string> = {
+  RECRUITING: '모집중',
+  PROCEEDING: '진행중',
+  DONE: '마감',
+};
+
+function getStatusStyle(status: BackendProjectStatus) {
+  if (status === 'RECRUITING') return { dot: '#43b581', text: '#22c55e' };
+  if (status === 'DONE') return { dot: '#9ca3af', text: '#9ca3af' };
   return { dot: '#f59e0b', text: '#f59e0b' };
+}
+
+function getPositionSlot(positions: ProjectCardDto['positions'], role: string) {
+  const pos = positions.find((p) => p.role === role);
+  return { current: pos?.currentCount ?? 0, total: pos?.targetCount ?? 0 };
 }
 
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const [hovered, setHovered] = useState(false);
-  const { category, status, title, description, techStack, slots, author } =
-    project;
+  const { domain, status, title, description, skills, positions, leaderName, projectId } = project;
 
-  const categoryColor = getCategoryColor(category);
+  const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
   const statusStyle = getStatusStyle(status);
-  const avatarColor = author.avatarColor ?? '#43b581';
+  const avatarColor = AVATAR_COLORS[projectId % AVATAR_COLORS.length];
 
-  const visibleTech = techStack.slice(0, 3);
-  const extraCount = techStack.length - visibleTech.length;
+  const fe = getPositionSlot(positions, 'FE');
+  const be = getPositionSlot(positions, 'BE');
+
+  const visibleTech = skills.slice(0, 3);
+  const extraCount = skills.length - visibleTech.length;
 
   const bgColor = hovered
     ? '#FFF2C6'
-    : status === '마감'
+    : status === 'DONE'
     ? '#EDEBE6'
     : '#ffffff';
 
@@ -79,7 +74,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
           className="font-bold text-[12px] leading-[18px]"
           style={{ color: categoryColor }}
         >
-          {category}
+          {domain}
         </p>
         <div className="flex items-center gap-[5px]">
           <div
@@ -90,7 +85,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
             className="font-bold text-[12px] leading-[18px]"
             style={{ color: statusStyle.text }}
           >
-            {status}
+            {STATUS_LABEL[status]}
           </p>
         </div>
       </div>
@@ -125,27 +120,25 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       {/* 하단: 포지션 슬롯 + 작성자 */}
       <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
         <div className="flex gap-[12px]">
-          <p className="font-bold text-[#2196f3] text-[12px]">
-            FE{' '}
-            <span className="font-black">
-              {slots.fe.current}/{slots.fe.total}
-            </span>
-          </p>
-          <p className="font-bold text-[#22c55e] text-[12px]">
-            BE{' '}
-            <span className="font-black">
-              {slots.be.current}/{slots.be.total}
-            </span>
-          </p>
+          {fe.total > 0 && (
+            <p className="font-bold text-[#2196f3] text-[12px]">
+              FE <span className="font-black">{fe.current}/{fe.total}</span>
+            </p>
+          )}
+          {be.total > 0 && (
+            <p className="font-bold text-[#22c55e] text-[12px]">
+              BE <span className="font-black">{be.current}/{be.total}</span>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-[8px]">
           <div
             className="rounded-full size-[24px] flex items-center justify-center"
             style={{ backgroundColor: avatarColor }}
           >
-            <p className="font-bold text-white text-[11px]">{author.initial}</p>
+            <p className="font-bold text-white text-[11px]">{leaderName?.[0] ?? '?'}</p>
           </div>
-          <p className="font-bold text-[#8a8073] text-[12px]">{author.name}</p>
+          <p className="font-bold text-[#8a8073] text-[12px]">{leaderName}</p>
         </div>
       </div>
     </a>

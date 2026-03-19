@@ -9,19 +9,12 @@ export interface ProjectFilterProps {
   onTechChange: (value: string) => void;
   onDomainChange: (value: string) => void;
   onPositionChange: (value: string) => void;
+  techOptions?: string[];
+  domainOptions?: string[];
 }
 
-const TECH_OPTIONS = [
-  '전체', 'React', 'TypeScript', 'Spring Boot',
-  'Python', 'Node.js', 'Vue.js', 'Next.js', 'Neo4j',
-];
-
-const DOMAIN_OPTIONS = [
-  '전체', '웹기술', '웹디자인', '모바일',
-  'AIoT', '인공지능', '빅데이터', '블록체인',
-  '자율주행', '핀테크', '메타버스',
-];
-
+const DEFAULT_TECH_OPTIONS = ['전체', 'React', 'TypeScript', 'Spring Boot', 'Python', 'Node.js', 'Vue.js', 'Next.js'];
+const DEFAULT_DOMAIN_OPTIONS = ['전체', '웹기술', '웹디자인', '모바일', 'AIoT', '인공지능', '빅데이터', '블록체인', '자율주행', '핀테크', '메타버스'];
 const POSITION_OPTIONS = ['전체', 'FE 모집중', 'BE 모집중'];
 
 interface FilterRowProps {
@@ -70,7 +63,12 @@ export default function ProjectFilter({
   onTechChange,
   onDomainChange,
   onPositionChange,
+  techOptions,
+  domainOptions,
 }: ProjectFilterProps) {
+  const techs = techOptions ? ['전체', ...techOptions] : DEFAULT_TECH_OPTIONS;
+  const domains = domainOptions ? ['전체', ...domainOptions] : DEFAULT_DOMAIN_OPTIONS;
+
   return (
     <div className="flex flex-col gap-[24px]">
 
@@ -91,7 +89,7 @@ export default function ProjectFilter({
 
         <FilterRow
           label="기술스택"
-          options={TECH_OPTIONS}
+          options={techs}
           selected={techFilter}
           onChange={onTechChange}
         />
@@ -100,7 +98,7 @@ export default function ProjectFilter({
 
         <FilterRow
           label="도메인"
-          options={DOMAIN_OPTIONS}
+          options={domains}
           selected={domainFilter}
           onChange={onDomainChange}
         />
