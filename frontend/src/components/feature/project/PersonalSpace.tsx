@@ -453,10 +453,8 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
           {/* 챗봇 캐릭터 버튼 */}
           <button
             onClick={() => {
-              setChatbotOpen(prev => {
-                if (!prev) chatTrouble().catch(err => console.error('챗봇 호출 실패:', err));
-                return !prev;
-              });
+              if (!chatbotOpen) chatTrouble().catch(err => console.error('챗봇 호출 실패:', err));
+              setChatbotOpen(prev => !prev);
             }}
             className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
           >
