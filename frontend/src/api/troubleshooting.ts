@@ -8,3 +8,6 @@ export const updateTroubleshooting = (
   data: { title: string; situation: string; solution: string; codeSnippet: string }
 ) =>
   api.put(`/v1/troubleshooting/${troubleshootingId}`, data);
+
+export const chatTrouble = () =>
+  api.post('/v1/ai/chat/trouble');
