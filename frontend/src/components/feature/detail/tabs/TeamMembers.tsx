@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Trash2,
   ChevronDown,
@@ -10,7 +11,7 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
 
 /* ── 타입 ── */
@@ -759,6 +760,7 @@ const TeamManagement = ({
   onAccept,
   onReject,
 }: TeamManagementProps) => {
+  const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
   const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
@@ -1537,7 +1539,17 @@ const TeamManagement = ({
                 취소
               </button>
               <button
-                onClick={() => setShowLeaveModal(false)}
+                onClick={() => {
+                  if (!projectId) return;
+                  leaveProject(projectId)
+                    .then(() => {
+                      setShowLeaveModal(false);
+                      navigate('/projects');
+                    })
+                    .catch(() => {
+                      alert('팀 나가기에 실패했습니다. 다시 시도해주세요.');
+                    });
+                }}
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
               >
                 나가기
