@@ -13,6 +13,7 @@ import {
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
 import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
+import UserProfileModal from "../../mypage/UserProfileModal";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -774,6 +775,7 @@ const TeamManagement = ({
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
   const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
 
@@ -1625,6 +1627,14 @@ const TeamManagement = ({
             </div>
           </div>
         </div>
+      )}
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen={true}
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
       )}
     </div>
   );
