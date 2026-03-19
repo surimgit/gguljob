@@ -447,7 +447,7 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
 
           {/* 챗봇 팝업 */}
           {chatbotOpen && (
-            <div ref={chatbotRef} className="fixed bottom-15 right-44 w-[440px] h-[520px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col" style={{ background: '#f5f7ff' }}>
+            <div ref={chatbotRef} className={`fixed bottom-15 right-44 w-[450px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col ${generating ? 'h-[420px]' : ''}`} style={{ background: '#f5f7ff' }}>
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#c7d2fe]" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
                 <div className="flex items-center gap-2">
@@ -483,7 +483,7 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                   </div>
                 </div>
               ) : (
-                <div className="px-6 pt-7 pb-6 flex-1 flex flex-col gap-5">
+                <div className="px-6 pt-7 pb-6 flex flex-col gap-5">
                   <div className="flex items-start gap-0.5">
                     <div className="w-20 h-14 overflow-hidden flex-shrink-0">
                       <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
@@ -496,39 +496,53 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
-                    <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
-                      {mrList.map((mr) => (
-                        <label
-                          key={mr.id}
-                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border ${
-                            selectedMrId === mr.id
-                              ? 'bg-[#eef2ff] border-[#c7d2fe]'
-                              : 'bg-white border-border hover:bg-[#f9fafb]'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="mr-select"
-                            checked={selectedMrId === mr.id}
-                            onChange={() => setSelectedMrId(mr.id)}
-                            className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
-                          />
-                          <span className="text-sm text-text-secondary truncate">{mr.title}</span>
-                        </label>
-                      ))}
+                  {mrList.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
+                      <div className="flex flex-col gap-1.5 overflow-y-auto" style={{ maxHeight: Math.min(mrList.length, 4) * 46 }}>
+                        {mrList.map((mr) => (
+                          <label
+                            key={mr.id}
+                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border flex-shrink-0 ${
+                              selectedMrId === mr.id
+                                ? 'bg-[#eef2ff] border-[#c7d2fe]'
+                                : 'bg-white border-border hover:bg-[#f9fafb]'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="mr-select"
+                              checked={selectedMrId === mr.id}
+                              onChange={() => setSelectedMrId(mr.id)}
+                              className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
+                            />
+                            <span className="text-sm text-text-secondary truncate">{mr.title}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <button
-                    onClick={() => setGenerating(true)}
-                    className="w-full py-4 mt-2 rounded-xl text-sm font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 border-0 outline-none"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    트러블슈팅 자동 생성하기
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="트러블슈팅으로 생성할 MR을 선택하세요"
+                      readOnly
+                      value={selectedMrId ? mrList.find(mr => mr.id === selectedMrId)?.title ?? '' : ''}
+                      className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors truncate"
+                    />
+                    <button
+                      onClick={() => setGenerating(true)}
+                      disabled={mrList.length > 0 && selectedMrId === null}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity hover:opacity-90 border-0 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
