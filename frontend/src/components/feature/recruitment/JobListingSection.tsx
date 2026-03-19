@@ -32,7 +32,7 @@ const DEFAULT_TECH_STACKS = [
   'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
 ];
 
-const SORT_OPTIONS = ['매칭순', '마감순', '연봉순'];
+const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
   suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
@@ -51,7 +51,7 @@ const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
     if (!b.deadline) return -1;
     return a.deadline.localeCompare(b.deadline);
   });
-  if (sort === '연봉순') return copy.sort((a, b) => b.salaryMax - a.salaryMax);
+
   return copy;
 };
 
