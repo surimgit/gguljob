@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { BaseModal } from '../../common';
 import { getMyProjects, inviteUser } from '../../../api/projects';
 import type { ProjectSimple } from '../../../types/project';
@@ -11,7 +13,14 @@ interface TeamInviteModalProps {
   userId: number;
 }
 
-const JOB_OPTIONS = ['프론트엔드', '백엔드', '인프라/DevOps', '데이터/AI', '기획/PM', '디자인'];
+const JOB_OPTIONS: { label: string; role: string }[] = [
+  { label: '프론트엔드', role: 'FE' },
+  { label: '백엔드', role: 'BE' },
+  { label: '인프라/DevOps', role: 'INFRA' },
+  { label: '데이터/AI', role: 'AI' },
+  { label: '기획/PM', role: 'PM' },
+  { label: '디자인', role: 'DESIGN' },
+];
 
 const MAX_MESSAGE_LENGTH = 200;
 
@@ -30,11 +39,19 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
   const handleSubmit = async () => {
     if (!selectedProject) return;
     try {
-      await inviteUser(Number(selectedProject), userId);
-    } catch {
-      // 에러 무시 (이미 초대됐거나 서버 오류)
+      await inviteUser(Number(selectedProject), userId, {
+        role: selectedJob,
+        appealContent: message || undefined,
+      });
+      toast.success(`${memberName}님에게 초대를 보냈습니다.`);
+      onClose();
+    } catch (err: unknown) {
+      if (isAxiosError(err) && err.response?.status === 409) {
+        toast.error('이미 초대된 사용자입니다.');
+      } else {
+        toast.error('초대에 실패했습니다. 다시 시도해주세요.');
+      }
     }
-    onClose();
   };
 
   const handleClose = () => {
@@ -96,16 +113,16 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
           <div className="flex flex-wrap gap-2">
             {JOB_OPTIONS.map((job) => (
               <button
-                key={job}
+                key={job.role}
                 type="button"
-                onClick={() => setSelectedJob(selectedJob === job ? '' : job)}
+                onClick={() => setSelectedJob(selectedJob === job.role ? '' : job.role)}
                 className={`px-4 py-2 rounded-full border-2 text-sm font-semibold transition-colors ${
-                  selectedJob === job
+                  selectedJob === job.role
                     ? 'border-primary-hover bg-primary-soft text-primary-hover'
                     : 'border-border bg-white text-text-secondary hover:border-primary hover:bg-primary-soft'
                 }`}
               >
-                {job}
+                {job.label}
               </button>
             ))}
           </div>
