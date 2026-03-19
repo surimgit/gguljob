@@ -60,3 +60,7 @@ export const uploadProfileImageApi = (file: File) => {
 export const logoutApi = () => api.post('/v1/auth/logout');
 
 export const withdrawApi = () => api.delete('/v1/user/withdraw');
+
+/** GET /v1/user/users → 사용자 전체 목록 조회 (페이지네이션) */
+export const getUsers = (params?: { page?: number; size?: number; sort?: string }) =>
+  api.get('/v1/user/users', { params });
