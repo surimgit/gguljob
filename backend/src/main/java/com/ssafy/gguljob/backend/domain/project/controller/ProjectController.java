@@ -170,13 +170,10 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "프로젝트 검색 필터 옵션 조회", description = "프로젝트 검색 시 필요한 기술스택, 도메인, 포지션 필터 목록을 제공합니다.")
+    @Operation(summary = "프로젝트 검색 필터 옵션 조회", description = "프로젝트 검색 시 필요한 기술스택, 도메인, 포지션 필터 목록을 제공합니다. 실제 필터링된 검색 결과는 /list API에 파라미터를 넘겨서 조회하세요")
     @GetMapping("/filters")
     public ResponseEntity<?> getProjectFilters() {
-
-        // TODO: 기술스택, 도메인, 포지션 필터 목록을 반환하는 로직 (Enum이나 DB에서 꺼내오기)
-        // return ResponseEntity.ok(projectService.getFilters());
-        return ResponseEntity.ok().build(); // 임시 리턴
+        return ResponseEntity.ok(projectService.getProjectFilters());
     }
 
     @Operation(summary = "메인 상단 표시 프로젝트 조회", description = "프로젝트 찾기 페이지 상단에 노출되는 프로젝트 목록을 최신순으로 조회합니다.")
@@ -188,10 +185,21 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getTopProjects(userId));
     }
 
-    @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트 목록을 사용자와의 매칭 스코어(추천순) 기반으로 페이징하여 조회합니다.")
+    @Operation(summary = "프로젝트 목록 조회 (추천순)", description = "현재 모집 중인 프로젝트를 조회합니다.<br>" +
+        "- 검색어(제목), 도메인, 포지션, 기술스택 필터를 URL 파라미터로 넘기면 해당 조건에 맞게 필터링됩니다.<br>" +
+        "- 필터 조건에 맞는 프로젝트 중, 사용자와의 매칭 스코어가 높은 순(추천순)으로 정렬되어 반환됩니다.")
     @GetMapping("/list")
     public ResponseEntity<Page<ProjectCardDto>> getProjectList(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
+        @Parameter(description = "검색어 (제목 기준)", example = "감자")
+        @RequestParam(required = false) String keyword,
+        @Parameter(description = "도메인 필터", example = "IT")
+        @RequestParam(required = false) String domain,
+        @Parameter(description = "포지션(직무) 필터", example = "BACKEND")
+        @RequestParam(required = false) String role,
+        @Parameter(description = "기술 스택 ID 리스트", example = "1,2,3")
+        @RequestParam(required = false) List<Long> skillIds,
 
         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
         @RequestParam(defaultValue = "0") int page,
@@ -202,7 +210,8 @@ public class ProjectController {
         Pageable pageable = PageRequest.of(page, size);
 
         Long userId = (userDetails != null) ? userDetails.getId() : null;
-        Page<ProjectCardDto> result = matchingService.getRecommendedProjects(userId, pageable);
+
+        Page<ProjectCardDto> result = matchingService.getRecommendedProjects(userId, keyword, domain, role, skillIds, pageable);
 
         return ResponseEntity.ok(result);
     }

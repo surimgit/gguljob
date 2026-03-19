@@ -9,6 +9,7 @@ import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
 import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.CurrentMemberDto;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
+import com.ssafy.gguljob.backend.domain.project.dto.ProjectFilterResponseDto;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectRequest.ProjectUpdateRequest;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
@@ -401,5 +402,32 @@ public class ProjectService {
             .map(p -> cardMap.get(p.getId()))
             .filter(java.util.Objects::nonNull)
             .toList();
+    }
+
+    public ProjectFilterResponseDto getProjectFilters() {
+
+        // 도메인
+        List<ProjectFilterResponseDto.FilterOptionDto> domains = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.project.type.Domain.values())
+            .map(domain -> new ProjectFilterResponseDto.FilterOptionDto(domain.name(), domain.getDescription()))
+            .toList();
+
+        // 직무
+        List<ProjectFilterResponseDto.FilterOptionDto> roles = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.project.type.Role.values())
+            .map(role -> new ProjectFilterResponseDto.FilterOptionDto(role.name(), role.getDescription()))
+            .toList();
+
+        List<ProjectFilterResponseDto.SkillCategoryDto> skillCategories = skillRepository.findAll().stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                skill -> skill.getCategory().name(),
+                java.util.stream.Collectors.mapping(
+                    skill -> new ProjectFilterResponseDto.SkillDto(skill.getId(), skill.getName()),
+                    java.util.stream.Collectors.toList()
+                )
+            ))
+            .entrySet().stream()
+            .map(entry -> new ProjectFilterResponseDto.SkillCategoryDto(entry.getKey(), entry.getValue()))
+            .toList();
+
+        return new ProjectFilterResponseDto(domains, roles, skillCategories);
     }
 }
