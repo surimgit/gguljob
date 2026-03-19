@@ -34,7 +34,7 @@ public class MatchingService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
-    public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, Pageable pageable) {
+    public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
@@ -53,6 +53,10 @@ public class MatchingService {
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
             String.valueOf(userId),
             joinedProjectIds,
+            keyword,
+            domain,
+            role,
+            skillIds,
             unsortedPageable
         );
 

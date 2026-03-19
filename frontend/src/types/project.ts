@@ -74,6 +74,44 @@ export interface CreateProjectResponse {
   projectId: number;
 }
 
+// GET /projects/{id}/edit 응답
+export type BackendProjectEditStatus = 'RECRUITING' | 'PROCEEDING' | 'DONE' | 'STOPPED';
+
+export interface ProjectEditMember {
+  userId: number;
+  userName: string;
+  role: string;
+}
+
+export interface ProjectEditForm {
+  status: BackendProjectEditStatus;
+  title: string;
+  teamName: string;
+  description: string;
+  domain: string;
+  skillIds: number[];
+  members: ProjectEditMember[];
+}
+
+// PATCH /projects/{id} 요청
+export interface ProjectUpdateRequest {
+  status: string;
+  title: string;
+  teamName?: string;
+  description?: string;
+  domain?: string;
+  skillIds: number[];
+  members: { userId: number; role: string }[];
+}
+
+// PATCH /projects/{id} 응답
+export interface ProjectUpdateResponse {
+  projectId: number;
+  teamName: string;
+  title: string;
+  status: string;
+}
+
 // PUT /projects/{id}/git-repo 요청
 export interface RegisterGitRepoRequest {
   repoUrl: string;

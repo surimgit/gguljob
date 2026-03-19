@@ -17,7 +17,6 @@ interface JobListing {
   experience: string;
   employmentType: string;
   salary: string;
-  salaryMax: number;
   deadline: string;
   match: MatchType;
   techStacks: string[];
@@ -32,7 +31,7 @@ const DEFAULT_TECH_STACKS = [
   'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
 ];
 
-const SORT_OPTIONS = ['매칭순', '마감순', '연봉순'];
+const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
   suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
@@ -46,8 +45,12 @@ const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insuffi
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
   const copy = [...jobs];
   if (sort === '매칭순') return copy.sort((a, b) => MATCH_RANK[b.match] - MATCH_RANK[a.match]);
-  if (sort === '마감순') return copy.sort((a, b) => a.deadline.localeCompare(b.deadline));
-  if (sort === '연봉순') return copy.sort((a, b) => b.salaryMax - a.salaryMax);
+  if (sort === '마감순') return copy.sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
+
   return copy;
 };
 
@@ -64,8 +67,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   experience: item.experience,
   employmentType: item.contractType,
   salary: item.salary,
-  salaryMax: 0,
-  deadline: item.deadline,
+  deadline: item.deadline ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: [],
 });
@@ -300,7 +302,7 @@ const JobListingSection = () => {
   };
 
   return (
-    <div className="bg-background" style={{ width: '1103px', margin: '0 auto' }}>
+    <div className="bg-background max-w-[1400px] mx-auto px-3">
       {/* 섹션 제목 */}
       <div className="px-[42px] pt-8 pb-5">
         <h2 className="font-semibold text-[25px]">

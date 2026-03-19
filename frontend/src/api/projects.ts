@@ -6,6 +6,9 @@ import type {
   ProjectSimple,
   CreateProjectRequest,
   CreateProjectResponse,
+  ProjectEditForm,
+  ProjectUpdateRequest,
+  ProjectUpdateResponse,
   RegisterGitRepoRequest,
   TeamDashboard,
   TeamManagement,
@@ -21,8 +24,8 @@ export const getProjects = (params?: ProjectQueryParams) =>
 export const getProjectById = (id: number) =>
   api.get<ProjectDetail>(`/projects/${id}`);
 
-export const inviteUser = (projectId: number, userId: number) =>
-  api.post(`/v1/projects/${projectId}/invites/${userId}`);
+export const inviteUser = (projectId: number, userId: number, body: { role: string; appealContent?: string }) =>
+  api.post(`/v1/projects/${projectId}/invites/${userId}`, body);
 
 /* ── 내 프로젝트 ── */
 
@@ -51,6 +54,12 @@ export const applyToPosition = (projectId: number, positionId: number, appealCon
   api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`, appealContent ? { appealContent } : undefined);
 
 /* ── 프로젝트 설정 ── */
+
+export const getProjectEditForm = (projectId: number) =>
+  api.get<{ data: ProjectEditForm }>(`/v1/projects/${projectId}/edit`);
+
+export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
+  api.patch<{ data: ProjectUpdateResponse }>(`/v1/projects/${projectId}`, data);
 
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);

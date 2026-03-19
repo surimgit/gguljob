@@ -866,7 +866,7 @@ const TeamManagement = ({
   return (
     <div className="flex flex-col gap-5">
       {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* ── 좌측: 팀원 모집 현황 ── */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -876,7 +876,7 @@ const TeamManagement = ({
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div className="flex items-center gap-3">
               <h3
                 className="text-base font-bold"
@@ -893,7 +893,7 @@ const TeamManagement = ({
             </div>
             <button
               onClick={() => setShowRecruitModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
               style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
               <UserPlus className="w-4 h-4" />
@@ -1118,7 +1118,7 @@ const TeamManagement = ({
       </div>
 
       {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* 좌측: 합류 신청 목록 */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -1156,7 +1156,7 @@ const TeamManagement = ({
             return (
               <div
                 key={app.id}
-                className="flex items-center gap-4 px-4 py-3.5 rounded-xl"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 py-3.5 rounded-xl"
                 style={{
                   background: "#fafafa",
                   border: "1px solid var(--color-border)",

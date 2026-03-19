@@ -156,4 +156,10 @@ public class UserController {
         UserResponse.UserPageResponse response = userService.getUsers(pageable);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "팀원(유저) 검색 필터 옵션(메뉴판) 조회", description = "팀원 찾기 페이지의 포지션 및 숙련도 필터 목록(value, label)을 제공합니다.")
+    @GetMapping("/filters")
+    public ResponseEntity<com.ssafy.gguljob.backend.domain.user.dto.MemberFilterResponseDto> getMemberFilters() {
+        return ResponseEntity.ok(userService.getMemberFilters());
+    }
 }

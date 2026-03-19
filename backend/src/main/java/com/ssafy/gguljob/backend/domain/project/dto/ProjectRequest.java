@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.project.dto;
 
+import com.ssafy.gguljob.backend.domain.project.type.Domain;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +13,7 @@ public class ProjectRequest {
         @NotBlank(message = "프로젝트 제목은 필수입니다.")
         String title,
         String teamName,
-        String domain,
+        Domain domain,
         String description,
         Boolean isPublic,
         String imageUrl,
@@ -44,7 +45,7 @@ public class ProjectRequest {
 
         String teamName,
         String description,
-        String domain,
+        Domain domain,
 
         @NotNull
         List<Long> skillIds,
@@ -56,5 +57,9 @@ public class ProjectRequest {
     public record MemberDto(
         @NotNull Long userId,
         @NotNull(message = "역할은 필수입니다.") PositionType role
+    ) {}
+
+    public record ApplyTopicRequest(
+        String selectedTopic
     ) {}
 }
