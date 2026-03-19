@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { UserPlus, Loader2, RotateCw } from 'lucide-react';
 import ProfileModalLayout from './ProfileModalLayout';
 import type { ProfileUser, ProfileProject } from './ProfileModalLayout';
 import { getUserProfile } from '../../../api/user';
@@ -41,28 +41,27 @@ const UserProfileModal = ({ isOpen, onClose, userId }: UserProfileModalProps) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchUser = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await getUserProfile(userId);
+      setUser(toProfileUser(data.data));
+    } catch {
+      setError('프로필을 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (!isOpen) {
       setUser(null);
       setError(null);
       return;
     }
-
-    const fetchUser = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data } = await getUserProfile(userId);
-        setUser(toProfileUser(data.data));
-      } catch {
-        setError('프로필을 불러올 수 없습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUser();
-  }, [isOpen, userId]);
+  }, [isOpen, fetchUser]);
 
   if (!isOpen) return null;
 
@@ -80,14 +79,23 @@ const UserProfileModal = ({ isOpen, onClose, userId }: UserProfileModalProps) =>
   if (error || !user) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-3xl p-12 flex flex-col items-center gap-3">
+        <div className="bg-white rounded-3xl p-12 flex flex-col items-center gap-4">
           <p className="text-sm text-text-secondary">{error ?? '프로필을 불러올 수 없습니다.'}</p>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-primary text-text-primary text-sm font-semibold hover:bg-primary-hover transition-colors"
-          >
-            닫기
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchUser}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-text-primary text-sm font-semibold hover:bg-primary-hover transition-colors"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              재시도
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-border bg-white text-text-secondary text-sm font-semibold hover:bg-[#f9fafb] transition-colors"
+            >
+              닫기
+            </button>
+          </div>
         </div>
       </div>
     );
