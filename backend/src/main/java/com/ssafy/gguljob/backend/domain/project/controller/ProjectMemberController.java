@@ -87,4 +87,18 @@ public class ProjectMemberController {
             projectMemberService.updateTargetCount(projectId, positionId, userDetails.getId(), request);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "팀장 위임", description = "현재 팀장이 특정 팀원에게 팀장 권한을 위임하는 API")
+    @PatchMapping("/members/{targetUserId}/delegate")
+    public ResponseEntity<ProjectMemberResponse.DelegateResponse> delegateLeader(
+        @PathVariable("projectId") Long projectId,
+        @PathVariable("targetUserId") Long targetUserId,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        ProjectMemberResponse.DelegateResponse response =
+            projectMemberService.delegateLeader(projectId, userDetails.getId(), targetUserId);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

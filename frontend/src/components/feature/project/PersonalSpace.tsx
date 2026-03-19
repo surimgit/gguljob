@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import chatbotImg from '../../../assets/images/chatbot.png';
 import type { PersonalSpaceData } from '../../../types/project';
+import { generateTroubleshooting, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -212,7 +213,7 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
 
 const CIRCLE_COLORS = ['#E11D48', '#2563EB', '#16A34A', '#E8B931', '#9333EA', '#F97316', '#0EA5E9', '#6D28D9'];
 
-const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => {
+const TroubleshootingCard = ({ item, onSave }: { item: TroubleshootingItem; onSave?: (data: { title: string; situation: string; solution: string; codeSnippet: string }) => void }) => {
   const [editing, setEditing] = useState(false);
   const [problemDesc, setProblemDesc] = useState(item.problemDesc);
   const [solutionDesc, setSolutionDesc] = useState(item.solutionDesc);
@@ -290,7 +291,13 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingItem }) => {
             <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-secondary border border-border bg-surface hover:bg-background transition-colors">
               취소
             </button>
-            <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-primary bg-primary-hover hover:opacity-90 transition-opacity">
+            <button
+              onClick={() => {
+                onSave?.({ title: item.title, situation: problemDesc, solution: solutionDesc, codeSnippet });
+                setEditing(false);
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold text-text-primary bg-primary-hover hover:opacity-90 transition-opacity"
+            >
               저장
             </button>
           </>
@@ -398,7 +405,13 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
             ) : (
               <>
                 <div className="flex flex-col gap-5">
-                  {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => <TroubleshootingCard key={item.id} item={item} />)}
+                  {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => (
+                    <TroubleshootingCard
+                      key={item.id}
+                      item={item}
+                      onSave={(data) => updateTroubleshooting(item.id, data).catch(err => console.error('트러블슈팅 수정 실패:', err))}
+                    />
+                  ))}
                 </div>
 
                 {/* 페이지네이션 */}
@@ -439,7 +452,10 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
 
           {/* 챗봇 캐릭터 버튼 */}
           <button
-            onClick={() => setChatbotOpen(prev => !prev)}
+            onClick={() => {
+              if (!chatbotOpen) chatTrouble().catch(err => console.error('챗봇 호출 실패:', err));
+              setChatbotOpen(prev => !prev);
+            }}
             className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
           >
             <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
@@ -532,7 +548,16 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                       className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors truncate"
                     />
                     <button
-                      onClick={() => setGenerating(true)}
+                      onClick={async () => {
+                        if (!selectedMrId) return;
+                        setGenerating(true);
+                        try {
+                          await generateTroubleshooting(selectedMrId);
+                        } catch (err) {
+                          console.error('트러블슈팅 생성 실패:', err);
+                          setGenerating(false);
+                        }
+                      }}
                       disabled={mrList.length > 0 && selectedMrId === null}
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity hover:opacity-90 border-0 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
