@@ -97,7 +97,9 @@ public class User extends BaseTimeEntity {
 
     public void updateGithubProfile(String userName, String imageUrl) {
         this.userName = userName;
-        this.profileImageUrl = imageUrl;
+        if (this.profileImageUrl == null || this.profileImageUrl.contains("avatars.githubusercontent.com")) {
+            this.profileImageUrl = imageUrl;
+        }
     }
 
     public void updateOnboarding(String description, List<PositionType> roles,
