@@ -10,8 +10,6 @@ import {
   Cloud,
   Bot,
   Smartphone,
-  FileText,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
@@ -57,7 +55,6 @@ interface ProjectFormState {
   domains: string[];
   gitUrl: string;
   techStacks: Record<string, string[]>;
-  pdfFile: File | null;
   members: Member[];
 }
 
@@ -73,7 +70,6 @@ const CreateProject = () => {
     domains: [],
     gitUrl: '',
     techStacks: {},
-    pdfFile: null,
     members: [],
   });
 
@@ -329,58 +325,7 @@ const CreateProject = () => {
           </div>
         </section>
 
-        {/* ─── 섹션 3: AI 역할별 인원 분석 ─── */}
-        <section
-          className="rounded-2xl p-4 sm:p-6 shadow-sm"
-          style={{ backgroundColor: '#EDE9FE', border: '1px solid #C4B5FD' }}
-        >
-          <h2 className="flex items-center gap-2 text-base font-bold mb-1" style={{ color: '#7C3AED' }}>
-            🤖 AI 역할별 인원 분석
-          </h2>
-          <p className="text-xs mb-3" style={{ color: '#7C3AED' }}>
-            기획서를 업로드하면 AI가 필요한 역할과 인원을 분석해드려요
-          </p>
-
-          {/* PDF 업로드 */}
-          <label
-            className="border-2 border-dashed rounded-xl p-5 sm:p-8 flex flex-col items-center gap-2 cursor-pointer"
-            style={{ borderColor: '#C4B5FD', backgroundColor: 'var(--color-surface)' }}
-          >
-            <FileText className="w-10 h-10" style={{ color: 'var(--color-text-tertiary)' }} />
-            <span className="text-sm font-semibold" style={{ color: '#7C3AED' }}>
-              {form.pdfFile ? form.pdfFile.name : '기획서 PDF를 업로드하세요'}
-            </span>
-            <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-              PDF 파일만 지원 (최대 10MB)
-            </span>
-            <input
-              type="file"
-              accept=".pdf"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0] ?? null;
-                setForm((prev) => ({ ...prev, pdfFile: file }));
-              }}
-            />
-          </label>
-
-          {/* AI 분석 버튼 */}
-          <button
-            type="button"
-            disabled={!form.pdfFile}
-            className="w-full py-3 rounded-xl text-sm font-semibold mt-3 transition-colors flex items-center justify-center gap-2"
-            style={{
-              backgroundColor: form.pdfFile ? '#7C3AED' : 'var(--color-border)',
-              color: form.pdfFile ? 'white' : 'var(--color-text-tertiary)',
-              cursor: form.pdfFile ? 'pointer' : 'not-allowed',
-            }}
-          >
-            <Sparkles className="w-4 h-4" />
-            AI 분석하기
-          </button>
-        </section>
-
-        {/* ─── 섹션 4: 팀원 등록 ─── */}
+        {/* ─── 섹션 3: 팀원 등록 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
           <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             👥 팀원 등록

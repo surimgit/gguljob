@@ -78,7 +78,7 @@ export const removeMember = (projectId: number, memberId: number) =>
   api.delete(`/v1/projects/${projectId}/members/${memberId}`);
 
 export const leaveProject = (projectId: number) =>
-  api.delete(`/v1/projects/${projectId}/members/me`);
+  api.delete(`/v1/projects/${projectId}/members/leave`);
 
 /* 나만의 공간 */
 
