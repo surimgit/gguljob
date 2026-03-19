@@ -4,20 +4,7 @@ import { ArrowLeft, Search } from 'lucide-react';
 import TroubleshootingCard from '../components/feature/troubleshooting/TroubleshootingCard';
 import type { TroubleshootingCardItem } from '../components/feature/troubleshooting/TroubleshootingCard';
 
-const MOCK_DATA: TroubleshootingCardItem[] = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  title:
-    i % 2 === 0
-      ? `초기 로딩 속도 개선 작업 ${i + 1}`
-      : `무한 스크롤 메모리 누수 해결 ${i + 1}`,
-  description:
-    i % 2 === 0
-      ? 'Lighthouse 기준 성능 지표를 60점에서 90점 이상으로 올리기 위해 코드 스플리팅을 진행 중입니다.'
-      : 'Intersection Observer API를 최적화하여 스크롤 시 발생하는 DOM 노드 누적 현상을 해결했습니다.',
-  date: `2026.03.${String(10 - Math.floor(i / 2)).padStart(2, '0')}`,
-  status: i % 3 === 0 ? ('in_progress' as const) : ('resolved' as const),
-  projectName: i % 2 === 0 ? 'DevMatch' : 'React 스터디',
-}));
+const MOCK_DATA: TroubleshootingCardItem[] = [];
 
 const ITEMS_PER_PAGE = 5;
 type FilterTab = 'all' | 'in_progress' | 'resolved';
