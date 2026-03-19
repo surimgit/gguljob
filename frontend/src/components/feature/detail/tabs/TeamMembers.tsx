@@ -10,7 +10,7 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
 
 /* ── 타입 ── */
