@@ -843,8 +843,8 @@ const TeamManagement = ({
           }),
         );
       }
-    } catch {
-      // API 실패 시 무시
+    } catch (err) {
+      console.error('참여 수락 실패:', err);
     }
     setApplications((prev) => prev.filter((a) => a.id !== appId));
     onAccept(appId);
@@ -855,8 +855,8 @@ const TeamManagement = ({
       await rejectRequest(Number(appId));
       setApplications((prev) => prev.filter((a) => a.id !== appId));
       onReject(appId);
-    } catch {
-      // API 실패 시 무시
+    } catch (err) {
+      console.error('참여 거절 실패:', err);
     }
   };
 
