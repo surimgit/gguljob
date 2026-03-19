@@ -818,38 +818,48 @@ const TeamManagement = ({
     onDeleteRole(roleId);
   };
 
-  const handleAccept = (appId: string) => {
-    const app = applications.find((a) => a.id === appId);
-    if (app) {
-      setLocalMembers((prev) => [
-        ...prev,
-        {
-          id: appId,
-          name: app.name,
-          role: app.role,
-          joinDate: new Date().toISOString().slice(0, 10),
-          contribution: 0,
-        },
-      ]);
-      setRoles((prev) =>
-        prev.map((r) => {
-          if (r.name !== app.role) return r;
-          const newCurrent = r.current + 1;
-          return {
-            ...r,
-            current: newCurrent,
-            status: newCurrent >= r.total ? "closed" : r.status,
-          };
-        }),
-      );
+  const handleAccept = async (appId: string) => {
+    try {
+      await acceptRequest(Number(appId));
+      const app = applications.find((a) => a.id === appId);
+      if (app) {
+        setLocalMembers((prev) => [
+          ...prev,
+          {
+            id: appId,
+            name: app.name,
+            role: app.role,
+            joinDate: new Date().toISOString().slice(0, 10),
+            contribution: 0,
+          },
+        ]);
+        setRoles((prev) =>
+          prev.map((r) => {
+            if (r.name !== app.role) return r;
+            const newCurrent = r.current + 1;
+            return {
+              ...r,
+              current: newCurrent,
+              status: newCurrent >= r.total ? "closed" : r.status,
+            };
+          }),
+        );
+      }
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onAccept(appId);
+    } catch (err) {
+      console.error('참여 수락 실패:', err);
     }
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onAccept(appId);
   };
 
-  const handleReject = (appId: string) => {
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onReject(appId);
+  const handleReject = async (appId: string) => {
+    try {
+      await rejectRequest(Number(appId));
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onReject(appId);
+    } catch (err) {
+      console.error('참여 거절 실패:', err);
+    }
   };
 
   const handleRecruitConfirm = (data: { role: RoleType; count: number; stacks: string[] }) => {
