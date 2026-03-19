@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import {
   FolderOpen,
@@ -206,11 +207,9 @@ const ProjectDashboard = () => {
     setTopicsLoading(true);
     recommendTopics(Number(id), false)
       .then(({ data }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (data as any).recommendedTopics ?? (data as any).data ?? data;
-        setTopics(Array.isArray(result) ? result : []);
+        setTopics(data.recommendedTopics ?? []);
       })
-      .catch(() => {})
+      .catch(() => toast.error('주제 추천을 불러오지 못했습니다.'))
       .finally(() => setTopicsLoading(false));
   }, [id]);
 
@@ -249,18 +248,14 @@ const ProjectDashboard = () => {
   }
 
   const handleRecommend = (isRefresh: boolean) => {
-    console.log('handleRecommend called', id);
     if (!id) return;
     setTopicsLoading(true);
     setSelectedTopic(null);
     recommendTopics(Number(id), isRefresh, keyword || undefined)
       .then(({ data }) => {
-        console.log('AI 주제 추천 응답:', data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (data as any).recommendedTopics ?? (data as any).data ?? data;
-        setTopics(Array.isArray(result) ? result : []);
+        setTopics(data.recommendedTopics ?? []);
       })
-      .catch((err) => console.error('AI 주제 추천 실패:', err))
+      .catch(() => toast.error('주제 추천에 실패했습니다. 다시 시도해주세요.'))
       .finally(() => setTopicsLoading(false));
   };
 
@@ -656,7 +651,7 @@ const ProjectDashboard = () => {
                       className="text-sm font-bold"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      연동된 레포 없음
+                      연동된 레포 없���
                     </span>
                   )}
                 </div>

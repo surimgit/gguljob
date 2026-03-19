@@ -88,7 +88,7 @@ export const getPersonalSpace = (projectId: number) =>
 /* AI 주제 추천 */
 
 export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
-  api.post<{ data: string[] }>(`/v1/ai/projects/${projectId}/topics/recommend`, { isRefresh, keyword }, { timeout: 60000 });
+  api.post<{ projectId: number; domain: string; recommendedTopics: string[] }>(`/v1/ai/projects/${projectId}/topics/recommend`, { isRefresh, keyword }, { timeout: 60000 });
 
 /* AI 추천 주제 적용 */
 
