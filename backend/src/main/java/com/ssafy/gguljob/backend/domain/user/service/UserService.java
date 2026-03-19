@@ -7,6 +7,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberReposito
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.UserRepProjectRepository;
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
+import com.ssafy.gguljob.backend.domain.user.dto.MemberFilterResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
@@ -217,5 +218,18 @@ public class UserService {
         Page<UserSummary> userSummaries = users.map(UserResponse.UserSummary::from);
 
         return UserResponse.UserPageResponse.of(userSummaries);
+    }
+
+    public MemberFilterResponseDto getMemberFilters() {
+
+        List<MemberFilterResponseDto.FilterOptionDto> positions = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.user.type.PositionType.values())
+            .map(pos -> new MemberFilterResponseDto.FilterOptionDto(pos.name(), pos.getDescription()))
+            .toList();
+
+        List<MemberFilterResponseDto.FilterOptionDto> levels = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel.values())
+            .map(level -> new MemberFilterResponseDto.FilterOptionDto(level.name(), level.getDescription()))
+            .toList();
+
+        return new MemberFilterResponseDto(positions, levels);
     }
 }

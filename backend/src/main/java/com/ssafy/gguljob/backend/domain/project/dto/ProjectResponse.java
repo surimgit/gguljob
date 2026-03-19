@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.project.dto;
 
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
+import com.ssafy.gguljob.backend.domain.project.type.Domain;
 import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +22,7 @@ public class ProjectResponse {
         Long projectId,
         String title,
         String teamName,
-        String domain,
+        Domain domain,
         String leaderName,
         ProjectStatus status,
         LocalDateTime finishedAt,
@@ -55,7 +56,7 @@ public class ProjectResponse {
     public record ProjectOverviewDto(
         String title,
         String teamName,
-        String domain,
+        Domain domain,
         String description,
         List<String> skills
     ) {}
@@ -101,7 +102,7 @@ public class ProjectResponse {
         String title,
         String teamName,
         String description,
-        String domain,
+        Domain domain,
         List<Long> skillIds,
         List<MemberDto> members
     ) {
@@ -131,7 +132,7 @@ public class ProjectResponse {
     // 추천 프로젝트 카드 디자인용
     public record ProjectCardDto(
         Long projectId,
-        String domain,
+        Domain domain,
         ProjectStatus status,
         String title,
         String description,

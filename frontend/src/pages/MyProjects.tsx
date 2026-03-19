@@ -4,46 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
 
-/* ── 더미 데이터 ── */
-const MOCK_PROJECTS: ProjectSimple[] = [
-  {
-    projectId: 1,
-    title: "DevLog 트러블슈팅 플랫폼",
-    teamName: "S14P21E107",
-    domain: "웹 풀스택",
-    leaderName: "김도현",
-    status: "PROCEEDING",
-    finishedAt: null,
-    imageUrl: null,
-    roleCounts: { FRONTEND: 3, BACKEND: 3 },
-    skills: ["React", "TypeScript", "Spring Boot", "Redis", "Docker"],
-  },
-  {
-    projectId: 2,
-    title: "실시간 협업 화이트보드",
-    teamName: "S14P11A203",
-    domain: "웹 풀스택",
-    leaderName: "오준혁",
-    status: "RECRUITING",
-    finishedAt: null,
-    imageUrl: null,
-    roleCounts: { FRONTEND: 2, BACKEND: 2 },
-    skills: ["Vue.js", "WebSocket", "Spring Boot", "MySQL"],
-  },
-  {
-    projectId: 3,
-    title: "AI 코드 리뷰 어시스턴트",
-    teamName: "S13P31B102",
-    domain: "AI/ML",
-    leaderName: "이준혁",
-    status: "DONE",
-    finishedAt: "2025-11-30",
-    imageUrl: null,
-    roleCounts: { FRONTEND: 2, BACKEND: 3 },
-    skills: ["Next.js", "Python", "FastAPI", "OpenAI"],
-  },
-];
-
 /* ── 상수 ── */
 
 const AVATAR_COLORS = [
@@ -188,7 +148,7 @@ const MyProjects = () => {
     fetchMyProjects();
   }, [fetchMyProjects]);
 
-  const resolvedProjects = myProjects.length > 0 ? myProjects : MOCK_PROJECTS;
+  const resolvedProjects = myProjects;
 
   const filterByTab = (status: BackendProjectStatus) =>
     tab === "active"
@@ -206,7 +166,7 @@ const MyProjects = () => {
       style={{ backgroundColor: "var(--color-background)" }}
       className="min-h-screen"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
         {/* 헤더 */}
         <h1
           className="text-2xl sm:text-3xl font-bold"

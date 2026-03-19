@@ -101,7 +101,7 @@ const ProjectFind = () => {
         </div>
       </section>
 
-      <div className="max-w-[1084px] mx-auto pt-[48px]">
+      <div className="max-w-[1400px] mx-auto pt-[48px]">
 
         {/* 필터 */}
         <ProjectFilter
@@ -121,7 +121,7 @@ const ProjectFind = () => {
         </p>
 
         {/* 카드 그리드 */}
-        <div ref={gridRef} className="grid grid-cols-3 gap-x-[16px] gap-y-[16px]">
+        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-[16px] gap-y-[16px]">
           {paginatedProjects.map((project) => (
             <ProjectCard key={project.id} project={project} onClick={setSelectedProject} />
           ))}

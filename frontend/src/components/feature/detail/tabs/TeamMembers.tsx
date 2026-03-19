@@ -10,7 +10,8 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
+import { useAuthStore } from "../../../../stores/authStore";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -53,6 +54,7 @@ interface Application {
 
 interface TeamManagementProps {
   projectName: string;
+  projectId?: number;
   roles: Role[];
   members: Member[];
   applications: Application[];
@@ -749,6 +751,7 @@ const TeamManagement = ({
   roles: initialRoles,
   members,
   applications: initialApps,
+  projectId,
   onAddRole,
   onDeleteRole,
   onUpdateRoleCount,
@@ -759,6 +762,10 @@ const TeamManagement = ({
   const [roles, setRoles] = useState(initialRoles);
   const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
+
+  useEffect(() => {
+    setLocalMembers(members);
+  }, [members]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
@@ -859,7 +866,7 @@ const TeamManagement = ({
   return (
     <div className="flex flex-col gap-5">
       {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* ── 좌측: 팀원 모집 현황 ── */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -869,7 +876,7 @@ const TeamManagement = ({
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div className="flex items-center gap-3">
               <h3
                 className="text-base font-bold"
@@ -886,7 +893,7 @@ const TeamManagement = ({
             </div>
             <button
               onClick={() => setShowRecruitModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
               style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
             >
               <UserPlus className="w-4 h-4" />
@@ -1111,7 +1118,7 @@ const TeamManagement = ({
       </div>
 
       {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
-      <div className="grid grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         {/* 좌측: 합류 신청 목록 */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -1149,7 +1156,7 @@ const TeamManagement = ({
             return (
               <div
                 key={app.id}
-                className="flex items-center gap-4 px-4 py-3.5 rounded-xl"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 py-3.5 rounded-xl"
                 style={{
                   background: "#fafafa",
                   border: "1px solid var(--color-border)",
@@ -1461,7 +1468,18 @@ const TeamManagement = ({
               </button>
               <button
                 onClick={() => {
-                  setLocalMembers((prev) => prev.filter((m) => m.id !== kickMemberId));
+                  const numericMemberId = Number(kickMemberId);
+                  const targetId = kickMemberId;
+                  if (projectId && targetId && !isNaN(numericMemberId)) {
+                    removeMember(projectId, numericMemberId)
+                      .then(() => {
+                        setLocalMembers((prev) => prev.filter((m) => Number(m.id) !== numericMemberId));
+                      })
+                      .catch((err) => {
+                        console.error('팀원 내보내기 실패:', err);
+                        alert('팀원 내보내기에 실패했습니다. 다시 시도해주세요.');
+                      });
+                  }
                   setKickMemberId(null);
                 }}
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
@@ -1537,6 +1555,7 @@ const TeamManagement = ({
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
   const [detail, setDetail] = useState<TeamManagementData | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1562,16 +1581,17 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
   const members: Member[] = useMemo(() => {
     if (detail) {
       return detail.currentMembers.map((m, i) => ({
-        id: m.memberId.toString(),
+        id: m.userId.toString(),
         name: m.userName,
         role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
         isLeader: i === 0,
+        isMe: m.userId === currentUserId,
       }));
     }
     return dashboard ? dashboardToMembers(dashboard) : [];
-  }, [detail, dashboard]);
+  }, [detail, dashboard, currentUserId]);
 
   const applications: Application[] = useMemo(() => {
     if (!detail) return [];
@@ -1589,6 +1609,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     <TeamManagement
       key={projectId ?? dashboard?.projectInfo.title ?? "default"}
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
+      projectId={projectId}
       roles={roles}
       members={members}
       applications={applications}

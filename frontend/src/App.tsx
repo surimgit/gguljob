@@ -19,6 +19,7 @@ import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
 import ScrollToTop from './components/common/ScrollToTop';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
 import { getMe } from './api/user';
 
@@ -101,6 +102,13 @@ function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: { borderRadius: '12px', fontSize: '14px' },
+        }}
+      />
     </BrowserRouter>
   );
 }

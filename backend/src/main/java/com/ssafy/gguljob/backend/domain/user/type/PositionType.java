@@ -1,9 +1,22 @@
 package com.ssafy.gguljob.backend.domain.user.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.Getter;
 
+@Getter
 public enum PositionType {
-    BE, FE, AI, PM, INFRA, DESIGN;
+    BE("Backend"),
+    FE("Frontend"),
+    AI("AI"),
+    PM("PM"),
+    INFRA("Infra"),
+    DESIGN("Design");
+
+    private final String description;
+
+    PositionType(String description) {
+        this.description = description;
+    }
 
     @JsonCreator
     public static PositionType from(String value) {
