@@ -203,7 +203,7 @@ const JobRecommendHero = () => {
   }, []);
 
   return (
-    <div style={{ width: '1103px', margin: '0 auto', background: '#F7F8FA', fontFamily: 'inherit' }}>
+    <div style={{ width: '100%', background: '#F7F8FA', fontFamily: 'inherit' }}>
 
       {/* ── 히어로 배너 ── */}
       <div

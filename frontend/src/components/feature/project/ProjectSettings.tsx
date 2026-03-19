@@ -300,7 +300,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
   });
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 flex flex-col gap-5 pb-28">
+    <div className="py-6 flex flex-col gap-5 pb-28">
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
@@ -313,6 +313,12 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
           </h1>
         </div>
       </div>
+
+      {/* ── 2컬럼 그리드 (데스크톱) / 1컬럼 (모바일) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5">
+
+      {/* ── 좌측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
 
       {/* ── 섹션 1: 프로젝트 상태 ── */}
       <section
@@ -605,6 +611,11 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </div>
       </section>
 
+      </div>{/* 좌측 컬럼 끝 */}
+
+      {/* ── 우측 컬럼 ── */}
+      <div className="flex flex-col gap-5">
+
       {/* ── 섹션 3: 기술 스택 ── */}
       <section
         className="rounded-2xl p-6 shadow-sm"
@@ -786,6 +797,9 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
         </button>
       </div>
 
+      </div>{/* 우측 컬럼 끝 */}
+      </div>{/* 그리드 끝 */}
+
       {/* ── 하단 고정 저장 버튼 ── */}
       <div
         className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3"
@@ -793,7 +807,7 @@ const ProjectSettings = ({ dashboard }: ProjectSettingsProps) => {
       >
         <button
           disabled={!hasChanges}
-          className="w-full max-w-xl mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
+          className="w-full max-w-[1400px] mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
           style={
             hasChanges
               ? {

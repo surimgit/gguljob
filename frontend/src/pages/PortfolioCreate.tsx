@@ -240,7 +240,7 @@ const PortfolioCreate = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4 flex flex-col gap-8">
+    <div className="max-w-[1400px] mx-auto py-10 px-4 flex flex-col gap-8">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
         <button
@@ -253,7 +253,7 @@ const PortfolioCreate = () => {
       </div>
 
       {generatedMd ? (
-        <div className="grid grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
           {/* Step3: AI 포트폴리오 생성 (왼쪽) */}
           <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
             <div className="flex items-center gap-2">
@@ -334,7 +334,7 @@ const PortfolioCreate = () => {
           </div>
         </div>
       ) : (
-      <div className="grid grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
         {/* 섹션 1: 프로젝트 선택 */}
         <div className="flex flex-col gap-4 bg-surface border border-border rounded-2xl p-6" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.07)' }}>
           <div className="flex items-center gap-2">
