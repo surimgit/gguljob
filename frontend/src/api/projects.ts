@@ -21,8 +21,8 @@ export const getProjects = (params?: ProjectQueryParams) =>
 export const getProjectById = (id: number) =>
   api.get<ProjectDetail>(`/projects/${id}`);
 
-export const inviteUser = (projectId: number, userId: number) =>
-  api.post(`/v1/projects/${projectId}/invites/${userId}`);
+export const inviteUser = (projectId: number, userId: number, body: { role: string; appealContent?: string }) =>
+  api.post(`/v1/projects/${projectId}/invites/${userId}`, body);
 
 /* ── 내 프로젝트 ── */
 

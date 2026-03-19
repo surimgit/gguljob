@@ -12,7 +12,14 @@ interface TeamInviteModalProps {
   userId: number;
 }
 
-const JOB_OPTIONS = ['프론트엔드', '백엔드', '인프라/DevOps', '데이터/AI', '기획/PM', '디자인'];
+const JOB_OPTIONS: { label: string; role: string }[] = [
+  { label: '프론트엔드', role: 'FE' },
+  { label: '백엔드', role: 'BE' },
+  { label: '인프라/DevOps', role: 'INFRA' },
+  { label: '데이터/AI', role: 'AI' },
+  { label: '기획/PM', role: 'PM' },
+  { label: '디자인', role: 'DESIGN' },
+];
 
 const MAX_MESSAGE_LENGTH = 200;
 
@@ -31,7 +38,10 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
   const handleSubmit = async () => {
     if (!selectedProject) return;
     try {
-      await inviteUser(Number(selectedProject), userId);
+      await inviteUser(Number(selectedProject), userId, {
+        role: selectedJob,
+        appealContent: message || undefined,
+      });
       toast.success(`${memberName}님에게 초대를 보냈습니다.`);
       onClose();
     } catch (err: unknown) {
@@ -103,16 +113,16 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
           <div className="flex flex-wrap gap-2">
             {JOB_OPTIONS.map((job) => (
               <button
-                key={job}
+                key={job.role}
                 type="button"
-                onClick={() => setSelectedJob(selectedJob === job ? '' : job)}
+                onClick={() => setSelectedJob(selectedJob === job.role ? '' : job.role)}
                 className={`px-4 py-2 rounded-full border-2 text-sm font-semibold transition-colors ${
-                  selectedJob === job
+                  selectedJob === job.role
                     ? 'border-primary-hover bg-primary-soft text-primary-hover'
                     : 'border-border bg-white text-text-secondary hover:border-primary hover:bg-primary-soft'
                 }`}
               >
-                {job}
+                {job.label}
               </button>
             ))}
           </div>
