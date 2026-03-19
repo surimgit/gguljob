@@ -33,6 +33,7 @@ const toNotification = (dto: NotificationDto): Notification => {
     message: dto.content,
     time,
     isRead: dto.isRead,
+    referenceId: dto.referenceId,
   };
 };
 
