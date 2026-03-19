@@ -843,11 +843,11 @@ const TeamManagement = ({
           }),
         );
       }
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onAccept(appId);
     } catch (err) {
       console.error('참여 수락 실패:', err);
     }
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onAccept(appId);
   };
 
   const handleReject = async (appId: string) => {
