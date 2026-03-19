@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   Trash2,
   ChevronDown,
@@ -816,38 +817,50 @@ const TeamManagement = ({
     onDeleteRole(roleId);
   };
 
-  const handleAccept = (appId: string) => {
-    const app = applications.find((a) => a.id === appId);
-    if (app) {
-      setLocalMembers((prev) => [
-        ...prev,
-        {
-          id: appId,
-          name: app.name,
-          role: app.role,
-          joinDate: new Date().toISOString().slice(0, 10),
-          contribution: 0,
-        },
-      ]);
-      setRoles((prev) =>
-        prev.map((r) => {
-          if (r.name !== app.role) return r;
-          const newCurrent = r.current + 1;
-          return {
-            ...r,
-            current: newCurrent,
-            status: newCurrent >= r.total ? "closed" : r.status,
-          };
-        }),
-      );
+  const handleAccept = async (appId: string) => {
+    try {
+      await acceptRequest(Number(appId));
+      const app = applications.find((a) => a.id === appId);
+      if (app) {
+        setLocalMembers((prev) => [
+          ...prev,
+          {
+            id: appId,
+            name: app.name,
+            role: app.role,
+            joinDate: new Date().toISOString().slice(0, 10),
+            contribution: 0,
+          },
+        ]);
+        setRoles((prev) =>
+          prev.map((r) => {
+            if (r.name !== app.role) return r;
+            const newCurrent = r.current + 1;
+            return {
+              ...r,
+              current: newCurrent,
+              status: newCurrent >= r.total ? "closed" : r.status,
+            };
+          }),
+        );
+      }
+      toast.success("참여 요청을 수락했습니다.");
+    } catch {
+      toast.error("수락에 실패했습니다.");
     }
     setApplications((prev) => prev.filter((a) => a.id !== appId));
     onAccept(appId);
   };
 
-  const handleReject = (appId: string) => {
-    setApplications((prev) => prev.filter((a) => a.id !== appId));
-    onReject(appId);
+  const handleReject = async (appId: string) => {
+    try {
+      await rejectRequest(Number(appId));
+      setApplications((prev) => prev.filter((a) => a.id !== appId));
+      onReject(appId);
+      toast.success("참여 요청을 거절했습니다.");
+    } catch {
+      toast.error("거절에 실패했습니다.");
+    }
   };
 
   const handleRecruitConfirm = (data: { role: RoleType; count: number; stacks: string[] }) => {
