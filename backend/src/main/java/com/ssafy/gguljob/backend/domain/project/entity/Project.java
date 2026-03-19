@@ -115,4 +115,8 @@ public class Project extends BaseTimeEntity {
         this.status = ProjectStatus.DONE;
         this.finishedAt = LocalDateTime.now();
     }
+
+    public void updateTitle(String newTitle) {
+        this.title = newTitle;
+    }
 }

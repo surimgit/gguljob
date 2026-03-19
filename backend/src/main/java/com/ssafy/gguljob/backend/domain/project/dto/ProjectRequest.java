@@ -57,4 +57,8 @@ public class ProjectRequest {
         @NotNull Long userId,
         @NotNull(message = "역할은 필수입니다.") PositionType role
     ) {}
+
+    public record ApplyTopicRequest(
+        String selectedTopic
+    ) {}
 }
