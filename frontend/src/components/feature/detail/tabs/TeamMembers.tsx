@@ -1581,7 +1581,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
   const members: Member[] = useMemo(() => {
     if (detail) {
       return detail.currentMembers.map((m, i) => ({
-        id: m.memberId.toString(),
+        id: m.userId.toString(),
         name: m.userName,
         role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
