@@ -6,7 +6,8 @@ import lombok.Builder;
 public class AiTopicDto {
 
     public record RecommendRequest(
-        String keyword
+        String keyword,
+        boolean isRefresh
     ) {}
 
     @Builder

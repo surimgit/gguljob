@@ -44,7 +44,7 @@ public class AiChatController {
         @RequestBody(required = false) AiTopicDto.RecommendRequest request) {
 
         if (request == null) {
-            request = new AiTopicDto.RecommendRequest(null);
+            request = new AiTopicDto.RecommendRequest(null, false);
         }
 
         AiTopicDto.RecommendResponse response = aiRecommendationService.recommendTopics(projectId, request);
