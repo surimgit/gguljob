@@ -64,3 +64,29 @@ export const withdrawApi = () => api.delete('/v1/user/withdraw');
 /** GET /v1/user/users → 사용자 전체 목록 조회 (페이지네이션) */
 export const getUsers = (params?: { page?: number; size?: number; sort?: string }) =>
   api.get('/v1/user/users', { params });
+
+/** GET /v1/user/{userId} → 타 사용자 프로필 조회 */
+export interface UserProfileDto {
+  userId: number;
+  email: string;
+  userName: string;
+  imageUrl: string;
+  description: string;
+  roles: string[];
+  experience: string;
+  mbti: string;
+  teamTendency: string;
+  skills: { name: string; category: string; iconUrl: string }[];
+  repProjects: {
+    projectId: number;
+    title: string;
+    description: string;
+    role: string;
+    period: string;
+    skills: string[];
+  }[];
+  goals: string[];
+}
+
+export const getUserProfile = (userId: number) =>
+  api.get<{ data: UserProfileDto }>(`/v1/user/${userId}`);
