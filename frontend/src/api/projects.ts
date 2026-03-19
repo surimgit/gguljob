@@ -19,13 +19,39 @@ export const getProjects = (params?: ProjectListParams) =>
 export const getRecommendedProjects = () =>
   api.get<ProjectCardDto[]>('/v1/projects/recommended/top');
 
-export interface ProjectFilters {
-  domains: string[];
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
+export interface SkillCategory {
+  category: string;
+  skills: { skillId: number; name: string }[];
+}
+
+export interface ProjectFiltersRaw {
+  domains: FilterOption[];
+  roles: FilterOption[];
+  skillCategories: SkillCategory[];
+}
+
+export interface SkillGroup {
+  category: string;
+  label: string;
   skills: string[];
 }
 
+export interface ProjectFilters {
+  domains: string[];
+  skillGroups: SkillGroup[];
+  roles: string[];
+  /** label → API value 매핑 (도메인: "웹기술" → "WEB_TECH", 포지션: "FE 모집중" → "FRONTEND") */
+  domainValueMap: Record<string, string>;
+  roleValueMap: Record<string, string>;
+}
+
 export const getProjectFilters = () =>
-  api.get<ProjectFilters>('/v1/projects/filters');
+  api.get<ProjectFiltersRaw>('/v1/projects/filters');
 
 export const applyToPosition = (projectId: number, positionId: number, appealContent?: string) =>
   api.post(`/v1/projects/${projectId}/positions/${positionId}/apply`, appealContent ? { appealContent } : undefined);

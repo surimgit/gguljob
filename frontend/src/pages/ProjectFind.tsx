@@ -30,19 +30,20 @@ const ProjectFind = () => {
     setCurrentPage(1);
   }, [debouncedSearch, techFilter, domainFilter, positionFilter]);
 
-  // API 쿼리 파라미터 구성
+  const { data: filters } = useProjectFilters();
+
+  // API 쿼리 파라미터 구성 (label → backend value 변환)
   const params = {
     page: currentPage - 1,
     size: ITEMS_PER_PAGE,
     ...(debouncedSearch && { keyword: debouncedSearch }),
-    ...(domainFilter !== '전체' && { domain: domainFilter }),
+    ...(domainFilter !== '전체' && { domain: filters?.domainValueMap?.[domainFilter] ?? domainFilter }),
     ...(techFilter !== '전체' && { skill: techFilter }),
-    ...(positionFilter !== '전체' && { position: positionFilter === 'FE 모집중' ? 'FE' : 'BE' }),
+    ...(positionFilter !== '전체' && { position: filters?.roleValueMap?.[positionFilter] ?? positionFilter }),
   };
 
   const { data: pageData, isLoading, isError } = useProjects(params);
   const { data: recommendedProjects } = useRecommendedProjects();
-  const { data: filters } = useProjectFilters();
 
   const projects = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
@@ -118,7 +119,7 @@ const ProjectFind = () => {
           onTechChange={setTechFilter}
           onDomainChange={setDomainFilter}
           onPositionChange={setPositionFilter}
-          techOptions={filters?.skills}
+          skillGroups={filters?.skillGroups}
           domainOptions={filters?.domains}
         />
 
