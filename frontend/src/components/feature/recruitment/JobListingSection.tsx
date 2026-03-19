@@ -46,7 +46,11 @@ const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insuffi
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
   const copy = [...jobs];
   if (sort === '매칭순') return copy.sort((a, b) => MATCH_RANK[b.match] - MATCH_RANK[a.match]);
-  if (sort === '마감순') return copy.sort((a, b) => a.deadline.localeCompare(b.deadline));
+  if (sort === '마감순') return copy.sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
   if (sort === '연봉순') return copy.sort((a, b) => b.salaryMax - a.salaryMax);
   return copy;
 };
@@ -65,7 +69,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   employmentType: item.contractType,
   salary: item.salary,
   salaryMax: 0,
-  deadline: item.deadline,
+  deadline: item.deadline ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: [],
 });
