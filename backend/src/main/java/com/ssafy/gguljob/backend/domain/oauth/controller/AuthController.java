@@ -1,39 +1,32 @@
 package com.ssafy.gguljob.backend.domain.oauth.controller;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenRequestDto;
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
-import com.ssafy.gguljob.backend.domain.oauth.service.GithubOAuthService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
-import com.ssafy.gguljob.backend.global.redis.RedisService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import com.ssafy.gguljob.backend.global.redis.RedisService;
+import com.ssafy.gguljob.backend.domain.oauth.service.GithubOAuthService;
 
 @Slf4j
 @RestController

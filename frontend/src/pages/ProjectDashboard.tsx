@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import {
   FolderOpen,
@@ -25,13 +26,8 @@ import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
-import { getPersonalSpace } from "../api/projects";
-
-const AI_TOPICS = [
-  "GitHub Actions CI/CD 파이프라인 구축",
-  "WebSocket 기반 실시간 알림 시스템",
-  "Redis 캐싱 전략 최적화",
-];
+import { getPersonalSpace, recommendTopics, updateProjectTitle } from "../api/projects";
+import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
 /* ── 더미 데이터 ── */
 const MOCK_DASHBOARD: TeamDashboard = {
@@ -187,6 +183,8 @@ const ProjectDashboard = () => {
   const [personalDropdownOpen, setPersonalDropdownOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [topics, setTopics] = useState<string[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const [editingRepo, setEditingRepo] = useState(false);
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
@@ -194,6 +192,7 @@ const ProjectDashboard = () => {
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
@@ -202,6 +201,17 @@ const ProjectDashboard = () => {
   useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
+
+  useEffect(() => {
+    if (!id) return;
+    setTopicsLoading(true);
+    recommendTopics(Number(id), false)
+      .then(({ data }) => {
+        setTopics(data.recommendedTopics ?? []);
+      })
+      .catch(() => toast.error('주제 추천을 불러오지 못했습니다.'))
+      .finally(() => setTopicsLoading(false));
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -237,6 +247,18 @@ const ProjectDashboard = () => {
     );
   }
 
+  const handleRecommend = (isRefresh: boolean) => {
+    if (!id) return;
+    setTopicsLoading(true);
+    setSelectedTopic(null);
+    recommendTopics(Number(id), isRefresh, keyword || undefined)
+      .then(({ data }) => {
+        setTopics(data.recommendedTopics ?? []);
+      })
+      .catch(() => toast.error('주제 추천에 실패했습니다. 다시 시도해주세요.'))
+      .finally(() => setTopicsLoading(false));
+  };
+
   const resolvedDashboard = dashboard ?? MOCK_DASHBOARD;
   const resolvedGitLog = gitLog ?? MOCK_GIT_LOG;
 
@@ -249,6 +271,7 @@ const ProjectDashboard = () => {
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
 
   return (
+    <>
     <div
       className="min-h-screen"
       style={{ background: "var(--color-background)" }}
@@ -628,7 +651,7 @@ const ProjectDashboard = () => {
                       className="text-sm font-bold"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      연동된 레포 없음
+                      연동된 레포 없���
                     </span>
                   )}
                 </div>
@@ -718,13 +741,14 @@ const ProjectDashboard = () => {
                     </span>
                   </div>
                   <button
+                    onClick={() => handleRecommend(true)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={{
                       border: "1px solid var(--color-border)",
                       color: "var(--color-text-secondary)",
                     }}
                   >
-                    <RefreshCw className="w-3 h-3" />
+                    <RefreshCw className={`w-3 h-3 ${topicsLoading ? "animate-spin" : ""}`} />
                     새로 추천
                   </button>
                 </div>
@@ -748,6 +772,7 @@ const ProjectDashboard = () => {
                     }
                   />
                   <button
+                    onClick={() => handleRecommend(true)}
                     className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
                     style={{ background: "#7C3AED" }}
                   >
@@ -758,7 +783,17 @@ const ProjectDashboard = () => {
 
                 {/* 추천 주제 목록 */}
                 <div className="flex flex-col gap-2 mb-4">
-                  {AI_TOPICS.map((topic, idx) => {
+                  {topicsLoading ? (
+                    <div className="flex items-center justify-center py-6 gap-2" style={{ color: "var(--color-text-tertiary)" }}>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">AI가 주제를 추천하고 있어요...</span>
+                    </div>
+                  ) : topics.length === 0 ? (
+                    <p className="text-sm text-center py-4" style={{ color: "var(--color-text-tertiary)" }}>
+                      키워드를 입력하고 생성 버튼을 눌러보세요
+                    </p>
+                  ) : null}
+                  {!topicsLoading && topics.map((topic, idx) => {
                     const isSelected = selectedTopic === idx;
                     return (
                       <button
@@ -814,6 +849,15 @@ const ProjectDashboard = () => {
                       e.currentTarget.style.background = "#7C3AED";
                   }}
                   disabled={selectedTopic === null}
+                  onClick={() => {
+                    if (selectedTopic === null || !id) return;
+                    updateProjectTitle(Number(id), topics[selectedTopic])
+                      .then(() => {
+                        fetchDashboard(Number(id));
+                        setSelectedTopic(null);
+                      })
+                      .catch((err) => { console.error('주제 적용 실패:', err.response?.status, err.response?.data); alert('주제 적용에 실패했습니다. 다시 시도해주세요.'); });
+                  }}
                 >
                   선택한 주제 적용하기
                 </button>
@@ -1013,6 +1057,15 @@ const ProjectDashboard = () => {
         )}
       </div>
     </div>
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen={true}
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
+      )}
+    </>
   );
 };
 

@@ -72,4 +72,8 @@ public class JobPosting extends BaseTimeEntity {
 
     @Column(name = "contract_type", length = 50)
     private String contractType;
+
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
+
 }

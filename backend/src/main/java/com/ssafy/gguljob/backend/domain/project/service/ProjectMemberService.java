@@ -18,8 +18,10 @@ import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectPositionRepository projectPositionRepository;
     private final SkillRepository skillRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ProjectMemberResponse.ProjectLeaveResponse leaveProject(Long projectId, Long userId) {
@@ -147,6 +150,8 @@ public class ProjectMemberService {
 
         ProjectPosition savedPosition = projectPositionRepository.save(newPosition);
 
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+
         return new ProjectRecruitmentDto.CreateResponse(
             savedPosition.getId(),
             savedPosition.getRole(),
@@ -165,6 +170,8 @@ public class ProjectMemberService {
         // 상태 변경
         position.changeStatus(request.status());
 
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+
         return new ProjectRecruitmentDto.UpdateResponse(
             position.getId(), position.getStatus(), position.getTargetCount(), "모집 상태가 변경되었습니다."
         );
@@ -182,6 +189,8 @@ public class ProjectMemberService {
 
         // 인원 변경
         position.changeTargetCount(request.targetCount());
+
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
 
         return new ProjectRecruitmentDto.UpdateResponse(
             position.getId(), position.getStatus(), position.getTargetCount(), "모집 인원이 변경되었습니다."

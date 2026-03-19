@@ -5,17 +5,16 @@ import lombok.Getter;
 
 @Getter
 public enum PositionType {
-    BE("Backend"),
-    FE("Frontend"),
-    AI("AI"),
-    PM("PM"),
-    INFRA("Infra"),
-    DESIGN("Design");
+    BE("Backend"), FE("Frontend"), AI("AI"), PM("PM"), INFRA("Infra"), DESIGN("Design");
 
     private final String description;
 
     PositionType(String description) {
         this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @JsonCreator

@@ -95,3 +95,13 @@ export const leaveProject = (projectId: number) =>
 
 export const getPersonalSpace = (projectId: number) =>
   api.get(`/v1/projects/${projectId}/personal-space`);
+
+/* AI 주제 추천 */
+
+export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
+  api.post<{ projectId: number; domain: string; recommendedTopics: string[] }>(`/v1/ai/projects/${projectId}/topics/recommend`, { isRefresh, keyword }, { timeout: 60000 });
+
+/* AI 추천 주제 적용 */
+
+export const updateProjectTitle = (projectId: number, selectedTopic: string) =>
+  api.patch(`/v1/projects/${projectId}/title`, { selectedTopic });
