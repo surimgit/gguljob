@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import chatbotImg from '../../../assets/images/chatbot.png';
 import type { PersonalSpaceData } from '../../../types/project';
-import { generateTroubleshooting, updateTroubleshooting } from '../../../api/troubleshooting';
+import { generateTroubleshooting, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -452,7 +452,10 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
 
           {/* 챗봇 캐릭터 버튼 */}
           <button
-            onClick={() => setChatbotOpen(prev => !prev)}
+            onClick={() => {
+              setChatbotOpen(prev => !prev);
+              chatTrouble().catch(err => console.error('챗봇 호출 실패:', err));
+            }}
             className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
           >
             <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
