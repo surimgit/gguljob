@@ -19,8 +19,9 @@ import {
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
 import PersonalSpace, { type PersonalSubTab } from "../components/feature/project/PersonalSpace";
-import { ChevronDown, X, ChevronLeft } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import chatbotImg from "../assets/images/chatbot.png";
+import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
@@ -193,8 +194,6 @@ const ProjectDashboard = () => {
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const chatbotRef = useRef<HTMLDivElement>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
@@ -224,17 +223,8 @@ const ProjectDashboard = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [personalDropdownOpen]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (chatbotRef.current && !chatbotRef.current.contains(e.target as Node)) {
-        setChatbotOpen(false);
-        setGenerating(false);
-      }
-    };
-    if (chatbotOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [chatbotOpen]);
-
+  // 챗봇 표시 조건: 팀 프로젝트 탭에서만
+  const showChatbot = activeTab === "team";
 
   if (dashboardLoading) {
     return (
@@ -1004,8 +994,8 @@ const ProjectDashboard = () => {
         </>
         )}
 
-        {/* 챗봇 캐릭터 버튼 */}
-        {activeTab !== "personal" && (
+        {/* 챗봇 캐릭터 버튼 + 팝업 */}
+        {showChatbot && (
           <>
             <button
               onClick={() => setChatbotOpen(prev => !prev)}
@@ -1014,84 +1004,11 @@ const ProjectDashboard = () => {
               <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
             </button>
 
-            {/* 챗봇 팝업 */}
-            {chatbotOpen && (
-              <div ref={chatbotRef} className="fixed bottom-15 right-44 w-[450px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col" style={{ background: '#f5f7ff', minHeight: generating ? 360 : undefined }}>
-                {/* 헤더 */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[#c7d2fe]" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-white" />
-                    <span className="text-base font-bold text-white">꿀잡 에이전트</span>
-                    <span className="text-[10px] font-bold tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full">Beta</span>
-                  </div>
-                  <button onClick={() => { setGenerating(false); setChatbotOpen(false); }} className="text-white/70 hover:text-white transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* 본문 */}
-                {generating ? (
-                  <div className="relative px-6 py-8 flex-1 flex flex-col items-center justify-center gap-3">
-                    <button
-                      onClick={() => setGenerating(false)}
-                      className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#f3f4f6] transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <div className="w-24 h-24 overflow-hidden flex-shrink-0">
-                      <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-lg font-bold text-text-primary">답변 생성 중...</span>
-                      <span className="text-sm text-text-secondary">질문을 분석하고 있습니다</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '300ms' }} />
-                      <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '600ms' }} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="px-6 pt-7 pb-6 flex-1 flex flex-col gap-5">
-                    <div className="flex items-start gap-0.5">
-                      <div className="w-20 h-14 overflow-hidden flex-shrink-0">
-                        <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
-                      </div>
-                      <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-4 border border-border">
-                        <p className="text-sm text-text-secondary leading-relaxed">
-                          프로젝트 구현 중 막히는 부분이 있으신가요?
-                          <br />꿀잡 에이전트가 해결 방법을 찾아드립니다.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto flex items-end gap-2">
-                      <textarea
-                        rows={1}
-                        placeholder="구현 중 막히는 부분을 입력하세요..."
-                        className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors resize-none"
-                        style={{ maxHeight: 120, overflowY: 'auto' }}
-                        onInput={(e) => {
-                          const el = e.currentTarget;
-                          el.style.height = 'auto';
-                          el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
-                        }}
-                      />
-                      <button
-                        onClick={() => setGenerating(true)}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity hover:opacity-90 border-0 outline-none"
-                        style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="22" y1="2" x2="11" y2="13" />
-                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <ChatbotPopup
+              isOpen={chatbotOpen}
+              onClose={() => setChatbotOpen(false)}
+              mode="agent"
+            />
           </>
         )}
       </div>

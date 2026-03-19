@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
-import chatbotImg from '../../../assets/images/chatbot.png';
 import type { PersonalSpaceData } from '../../../types/project';
-import { generateTroubleshooting, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
+import { generateTroubleshooting, updateTroubleshooting } from '../../../api/troubleshooting';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -319,22 +318,10 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
-  const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [showAiSection, setShowAiSection] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const chatbotRef = useRef<HTMLDivElement>(null);
   const MR_PER_PAGE = 3;
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (chatbotRef.current && !chatbotRef.current.contains(e.target as Node)) {
-        setChatbotOpen(false);
-        setGenerating(false);
-      }
-    };
-    if (chatbotOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [chatbotOpen]);
 
   const mrList: MrItem[] = personalData
     ? personalData.myPullRequests.map(pr => ({
@@ -398,8 +385,95 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                 </div>
                 <span className="text-xl font-bold tracking-tight text-text-primary">트러블슈팅</span>
               </div>
-              <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
+              <div className="flex items-center gap-3">
+                <span className="text-base tracking-wider text-text-secondary font-semibold">총 {stats.autoGenCount}건</span>
+                <button
+                  onClick={() => setShowAiSection(prev => !prev)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  AI 자동 생성
+                </button>
+              </div>
             </div>
+
+            {/* AI 트러블슈팅 자동 생성 섹션 */}
+            {showAiSection && (
+              <div className="mb-6 rounded-2xl px-7 py-6 border border-[#c7d2fe] relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)' }}>
+                {/* 상단 보라 글로우 */}
+                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: 'linear-gradient(90deg, #6366f1, #7c3aed, #6366f1)' }} />
+
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#6366f1]" />
+                    <span className="text-lg font-bold text-text-primary">AI 트러블슈팅 자동 생성</span>
+                    <span className="text-[10px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
+                  </div>
+                  <span className="text-sm text-text-tertiary font-medium">마지막 분석: 3분 전</span>
+                </div>
+
+                <p className="text-sm text-text-secondary leading-relaxed mb-1">
+                  내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
+                </p>
+                <p className="text-sm text-text-secondary leading-relaxed mb-5">
+                  생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
+                </p>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border border-[#c7d2fe] bg-white text-text-primary">
+                    <MessageSquare className="w-3.5 h-3.5 text-[#6366f1]" />
+                    MR 리뷰 <span className="text-[#6366f1] font-bold">{stats.mrCount}건</span>
+                  </span>
+                </div>
+
+                {/* MR 리스트 선택 */}
+                {mrList.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mb-5 overflow-y-auto" style={{ maxHeight: Math.min(mrList.length, 4) * 46 }}>
+                    {mrList.map((mr) => (
+                      <label
+                        key={mr.id}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border flex-shrink-0 ${
+                          selectedMrId === mr.id
+                            ? 'bg-[#eef2ff] border-[#c7d2fe]'
+                            : 'bg-white border-border hover:bg-[#f9fafb]'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="ai-mr-select"
+                          checked={selectedMrId === mr.id}
+                          onChange={() => setSelectedMrId(mr.id)}
+                          className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
+                        />
+                        <span className="text-sm text-text-secondary truncate">{mr.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  onClick={async () => {
+                    if (!selectedMrId) return;
+                    setAiGenerating(true);
+                    try {
+                      await generateTroubleshooting(selectedMrId);
+                    } catch (err) {
+                      console.error('트러블슈팅 생성 실패:', err);
+                    } finally {
+                      setAiGenerating(false);
+                    }
+                  }}
+                  disabled={aiGenerating || !selectedMrId}
+                  className="w-full py-3.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {aiGenerating ? '생성 중...' : '트러블슈팅 자동 생성하기'}
+                </button>
+              </div>
+            )}
+
             {tsList.length === 0 ? (
               <EmptyState message="아직 등록된 트러블슈팅이 없습니다." />
             ) : (
@@ -450,128 +524,6 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
             )}
           </div>
 
-          {/* 챗봇 캐릭터 버튼 */}
-          <button
-            onClick={() => {
-              if (!chatbotOpen) chatTrouble().catch(err => console.error('챗봇 호출 실패:', err));
-              setChatbotOpen(prev => !prev);
-            }}
-            className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
-          >
-            <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
-          </button>
-
-          {/* 챗봇 팝업 */}
-          {chatbotOpen && (
-            <div ref={chatbotRef} className={`fixed bottom-15 right-44 w-[450px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col ${generating ? 'h-[420px]' : ''}`} style={{ background: '#f5f7ff' }}>
-              {/* 헤더 */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#c7d2fe]" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-white" />
-                  <span className="text-base font-bold text-white">AI 트러블슈팅 자동 생성</span>
-                  <span className="text-[10px] font-bold tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full">Beta</span>
-                </div>
-                <button onClick={() => { setGenerating(false); setChatbotOpen(false); }} className="text-white/70 hover:text-white transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* 본문 */}
-              {generating ? (
-                <div className="relative px-6 flex-1 flex flex-col items-center justify-center gap-5">
-                  <button
-                    onClick={() => setGenerating(false)}
-                    className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#f3f4f6] transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <div className="w-36 h-36 overflow-hidden">
-                    <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-xl font-bold text-text-primary">트러블슈팅 생성 중...</span>
-                    <span className="text-base text-text-secondary">MR 리뷰를 분석하고 있습니다</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '300ms' }} />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '600ms' }} />
-                  </div>
-                </div>
-              ) : (
-                <div className="px-6 pt-7 pb-6 flex flex-col gap-5">
-                  <div className="flex items-start gap-0.5">
-                    <div className="w-20 h-14 overflow-hidden flex-shrink-0">
-                      <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-4 border border-border">
-                      <p className="text-sm text-text-secondary leading-relaxed">
-                        MR 리뷰를 AI가 분석하여 트러블슈팅 초안을 자동으로 생성합니다.
-                        <br />생성 후 직접 수정 · 보완하여 포트폴리오로 활용할 수 있습니다.
-                      </p>
-                    </div>
-                  </div>
-
-                  {mrList.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
-                      <div className="flex flex-col gap-1.5 overflow-y-auto" style={{ maxHeight: Math.min(mrList.length, 4) * 46 }}>
-                        {mrList.map((mr) => (
-                          <label
-                            key={mr.id}
-                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors border flex-shrink-0 ${
-                              selectedMrId === mr.id
-                                ? 'bg-[#eef2ff] border-[#c7d2fe]'
-                                : 'bg-white border-border hover:bg-[#f9fafb]'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="mr-select"
-                              checked={selectedMrId === mr.id}
-                              onChange={() => setSelectedMrId(mr.id)}
-                              className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
-                            />
-                            <span className="text-sm text-text-secondary truncate">{mr.title}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="트러블슈팅으로 생성할 MR을 선택하세요"
-                      readOnly
-                      value={selectedMrId ? mrList.find(mr => mr.id === selectedMrId)?.title ?? '' : ''}
-                      className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors truncate"
-                    />
-                    <button
-                      onClick={async () => {
-                        if (!selectedMrId) return;
-                        setGenerating(true);
-                        try {
-                          await generateTroubleshooting(selectedMrId);
-                        } catch (err) {
-                          console.error('트러블슈팅 생성 실패:', err);
-                          setGenerating(false);
-                        }
-                      }}
-                      disabled={mrList.length > 0 && selectedMrId === null}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity hover:opacity-90 border-0 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13" />
-                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
