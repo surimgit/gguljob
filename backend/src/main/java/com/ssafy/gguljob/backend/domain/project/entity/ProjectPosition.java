@@ -1,4 +1,5 @@
 package com.ssafy.gguljob.backend.domain.project.entity;
+
 import com.ssafy.gguljob.backend.domain.project.type.PositionStatus;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
@@ -63,5 +64,15 @@ public class ProjectPosition extends BaseTimeEntity {
         this.requireSkills = requireSkills;
         this.description = description;
         this.requirement = requirement;
+    }
+
+    // 상태 변경
+    public void changeStatus(PositionStatus status) {
+        this.status = status;
+    }
+
+    // 목표 인원 변경
+    public void changeTargetCount(Integer targetCount) {
+        this.targetCount = targetCount;
     }
 }

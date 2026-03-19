@@ -7,8 +7,8 @@ spring:
     active: local
 
   threads:
-      virtual:
-        enabled: true
+    virtual:
+      enabled: true
 
   security:
     oauth2:

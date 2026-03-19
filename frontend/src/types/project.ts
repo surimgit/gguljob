@@ -102,32 +102,41 @@ export interface TeamDashboard {
 }
 
 // GET /projects/{id}/members/detail 응답
-export interface MembersDetail {
-  recruitments: {
-    positionId: number;
-    role: string;
-    status: string;
-    currentCount: number;
-    targetCount: number;
-    requireSkills: string[];
-  }[];
-  currentMembers: {
-    memberId: number;
-    userId: number;
-    role: string;
-    userName: string;
-    profileImageUrl: string | null;
-    joinedAt: string;
-  }[];
-  pendingRequests: {
-    requestId: number;
-    userId: number;
-    userName: string;
-    userProfileImageUrl: string | null;
-    positionName: string;
-    techStacks: string[];
-    createdAt: string;
-  }[];
+export type PositionType = 'FE' | 'BE' | 'AI' | 'PM' | 'INFRA' | 'DESIGN';
+export type PositionStatus = 'RECRUITING' | 'DONE';
+
+export interface RecruitmentStatus {
+  positionId: number;
+  role: PositionType;
+  status: PositionStatus;
+  currentCount: number;
+  targetCount: number;
+  requireSkills: string[];
+}
+
+export interface CurrentMember {
+  memberId: number;
+  userId: number;
+  role: PositionType;
+  userName: string;
+  profileImageUrl: string | null;
+  joinedAt: string;
+}
+
+export interface PendingJoinRequest {
+  requestId: number;
+  userId: number;
+  userName: string;
+  userProfileImageUrl: string | null;
+  positionName: string;
+  techStacks: string[];
+  createdAt: string;
+}
+
+export interface TeamManagement {
+  recruitments: RecruitmentStatus[];
+  currentMembers: CurrentMember[];
+  pendingRequests: PendingJoinRequest[];
 }
 
 // GET /projects/{id}/gitlog 응답

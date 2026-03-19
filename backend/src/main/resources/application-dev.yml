@@ -22,3 +22,9 @@ spring:
       host: ${REDIS_HOST:gguljob-redis-dev}
       port: ${REDIS_PORT:6379}
 
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USERNAME}
+      password: ${NEO4J_PASSWORD}
+
