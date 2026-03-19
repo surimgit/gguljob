@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/ai")
 @RequiredArgsConstructor
-@Tag(name = "Ai Chat", description = "트러블 슈팅 AI 대화 API")
+@Tag(name = "Ai Agent", description = "AI 관련 API (주제 추천, Agent 대화)")
 public class AiChatController {
 
     private final AiChatService mcpService;
@@ -37,7 +37,7 @@ public class AiChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "AI 프로젝트 주제 추천", description = "도메인과 키워드(선택)를 기반으로 4개의 프로젝트 주제를 추천받습니다.")
+    @Operation(summary = "AI 프로젝트 주제 추천", description = "모달 창 최초 진입 시: isRefresh: false, reload 시에 true")
     @PostMapping("/projects/{projectId}/topics/recommend")
     public ResponseEntity<AiTopicDto.RecommendResponse> recommendTopics(
         @PathVariable("projectId") Long projectId,

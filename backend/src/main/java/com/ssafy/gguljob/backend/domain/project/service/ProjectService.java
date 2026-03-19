@@ -430,4 +430,17 @@ public class ProjectService {
 
         return new ProjectFilterResponseDto(domains, roles, skillCategories);
     }
+
+    @Transactional
+    public void applyRecommendedTopic(Long projectId, Long userId, String selectedTopic) {
+
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new IllegalStateException("프로젝트 팀장만 주제를 변경할 수 있습니다.");
+        }
+
+        project.updateTitle(selectedTopic);
+    }
 }
