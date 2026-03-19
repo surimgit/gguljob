@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.gguljob.backend.domain.ai.dto.AiTopicDto;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
+import com.ssafy.gguljob.backend.domain.project.type.Domain;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class AiRecommendationService {
 
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
-        String domain = project.getDomain();
+        Domain domain = project.getDomain();
         String keyword = request.keyword();
         boolean isRefresh = request.isRefresh();
 
