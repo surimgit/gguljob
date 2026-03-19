@@ -10,7 +10,8 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
+import { useAuthStore } from "../../../../stores/authStore";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -53,6 +54,7 @@ interface Application {
 
 interface TeamManagementProps {
   projectName: string;
+  projectId?: number;
   roles: Role[];
   members: Member[];
   applications: Application[];
@@ -749,6 +751,7 @@ const TeamManagement = ({
   roles: initialRoles,
   members,
   applications: initialApps,
+  projectId,
   onAddRole,
   onDeleteRole,
   onUpdateRoleCount,
@@ -759,6 +762,10 @@ const TeamManagement = ({
   const [roles, setRoles] = useState(initialRoles);
   const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
+
+  useEffect(() => {
+    setLocalMembers(members);
+  }, [members]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
@@ -1461,6 +1468,10 @@ const TeamManagement = ({
               </button>
               <button
                 onClick={() => {
+                  const numericMemberId = Number(kickMemberId);
+                  if (projectId && kickMemberId && !isNaN(numericMemberId)) {
+                    removeMember(projectId, numericMemberId).catch(err => console.error('팀원 내보내기 실패:', err));
+                  }
                   setLocalMembers((prev) => prev.filter((m) => m.id !== kickMemberId));
                   setKickMemberId(null);
                 }}
@@ -1537,6 +1548,7 @@ const TeamManagement = ({
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
   const [detail, setDetail] = useState<TeamManagementData | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1568,10 +1580,11 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
         isLeader: i === 0,
+        isMe: m.userId === currentUserId,
       }));
     }
     return dashboard ? dashboardToMembers(dashboard) : [];
-  }, [detail, dashboard]);
+  }, [detail, dashboard, currentUserId]);
 
   const applications: Application[] = useMemo(() => {
     if (!detail) return [];
@@ -1589,6 +1602,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     <TeamManagement
       key={projectId ?? dashboard?.projectInfo.title ?? "default"}
       projectName={dashboard?.projectInfo.title ?? "프로젝트"}
+      projectId={projectId}
       roles={roles}
       members={members}
       applications={applications}

@@ -63,6 +63,14 @@ export const acceptRequest = (requestId: number) =>
 export const rejectRequest = (requestId: number) =>
   api.post(`/v1/requests/${requestId}/reject`);
 
+/* ── 팀원 내보내기 / 팀 나가기 ── */
+
+export const removeMember = (projectId: number, memberId: number) =>
+  api.delete(`/v1/projects/${projectId}/members/${memberId}`);
+
+export const leaveProject = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/members/me`);
+
 /* 나만의 공간 */
 
 export const getPersonalSpace = (projectId: number) =>
