@@ -1473,7 +1473,7 @@ const TeamManagement = ({
                   if (projectId && targetId && !isNaN(numericMemberId)) {
                     removeMember(projectId, numericMemberId)
                       .then(() => {
-                        setLocalMembers((prev) => prev.filter((m) => m.id !== targetId));
+                        setLocalMembers((prev) => prev.filter((m) => Number(m.id) !== numericMemberId));
                       })
                       .catch((err) => {
                         console.error('팀원 내보내기 실패:', err);
