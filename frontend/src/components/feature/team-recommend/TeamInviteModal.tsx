@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { BaseModal } from '../../common';
 import { getMyProjects, inviteUser } from '../../../api/projects';
 import type { ProjectSimple } from '../../../types/project';
@@ -45,8 +46,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
       toast.success(`${memberName}님에게 초대를 보냈습니다.`);
       onClose();
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 409) {
+      if (isAxiosError(err) && err.response?.status === 409) {
         toast.error('이미 초대된 사용자입니다.');
       } else {
         toast.error('초대에 실패했습니다. 다시 시도해주세요.');
