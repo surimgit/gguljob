@@ -17,7 +17,6 @@ interface JobListing {
   experience: string;
   employmentType: string;
   salary: string;
-  salaryMax: number;
   deadline: string;
   match: MatchType;
   techStacks: string[];
@@ -32,7 +31,7 @@ const DEFAULT_TECH_STACKS = [
   'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
 ];
 
-const SORT_OPTIONS = ['매칭순', '마감순', '연봉순'];
+const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
   suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
@@ -46,8 +45,12 @@ const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insuffi
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
   const copy = [...jobs];
   if (sort === '매칭순') return copy.sort((a, b) => MATCH_RANK[b.match] - MATCH_RANK[a.match]);
-  if (sort === '마감순') return copy.sort((a, b) => a.deadline.localeCompare(b.deadline));
-  if (sort === '연봉순') return copy.sort((a, b) => b.salaryMax - a.salaryMax);
+  if (sort === '마감순') return copy.sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
+
   return copy;
 };
 
@@ -64,8 +67,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   experience: item.experience,
   employmentType: item.contractType,
   salary: item.salary,
-  salaryMax: 0,
-  deadline: item.deadline,
+  deadline: item.deadline ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: [],
 });
@@ -82,7 +84,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '신입·경력 1~3년',
     employmentType: '정규직',
     salary: '5,000~7,500만원',
-    salaryMax: 7500,
     deadline: '2026-04-30',
     match: 'suitable',
     techStacks: ['React', 'TypeScript', 'Next.js'],
@@ -97,7 +98,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 1~4년',
     employmentType: '정규직',
     salary: '5,000~7,000만원',
-    salaryMax: 7000,
     deadline: '2026-04-15',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
@@ -112,7 +112,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 1~3년',
     employmentType: '정규직',
     salary: '5,000~7,000만원',
-    salaryMax: 7000,
     deadline: '2026-05-10',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
@@ -128,7 +127,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 2~5년',
     employmentType: '정규직',
     salary: '6,000~9,000만원',
-    salaryMax: 9000,
     deadline: '2026-03-31',
     match: 'insufficient',
     techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
@@ -143,7 +141,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 3~7년',
     employmentType: '정규직',
     salary: '6,000~9,500만원',
-    salaryMax: 9500,
     deadline: '2026-04-20',
     match: 'average',
     techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
@@ -158,7 +155,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 2~4년',
     employmentType: '정규직',
     salary: '5,500~8,000만원',
-    salaryMax: 8000,
     deadline: '2026-04-25',
     match: 'average',
     techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
