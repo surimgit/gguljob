@@ -148,18 +148,16 @@ const MyProjects = () => {
     fetchMyProjects();
   }, [fetchMyProjects]);
 
-  const resolvedProjects = myProjects;
-
   const filterByTab = (status: BackendProjectStatus) =>
     tab === "active"
       ? status === "RECRUITING" || status === "PROCEEDING"
       : status === "DONE";
 
-  const currentProjects = resolvedProjects.filter((p) => filterByTab(p.status));
-  const activeCount = resolvedProjects.filter(
+  const currentProjects = myProjects.filter((p) => filterByTab(p.status));
+  const activeCount = myProjects.filter(
     (p) => p.status === "RECRUITING" || p.status === "PROCEEDING"
   ).length;
-  const doneCount = resolvedProjects.filter((p) => p.status === "DONE").length;
+  const doneCount = myProjects.filter((p) => p.status === "DONE").length;
 
   return (
     <div
