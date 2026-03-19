@@ -1469,10 +1469,17 @@ const TeamManagement = ({
               <button
                 onClick={() => {
                   const numericMemberId = Number(kickMemberId);
-                  if (projectId && kickMemberId && !isNaN(numericMemberId)) {
-                    removeMember(projectId, numericMemberId).catch(err => console.error('팀원 내보내기 실패:', err));
+                  const targetId = kickMemberId;
+                  if (projectId && targetId && !isNaN(numericMemberId)) {
+                    removeMember(projectId, numericMemberId)
+                      .then(() => {
+                        setLocalMembers((prev) => prev.filter((m) => m.id !== targetId));
+                      })
+                      .catch((err) => {
+                        console.error('팀원 내보내기 실패:', err);
+                        alert('팀원 내보내기에 실패했습니다. 다시 시도해주세요.');
+                      });
                   }
-                  setLocalMembers((prev) => prev.filter((m) => m.id !== kickMemberId));
                   setKickMemberId(null);
                 }}
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
