@@ -1,0 +1,170 @@
+/* ── 백엔드 DB에 등록된 스킬 목록 (skill 테이블 기준) ── */
+
+export interface Skill {
+  id: number;
+  name: string;
+  category: string;
+}
+
+export const SKILLS: Skill[] = [
+  // FRONTEND
+  { id: 1, name: "React", category: "FRONTEND" },
+  { id: 2, name: "Vue.js", category: "FRONTEND" },
+  { id: 19, name: "Next.js", category: "FRONTEND" },
+  { id: 16, name: "JavaScript", category: "FRONTEND" },
+  { id: 17, name: "TypeScript", category: "FRONTEND" },
+  { id: 18, name: "HTML/CSS", category: "FRONTEND" },
+  { id: 66, name: "Swift", category: "FRONTEND" },
+  { id: 46, name: "jQuery", category: "FRONTEND" },
+  { id: 47, name: "Ajax", category: "FRONTEND" },
+  { id: 48, name: "Nexacro", category: "FRONTEND" },
+  { id: 49, name: "WebSquare", category: "FRONTEND" },
+
+  // BACKEND
+  { id: 3, name: "Java", category: "BACKEND" },
+  { id: 4, name: "Spring Boot", category: "BACKEND" },
+  { id: 5, name: "Python", category: "BACKEND" },
+  { id: 20, name: "Node.js", category: "BACKEND" },
+  { id: 6, name: "MySQL", category: "BACKEND" },
+  { id: 63, name: "Django", category: "BACKEND" },
+  { id: 64, name: "Flask", category: "BACKEND" },
+  { id: 45, name: "FastAPI", category: "BACKEND" },
+  { id: 43, name: "JPA", category: "BACKEND" },
+  { id: 44, name: "MyBatis", category: "BACKEND" },
+  { id: 22, name: "PostgreSQL", category: "BACKEND" },
+  { id: 23, name: "MariaDB", category: "BACKEND" },
+  { id: 24, name: "MongoDB", category: "BACKEND" },
+  { id: 21, name: "Oracle DB", category: "BACKEND" },
+  { id: 27, name: "Nest.js", category: "BACKEND" },
+  { id: 28, name: "Kafka", category: "BACKEND" },
+  { id: 26, name: ".NET", category: "BACKEND" },
+  { id: 25, name: "PHP", category: "BACKEND" },
+  { id: 13, name: "C", category: "BACKEND" },
+  { id: 14, name: "C#", category: "BACKEND" },
+  { id: 15, name: "C++", category: "BACKEND" },
+  { id: 42, name: "JSP", category: "BACKEND" },
+  { id: 41, name: "MSSQL", category: "BACKEND" },
+  { id: 53, name: "MFC/WPF", category: "BACKEND" },
+  { id: 55, name: "전자정부프레임워크", category: "BACKEND" },
+  { id: 59, name: "MSA", category: "BACKEND" },
+
+  // DEVOPS
+  { id: 8, name: "Docker", category: "DEVOPS" },
+  { id: 9, name: "Kubernetes", category: "DEVOPS" },
+  { id: 7, name: "AWS", category: "DEVOPS" },
+  { id: 31, name: "GCP", category: "DEVOPS" },
+  { id: 30, name: "Azure", category: "DEVOPS" },
+  { id: 10, name: "Jenkins", category: "DEVOPS" },
+  { id: 11, name: "Git", category: "DEVOPS" },
+  { id: 12, name: "Redis", category: "DEVOPS" },
+  { id: 65, name: "Nginx", category: "DEVOPS" },
+  { id: 29, name: "Linux", category: "DEVOPS" },
+  { id: 62, name: "Airflow", category: "DEVOPS" },
+  { id: 58, name: "VMware", category: "DEVOPS" },
+  { id: 68, name: "임베디드 Linux", category: "DEVOPS" },
+  { id: 69, name: "Windows", category: "DEVOPS" },
+  { id: 72, name: "ISMS", category: "DEVOPS" },
+
+  // DATA
+  { id: 37, name: "PyTorch", category: "DATA" },
+  { id: 38, name: "TensorFlow", category: "DATA" },
+  { id: 50, name: "OpenCV", category: "DATA" },
+  { id: 51, name: "Hadoop", category: "DATA" },
+
+  // AI
+  { id: 70, name: "AI", category: "AI" },
+  { id: 57, name: "LLM", category: "AI" },
+  { id: 56, name: "RAG", category: "AI" },
+  { id: 67, name: "MLOps", category: "AI" },
+
+  // DATABASE
+  { id: 54, name: "RDBMS/DBMS", category: "DATABASE" },
+  { id: 60, name: "Tibero", category: "DATABASE" },
+
+  // MOBILE
+  { id: 32, name: "Android", category: "MOBILE" },
+  { id: 33, name: "iOS", category: "MOBILE" },
+  { id: 34, name: "Kotlin", category: "MOBILE" },
+  { id: 35, name: "Flutter", category: "MOBILE" },
+  { id: 36, name: "React Native", category: "MOBILE" },
+  { id: 52, name: "Unity", category: "MOBILE" },
+
+  // TOOLS
+  { id: 40, name: "Figma", category: "TOOLS" },
+  { id: 39, name: "Jira", category: "TOOLS" },
+
+  // PM
+  { id: 61, name: "SAP", category: "PM" },
+  { id: 71, name: "MES", category: "PM" },
+];
+
+/** 스킬 이름만 모아놓은 배열 */
+export const SKILL_NAMES = SKILLS.map((s) => s.name);
+
+/** 카테고리별 스킬 이름 */
+export const SKILLS_BY_CATEGORY = SKILLS.reduce<Record<string, string[]>>((acc, s) => {
+  (acc[s.category] ??= []).push(s.name);
+  return acc;
+}, {});
+
+/** 스킬 이름 → id 매핑 */
+export const SKILL_NAME_TO_ID = Object.fromEntries(SKILLS.map((s) => [s.name, s.id]));
+
+/** 스킬 id → 이름 매핑 */
+export const SKILL_ID_TO_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.name]));
+
+/* ── 직무(Role) 관련 상수 — DB skill 카테고리 기준 ── */
+
+export type RoleCode =
+  | "FRONTEND" | "BACKEND" | "DEVOPS" | "DATA"
+  | "AI" | "DATABASE" | "MOBILE" | "TOOLS" | "PM";
+
+/** 전체 직무 목록 */
+export const ROLE_LIST: RoleCode[] = [
+  "FRONTEND", "BACKEND", "DEVOPS", "DATA",
+  "AI", "DATABASE", "MOBILE", "TOOLS", "PM",
+];
+
+/** 직무별 색상 */
+export const ROLE_COLORS: Record<string, string> = {
+  FRONTEND: "#2196F3",
+  BACKEND:  "#22C55E",
+  DEVOPS:   "#7C3AED",
+  DATA:     "#14B8A6",
+  AI:       "#EC4899",
+  DATABASE: "#EF4444",
+  MOBILE:   "#F97316",
+  TOOLS:    "#6366F1",
+  PM:       "#F59E0B",
+};
+
+export const getRoleColor = (role: string): string => ROLE_COLORS[role] ?? "#6B7280";
+
+/** 직무 코드 → 화면 표시 이름 (영어 풀네임) */
+export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
+  FRONTEND: "Frontend",
+  BACKEND:  "Backend",
+  DEVOPS:   "DevOps",
+  DATA:     "Data",
+  AI:       "AI",
+  DATABASE: "Database",
+  MOBILE:   "Mobile",
+  TOOLS:    "Tools",
+  PM:       "PM",
+};
+
+export const getRoleDisplayName = (role: string): string =>
+  ROLE_DISPLAY_NAMES[role as RoleCode] ?? role;
+
+/** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
+export const ROLE_STACKS: Record<RoleCode, string[]> = {
+  FRONTEND: SKILLS_BY_CATEGORY["FRONTEND"] ?? [],
+  BACKEND:  SKILLS_BY_CATEGORY["BACKEND"] ?? [],
+  DEVOPS:   SKILLS_BY_CATEGORY["DEVOPS"] ?? [],
+  DATA:     SKILLS_BY_CATEGORY["DATA"] ?? [],
+  AI:       SKILLS_BY_CATEGORY["AI"] ?? [],
+  DATABASE: SKILLS_BY_CATEGORY["DATABASE"] ?? [],
+  MOBILE:   SKILLS_BY_CATEGORY["MOBILE"] ?? [],
+  TOOLS:    SKILLS_BY_CATEGORY["TOOLS"] ?? [],
+  PM:       SKILLS_BY_CATEGORY["PM"] ?? [],
+};
