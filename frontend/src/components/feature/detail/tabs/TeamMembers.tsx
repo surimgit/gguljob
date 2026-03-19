@@ -764,6 +764,7 @@ const TeamManagement = ({
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
   const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
 
@@ -1277,18 +1278,30 @@ const TeamManagement = ({
         </div>
         </div>
 
-        {/* 우측: 팀원 추가하기 버튼 */}
-        <button
-          onClick={() => window.location.href = "/team-recommend"}
-          className="self-start w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-          style={{
-            background: "var(--color-primary-hover)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          팀원 추가하기
-        </button>
+        {/* 우측: 팀원 추가하기 + 팀 나가기 버튼 */}
+        <div className="self-start w-full flex flex-col gap-2">
+          <button
+            onClick={() => window.location.href = "/team-recommend"}
+            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            style={{
+              background: "var(--color-primary-hover)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            팀원 추가하기
+          </button>
+          <button
+            onClick={() => setShowLeaveModal(true)}
+            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            style={{
+              background: "var(--color-surface-secondary, #e5e7eb)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            팀 나가기
+          </button>
+        </div>
       </div>
 
       {/* ── 팀원 모집하기 모달 ── */}
@@ -1467,6 +1480,49 @@ const TeamManagement = ({
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
               >
                 내보내기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 팀 나가기 확인 모달 ── */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowLeaveModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-red-100 rounded-2xl p-4 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">팀 나가기</h2>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              정말 팀을 나가시겠습니까?
+              <br />
+              되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                나가기
               </button>
             </div>
           </div>
