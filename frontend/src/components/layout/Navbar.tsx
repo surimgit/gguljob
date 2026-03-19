@@ -291,7 +291,7 @@ const Navbar = () => {
             </div>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-end gap-4">
                 <div className="relative flex items-center" ref={notifRef}>
                   <button
                     onClick={() => setShowNotification(prev => !prev)}
