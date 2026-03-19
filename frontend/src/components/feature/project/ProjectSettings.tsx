@@ -257,8 +257,8 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
-  const [name, setName] = useState(info?.title ?? "");
-  const [description, setDescription] = useState(info?.description ?? "");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
   const descRef = useRef<HTMLTextAreaElement>(null);
 
@@ -279,11 +279,9 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>(info?.domain ? [info.domain] : []);
+  const [domains, setDomains] = useState<string[]>([]);
   const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
-  const [techStacks, setTechStacks] = useState<Record<string, string[]>>(
-    skillsToTechStacks(info?.skills ?? [])
-  );
+  const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const allSelected = useMemo(
