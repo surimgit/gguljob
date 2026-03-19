@@ -54,25 +54,16 @@ public class UserService {
 
     public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
-        user.updateOnboarding(
-            requestDto.getDescription(),
-            requestDto.getRoles(),
-            requestDto.getExperience(),
-            requestDto.getMbti(),
-            requestDto.getTeamTendency()
-        );
+        user.updateOnboarding(requestDto.getDescription(), requestDto.getRoles(),
+                requestDto.getExperience(), requestDto.getMbti(), requestDto.getTeamTendency());
 
         skillService.saveUserSkills(user, requestDto.getSkills());
 
         if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
             List<UserGoal> newGoals = requestDto.getGoals().stream()
-                .map(goalType -> UserGoal.builder()
-                    .user(user)
-                    .goal(goalType)
-                    .build())
-                .toList();
+                    .map(goalType -> UserGoal.builder().user(user).goal(goalType).build()).toList();
             userGoalRepository.saveAll(newGoals);
         }
 
@@ -83,11 +74,11 @@ public class UserService {
 
     public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         user.updateProfile(requestDto);
 
-        if(requestDto.getSkills() != null) {
+        if (requestDto.getSkills() != null) {
             skillService.saveUserSkills(user, requestDto.getSkills());
         }
 
@@ -95,11 +86,7 @@ public class UserService {
 
         if (requestDto.getGoals() != null && !requestDto.getGoals().isEmpty()) {
             List<UserGoal> newGoals = requestDto.getGoals().stream()
-                .map(goalType -> UserGoal.builder()
-                    .user(user)
-                    .goal(goalType)
-                    .build())
-                .toList();
+                    .map(goalType -> UserGoal.builder().user(user).goal(goalType).build()).toList();
             userGoalRepository.saveAll(newGoals);
         }
 
@@ -108,7 +95,7 @@ public class UserService {
 
     public void withdrawUser(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("이미 탈퇴했거나 없는 유저입니다."));
+                .orElseThrow(() -> new RuntimeException("이미 탈퇴했거나 없는 유저입니다."));
 
         userSkillRepository.deleteAllByUser(user);
 
@@ -122,43 +109,37 @@ public class UserService {
     @Transactional(readOnly = true)
     public ProfileResponseDto getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("유저 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("유저 정보를 찾을 수 없습니다."));
 
-        List<ProfileResponseDto.SkillDto> skillDtoList = userSkillRepository.findAllByUser(user).stream()
-            .map(userSkill -> ProfileResponseDto.SkillDto.builder()
-                .name(userSkill.getSkill().getName())
-                .category(userSkill.getSkill().getCategory().name())
-                .iconUrl(userSkill.getSkill().getIconUrl())
-                .build())
-            .toList();
+        List<ProfileResponseDto.SkillDto> skillDtoList =
+                userSkillRepository.findAllByUser(user).stream()
+                        .map(userSkill -> ProfileResponseDto.SkillDto.builder()
+                                .name(userSkill.getSkill().getName())
+                                .category(userSkill.getSkill().getCategory().name())
+                                .iconUrl(userSkill.getSkill().getIconUrl()).build())
+                        .toList();
 
-        List<GoalType> goalList = user.getGoals().stream()
-            .map(UserGoal::getGoal)
-            .toList();
+        List<GoalType> goalList = user.getGoals().stream().map(UserGoal::getGoal).toList();
 
-        return ProfileResponseDto.builder()
-            .userId(user.getId())
-            .email(user.getEmail())
-            .userName(user.getUserName())
-            .imageUrl(user.getProfileImageUrl())
-            .description(user.getDescription())
-            .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList() : Collections.emptyList())
-            .experience(user.getExperience() != null ? user.getExperience().name() : null)
-            .mbti(user.getMbti())
-            .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
-            .skills(skillDtoList)
-            .goals(goalList)
-            .build();
+        return ProfileResponseDto.builder().userId(user.getId()).email(user.getEmail())
+                .userName(user.getUserName()).imageUrl(user.getProfileImageUrl())
+                .description(user.getDescription())
+                .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList()
+                        : Collections.emptyList())
+                .experience(user.getExperience() != null ? user.getExperience().name() : null)
+                .mbti(user.getMbti())
+                .teamTendency(user.getTeamTendency() != null ? user.getTeamTendency().name() : null)
+                .skills(skillDtoList).goals(goalList).build();
     }
 
     @Transactional
     public String updateProfileImage(Long userId, MultipartFile file) {
         // 1. 유저 찾기
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
         // 2. S3에 이미지 업로드하고 URL 받아오기
-        String uploadedImageUrl = s3ImageService.uploadProfileImage(file);
+        String uploadedImageUrl = s3ImageService.uploadImage(file);
 
         // 3. 유저 엔티티에 URL 업데이트
         user.updateImageUrl(uploadedImageUrl);
@@ -171,72 +152,62 @@ public class UserService {
     public ProfileResponseDto getOtherProfile(Long targetUserId) {
 
         User user = userRepository.findById(targetUserId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        List<ProfileResponseDto.SkillDto> skillDtoList = userSkillRepository.findAllByUser(user).stream()
-            .map(userSkill -> ProfileResponseDto.SkillDto.builder()
-                .name(userSkill.getSkill().getName())
-                .category(userSkill.getSkill().getCategory().name())
-                .iconUrl(userSkill.getSkill().getIconUrl())
-                .build())
-            .toList();
+        List<ProfileResponseDto.SkillDto> skillDtoList =
+                userSkillRepository.findAllByUser(user).stream()
+                        .map(userSkill -> ProfileResponseDto.SkillDto.builder()
+                                .name(userSkill.getSkill().getName())
+                                .category(userSkill.getSkill().getCategory().name())
+                                .iconUrl(userSkill.getSkill().getIconUrl()).build())
+                        .toList();
 
-        List<UserRepProject> repProjectEntities = userRepProjectRepository.findByUserIdWithProject(targetUserId)
-            .stream().limit(2).toList();
+        List<UserRepProject> repProjectEntities = userRepProjectRepository
+                .findByUserIdWithProject(targetUserId).stream().limit(2).toList();
 
         List<ProfileResponseDto.RepProjectDto> repProjectDtoList = Collections.emptyList();
 
         if (!repProjectEntities.isEmpty()) {
-            List<Long> projectIds = repProjectEntities.stream()
-                .map(rep -> rep.getProject().getId())
-                .toList();
+            List<Long> projectIds =
+                    repProjectEntities.stream().map(rep -> rep.getProject().getId()).toList();
 
-            Map<Long, String> roleMap = projectMemberRepository.findByUserIdAndProjectIdIn(targetUserId, projectIds)
-                .stream()
-                .collect(Collectors.toMap(
-                    pm -> pm.getProject().getId(),
-                    pm -> pm.getRole().name()
-                ));
+            Map<Long, String> roleMap =
+                    projectMemberRepository.findByUserIdAndProjectIdIn(targetUserId, projectIds)
+                            .stream().collect(Collectors.toMap(pm -> pm.getProject().getId(),
+                                    pm -> pm.getRole().name()));
 
-            Map<Long, List<String>> skillMap = projectSkillRepository.findByProjectIdIn(projectIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                    ps -> ps.getProject().getId(),
-                    Collectors.mapping(ps -> ps.getSkill().getName(), Collectors.toList())
-                ));
+            Map<Long, List<String>> skillMap =
+                    projectSkillRepository.findByProjectIdIn(projectIds).stream()
+                            .collect(Collectors.groupingBy(ps -> ps.getProject().getId(), Collectors
+                                    .mapping(ps -> ps.getSkill().getName(), Collectors.toList())));
 
-            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+            java.time.format.DateTimeFormatter formatter =
+                    java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
 
             repProjectDtoList = repProjectEntities.stream().map(rep -> {
                 Project project = rep.getProject();
                 Long pId = project.getId();
 
-                String startStr = project.getCreatedAt() != null ? project.getCreatedAt().format(formatter) : "미상";
-                String endStr = project.getFinishedAt() != null ? project.getFinishedAt().format(formatter) : "진행중";
+                String startStr =
+                        project.getCreatedAt() != null ? project.getCreatedAt().format(formatter)
+                                : "미상";
+                String endStr =
+                        project.getFinishedAt() != null ? project.getFinishedAt().format(formatter)
+                                : "진행중";
                 String period = startStr + " ~ " + endStr;
 
-                return ProfileResponseDto.RepProjectDto.builder()
-                    .projectId(pId)
-                    .title(project.getTitle())
-                    .description(project.getDescription())
-                    .role(roleMap.getOrDefault(pId, "참여자"))
-                    .period(period)
-                    .skills(skillMap.getOrDefault(pId, Collections.emptyList()))
-                    .build();
+                return ProfileResponseDto.RepProjectDto.builder().projectId(pId)
+                        .title(project.getTitle()).description(project.getDescription())
+                        .role(roleMap.getOrDefault(pId, "참여자")).period(period)
+                        .skills(skillMap.getOrDefault(pId, Collections.emptyList())).build();
             }).toList();
         }
 
-        return ProfileResponseDto.builder()
-            .userId(user.getId())
-            .userName(user.getUserName())
-            .imageUrl(user.getProfileImageUrl())
-            .description(user.getDescription())
-            .roles(user.getRoles() != null
-                ? user.getRoles().stream().map(Enum::name).toList()
-                : java.util.Collections.emptyList())
-            .skills(skillDtoList)
-            .repProjects(repProjectDtoList)
-            .build();
+        return ProfileResponseDto.builder().userId(user.getId()).userName(user.getUserName())
+                .imageUrl(user.getProfileImageUrl()).description(user.getDescription())
+                .roles(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).toList()
+                        : java.util.Collections.emptyList())
+                .skills(skillDtoList).repProjects(repProjectDtoList).build();
     }
 
     @Transactional(readOnly = true)

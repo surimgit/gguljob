@@ -18,6 +18,8 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
 
+
+
 # Security (JWT)
 jwt:
   secret: ${JWT_SECRET:default-jwt-secret-key-please-change-in-production}
@@ -49,3 +51,16 @@ springdoc:
 gms:
   api:
     key: ${GMS_API_KEY}
+
+cdn:
+  url: ${CDN_URL}
+
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    region:
+      static: ap-northeast-2
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}

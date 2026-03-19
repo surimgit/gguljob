@@ -1,45 +1,55 @@
 package com.ssafy.gguljob.backend.global.infra.s3;
 
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+
+import java.io.IOException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class S3ImageService {
-    // S3 세팅 완료 후 아래 주석들 풀기
-    // private final AmazonS3 amazonS3;
-    // @Value("${cloud.aws.s3.bucket}")
-    // private String bucket;
 
-    public String uploadProfileImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("파일이 비어있습니다.");
-        }
+    private final AmazonS3 amazonS3;
 
-        // 파일명 중복 방지를 위한 UUID 생성 (리사이즈나 확장자 처리도 여기서 가능)
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String s3FileName = "profiles/" + UUID.randomUUID().toString().substring(0, 10) + originalFilename;
+    @Value("${cdn.url}")
+    private String cdnUrl;
 
-        log.info("S3 업로드 시도 (Mock) - 파일명: {}", s3FileName);
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
-        /* S3 세팅 완료 후 여기 주석 풀기
+    // 1. 업로드 로직
+    public String uploadImage(MultipartFile file) {
+        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        String s3Key = "uploads/" + fileName; // S3에 저장될 경로
+
         try {
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(file.getContentType());
             metadata.setContentLength(file.getSize());
+            metadata.setContentType(file.getContentType());
 
-            amazonS3.putObject(bucket, s3FileName, file.getInputStream(), metadata);
-            return amazonS3.getUrl(bucket, s3FileName).toString();
+            amazonS3.putObject(
+                    new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata));
+
         } catch (IOException e) {
-            log.error("S3 업로드 에러: {}", e.getMessage());
-            throw new RuntimeException("이미지 업로드에 실패했습니다.");
+            throw new RuntimeException("S3 파일 스트림 읽기 실패: " + e.getMessage());
         }
-        */
 
-        // 지금은 S3가 없으니 가짜(Mock) URL을 반환
-        return "https://gguljob-mock-s3-bucket.com/" + s3FileName;
+        return s3Key;
+    }
+
+    // 2. 조회/응답 로직
+    public String getImageUrl(String s3Key) {
+        // DB에서 꺼낸 s3Key 앞에 CDN 도메인을 붙여서 프론트엔드로 반환
+        return cdnUrl + "/" + s3Key;
     }
 }
