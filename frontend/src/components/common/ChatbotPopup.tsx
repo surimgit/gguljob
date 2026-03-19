@@ -67,12 +67,10 @@ const ChatbotPopup = ({
   return (
     <div
       ref={popupRef}
-      className={`fixed bottom-15 right-44 w-[450px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col ${
-        !isAgent && generating ? 'h-[420px]' : ''
-      }`}
+      className="fixed bottom-15 right-44 w-[450px] z-50 rounded-2xl border border-[#c7d2fe] overflow-hidden shadow-2xl flex flex-col"
       style={{
         background: '#f5f7ff',
-        minHeight: isAgent && generating ? 360 : undefined,
+        minHeight: generating ? (isAgent ? 360 : 420) : undefined,
       }}
     >
       {/* 헤더 */}
