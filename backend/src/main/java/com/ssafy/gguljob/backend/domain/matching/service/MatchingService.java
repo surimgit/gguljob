@@ -1,7 +1,10 @@
 package com.ssafy.gguljob.backend.domain.matching.service;
 
+import com.ssafy.gguljob.backend.domain.matching.dto.MemberCardDto;
+import com.ssafy.gguljob.backend.domain.matching.dto.MemberMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepository;
+import com.ssafy.gguljob.backend.domain.matching.repository.UserNodeRepository;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
@@ -10,6 +13,7 @@ import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +36,7 @@ public class MatchingService {
     private final ProjectService projectService;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final UserNodeRepository userNodeRepository;
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
@@ -71,6 +76,50 @@ public class MatchingService {
                 return (card != null) ? card.withScore(neoDto.score()) : null;
             })
             .filter(Objects::nonNull)
+            .toList();
+
+        return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
+    }
+
+    @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
+    public Page<MemberCardDto> getRecommendedMembers(Long projectId, String keyword, String position, String experienceLevel, Pageable pageable) {
+
+        // 제외할 유저
+        List<String> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
+            .stream()
+            .map(String::valueOf)
+            .toList();
+
+        // Neo4j 쿼리
+        Page<MemberMatchResultDto> neo4jResults = userNodeRepository.findRecommendedMembersForProject(
+            String.valueOf(projectId),
+            excludedUserIds,
+            keyword,
+            position,
+            experienceLevel,
+            pageable
+        );
+
+        if (neo4jResults.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> userIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.userId())).toList();
+
+        Map<Long, User> userMap = userRepository.findUsersWithRolesByIds(userIds).stream()
+            .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 유저 정보 + 적합도 점수
+        List<MemberCardDto> finalContent = neo4jResults.stream()
+            .map(neoDto -> {
+                User user = userMap.get(Long.valueOf(neoDto.userId()));
+                if (user == null) {
+                    log.warn("데이터 불일치 감지: Neo4j에는 존재하나 MySQL에 없는 유저 ID [{}]", neoDto.userId());
+                    return null;
+                }
+                return MemberCardDto.of(user, neoDto.matchScore());
+            })
+            .filter(java.util.Objects::nonNull)
             .toList();
 
         return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());

@@ -57,4 +57,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         MemberStatus status,
         Long leavingUserId
     );
+
+    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId")
+    List<Long> findUserIdsByProjectId(Long projectId);
 }
