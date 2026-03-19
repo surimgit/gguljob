@@ -1,0 +1,1 @@
+{"statements": [{"statement": "MATCH (u:User {id: 5}) MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j:Job) WHERE NOT j.title CONTAINS '국비' AND NOT j.title CONTAINS '교육과정' WITH j, u, count(s) AS graphScore WITH j, graphScore, 0.0 AS vectorScore, (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7 AS rawFinalScore RETURN count(j)"}]}
