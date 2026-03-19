@@ -70,100 +70,6 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   techStacks: [],
 });
 
-// ── 더미 데이터 (API 연결 전 fallback) ────────────────────────────────────────
-const MOCK_JOBS: JobListing[] = [
-  {
-    id: 1,
-    logoText: '당',
-    logoColor: '#F97316',
-    company: '당근',
-    title: '프론트엔드 엔지니어 (웹)',
-    location: '서울 서초구',
-    experience: '신입·경력 1~3년',
-    employmentType: '정규직',
-    salary: '5,000~7,500만원',
-    salaryMax: 7500,
-    deadline: '2026-04-30',
-    match: 'suitable',
-    techStacks: ['React', 'TypeScript', 'Next.js'],
-  },
-  {
-    id: 2,
-    logoText: 'L',
-    logoColor: '#00A63E',
-    company: '라인',
-    title: 'Web Frontend Developer',
-    location: '경기 판교',
-    experience: '경력 1~4년',
-    employmentType: '정규직',
-    salary: '5,000~7,000만원',
-    salaryMax: 7000,
-    deadline: '2026-04-15',
-    match: 'average',
-    techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
-  },
-  {
-    id: 3,
-    logoText: 'B',
-    logoColor: '#00D5BE',
-    company: '배달의민족',
-    title: 'React 프론트엔드 개발자',
-    location: '서울 송파구',
-    experience: '경력 1~3년',
-    employmentType: '정규직',
-    salary: '5,000~7,000만원',
-    salaryMax: 7000,
-    deadline: '2026-05-10',
-    match: 'average',
-    techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
-  },
-  {
-    id: 4,
-    logoText: 'C',
-    logoColor: '#E7000B',
-    company: '쿠팡',
-    isNew: true,
-    title: 'Backend Engineer (Java/Spring)',
-    location: '서울 송파구',
-    experience: '경력 2~5년',
-    employmentType: '정규직',
-    salary: '6,000~9,000만원',
-    salaryMax: 9000,
-    deadline: '2026-03-31',
-    match: 'insufficient',
-    techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
-  },
-  {
-    id: 5,
-    logoText: 'V',
-    logoColor: '#155DFC',
-    company: '비바리퍼블리카',
-    title: 'Server Engineer (Spring Boot)',
-    location: '서울 강남구',
-    experience: '경력 3~7년',
-    employmentType: '정규직',
-    salary: '6,000~9,500만원',
-    salaryMax: 9500,
-    deadline: '2026-04-20',
-    match: 'average',
-    techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
-  },
-  {
-    id: 6,
-    logoText: 'K',
-    logoColor: '#F2B705',
-    company: '카카오',
-    title: 'Node.js 백엔드 개발자',
-    location: '경기 성남시',
-    experience: '경력 2~4년',
-    employmentType: '정규직',
-    salary: '5,500~8,000만원',
-    salaryMax: 8000,
-    deadline: '2026-04-25',
-    match: 'average',
-    techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
-  },
-];
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const BookmarkBtn = ({
@@ -330,7 +236,7 @@ const JobListingSection = () => {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
-  const [jobs, setJobs] = useState<JobListing[]>(MOCK_JOBS);
+  const [jobs, setJobs] = useState<JobListing[]>([]);
   const [techStacks, setTechStacks] = useState<string[]>(DEFAULT_TECH_STACKS);
 
   useEffect(() => {
