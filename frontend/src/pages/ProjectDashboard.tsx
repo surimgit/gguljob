@@ -246,10 +246,10 @@ const ProjectDashboard = () => {
       className="min-h-screen"
       style={{ background: "var(--color-background)" }}
     >
-      <div className={`mx-auto py-6 flex flex-col gap-8 ${activeTab === "personal" ? "max-w-[1400px] px-3" : "max-w-5xl px-8"}`}>
+      <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-3">
         {/* ── 상단 탭 네비게이션 ── */}
         <div
-          className="flex gap-1 rounded-2xl px-2 py-1.5 w-fit"
+          className="flex flex-wrap gap-1 rounded-2xl px-2 py-1.5 w-fit"
           style={{
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
@@ -380,7 +380,7 @@ const ProjectDashboard = () => {
         <>
         {/* ── 프로젝트 히어로 배너 ── */}
         <div
-          className="rounded-2xl p-8 relative overflow-hidden"
+          className="rounded-2xl p-5 md:p-8 relative overflow-hidden"
           style={{
             background:
               "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-soft) 100%)",
@@ -443,7 +443,7 @@ const ProjectDashboard = () => {
             </div>
 
             {/* 우측 헥사곤 스탯 */}
-            <div className="flex flex-col items-center flex-shrink-0">
+            <div className="hidden md:flex flex-col items-center flex-shrink-0">
               <HexStat label="팀원" value={teamStats.totalMembers} large>
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span style={{ color: "var(--color-blue)" }}>
@@ -471,7 +471,7 @@ const ProjectDashboard = () => {
         </div>
 
         {/* ── 메인 2열 레이아웃 ── */}
-        <div className="grid grid-cols-[1fr_320px] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
           {/* ── 좌측 컬럼 ── */}
           <div className="flex flex-col gap-5">
             {/* Git 레포지토리 카드 */}
@@ -482,7 +482,7 @@ const ProjectDashboard = () => {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                 <div className="flex items-center gap-2">
                   <GitBranch
                     className="w-5 h-5"
@@ -548,7 +548,7 @@ const ProjectDashboard = () => {
                       onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="password"
                       value={tokenInput}
@@ -590,7 +590,7 @@ const ProjectDashboard = () => {
               )}
 
               <div
-                className="flex items-center justify-between px-4 py-3 rounded-xl"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 px-4 py-3 rounded-xl"
                 style={{
                   border: "1px solid var(--color-border)",
                   background: "var(--color-background)",
