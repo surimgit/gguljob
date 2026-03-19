@@ -208,7 +208,7 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => (
-  <div className="absolute right-0 top-full mt-2 flex flex-col overflow-hidden z-50 w-[360px] bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)]">
+  <div className="absolute top-full mt-2 flex flex-col overflow-hidden z-50 bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)] w-[calc(100vw-32px)] max-w-[360px] right-0 sm:w-[360px]">
     {/* 헤더 */}
     <div className="flex items-center justify-between px-5 h-[57px] bg-primary-hover">
       <div className="flex items-center gap-2">
