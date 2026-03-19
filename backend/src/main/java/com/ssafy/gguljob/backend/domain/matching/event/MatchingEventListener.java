@@ -20,10 +20,4 @@ public class MatchingEventListener {
     public void handleUserProfileSync(UserProfileSyncEvent event) {
         matchingProfileService.syncUserProfileToGraph(event.userId());
     }
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleProjectSync(ProjectSyncEvent event) {
-        matchingProjectService.syncProjectToGraph(event.id());
-    }
 }
