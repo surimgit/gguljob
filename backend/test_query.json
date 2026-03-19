@@ -1,7 +1,0 @@
-{
-  "statements": [
-    {
-      "statement": "MATCH (u:User {id: 5})\nMATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j:Job)\nWHERE NOT j.title CONTAINS '국비'\nAND NOT j.title CONTAINS '교육과정'\nAND NOT j.title CONTAINS '부트캠프'\nAND NOT j.title CONTAINS '수강생'\nAND NOT j.title CONTAINS '훈련생'\nWITH DISTINCT j, u\nORDER BY j.deadline ASC\nLIMIT 3000\nOPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j)\nWITH j, u, count(s) AS graphScore\nWITH j, u, graphScore,\nCASE\nWHEN u.embedding IS NULL OR j.embedding IS NULL THEN 0.0\nELSE REDUCE(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * j.embedding[i])\nEND AS rawVScore\nRETURN count(j.id)"
-    }
-  ]
-}

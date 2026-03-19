@@ -43,4 +43,24 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
         @Param("skillIds") List<Long> skillIds,
         Pageable pageable
     );
+
+    @Query("MERGE (p:Project {id: $projectId}) " +
+        "SET p.title = $title, p.domain = $domain, p.status = $status " +
+        "WITH p " +
+        "OPTIONAL MATCH (p)-[r:REQUIRES_ROLE|REQUIRES_SKILL]->() " +
+        "DELETE r " +
+        "WITH p " +
+        "UNWIND $roles AS roleName " +
+        "MERGE (r:Role {name: roleName}) " +
+        "MERGE (p)-[:REQUIRES_ROLE]->(r) " +
+        "WITH p " +
+        "UNWIND $skills AS skillName " +
+        "MERGE (s:Skill {name: skillName}) " +
+        "MERGE (p)-[:REQUIRES_SKILL]->(s)")
+    void syncProjectToNeo4j(@Param("projectId") String projectId,
+        @Param("title") String title,
+        @Param("domain") String domain,
+        @Param("status") String status,
+        @Param("roles") List<String> roles,
+        @Param("skills") List<String> skills);
 }

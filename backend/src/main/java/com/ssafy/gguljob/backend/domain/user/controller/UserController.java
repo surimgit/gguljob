@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.user.controller;
 
+import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingService;
 import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
@@ -44,6 +46,7 @@ public class UserController {
     private final UserService userService;
     private final ProjectService projectService;
     private final TroubleshootingService troubleshootingService;
+    private final MatchingService matchingService;
 
     @Operation(summary = "초기 프로필 설정 (온보딩)", description = "최초 로그인 시 필수 추가 정보를 입력받아 저장합니다.")
     @PostMapping("/onboarding")
@@ -148,18 +151,30 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponseDto<>(200, "타 사용자 프로필 조회 성공", profileDto));
     }
 
-    @Operation(summary = "사용자 전체 목록 조회", description = "페이지네이션을 적용하여 사용자 목록을 조회합니다.")
-    @GetMapping("/users")
-    public ResponseEntity<UserResponse.UserPageResponse> getUsers(
-        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-
-        UserResponse.UserPageResponse response = userService.getUsers(pageable);
-        return ResponseEntity.ok(response);
-    }
+//    @Operation(summary = "사용자 전체 목록 조회", description = "페이지네이션을 적용하여 사용자 목록을 조회합니다.")
+//    @GetMapping("/users")
+//    public ResponseEntity<UserResponse.UserPageResponse> getUsers(
+//        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+//
+//        UserResponse.UserPageResponse response = userService.getUsers(pageable);
+//        return ResponseEntity.ok(response);
+//    }
 
     @Operation(summary = "팀원(유저) 검색 필터 옵션(메뉴판) 조회", description = "팀원 찾기 페이지의 포지션 및 숙련도 필터 목록(value, label)을 제공합니다.")
     @GetMapping("/filters")
     public ResponseEntity<com.ssafy.gguljob.backend.domain.user.dto.MemberFilterResponseDto> getMemberFilters() {
         return ResponseEntity.ok(userService.getMemberFilters());
+    }
+
+    @Operation(summary = "추천 팀원 목록 및 검색", description = "필터(포지션, 숙련도) 및 키워드(이름, 포지션명)를 기반으로 팀원을 추천순으로 페이징 조회합니다.")
+    @GetMapping("/users")
+    public ResponseEntity<org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.matching.dto.MemberCardDto>> getRecommendedMembersList(
+        @RequestParam Long projectId,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String position,
+        @RequestParam(required = false) String experienceLevel,
+        @org.springframework.data.web.PageableDefault(size = 10) org.springframework.data.domain.Pageable pageable
+    ) {
+        return ResponseEntity.ok(matchingService.getRecommendedMembers(projectId, keyword, position, experienceLevel, pageable));
     }
 }

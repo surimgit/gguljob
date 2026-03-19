@@ -20,7 +20,7 @@ public class JobRecommendationController {
 
   private final JobRecommendationService jobRecommendationService;
 
-  @GetMapping("/recommend/top")
+  @GetMapping("/recommended/top")
   public ResponseEntity<List<RecommendedJobDto>> getTop3RecommendedJobs(
       @RequestParam(name = "userId", defaultValue = "5") Long userId) {
     // TODO: SecurityContext에서 실제 사용자 ID를 추출하여 사용하도록 수정해야 함.
