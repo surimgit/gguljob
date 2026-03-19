@@ -17,7 +17,6 @@ interface JobListing {
   experience: string;
   employmentType: string;
   salary: string;
-  salaryMax: number;
   deadline: string;
   match: MatchType;
   techStacks: string[];
@@ -68,7 +67,6 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   experience: item.experience,
   employmentType: item.contractType,
   salary: item.salary,
-  salaryMax: 0,
   deadline: item.deadline ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: [],
@@ -86,7 +84,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '신입·경력 1~3년',
     employmentType: '정규직',
     salary: '5,000~7,500만원',
-    salaryMax: 7500,
     deadline: '2026-04-30',
     match: 'suitable',
     techStacks: ['React', 'TypeScript', 'Next.js'],
@@ -101,7 +98,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 1~4년',
     employmentType: '정규직',
     salary: '5,000~7,000만원',
-    salaryMax: 7000,
     deadline: '2026-04-15',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'GraphQL', 'Webpack'],
@@ -116,7 +112,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 1~3년',
     employmentType: '정규직',
     salary: '5,000~7,000만원',
-    salaryMax: 7000,
     deadline: '2026-05-10',
     match: 'average',
     techStacks: ['React', 'TypeScript', 'Jest', 'Storybook'],
@@ -132,7 +127,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 2~5년',
     employmentType: '정규직',
     salary: '6,000~9,000만원',
-    salaryMax: 9000,
     deadline: '2026-03-31',
     match: 'insufficient',
     techStacks: ['Spring Boot', 'MySQL', 'Kubernetes', 'AWS'],
@@ -147,7 +141,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 3~7년',
     employmentType: '정규직',
     salary: '6,000~9,500만원',
-    salaryMax: 9500,
     deadline: '2026-04-20',
     match: 'average',
     techStacks: ['Spring Boot', 'MySQL', 'Redis', 'Kafka', 'AWS'],
@@ -162,7 +155,6 @@ const MOCK_JOBS: JobListing[] = [
     experience: '경력 2~4년',
     employmentType: '정규직',
     salary: '5,500~8,000만원',
-    salaryMax: 8000,
     deadline: '2026-04-25',
     match: 'average',
     techStacks: ['Node.js', 'TypeScript', 'MySQL', 'Redis'],
