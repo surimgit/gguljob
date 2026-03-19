@@ -20,6 +20,8 @@ import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
 import PersonalSpace, { type PersonalSubTab } from "../components/feature/project/PersonalSpace";
 import { ChevronDown } from "lucide-react";
+import chatbotImg from "../assets/images/chatbot.png";
+import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
@@ -191,6 +193,8 @@ const ProjectDashboard = () => {
   const [copied, setCopied] = useState(false);
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [chatbotOpen, setChatbotOpen] = useState(false);
+
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
   const [personalData, setPersonalData] = useState<PersonalSpaceData | null>(null);
@@ -218,6 +222,9 @@ const ProjectDashboard = () => {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [personalDropdownOpen]);
+
+  // 챗봇 표시 조건: 팀 프로젝트 탭에서만
+  const showChatbot = activeTab === "team";
 
   if (dashboardLoading) {
     return (
@@ -985,6 +992,24 @@ const ProjectDashboard = () => {
           </div>
         </div>
         </>
+        )}
+
+        {/* 챗봇 캐릭터 버튼 + 팝업 */}
+        {showChatbot && (
+          <>
+            <button
+              onClick={() => setChatbotOpen(prev => !prev)}
+              className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 overflow-hidden border-0 bg-transparent animate-float"
+            >
+              <img src={chatbotImg} alt="AI 챗봇" className="w-full h-full object-cover" />
+            </button>
+
+            <ChatbotPopup
+              isOpen={chatbotOpen}
+              onClose={() => setChatbotOpen(false)}
+              mode="agent"
+            />
+          </>
         )}
       </div>
     </div>
