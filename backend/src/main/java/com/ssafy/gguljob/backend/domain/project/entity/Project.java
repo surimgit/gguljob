@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.project.entity;
 
+import com.ssafy.gguljob.backend.domain.project.type.Domain;
 import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
 import com.ssafy.gguljob.backend.domain.skill.entity.ProjectSkill;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
@@ -45,8 +46,9 @@ public class Project extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private String domain;
+    private Domain domain;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -71,7 +73,7 @@ public class Project extends BaseTimeEntity {
     private List<ProjectSkill> projectSkills = new ArrayList<>();
 
     @Builder
-    public Project(User leader, String teamName, String title, String domain, String description, Boolean isPublic, String imageUrl, String readme) {
+    public Project(User leader, String teamName, String title, Domain domain, String description, Boolean isPublic, String imageUrl, String readme) {
         this.leader = leader;
         this.teamName = teamName;
         this.title = title;
@@ -83,7 +85,7 @@ public class Project extends BaseTimeEntity {
         this.readme = readme;
     }
 
-    public void updateBasicInfo(String title, String teamName, String description, String domain, String status) {
+    public void updateBasicInfo(String title, String teamName, String description, Domain domain, String status) {
         if (title != null && !title.isBlank()) {
             this.title = title;
         }

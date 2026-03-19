@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.ai.dto;
 
+import com.ssafy.gguljob.backend.domain.project.type.Domain;
 import java.util.List;
 import lombok.Builder;
 
@@ -13,7 +14,7 @@ public class AiTopicDto {
     @Builder
     public record RecommendResponse(
         Long projectId,
-        String domain,
+        Domain domain,
         List<String> recommendedTopics
     ) {}
 
