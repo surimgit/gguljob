@@ -93,7 +93,7 @@ public class AuthController {
         @GetMapping("/test-login")
         public ResponseEntity<ApiResponseDto<TokenResponseDto>> testLogin(
                         @Parameter(description = "테스트할 유저 ID (기본값 1)") @RequestParam(
-                                        defaultValue = "1") Long userId) {
+                                        name = "userId", defaultValue = "1") Long userId) {
 
                 String testAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
                 String testRefreshToken = jwtTokenProvider.createRefreshToken(userId);

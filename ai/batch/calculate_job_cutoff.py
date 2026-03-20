@@ -25,7 +25,6 @@ def get_users(tx):
     return [record["user_id"] for record in result]
 
 def evaluate_user_jobs(tx, user_id):
-    # 최근 백엔드 API 업데이트 된 완벽한 내적 및 혼합 쿼리 적용
     query = """
     MATCH (u:User {id: $user_id})
     CALL {
@@ -39,30 +38,29 @@ def evaluate_user_jobs(tx, user_id):
 
       WITH u
       WITH u WHERE u.embedding IS NOT NULL
-      CALL db.index.vector.queryNodes("job_embedding", $limitVector, u.embedding)     
+      CALL db.index.vector.queryNodes("job_embedding", $limitVector, u.embedding)
       YIELD node AS j, score
       RETURN j, score AS rawVScore
     }
     WITH j, u, sum(rawVScore) AS vectorScore
-    
+
     OPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j)
     WITH j, u, vectorScore, count(s) AS graphScore
-    
+
     WITH j, graphScore, vectorScore,
-         CASE
-           WHEN u.embedding IS NULL THEN
-             (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
-           ELSE
-             ((CASE WHEN vectorScore = 0.0 THEN 0.0
-                    WHEN vectorScore <= 0.50 THEN 10.0
-                    WHEN (vectorScore - 0.50) * 400.0 > 100.0 THEN 100.0        
-                    ELSE (vectorScore - 0.50) * 400.0 END) * 0.5) +
-             ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
-         END AS finalScore
+         CASE WHEN j.total_skills = 0 OR j.total_skills IS NULL THEN 0.0
+              ELSE toFloat(graphScore) / j.total_skills * 100.0
+         END AS graphScoreNorm,
+         CASE WHEN vectorScore = 0.0 THEN 0.0
+              WHEN (vectorScore - 0.65) * 533.0 > 80.0 THEN 80.0
+              WHEN (vectorScore - 0.65) * 533.0 < 0.0 THEN 0.0
+              ELSE (vectorScore - 0.65) * 533.0
+         END AS vectorScoreNorm
+    WITH j, graphScoreNorm * 0.5 + vectorScoreNorm * 0.5 AS finalScore
     RETURN j.id AS job_id, finalScore AS match_percentage
     """
     result = tx.run(query, user_id=user_id, limitGraph=EVAL_LIMIT_GRAPH, limitVector=EVAL_LIMIT_VECTOR)
-    return [{"job_id": record["job_id"], "score": record["match_percentage"]} for record in result]                                                             
+    return [{"job_id": record["job_id"], "score": record["match_percentage"]} for record in result]
 
 def update_job_cutoffs(tx, updates):
     # 계산된 커트라인과 평균을 Job 노드에 업데이트
@@ -75,15 +73,6 @@ def update_job_cutoffs(tx, updates):
     """
     tx.run(query, updates=updates)
 
-def update_global_stats(tx, global_avg, global_high, global_medium):
-    query = '''
-    MERGE (g:GlobalStats {id: "recommendation"})
-    SET g.global_average_score = $global_avg,
-        g.global_cutoff_high = $global_high,
-        g.global_cutoff_medium = $global_medium,
-        g.last_updated = datetime()
-    '''
-    tx.run(query, global_avg=global_avg, global_high=global_high, global_medium=global_medium)
 
 def main():
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)) 
@@ -133,11 +122,7 @@ def main():
         session.execute_write(update_job_cutoffs, updates)
         update_count = len(updates)
 
-        print(f" -> Successfully updated cutoffs for {update_count} jobs.")     
-
-        print("4. Updating GlobalStats node...")
-        session.execute_write(update_global_stats, float(global_avg), float(global_high), float(global_medium))                                                         
-        print(f" -> Global stats updated (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")                                           
+        print(f" -> Successfully updated cutoffs for {update_count} jobs. (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")                                           
     driver.close()
     print("Batch Processing Completed!")
 

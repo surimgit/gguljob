@@ -7,6 +7,7 @@ import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
 import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
+import com.ssafy.gguljob.backend.domain.matching.event.UserProfileSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.CurrentMemberDto;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectFilterResponseDto;
@@ -193,6 +194,7 @@ public class ProjectService {
                 if (readme != null && !readme.isBlank()) {
                     project.updateReadme(readme);
                     log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
+                    eventPublisher.publishEvent(new UserProfileSyncEvent(userId));
                 }
             }
         } catch (Exception e) {
