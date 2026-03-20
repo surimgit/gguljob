@@ -149,6 +149,7 @@ public class ProjectResponse {
     }
 
     public record PositionStatusDto(
+        Long positionId,
         String role,
         int currentCount,
         int targetCount
