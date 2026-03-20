@@ -1273,7 +1273,7 @@ const TeamManagement = ({
         {/* 우측: 팀원 추가하기 + 팀 나가기 버튼 */}
         <div className="self-start w-full flex flex-col gap-2">
           <button
-            onClick={() => window.location.href = `/team-recommend/${projectId}`}
+            onClick={() => navigate(`/team-recommend/${projectId}`)}
             className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             style={{
               background: "var(--color-primary-hover)",
