@@ -40,30 +40,41 @@ const RecommendCard = ({
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl p-5 min-w-[320px] w-[320px] min-h-[280px] shadow-md"
+      className="relative flex flex-col rounded-2xl p-5 min-h-[280px] shadow-md"
       style={{
         background: "rgba(var(--color-primary-soft-rgb, 255,243,200), 0.23)",
         border: "1px solid var(--color-border)",
       }}
     >
-      {/* 적합도 배지 + 프로필 아바타/이름/포지션 */}
-      <div className="flex items-center gap-3 mt-3 mb-5">
+      {/* 적합도 배지 (우상단) */}
+      <span
+        className="absolute top-4 right-4 text-xs font-bold px-3 py-1.5 rounded-full"
+        style={{
+          background: matchStyle.bg,
+          color: matchStyle.color,
+        }}
+      >
+        적합도 {matchRate}%
+      </span>
+
+      {/* 프로필 아바타/이름/포지션 */}
+      <div className="flex items-center gap-3 mt-3 mb-5 pr-24">
         <div
           className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
           style={{ background: "var(--color-primary-hover)" }}
         >
           {name.charAt(0)}
         </div>
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-w-0">
           <span
-            className="text-lg font-bold"
+            className="text-lg font-bold truncate"
             style={{ color: "var(--color-text-primary)" }}
           >
             {name}
           </span>
-          <div className="flex items-center gap-1.5 -ml-1">
+          <div className="flex flex-wrap items-center gap-1.5 -ml-1">
             <span
-              className="text-sm font-bold px-1.5 py-0.5 rounded"
+              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -72,23 +83,13 @@ const RecommendCard = ({
               {position}
             </span>
             <span
-              className="text-xs font-bold"
+              className="text-xs font-bold whitespace-nowrap"
               style={{ color: "var(--color-text-secondary)" }}
             >
               {level}
             </span>
           </div>
         </div>
-        {/* 적합도 배지 */}
-        <span
-          className="text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0 self-center"
-          style={{
-            background: matchStyle.bg,
-            color: matchStyle.color,
-          }}
-        >
-          적합도 {matchRate}%
-        </span>
       </div>
 
       {/* 한줄 소개 */}

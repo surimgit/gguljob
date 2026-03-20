@@ -149,7 +149,7 @@ const MemberRecommend = () => {
             <img
               src={beeImg}
               alt="팀빌딩"
-              className="absolute right-0 bottom-0 h-45 object-contain"
+              className="absolute right-0 bottom-0 h-45 object-contain hidden md:block"
             />
           </div>
 
@@ -159,9 +159,9 @@ const MemberRecommend = () => {
             style={{ background: "var(--color-border)", width: "calc(100% + 48px)" }}
           >
             {/* 포지션 필터 */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                className="text-sm font-semibold mr-1"
+                className="text-sm font-semibold mr-1 whitespace-nowrap"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 포지션
@@ -185,9 +185,9 @@ const MemberRecommend = () => {
             <hr className="border-t" style={{ borderColor: "var(--color-primary)" }} />
 
             {/* 숙련도 필터 */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                className="text-sm font-semibold mr-1"
+                className="text-sm font-semibold mr-1 whitespace-nowrap"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 숙련도
@@ -212,7 +212,7 @@ const MemberRecommend = () => {
 
         {/* ── 상단 추천 카드 Top 3 ── */}
         {topCards.length > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-4 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
             {topCards.map((m, idx) => (
               <RecommendCard
                 key={`recommend-${idx}`}
