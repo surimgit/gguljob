@@ -2,7 +2,7 @@ import api from './index';
 import type { JobItem, JobFilters } from '../types/recruitment';
 
 export const getRecommendedTop3 = () =>
-  api.get<JobItem[]>('/v1/jobs/recommend/top');
+  api.get<JobItem[]>('/v1/jobs/recommended/top');
 
 export const getJobs = (params?: { page?: number }) =>
   api.get<JobItem[]>('/v1/jobs', { params });
