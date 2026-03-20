@@ -76,10 +76,13 @@ const NotificationItem = ({
   onMarkRead: (id: number) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(null);
+  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(() => {
+    const saved = localStorage.getItem(`notif-action-${notif.id}`);
+    return saved as 'accepted' | 'rejected' | null;
+  });
   const [loading, setLoading] = useState(false);
 
-  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null;
+  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
 
   const handleClick = () => {
     if (!notif.isRead) onMarkRead(notif.id);
@@ -92,6 +95,7 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await acceptRequest(notif.referenceId);
+      localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
     } catch (err) {
@@ -107,6 +111,7 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await rejectRequest(notif.referenceId);
+      localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
     } catch (err) {
