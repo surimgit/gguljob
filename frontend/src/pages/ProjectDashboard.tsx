@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   FolderOpen,
   User,
@@ -26,7 +26,7 @@ import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
-import { getPersonalSpace, recommendTopics, updateProjectTitle } from "../api/projects";
+import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
 /* ── 더미 데이터 ── */
@@ -178,7 +178,13 @@ const formatTime = (dateStr: string) => {
 /* ── 메인 페이지 ── */
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<string>("team");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "team");
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
   const [personalSubTab, setPersonalSubTab] = useState<PersonalSubTab>("troubleshooting");
   const [personalDropdownOpen, setPersonalDropdownOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
@@ -197,10 +203,18 @@ const ProjectDashboard = () => {
   const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
     useProjectStore();
   const [personalData, setPersonalData] = useState<PersonalSpaceData | null>(null);
+  const [isLeader, setIsLeader] = useState(false);
 
   useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
+
+  useEffect(() => {
+    if (!id) return;
+    getTeamManagement(Number(id))
+      .then(() => setIsLeader(true))
+      .catch(() => setIsLeader(false));
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -396,7 +410,7 @@ const ProjectDashboard = () => {
                 }}
               >
                 <Icon className="w-4 h-4" />
-                {tab.label}
+                {tab.key === "members" ? (isLeader ? "팀원 관리" : "팀 정보") : tab.label}
               </button>
             );
           })}
