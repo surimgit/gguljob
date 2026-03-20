@@ -30,6 +30,8 @@ public class TroubleshootingResponse {
         String title,
         String trouble,
         String shooting,
+        String codeSnippet,
+        String confidence,
         String prTitle,
         Integer prNumber
     ) {}

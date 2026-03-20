@@ -14,7 +14,8 @@ public class TroubleshootingRequest {
         String language,
         String framework,
         String situation,
-        String solution
+        String solution,
+        String codeSnippet
     ) {}
 
 }

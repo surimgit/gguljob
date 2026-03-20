@@ -62,10 +62,16 @@ public class Troubleshooting extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String solution;
 
+    @Column(columnDefinition = "TEXT")
+    private String codeSnippet;
+
+    @Column(length = 10)
+    private String confidence;
+
     @Builder
     public Troubleshooting(User user, PullRequest pullRequest, Project project, String title,
         PositionType role, String language, String framework,
-        String situation, String solution) {
+        String situation, String solution, String codeSnippet, String confidence) {
         this.user = user;
         this.pullRequest = pullRequest;
         this.project = project;
@@ -75,16 +81,19 @@ public class Troubleshooting extends BaseTimeEntity {
         this.framework = framework;
         this.situation = situation;
         this.solution = solution;
+        this.codeSnippet = codeSnippet;
+        this.confidence = confidence;
     }
 
     public void updateContent(String title, PositionType role, String language,
-        String framework, String situation, String solution) {
+        String framework, String situation, String solution, String codeSnippet) {
         this.title = title;
         this.role = role;
         this.language = language;
         this.framework = framework;
         this.situation = situation;
         this.solution = solution;
+        this.codeSnippet = codeSnippet;
     }
 
 }

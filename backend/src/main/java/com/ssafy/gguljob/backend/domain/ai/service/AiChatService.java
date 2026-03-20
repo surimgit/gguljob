@@ -3,8 +3,12 @@ package com.ssafy.gguljob.backend.domain.ai.service;
 import com.ssafy.gguljob.backend.domain.ai.dto.ChatResponse;
 import com.ssafy.gguljob.backend.domain.ai.dto.ChatRequest;
 import com.ssafy.gguljob.backend.domain.ai.entity.ChatLog;
+import com.ssafy.gguljob.backend.domain.ai.event.ChatLogSavedEvent;
 import com.ssafy.gguljob.backend.domain.ai.repository.ChatLogRepository;
+import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
+import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +37,7 @@ public class AiChatService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final StringRedisTemplate redisTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${gms.api.key}")
     private String gmsKey;
@@ -87,12 +93,12 @@ public class AiChatService {
             redisTemplate.opsForValue().set(ansKey, aiResponseText, ANSWER_CACHE_TTL, TimeUnit.HOURS);
 
             // DB 저장
-            ChatLog chatLog = ChatLog.builder()
-                .user(userRepository.getReferenceById(userId))
-                .project(projectRepository.getReferenceById(request.projectId()))
-                .content("Q: " + userMsg + "\n\nA: " + aiResponseText)
-                .build();
-            chatLogRepository.save(chatLog);
+            saveChatLog(
+                userRepository.getReferenceById(userId),
+                projectRepository.getReferenceById(request.projectId()),
+                null,
+                "Q: " + userMsg + "\n\nA: " + aiResponseText
+            );
 
             return new ChatResponse.ChatMessageResponse(aiResponseText);
 
@@ -123,4 +129,66 @@ public class AiChatService {
         List<Map<String, Object>> contentList = (List<Map<String, Object>>) responseBody.get("content");
         return (String) contentList.get(0).get("text");
     }
+
+    @Transactional
+    public ChatLog saveChatLog(User user, Project project,
+        PullRequest pr, String content) {
+
+        ChatLog saved = chatLogRepository.save(
+            ChatLog.builder()
+                .user(user)
+                .project(project)
+                .pullRequest(pr)
+                .content(content)
+                .build()
+        );
+
+        // 임베딩 비동기 저장
+        applicationEventPublisher.publishEvent(new ChatLogSavedEvent(
+            saved.getId(),
+            project.getId(),
+            pr != null ? pr.getId() : null,
+            content
+        ));
+
+        return saved;
+    }
+
+    public String callClaudeApiWithSystem(String systemPrompt, String userPrompt) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", gmsKey);
+        headers.set("anthropic-version", "2023-06-01");
+
+        Map<String, Object> body = Map.of(
+            "model", "claude-opus-4-1-20250805",
+            "max_tokens", 1024,
+            "system", systemPrompt,
+            "messages", List.of(
+                Map.of("role", "user", "content", userPrompt)
+            )
+        );
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+            GMS_CLAUDE_URL, HttpMethod.POST,
+            new HttpEntity<>(body, headers), Map.class
+        );
+
+        Map responseBody = response.getBody();
+
+        // 토큰 사용량 로깅
+        Map<String, Object> usage = (Map<String, Object>) responseBody.get("usage");
+        if (usage != null) {
+            log.info("📊 토큰 사용량 - input: {}, output: {}, total: {}",
+                usage.get("input_tokens"),
+                usage.get("output_tokens"),
+                (int) usage.get("input_tokens") + (int) usage.get("output_tokens")
+            );
+        }
+
+        List<Map<String, Object>> contentList =
+            (List<Map<String, Object>>) responseBody.get("content");
+        return (String) contentList.get(0).get("text");
+    }
+
 }
