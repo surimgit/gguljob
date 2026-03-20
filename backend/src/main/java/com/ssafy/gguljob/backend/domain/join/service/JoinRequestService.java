@@ -181,33 +181,4 @@ public class JoinRequestService {
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
         ));
     }
-
-    // 참가 신청 현황 (대기 중) 목록 조회
-    @Transactional(readOnly = true)
-    public List<PendingJoinRequestDto> getPendingJoinRequests(Long loginUserId, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
-
-        // 1. 리더 권한 검증
-        if (!project.getLeader().getId().equals(loginUserId)) {
-            throw new IllegalArgumentException("프로젝트 리더만 참가 신청 현황을 볼 수 있습니다.");
-        }
-
-        // 2. 대기 중인 요청 목록 DB에서 뽑아오기
-        List<JoinRequest> pendingRequests = joinRequestRepository.findPendingRequestsByProjectId(projectId);
-
-        // 3. DTO로 변환
-        return pendingRequests.stream().map(request -> {
-            String positionName = projectPositionRepository.findById(request.getPositionId())
-                .map(pos -> pos.getRole().name())
-                .orElse("알 수 없음");
-
-            // 유저의 기술 스택 리스트를 가져오는 로직
-            List<String> techStacks = request.getUser().getUserSkills().stream()
-                .map(userSkill -> userSkill.getSkill().getName())
-                .collect(Collectors.toList());
-
-            return PendingJoinRequestDto.of(request, positionName, techStacks);
-        }).collect(Collectors.toList());
-    }
 }
