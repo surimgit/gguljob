@@ -25,7 +25,7 @@ import chatbotImg from "../assets/images/chatbot.png";
 import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
-import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
+import type { PersonalSpaceData } from "../types/project";
 import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
