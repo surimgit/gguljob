@@ -360,7 +360,7 @@ public class ProjectService {
             .collect(Collectors.groupingBy(
                 pp -> pp.getProject().getId(),
                 Collectors.mapping(pp -> new ProjectResponse.PositionStatusDto(
-                    pp.getRole().name(), pp.getCurrentCount(), pp.getTargetCount()), Collectors.toList())
+                    pp.getId(), pp.getRole().name(), pp.getCurrentCount(), pp.getTargetCount()), Collectors.toList())
             ));
 
         return projects.stream().collect(Collectors.toMap(
