@@ -77,15 +77,15 @@ export const useProjectFilters = () => {
 
       // skillCategories: [{category, skills: [{skillId, name}]}] → 카테고리별 그룹
       const CATEGORY_LABELS: Record<string, string> = {
-        FRONTEND: '프론트엔드',
-        BACKEND: '백엔드',
-        MOBILE: '모바일',
+        FRONTEND: 'Frontend',
+        BACKEND: 'Backend',
+        MOBILE: 'Mobile',
         DEVOPS: 'DevOps',
-        DATABASE: '데이터베이스',
-        DATA: '데이터',
+        DATABASE: 'Database',
+        DATA: 'Data',
         AI: 'AI',
         PM: 'PM',
-        TOOLS: '도구',
+        TOOLS: 'Tools',
       };
       const rawSkillGroups: SkillGroup[] = (raw?.skillCategories ?? []).map((cat: any) => ({
         category: cat.category,
