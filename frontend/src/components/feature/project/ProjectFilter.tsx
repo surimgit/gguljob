@@ -13,10 +13,11 @@ export interface ProjectFilterProps {
   onPositionChange: (value: string) => void;
   skillGroups?: SkillGroup[];
   domainOptions?: string[];
+  positionOptions?: string[];
 }
 
 const DEFAULT_DOMAIN_OPTIONS = ['웹기술', '웹디자인', '모바일', 'AIoT', '인공지능', '빅데이터', '블록체인', '자율주행', '핀테크', '메타버스'];
-const POSITION_OPTIONS = ['전체', 'FE 모집중', 'BE 모집중'];
+const DEFAULT_POSITION_OPTIONS = ['FE 모집중', 'BE 모집중'];
 
 interface FilterRowProps {
   label: string;
@@ -139,8 +140,10 @@ export default function ProjectFilter({
   onPositionChange,
   skillGroups,
   domainOptions,
+  positionOptions,
 }: ProjectFilterProps) {
   const domains = ['전체', ...(domainOptions ?? DEFAULT_DOMAIN_OPTIONS)];
+  const positions = ['전체', ...(positionOptions ?? DEFAULT_POSITION_OPTIONS)];
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -188,7 +191,7 @@ export default function ProjectFilter({
 
         <FilterRow
           label="포지션"
-          options={POSITION_OPTIONS}
+          options={positions}
           selected={positionFilter}
           onChange={onPositionChange}
         />

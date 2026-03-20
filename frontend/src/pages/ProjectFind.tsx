@@ -121,6 +121,7 @@ const ProjectFind = () => {
           onPositionChange={setPositionFilter}
           skillGroups={filters?.skillGroups}
           domainOptions={filters?.domains}
+          positionOptions={filters?.roles}
         />
 
         {/* 결과 카운트 */}
