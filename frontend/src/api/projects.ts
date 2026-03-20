@@ -96,6 +96,31 @@ export const leaveProject = (projectId: number) =>
 export const getPersonalSpace = (projectId: number) =>
   api.get(`/v1/projects/${projectId}/personal-space`);
 
+export interface PullRequestListItem {
+  prId: number;
+  prNumber: number;
+  title: string;
+  status: string;
+  githubCreatedAt: string;
+  githubClosedAt: string | null;
+}
+
+export interface PullRequestPage {
+  content: PullRequestListItem[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export const getPullRequests = (projectId: number, page = 0, size = 10) =>
+  api.get<PullRequestPage>(`/v1/projects/${projectId}/personal-space/pull-requests`, {
+    params: { page, size },
+  });
+
 /* AI 주제 추천 */
 
 export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
