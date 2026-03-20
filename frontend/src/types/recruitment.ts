@@ -32,6 +32,8 @@ export interface JobItem {
   cutoffHigh: number;
   cutoffMedium: number;
   averageScore: number;
+  techStacks: string[];
+  jobCategory: string;
 }
 
 // GET /api/v1/jobs/filters 응답
