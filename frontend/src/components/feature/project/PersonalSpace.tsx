@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import type { PersonalSpaceData } from '../../../types/project';
-import { generateTroubleshooting, updateTroubleshooting } from '../../../api/troubleshooting';
+import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } from '../../../api/troubleshooting';
+import type { TroubleshootingListItem } from '../../../api/troubleshooting';
+import { getPullRequests } from '../../../api/projects';
+import type { PullRequestListItem } from '../../../api/projects';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -314,17 +317,52 @@ const TroubleshootingCard = ({ item, onSave }: { item: TroubleshootingItem; onSa
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 
-const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' }: { projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
+const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubleshooting' }: { projectId?: number; projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
+  const [tsList, setTsList] = useState<TroubleshootingItem[]>([]);
+  const [tsTotalPages, setTsTotalPages] = useState(0);
+  const [tsTotalElements, setTsTotalElements] = useState(0);
+  const [tsLoading, setTsLoading] = useState(false);
+  const [mrList, setMrList] = useState<MrItem[]>([]);
+  const [mrTotalPages, setMrTotalPages] = useState(0);
+  const [mrTotalElements, setMrTotalElements] = useState(0);
+  const [mrLoading, setMrLoading] = useState(false);
   const [showAiSection, setShowAiSection] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
   const MR_PER_PAGE = 3;
+  const TS_PER_PAGE = 3;
 
-  const mrList: MrItem[] = personalData
-    ? personalData.myPullRequests.map(pr => ({
+  const fetchTroubleshootings = useCallback(async (page: number) => {
+    if (!projectId) return;
+    setTsLoading(true);
+    try {
+      const { data } = await getTroubleshootings(projectId, page, TS_PER_PAGE);
+      setTsList(data.content.map((ts: TroubleshootingListItem) => ({
+        id: ts.tsId,
+        title: ts.title,
+        problemDesc: ts.situation,
+        solutionDesc: '',
+        codeSnippet: '',
+        sources: [],
+      })));
+      setTsTotalPages(data.totalPages);
+      setTsTotalElements(data.totalElements);
+    } catch (err) {
+      console.error('트러블슈팅 목록 조회 실패:', err);
+    } finally {
+      setTsLoading(false);
+    }
+  }, [projectId]);
+
+  const fetchPullRequests = useCallback(async (page: number) => {
+    if (!projectId) return;
+    setMrLoading(true);
+    try {
+      const { data } = await getPullRequests(projectId, page, MR_PER_PAGE);
+      setMrList(data.content.map((pr: PullRequestListItem) => ({
         id: pr.prId,
         title: pr.title,
         status: pr.status as MrStatus,
@@ -333,23 +371,31 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
         commits: 0,
         time: new Date(pr.githubCreatedAt).toLocaleDateString(),
         reviews: [],
-      }))
-    : MOCK_MR_LIST;
+      })));
+      setMrTotalPages(data.totalPages);
+      setMrTotalElements(data.totalElements);
+    } catch (err) {
+      console.error('PR 목록 조회 실패:', err);
+    } finally {
+      setMrLoading(false);
+    }
+  }, [projectId]);
 
-  const tsList: TroubleshootingItem[] = personalData
-    ? personalData.myTroubleshootings.map(ts => ({
-        id: ts.tsId,
-        title: ts.title,
-        problemDesc: ts.situation,
-        solutionDesc: '',
-        codeSnippet: '',
-        sources: [],
-      }))
-    : MOCK_TROUBLESHOOTINGS;
+  useEffect(() => {
+    if (projectId && subTab === 'troubleshooting') {
+      fetchTroubleshootings(tsPage);
+    }
+  }, [projectId, tsPage, subTab, fetchTroubleshootings]);
 
-  const mrCount = personalData ? personalData.stats.prCount : MOCK_MR_LIST.length;
+  useEffect(() => {
+    if (projectId && subTab === 'mr-review') {
+      fetchPullRequests(mrPage);
+    }
+  }, [projectId, mrPage, subTab, fetchPullRequests]);
+
+  const mrCount = projectId ? mrTotalElements : (personalData ? personalData.stats.prCount : MOCK_MR_LIST.length);
   const codeReviews = personalData ? personalData.stats.reviewCount : MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
-  const stats = { mrCount, autoGenCount: personalData ? personalData.stats.troubleshootingCount : MOCK_TROUBLESHOOTINGS.length };
+  const stats = { mrCount, autoGenCount: projectId ? tsTotalElements : (personalData ? personalData.stats.troubleshootingCount : MOCK_TROUBLESHOOTINGS.length) };
 
   return (
     <div className="flex flex-col gap-10">
@@ -474,12 +520,14 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
               </div>
             )}
 
-            {tsList.length === 0 ? (
+            {tsLoading ? (
+              <div className="flex items-center justify-center py-12 text-text-tertiary">불러오는 중...</div>
+            ) : tsList.length === 0 ? (
               <EmptyState message="아직 등록된 트러블슈팅이 없습니다." />
             ) : (
               <>
                 <div className="flex flex-col gap-5">
-                  {tsList.slice(tsPage * MR_PER_PAGE, (tsPage + 1) * MR_PER_PAGE).map(item => (
+                  {tsList.map(item => (
                     <TroubleshootingCard
                       key={item.id}
                       item={item}
@@ -489,7 +537,7 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                 </div>
 
                 {/* 페이지네이션 */}
-                {(
+                {tsTotalPages > 1 && (
                   <div className="flex items-center justify-center gap-4 mt-6">
                     <button
                       onClick={() => setTsPage(p => Math.max(0, p - 1))}
@@ -498,7 +546,7 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                     >
                       <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                     </button>
-                    {Array.from({ length: Math.ceil(tsList.length / MR_PER_PAGE) }, (_, i) => (
+                    {Array.from({ length: tsTotalPages }, (_, i) => (
                       <button
                         key={i}
                         onClick={() => setTsPage(i)}
@@ -512,8 +560,8 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                       </button>
                     ))}
                     <button
-                      onClick={() => setTsPage(p => Math.min(Math.ceil(tsList.length / MR_PER_PAGE) - 1, p + 1))}
-                      disabled={tsPage >= Math.ceil(tsList.length / MR_PER_PAGE) - 1}
+                      onClick={() => setTsPage(p => Math.min(tsTotalPages - 1, p + 1))}
+                      disabled={tsPage >= tsTotalPages - 1}
                       className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
@@ -542,16 +590,18 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
               </div>
               <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
             </div>
-            {mrList.length === 0 ? (
+            {mrLoading ? (
+              <div className="flex items-center justify-center py-12 text-text-tertiary">불러오는 중...</div>
+            ) : mrList.length === 0 ? (
               <EmptyState message="아직 등록된 MR 리뷰가 없습니다." />
             ) : (
               <>
                 <div className="flex flex-col gap-10">
-                  {mrList.slice(mrPage * MR_PER_PAGE, (mrPage + 1) * MR_PER_PAGE).map(mr => <MrCard key={mr.id} mr={mr} />)}
+                  {mrList.map(mr => <MrCard key={mr.id} mr={mr} />)}
                 </div>
 
                 {/* 페이지네이션 */}
-                {(
+                {mrTotalPages > 1 && (
                   <div className="flex items-center justify-center gap-4 mt-6">
                     <button
                       onClick={() => setMrPage(p => Math.max(0, p - 1))}
@@ -560,7 +610,7 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                     >
                       <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                     </button>
-                    {Array.from({ length: Math.ceil(mrList.length / MR_PER_PAGE) }, (_, i) => (
+                    {Array.from({ length: mrTotalPages }, (_, i) => (
                       <button
                         key={i}
                         onClick={() => setMrPage(i)}
@@ -574,8 +624,8 @@ const PersonalSpace = ({ projectTitle, personalData, subTab = 'troubleshooting' 
                       </button>
                     ))}
                     <button
-                      onClick={() => setMrPage(p => Math.min(Math.ceil(mrList.length / MR_PER_PAGE) - 1, p + 1))}
-                      disabled={mrPage >= Math.ceil(mrList.length / MR_PER_PAGE) - 1}
+                      onClick={() => setMrPage(p => Math.min(mrTotalPages - 1, p + 1))}
+                      disabled={mrPage >= mrTotalPages - 1}
                       className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
