@@ -117,7 +117,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
     setSubmitting(true);
     try {
-      await applyToPosition(project.projectId, 0, intro || undefined);
+      await applyToPosition(project.projectId, position.positionId, intro || undefined);
       onApplied?.();
       setShowConfirm(true);
     } catch {

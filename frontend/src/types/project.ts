@@ -5,6 +5,7 @@ export type ProjectDomain =
   | '빅데이터' | '블록체인' | '자율주행' | '핀테크' | '메타버스';
 
 export interface ProjectPositionDto {
+  positionId: number;
   role: string;
   currentCount: number;
   targetCount: number;
