@@ -13,6 +13,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JobRecommendationRepository {
 
+  /*
+   * [스코어링 상수 설명] — Cypher 문자열 내부라 Java 상수로 추출 불가, 주석으로 대신함
+   * calculate_job_cutoff.py 배치와 반드시 동일하게 유지해야 함
+   *
+   * vectorScoreNorm 정규화:
+   *   - VECTOR_BASELINE = 0.65  : 코사인 유사도 실측 최솟값 (이 미만 → 0점)
+   *   - VECTOR_SCALE   = 533.0  : 80 / (0.80 - 0.65) ≈ 533, 유효 구간을 80점으로 선형 확대
+   *   - VECTOR_MAX     = 80.0   : 벡터 최고 상한 (100 미만인 이유: 공고 텍스트 ≠ 사람 프로필)
+   *
+   * finalScore 가중치:
+   *   - graphScoreNorm  * 0.5 : 스킬 매칭 비율 (보유 스킬 / 공고 요구 스킬)
+   *   - vectorScoreNorm * 0.5 : 시맨틱 유사도 보너스 (임베딩 없으면 0으로 처리 → 스킬만으로 최대 50점)
+   *   → 임베딩(포트폴리오/프로필)이 있을 때만 가산점 부여, 없다고 감점하지 않는 구조
+   *
+   * fallback cutoff (Job에 cutoff_high/medium이 미설정된 경우):
+   *   - cutoff_high   = 35.0  : 배치 실측 P70 근사값 (새 공식 기준)
+   *   - cutoff_medium = 20.0  : 배치 실측 P40 근사값
+   *   - average_score = 25.0  : 배치 실측 평균 근사값
+   */
+
   private final Neo4jClient neo4jClient;
 
   public Collection<JobRecommendationResponse> recommendJobsForUser(Long userId, int limit,

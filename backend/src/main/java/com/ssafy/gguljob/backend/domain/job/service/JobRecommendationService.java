@@ -1,6 +1,8 @@
 package com.ssafy.gguljob.backend.domain.job.service;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +101,8 @@ public class JobRecommendationService {
             .logoUrl(
                 (dbJob.getLogoUrl() != null && !dbJob.getLogoUrl().isBlank()) ? dbJob.getLogoUrl()
                     : DEFAULT_LOGO_URL)
+            .techStacks(parseTechStacks(dbJob.getTechStacks()))
+            .jobCategory(dbJob.getJobCategory())
             .build();
       }).filter(dto -> dto != null).collect(Collectors.toList());
     } else {
@@ -129,6 +133,8 @@ public class JobRecommendationService {
                 .logoUrl((dbJob.getLogoUrl() != null && !dbJob.getLogoUrl().isBlank())
                     ? dbJob.getLogoUrl()
                     : DEFAULT_LOGO_URL)
+                .techStacks(parseTechStacks(dbJob.getTechStacks()))
+                .jobCategory(dbJob.getJobCategory())
                 .build();
           }).collect(Collectors.toList());
 
@@ -136,5 +142,13 @@ public class JobRecommendationService {
       dtoList.sort((a, b) -> Integer.compare(a.getTopPercentile(), b.getTopPercentile()));
       return dtoList;
     }
+  }
+
+  private List<String> parseTechStacks(String raw) {
+    if (raw == null || raw.isBlank()) return Collections.emptyList();
+    return Arrays.stream(raw.split(","))
+        .map(String::trim)
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.toList());
   }
 }

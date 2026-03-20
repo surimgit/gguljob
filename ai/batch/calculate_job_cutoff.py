@@ -14,6 +14,14 @@ NEO4J_PASSWORD = "default-neo4j-password-please-change-in-production"
 EVAL_LIMIT_GRAPH = 500
 EVAL_LIMIT_VECTOR = 3000
 
+# 벡터 점수 정규화 상수 (백엔드 JobRecommendationRepository와 동일하게 유지)
+# 코사인 유사도 분포 실측 기반: 유효 구간 [0.65, 0.80] → [0, 80] 선형 매핑
+VECTOR_BASELINE = 0.65   # 이 미만은 의미 없는 유사도로 간주 → 0점 처리
+VECTOR_SCALE = 533.0     # 80 / (0.80 - 0.65) ≈ 533, [0.65~0.80] 구간을 80점으로 확장
+VECTOR_MAX = 80.0        # 벡터 최고점 상한 (100이 아닌 이유: 공고 != 사람 프로필)
+GRAPH_WEIGHT = 0.5       # 그래프(스킬 매칭) 가중치
+VECTOR_WEIGHT = 0.5      # 벡터(시맨틱 유사도) 가중치 — 임베딩 없으면 0으로 처리됨
+
 def get_users(tx):
     # 최근 접속했거나 유효한 유저들의 ID를 가져옴 (여기서는 최대 1000명 샘플링) 
     query = """
