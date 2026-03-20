@@ -76,10 +76,13 @@ const NotificationItem = ({
   onMarkRead: (id: number) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(null);
+  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(() => {
+    const saved = localStorage.getItem(`notif-action-${notif.id}`);
+    return saved as 'accepted' | 'rejected' | null;
+  });
   const [loading, setLoading] = useState(false);
 
-  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null;
+  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
 
   const handleClick = () => {
     if (!notif.isRead) onMarkRead(notif.id);
@@ -92,6 +95,7 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await acceptRequest(notif.referenceId);
+      localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
     } catch (err) {
@@ -107,6 +111,7 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await rejectRequest(notif.referenceId);
+      localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
     } catch (err) {
@@ -146,7 +151,7 @@ const NotificationItem = ({
             <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
+            onClick={(e) => { e.stopPropagation(); localStorage.removeItem(`notif-action-${notif.id}`); onDelete(notif.id); }}
             aria-label="알림 삭제"
             className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
               notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
@@ -207,7 +212,13 @@ interface NotificationPanelProps {
   onClose: () => void;
 }
 
-const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => (
+const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => {
+  const handleClearAll = () => {
+    notifications.forEach(n => localStorage.removeItem(`notif-action-${n.id}`));
+    onClearAll();
+  };
+
+  return (
   <div className="absolute top-full mt-2 flex flex-col overflow-hidden z-50 bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)] w-[calc(100vw-32px)] max-w-[360px] right-0 sm:w-[360px]">
     {/* 헤더 */}
     <div className="flex items-center justify-between px-5 h-[57px] bg-primary-hover">
@@ -226,7 +237,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
       <div className="flex items-center gap-3">
         {notifications.length > 0 && (
           <button
-            onClick={onClearAll}
+            onClick={handleClearAll}
             className="text-white text-[13px] font-bold opacity-90 hover:opacity-100 transition-opacity"
           >
             모두 지우기
@@ -258,6 +269,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
       )}
     </div>
   </div>
-);
+  );
+};
 
 export default NotificationPanel;
