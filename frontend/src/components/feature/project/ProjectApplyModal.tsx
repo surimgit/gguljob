@@ -3,8 +3,7 @@ import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
-import type { Project } from './ProjectCard';
-import { X } from 'lucide-react';
+import type { ProjectCardDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
 
 interface ProjectApplyModalProps {
