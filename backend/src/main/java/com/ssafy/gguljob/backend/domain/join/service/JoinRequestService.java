@@ -51,11 +51,12 @@ public class JoinRequestService {
             .appealContent(appealContent)
             .build();
 
-        joinRequestRepository.save(joinRequest);
+        JoinRequest savedRequest = joinRequestRepository.save(joinRequest);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             project.getLeader().getId(),
             projectId,
+            savedRequest.getId(),
             user.getUserName() + "님이 " + project.getTitle() + " 프로젝트에 지원했습니다.",
             "JOIN_APPLY"
         ));
@@ -85,11 +86,12 @@ public class JoinRequestService {
             .appealContent(appealContent)
             .build();
 
-        joinRequestRepository.save(joinRequest);
+        JoinRequest savedRequest = joinRequestRepository.save(joinRequest);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetUserId,
             projectId,
+            savedRequest.getId(),
             project.getTitle() + " 프로젝트에 초대되었습니다.",
             "JOIN_INVITE"
         ));
@@ -142,7 +144,7 @@ public class JoinRequestService {
             : joinRequest.getUser().getUserName() + "님이 초대를 수락했습니다.";
 
         eventPublisher.publishEvent(new JoinRequestEvent(
-            targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_ACCEPT"
+            targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_ACCEPT"
         ));
     }
 
@@ -176,7 +178,7 @@ public class JoinRequestService {
             : joinRequest.getUser().getUserName() + "님이 초대를 거절했습니다.";
 
         eventPublisher.publishEvent(new JoinRequestEvent(
-            targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_REJECT"
+            targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
         ));
     }
 

@@ -404,7 +404,7 @@ const ProjectDashboard = () => {
 
         {activeTab === "members" && <TeamMembers dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
         {activeTab === "settings" && <ProjectSettings dashboard={dashboard} projectId={id ? Number(id) : undefined} />}
-        {activeTab === "personal" && <PersonalSpace projectTitle={projectInfo.title} personalData={personalData} subTab={personalSubTab} />}
+        {activeTab === "personal" && <PersonalSpace projectId={id ? Number(id) : undefined} projectTitle={projectInfo.title} personalData={personalData} subTab={personalSubTab} />}
 
         {activeTab === "team" && (
         <>
