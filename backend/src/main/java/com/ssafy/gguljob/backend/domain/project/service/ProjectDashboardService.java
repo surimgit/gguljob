@@ -156,8 +156,20 @@ public class ProjectDashboardService {
         List<PrItem> prItems =
             pullRequestRepository.findMyPrItems(projectId, userId, top5);
 
-        List<TroubleshootingItem> tsItems =
-            troubleshootingRepository.findMyTsItems(projectId, userId, top5);
+        List<TroubleshootingItem> tsItems = troubleshootingRepository.findMyTsItems(projectId, userId, top5)
+            .stream()
+            .map(ts -> new TroubleshootingItem(
+                ts.getId(),
+                ts.getTitle(),
+                ts.getSituation(),
+                ts.getSolution(),
+                ts.getCodeSnippet(),
+                String.valueOf(ts.getPullRequest().getId()),
+                String.valueOf(ts.getPullRequest().getPrNumber()),
+                ts.getPullRequest().getTitle(),
+                ts.getCreatedAt()
+            ))
+            .toList();
 
         List<PersonalSpaceResponse.ReviewItem> reviewItems = Collections.emptyList();
 
@@ -169,6 +181,17 @@ public class ProjectDashboardService {
     }
 
     public org.springframework.data.domain.Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
-        return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable);
+        return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable)
+            .map(ts -> new TroubleshootingItem(
+                ts.getId(),
+                ts.getTitle(),
+                ts.getSituation(),
+                ts.getSolution(),
+                ts.getCodeSnippet(),
+                String.valueOf(ts.getPullRequest().getId()),        // prId
+                String.valueOf(ts.getPullRequest().getPrNumber()),  // prNum
+                ts.getPullRequest().getTitle(),                     // prTitle
+                ts.getCreatedAt()
+            ));
     }
 }
