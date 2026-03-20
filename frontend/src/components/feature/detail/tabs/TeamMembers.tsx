@@ -713,7 +713,7 @@ const TeamManagement = ({
   members,
   applications: initialApps,
   projectId,
-  onDeleteRole,
+  onDeleteRole: _onDeleteRole,
 }: TeamManagementProps) => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
