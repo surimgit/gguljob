@@ -43,9 +43,10 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
     );
 
     @Query("""
-        SELECT t FROM Troubleshooting t
-        JOIN FETCH t.user u
-        WHERE t.id IN :ids
-        """)
+    SELECT t FROM Troubleshooting t
+    JOIN FETCH t.user u
+    JOIN FETCH t.project p
+    WHERE t.id IN :ids
+    """)
     List<Troubleshooting> findAllByIdIn(@Param("ids") List<Long> ids);
 }
