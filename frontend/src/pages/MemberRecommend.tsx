@@ -222,7 +222,7 @@ const MemberRecommend = () => {
 
         {/* ── 상단 추천 카드 Top 3 ── */}
         {topCards.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 pb-4 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4 mb-10">
             {topCards.map((m, idx) => (
               <RecommendCard
                 key={`recommend-${idx}`}
