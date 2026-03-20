@@ -78,7 +78,7 @@ const AppRoutes = () => {
         <Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
-        <Route path="/team-recommend" element={<MemberRecommend />} />
+        <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
         <Route path="/user-profile-test" element={<UserProfileTest />} />
 
         {/* 로그인 필요 라우트 */}
