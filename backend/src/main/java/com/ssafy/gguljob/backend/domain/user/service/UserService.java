@@ -161,6 +161,14 @@ public class UserService {
                 return fullImageUrl;
         }
 
+        @Transactional
+        public void resetProfileImage(Long userId) {
+                User user = userRepository.findById(userId)
+                    .orElseThrow(() ->new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+                user.updateImageUrl(null);
+        }
+
         @Transactional(readOnly = true)
         public ProfileResponseDto getOtherProfile(Long targetUserId) {
 
