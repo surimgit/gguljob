@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
-import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project';
+import type { ProjectCardDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
 
 interface ProjectApplyModalProps {
@@ -118,6 +118,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
     setSubmitting(true);
     try {
       await applyToPosition(project.projectId, 0, intro || undefined);
+      onApplied?.();
       setShowConfirm(true);
     } catch {
       toast.error('지원에 실패했습니다. 다시 시도해주세요.');
@@ -246,7 +247,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           confirmText="확인"
           onConfirm={() => {
             setShowConfirm(false);
-            onApplied?.();
+            onClose();
           }}
           onClose={() => {
             setShowConfirm(false);
