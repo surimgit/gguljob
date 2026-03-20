@@ -166,5 +166,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getMemberFilters());
     }
 
+    @Operation(summary = "프로필 이미지 초기화 (삭제)", description = "커스텀 프로필 이미지를 삭제하고 기본 상태로 되돌립니다. (다음 로그인 시 깃허브 프사 동기화)")
+    @DeleteMapping("/me/profile/image")
+    public ResponseEntity<ApiResponseDto<Void>> resetProfileImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
 
+        userService.resetProfileImage(userDetails.getId());
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지가 기본으로 초기화되었습니다.", null));
+    }
 }
