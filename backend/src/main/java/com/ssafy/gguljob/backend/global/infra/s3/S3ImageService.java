@@ -1,5 +1,7 @@
 package com.ssafy.gguljob.backend.global.infra.s3;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,21 @@ public class S3ImageService {
         } catch (IOException e) {
             throw new RuntimeException("S3 파일 스트림 읽기 실패: " + e.getMessage());
         }
+
+        return s3Key;
+    }
+
+    // MD 텍스트 업로드
+    public String uploadMarkdown(String content, String s3Key) {
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(bytes.length);
+        metadata.setContentType("text/markdown; charset=UTF-8");
+
+        amazonS3.putObject(
+            new PutObjectRequest(bucket, s3Key, new ByteArrayInputStream(bytes), metadata)
+        );
 
         return s3Key;
     }
