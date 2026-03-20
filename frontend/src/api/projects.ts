@@ -1,8 +1,7 @@
 import api from './index';
 import type {
-  Project,
-  ProjectDetail,
-  ProjectQueryParams,
+  ProjectCardDto,
+  ProjectListParams,
   ProjectSimple,
   CreateProjectRequest,
   CreateProjectResponse,
@@ -16,13 +15,47 @@ import type {
 } from '../types/project';
 import type { PageResponse } from '../types/common';
 
-/* ── 기존 (프로젝트 찾기) ── */
+/* ── 프로젝트 찾기 ── */
 
-export const getProjects = (params?: ProjectQueryParams) =>
-  api.get<PageResponse<Project>>('/v1/projects/list', { params });
+export const getProjects = (params?: ProjectListParams) =>
+  api.get<PageResponse<ProjectCardDto>>('/v1/projects/list', { params });
 
-export const getProjectById = (id: number) =>
-  api.get<ProjectDetail>(`/projects/${id}`);
+export const getRecommendedProjects = () =>
+  api.get<ProjectCardDto[]>('/v1/projects/recommended/top');
+
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
+export interface SkillCategory {
+  category: string;
+  skills: { skillId: number; name: string }[];
+}
+
+export interface ProjectFiltersRaw {
+  domains: FilterOption[];
+  roles: FilterOption[];
+  skillCategories: SkillCategory[];
+}
+
+export interface SkillGroup {
+  category: string;
+  label: string;
+  skills: string[];
+}
+
+export interface ProjectFilters {
+  domains: string[];
+  skillGroups: SkillGroup[];
+  roles: string[];
+  /** label → API value 매핑 (도메인: "웹기술" → "WEB_TECH", 포지션: "FE 모집중" → "FRONTEND") */
+  domainValueMap: Record<string, string>;
+  roleValueMap: Record<string, string>;
+}
+
+export const getProjectFilters = () =>
+  api.get<ProjectFiltersRaw>('/v1/projects/filters');
 
 export const inviteUser = (projectId: number, userId: number, body: { role: string; appealContent?: string }) =>
   api.post(`/v1/projects/${projectId}/invites/${userId}`, body);
@@ -96,6 +129,31 @@ export const leaveProject = (projectId: number) =>
 export const getPersonalSpace = (projectId: number) =>
   api.get(`/v1/projects/${projectId}/personal-space`);
 
+export interface PullRequestListItem {
+  prId: number;
+  prNumber: number;
+  title: string;
+  status: string;
+  githubCreatedAt: string;
+  githubClosedAt: string | null;
+}
+
+export interface PullRequestPage {
+  content: PullRequestListItem[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export const getPullRequests = (projectId: number, page = 0, size = 10) =>
+  api.get<PullRequestPage>(`/v1/projects/${projectId}/personal-space/pull-requests`, {
+    params: { page, size },
+  });
+
 /* AI 주제 추천 */
 
 export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
@@ -105,3 +163,29 @@ export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?:
 
 export const updateProjectTitle = (projectId: number, selectedTopic: string) =>
   api.patch(`/v1/projects/${projectId}/title`, { selectedTopic });
+
+/* 추천 팀원 */
+
+export interface RecommendedMember {
+  userId: number;
+  userName: string;
+  position: string;
+  experienceLevel: string;
+  bio: string;
+  skills: string[];
+  matchScore: number;
+}
+
+export interface RecommendedMembersParams {
+  keyword?: string;
+  position?: string;
+  experienceLevel?: string;
+  page?: number;
+  size?: number;
+}
+
+export const getRecommendedMembersTop = (projectId: number) =>
+  api.get<RecommendedMember[]>(`/v1/projects/${projectId}/recommended-members/top`);
+
+export const getRecommendedMembers = (projectId: number, params?: RecommendedMembersParams) =>
+  api.get(`/v1/projects/${projectId}/recommended-members`, { params: { ...params, page: params?.page ?? 0, size: params?.size ?? 6 } });

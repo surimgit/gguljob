@@ -5,7 +5,17 @@ import lombok.Getter;
 
 @Getter
 public enum PositionType {
-    BE("Backend"), FE("Frontend"), AI("AI"), PM("PM"), INFRA("Infra"), DESIGN("Design");
+    BE("Backend"),
+    FE("Frontend"),
+    AI("AI"),
+    PM("PM"),
+    INFRA("Infra"),
+    DEVOPS("DevOps"),
+    DESIGN("Design"),
+    DB("Database"),
+    MOBILE("Mobile"),
+    DATA("Data"),
+    TOOLS("Tools");
 
     private final String description;
 
@@ -38,6 +48,26 @@ public enum PositionType {
             case "INFRASTRUCTURE":
             case "INFRA":
                 return INFRA;
+            case "DEVOPS":
+                return DEVOPS;
+            case "DATABASE":
+            case "DB":
+                return DB;
+            case "MOBILE":
+            case "APP":
+            case "IOS":
+            case "ANDROID":
+                return MOBILE;
+            case "DATA":
+                return DATA;
+            case "TOOLS":
+                return TOOLS;
+            case "DESIGN":
+                return DESIGN;
+            case "PM":
+                return PM;
+            case "AI":
+                return AI;
             default:
                 // 매핑 안 된 글자(예: AI, PM)는 그대로 자바 Enum 이름으로 찾기
                 try {

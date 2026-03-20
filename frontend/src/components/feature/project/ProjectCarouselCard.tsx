@@ -1,8 +1,8 @@
-import type { Project } from './ProjectCard';
+import type { ProjectCardDto } from '../../../types/project';
 
 export interface ProjectCarouselCardProps {
-  project: Project;
-  onClick?: (project: Project) => void;
+  project: ProjectCardDto;
+  onClick?: (project: ProjectCardDto) => void;
 }
 
 const THUMBNAIL_GRADIENTS: Record<string, string> = {
@@ -46,13 +46,13 @@ const TECH_BADGE_STYLES: Record<string, { bg: string; border: string; text: stri
 const DEFAULT_TECH_STYLE = { bg: '#f5f5f5', border: 'transparent', text: '#8a8073' };
 
 const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => {
-  const { category, title, description, techStack } = project;
+  const { domain, title, description, skills } = project;
 
-  const gradient = THUMBNAIL_GRADIENTS[category] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
-  const categoryColor = CATEGORY_COLORS[category] ?? '#6b7280';
+  const gradient = THUMBNAIL_GRADIENTS[domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
+  const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
 
-  const visibleTech = techStack.slice(0, 2);
-  const extraCount = techStack.length - visibleTech.length;
+  const visibleTech = skills.slice(0, 2);
+  const extraCount = skills.length - visibleTech.length;
 
   return (
     <div
@@ -67,7 +67,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
           <p className="font-bold text-[10px] leading-[15px]" style={{ color: categoryColor }}>
-            {category}
+            {domain}
           </p>
         </div>
       </div>

@@ -51,11 +51,12 @@ public class JoinRequestService {
             .appealContent(appealContent)
             .build();
 
-        joinRequestRepository.save(joinRequest);
+        JoinRequest savedRequest = joinRequestRepository.save(joinRequest);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             project.getLeader().getId(),
             projectId,
+            savedRequest.getId(),
             user.getUserName() + "님이 " + project.getTitle() + " 프로젝트에 지원했습니다.",
             "JOIN_APPLY"
         ));
@@ -85,11 +86,12 @@ public class JoinRequestService {
             .appealContent(appealContent)
             .build();
 
-        joinRequestRepository.save(joinRequest);
+        JoinRequest savedRequest = joinRequestRepository.save(joinRequest);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetUserId,
             projectId,
+            savedRequest.getId(),
             project.getTitle() + " 프로젝트에 초대되었습니다.",
             "JOIN_INVITE"
         ));
@@ -142,7 +144,7 @@ public class JoinRequestService {
             : joinRequest.getUser().getUserName() + "님이 초대를 수락했습니다.";
 
         eventPublisher.publishEvent(new JoinRequestEvent(
-            targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_ACCEPT"
+            targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_ACCEPT"
         ));
     }
 
@@ -176,36 +178,7 @@ public class JoinRequestService {
             : joinRequest.getUser().getUserName() + "님이 초대를 거절했습니다.";
 
         eventPublisher.publishEvent(new JoinRequestEvent(
-            targetNotifyUserId, joinRequest.getProject().getId(), message, "JOIN_REJECT"
+            targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
         ));
-    }
-
-    // 참가 신청 현황 (대기 중) 목록 조회
-    @Transactional(readOnly = true)
-    public List<PendingJoinRequestDto> getPendingJoinRequests(Long loginUserId, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
-
-        // 1. 리더 권한 검증
-        if (!project.getLeader().getId().equals(loginUserId)) {
-            throw new IllegalArgumentException("프로젝트 리더만 참가 신청 현황을 볼 수 있습니다.");
-        }
-
-        // 2. 대기 중인 요청 목록 DB에서 뽑아오기
-        List<JoinRequest> pendingRequests = joinRequestRepository.findPendingRequestsByProjectId(projectId);
-
-        // 3. DTO로 변환
-        return pendingRequests.stream().map(request -> {
-            String positionName = projectPositionRepository.findById(request.getPositionId())
-                .map(pos -> pos.getRole().name())
-                .orElse("알 수 없음");
-
-            // 유저의 기술 스택 리스트를 가져오는 로직
-            List<String> techStacks = request.getUser().getUserSkills().stream()
-                .map(userSkill -> userSkill.getSkill().getName())
-                .collect(Collectors.toList());
-
-            return PendingJoinRequestDto.of(request, positionName, techStacks);
-        }).collect(Collectors.toList());
     }
 }

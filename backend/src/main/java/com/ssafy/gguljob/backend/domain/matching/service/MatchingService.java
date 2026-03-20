@@ -81,10 +81,12 @@ public class MatchingService {
         return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<MemberCardDto> getRecommendedMembers(Long projectId, String keyword, String position, String experienceLevel, Pageable pageable) {
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
+        Pageable unsortedPageable = pageable.isPaged()
+            ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+            : PageRequest.of(0, 10);
         // 제외할 유저
         List<String> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
             .stream()

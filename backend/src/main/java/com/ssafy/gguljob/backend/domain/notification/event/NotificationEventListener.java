@@ -29,7 +29,7 @@ public class NotificationEventListener {
                 .user(user)
                 .category(NotificationCategory.TEAM)
                 .content(event.getMessage())
-                .referenceId(event.getProjectId())
+                .referenceId(event.getRequestId())
                 .referenceUrl("/projects/" + event.getProjectId())
                 .build();
 

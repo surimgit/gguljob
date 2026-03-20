@@ -322,9 +322,12 @@ public class ProjectService {
         //참가 신청 현황
         List<JoinRequest> pendingRequestsEntities = joinRequestRepository.findPendingRequestsByProjectId(projectId);
         List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream().map(request -> {
-            String positionName = projectPositionRepository.findById(request.getPositionId())
-                .map(pos -> pos.getRole().name())
-                .orElse("UNKNOWN");
+            String positionName = "미지정";
+            if (request.getPositionId() != null) {
+                positionName = projectPositionRepository.findById(request.getPositionId())
+                    .map(pos -> pos.getRole().name())
+                    .orElse("UNKNOWN");
+            }
 
             List<String> techStacks = request.getUser().getUserSkills().stream()
                 .map(userSkill -> userSkill.getSkill().getName())
@@ -359,7 +362,7 @@ public class ProjectService {
             .collect(Collectors.groupingBy(
                 pp -> pp.getProject().getId(),
                 Collectors.mapping(pp -> new ProjectResponse.PositionStatusDto(
-                    pp.getRole().name(), pp.getCurrentCount(), pp.getTargetCount()), Collectors.toList())
+                    pp.getId(), pp.getRole().name(), pp.getCurrentCount(), pp.getTargetCount()), Collectors.toList())
             ));
 
         return projects.stream().collect(Collectors.toMap(

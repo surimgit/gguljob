@@ -1,34 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
 import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
 import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayout";
 import beeImg from "../assets/images/memberfind.png";
-import { getUsers } from "../api/user";
-import type { UserSummary, PositionType, ExperienceLevel } from "../types/user";
+import { getRecommendedMembers, getRecommendedMembersTop } from "../api/projects";
+import type { RecommendedMember } from "../api/projects";
 
-/* ── 포지션 라벨 매핑 ── */
-const POSITION_LABEL: Record<PositionType, string> = {
-  FE: "Frontend",
-  BE: "Backend",
-  AI: "AI",
-  PM: "PM",
-  INFRA: "Infra",
-  DESIGN: "Design",
-};
-
-/* ── 숙련도 라벨 매핑 ── */
-const EXPERIENCE_LABEL: Record<ExperienceLevel, string> = {
-  BEGINNER: "초급",
-  JUNIOR: "초급",
-  MID_LEVEL: "중급",
-  SENIOR: "고급",
-};
-
-/* ── 필터 옵션 ── */
-const POSITION_FILTERS: { label: string; value: PositionType | "전체" }[] = [
-  { label: "전체", value: "전체" },
+/* ── 포지션 필터 옵션 ── */
+const POSITION_FILTERS = [
+  { label: "전체", value: "" },
   { label: "Frontend", value: "FE" },
   { label: "Backend", value: "BE" },
   { label: "AI", value: "AI" },
@@ -36,82 +19,78 @@ const POSITION_FILTERS: { label: string; value: PositionType | "전체" }[] = [
   { label: "Infra", value: "INFRA" },
   { label: "Design", value: "DESIGN" },
 ];
-const LEVEL_FILTERS = ["전체", "초급", "중급", "고급"];
+
+const LEVEL_FILTERS = [
+  { label: "전체", value: "" },
+  { label: "초급", value: "BEGINNER" },
+  { label: "중급", value: "MID_LEVEL" },
+  { label: "고급", value: "SENIOR" },
+];
 
 const ITEMS_PER_PAGE = 6;
 
-/** UserSummary → 카드 컴포넌트용 데이터로 변환 */
-const toCardData = (u: UserSummary) => ({
-  id: String(u.userId),
-  name: u.userName,
-  position: u.roles.length > 0 ? POSITION_LABEL[u.roles[0]] ?? u.roles[0] : "미정",
-  level: u.experience ? (EXPERIENCE_LABEL[u.experience] ?? u.experience) : "-",
-  matchRate: 0,
-  introduction: u.description ?? "",
-  techStacks: [] as string[],
-  profileImage: u.profileImageUrl ?? "",
+const toCardData = (m: RecommendedMember) => ({
+  id: String(m.userId),
+  name: m.userName,
+  position: m.position,
+  level: m.experienceLevel,
+  matchRate: m.matchScore,
+  introduction: m.bio,
+  techStacks: m.skills,
+  profileImage: "",
 });
 
 const MemberRecommend = () => {
-  const [positionFilter, setPositionFilter] = useState<PositionType | "전체">("전체");
-  const [levelFilter, setLevelFilter] = useState("전체");
-  const [currentPage, setCurrentPage] = useState(1);
+  const { projectId } = useParams<{ projectId: string }>();
+
+  const [positionFilter, setPositionFilter] = useState("");
+  const [levelFilter, setLevelFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
 
-  const [members, setMembers] = useState<UserSummary[]>([]);
+  const [topMembers, setTopMembers] = useState<RecommendedMember[]>([]);
+  const [members, setMembers] = useState<RecommendedMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getUsers({ page: 0, size: 100 });
-      setMembers(res.data.content ?? []);
-    } catch {
-      setError("사용자 목록을 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  /* Top 3 추천 */
+  useEffect(() => {
+    if (!projectId) return;
+    getRecommendedMembersTop(Number(projectId))
+      .then(({ data }) => {
+        const list = (data as any).data ?? data;
+        setTopMembers(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {});
+  }, [projectId]);
+
+  /* 목록 */
+  const fetchMembers = useCallback(() => {
+    if (!projectId) return;
+    setLoading(true);
+    setError(null);
+    getRecommendedMembers(Number(projectId), {
+      keyword: searchQuery || undefined,
+      position: positionFilter || undefined,
+      experienceLevel: levelFilter || undefined,
+      page: currentPage,
+      size: ITEMS_PER_PAGE,
+    })
+      .then(({ data }) => {
+        const res = (data as any).data ?? data;
+        const content = res.content ?? res;
+        setMembers(Array.isArray(content) ? content : []);
+        setTotalPages(res.totalPages ?? (Math.ceil((res.numberOfElements ?? content.length) / ITEMS_PER_PAGE) || 1));
+      })
+      .catch(() => setError("팀원 목록을 불러오지 못했습니다."))
+      .finally(() => setLoading(false));
+  }, [projectId, searchQuery, positionFilter, levelFilter, currentPage]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  /* ── 필터 적용 ── */
-  const filtered = members.filter((m) => {
-    // 포지션 필터
-    if (positionFilter !== "전체" && !m.roles.includes(positionFilter)) return false;
-
-    // 숙련도 필터
-    if (levelFilter !== "전체") {
-      const label = m.experience ? EXPERIENCE_LABEL[m.experience] : null;
-      if (label !== levelFilter) return false;
-    }
-
-    // 검색
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const nameMatch = m.userName.toLowerCase().includes(q);
-      const roleMatch = m.roles.some(
-        (r) => r.toLowerCase() === q || (POSITION_LABEL[r] ?? "").toLowerCase().includes(q)
-      );
-      return nameMatch || roleMatch;
-    }
-
-    return true;
-  });
-
-  // 상단 추천 3명 (전체 목록에서 첫 3명)
-  const topRecommended = members.slice(0, 3).map(toCardData);
-
-  // 하단 목록 페이지네이션
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const paged = filtered
-    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-    .map(toCardData);
+    fetchMembers();
+  }, [fetchMembers]);
 
   const handleClickProfile = (card: ReturnType<typeof toCardData>) => {
     setSelectedUser({
@@ -124,6 +103,9 @@ const MemberRecommend = () => {
       projects: [],
     });
   };
+
+  const topCards = topMembers.map(toCardData);
+  const paged = members.map(toCardData);
 
   return (
     <div
@@ -167,7 +149,7 @@ const MemberRecommend = () => {
             <img
               src={beeImg}
               alt="팀빌딩"
-              className="absolute right-0 bottom-0 h-45 object-contain"
+              className="absolute right-0 bottom-0 h-45 object-contain hidden md:block"
             />
           </div>
 
@@ -176,62 +158,62 @@ const MemberRecommend = () => {
             className="flex flex-col gap-3 w-full rounded-b-xl px-5 py-4 -mx-6 -mb-6"
             style={{ background: "var(--color-border)", width: "calc(100% + 48px)" }}
           >
-          {/* 포지션 필터 */}
-          <div className="flex items-center gap-2">
-            <span
-              className="text-sm font-semibold mr-1"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              포지션
-            </span>
-            {POSITION_FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => { setPositionFilter(f.value); setCurrentPage(1); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{
-                  background: positionFilter === f.value ? "var(--color-primary-hover)" : "transparent",
-                  color: positionFilter === f.value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  border: "none",
-                }}
+            {/* 포지션 필터 */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-sm font-semibold mr-1 whitespace-nowrap"
+                style={{ color: "var(--color-text-primary)" }}
               >
-                {f.label}
-              </button>
-            ))}
-          </div>
+                포지션
+              </span>
+              {POSITION_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => { setPositionFilter(f.value); setCurrentPage(0); }}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    background: positionFilter === f.value ? "var(--color-primary-hover)" : "transparent",
+                    color: positionFilter === f.value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    border: "none",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-          <hr className="border-t" style={{ borderColor: "var(--color-primary)" }} />
+            <hr className="border-t" style={{ borderColor: "var(--color-primary)" }} />
 
-          {/* 숙련도 필터 */}
-          <div className="flex items-center gap-2">
-            <span
-              className="text-sm font-semibold mr-1"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              숙련도
-            </span>
-            {LEVEL_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => { setLevelFilter(f); setCurrentPage(1); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{
-                  background: levelFilter === f ? "var(--color-primary-hover)" : "transparent",
-                  color: levelFilter === f ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  border: "none",
-                }}
+            {/* 숙련도 필터 */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-sm font-semibold mr-1 whitespace-nowrap"
+                style={{ color: "var(--color-text-primary)" }}
               >
-                {f}
-              </button>
-            ))}
-          </div>
+                숙련도
+              </span>
+              {LEVEL_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => { setLevelFilter(f.value); setCurrentPage(0); }}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    background: levelFilter === f.value ? "var(--color-primary-hover)" : "transparent",
+                    color: levelFilter === f.value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    border: "none",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* ── 상단 추천 카드 ── */}
-        {topRecommended.length > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-4 mb-10">
-            {topRecommended.map((m, idx) => (
+        {/* ── 상단 추천 카드 Top 3 ── */}
+        {topCards.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+            {topCards.map((m, idx) => (
               <RecommendCard
                 key={`recommend-${idx}`}
                 {...m}
@@ -261,7 +243,7 @@ const MemberRecommend = () => {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(0); }}
               placeholder="이름, 포지션 검색"
               className="flex-1 text-sm outline-none bg-transparent"
               style={{ color: "var(--color-text-primary)" }}
@@ -300,16 +282,16 @@ const MemberRecommend = () => {
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
                   className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
                   style={{
-                    color: currentPage === 1 ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
+                    color: currentPage === 0 ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
                   }}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from({ length: totalPages }, (_, i) => i).map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
@@ -319,15 +301,15 @@ const MemberRecommend = () => {
                       color: currentPage === page ? "white" : "var(--color-text-secondary)",
                     }}
                   >
-                    {page}
+                    {page + 1}
                   </button>
                 ))}
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage === totalPages - 1}
                   className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
                   style={{
-                    color: currentPage === totalPages ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
+                    color: currentPage === totalPages - 1 ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
                   }}
                 >
                   <ChevronRight className="w-4 h-4" />
