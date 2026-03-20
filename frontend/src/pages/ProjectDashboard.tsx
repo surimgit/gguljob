@@ -25,83 +25,9 @@ import chatbotImg from "../assets/images/chatbot.png";
 import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
-import type { TeamDashboard, GitLog, PersonalSpaceData } from "../types/project";
+import type { PersonalSpaceData } from "../types/project";
 import { getPersonalSpace, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
-
-/* ── 더미 데이터 ── */
-const MOCK_DASHBOARD: TeamDashboard = {
-  projectInfo: {
-    title: "DevLog 트러블슈팅 플랫폼",
-    teamName: "S14P21E107",
-    domain: "웹 풀스택",
-    description:
-      "개발자가 프로젝트 중 겪은 트러블슈팅 경험을 기록하고 AI가 자동으로 문서화해주는 협업 플랫폼입니다.",
-    skills: ["React", "TypeScript", "Spring Boot", "Redis", "Docker", "GitLab CI"],
-  },
-  teamStats: {
-    totalMembers: 6,
-    roleCounts: { FRONTEND: 3, BACKEND: 3 },
-    totalCommits: 248,
-    totalTroubleshootings: 17,
-  },
-  gitRepoInfo: {
-    repoUrl: "https://github.com/ssafy/s14p21e107",
-    lastSyncTime: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-  },
-};
-
-const MOCK_GIT_LOG: GitLog = {
-  mrRankings: [
-    { rank: 1, userId: 1, userName: "김도현", profileImageUrl: null, mrCount: 18 },
-    { rank: 2, userId: 2, userName: "오준혁", profileImageUrl: null, mrCount: 14 },
-    { rank: 3, userId: 3, userName: "이준혁", profileImageUrl: null, mrCount: 11 },
-    { rank: 4, userId: 4, userName: "정서윤", profileImageUrl: null, mrCount: 9 },
-    { rank: 5, userId: 5, userName: "박민수", profileImageUrl: null, mrCount: 6 },
-  ],
-  recentActivities: [
-    {
-      userName: "김도현",
-      profileImageUrl: null,
-      content: "feat: 트러블슈팅 상세 페이지 UI 구현 및 마크다운 렌더링 연동",
-      label: "feat/troubleshoot-detail",
-      createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-      activityType: "MR",
-    },
-    {
-      userName: "오준혁",
-      profileImageUrl: null,
-      content: "fix: WebSocket 연결 끊김 시 자동 재연결 로직 추가",
-      label: "fix/websocket-reconnect",
-      createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-      activityType: "MR",
-    },
-    {
-      userName: "이준혁",
-      profileImageUrl: null,
-      content: "refactor: 알림 컴포넌트 상태 관리 zustand로 마이그레이션",
-      label: "refactor/notification-store",
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      activityType: "COMMIT",
-    },
-    {
-      userName: "정서윤",
-      profileImageUrl: null,
-      content: "chore: Docker Compose 개발 환경 설정 최적화",
-      label: "chore/docker-dev",
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      activityType: "COMMIT",
-    },
-    {
-      userName: "박민수",
-      profileImageUrl: null,
-      content: "feat: Redis 캐싱 레이어 적용으로 API 응답속도 60% 개선",
-      label: "feat/redis-cache",
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      activityType: "MR",
-    },
-  ],
-};
 
 /* ── 탭 설정 ── */
 const TABS = [
@@ -259,13 +185,12 @@ const ProjectDashboard = () => {
       .finally(() => setTopicsLoading(false));
   };
 
-  const resolvedDashboard = dashboard ?? MOCK_DASHBOARD;
-  const resolvedGitLog = gitLog ?? MOCK_GIT_LOG;
-
-  const { projectInfo, teamStats, gitRepoInfo } = resolvedDashboard;
-  const rankings = resolvedGitLog.mrRankings;
-  const activities = resolvedGitLog.recentActivities;
-  const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
+  const projectInfo = dashboard?.projectInfo ?? { title: "", teamName: "", domain: "", description: "", skills: [] };
+  const teamStats = dashboard?.teamStats ?? { totalMembers: 0, roleCounts: {}, totalCommits: 0, totalTroubleshootings: 0 };
+  const gitRepoInfo = dashboard?.gitRepoInfo ?? null;
+  const rankings = gitLog?.mrRankings ?? [];
+  const activities = gitLog?.recentActivities ?? [];
+  const maxCommits = Math.max(1, ...rankings.map((m: { mrCount: number }) => m.mrCount));
 
   const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
@@ -885,7 +810,12 @@ const ProjectDashboard = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-2.5">
-                {rankings.map((member, idx) => (
+                {rankings.length === 0 && (
+                  <p className="text-sm text-center py-4" style={{ color: "var(--color-text-tertiary)" }}>
+                    아직 MR 기록이 없습니다
+                  </p>
+                )}
+                {rankings.map((member: any, idx: number) => (
                   <div
                     key={member.userId}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl"
@@ -969,7 +899,12 @@ const ProjectDashboard = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                {activities.map((activity, idx) => (
+                {activities.length === 0 && (
+                  <p className="text-sm text-center py-4" style={{ color: "var(--color-text-tertiary)" }}>
+                    아직 활동 기록이 없습니다
+                  </p>
+                )}
+                {activities.map((activity: any, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-start gap-3 px-2 py-2.5 rounded-lg"
