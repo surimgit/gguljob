@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
+import { ROLE_LIST, getRoleDisplayName } from '../constants/skills';
 
 /* ── 상수 ── */
 
@@ -32,14 +33,6 @@ const TECH_CATEGORIES = {
 
 type TechCategory = keyof typeof TECH_CATEGORIES;
 
-const POSITIONS = [
-  { label: 'Frontend', value: 'FE' },
-  { label: 'Backend', value: 'BE' },
-  { label: 'AI', value: 'AI' },
-  { label: 'PM', value: 'PM' },
-  { label: 'Infra', value: 'INFRA' },
-  { label: 'Design', value: 'DESIGN' },
-];
 
 /* ── 타입 ── */
 
@@ -56,6 +49,7 @@ interface ProjectFormState {
   gitUrl: string;
   techStacks: Record<string, string[]>;
   members: Member[];
+  leaderRole: string;
 }
 
 /* ── 컴포넌트 ── */
@@ -71,6 +65,7 @@ const CreateProject = () => {
     gitUrl: '',
     techStacks: {},
     members: [],
+    leaderRole: '',
   });
 
   const [openCategory, setOpenCategory] = useState<TechCategory | null>(null);
@@ -109,7 +104,7 @@ const CreateProject = () => {
   const removeMember = (idx: number) =>
     setForm((prev) => ({ ...prev, members: prev.members.filter((_, i) => i !== idx) }));
 
-  const canSubmit = form.name.trim().length > 0 && !submitting;
+  const canSubmit = form.name.trim().length > 0 && form.leaderRole !== '' && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -119,7 +114,7 @@ const CreateProject = () => {
         title: form.name,
         domain: form.domains[0],
         description: form.description,
-        leaderRole: form.members[0]?.position || 'FE',
+        leaderRole: form.leaderRole,
       });
       navigate(`/my-projects/${projectId}`);
     } catch {
@@ -172,6 +167,33 @@ const CreateProject = () => {
             <p className="text-xs text-right mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
               {form.name.length}/90
             </p>
+          </div>
+
+          {/* 내 직무 선택 */}
+          <div className="mb-4">
+            <label className="text-sm font-semibold mb-1.5 block" style={{ color: 'var(--color-text-primary)' }}>
+              내 직무 <span style={{ color: 'var(--color-error)' }}>*</span>
+            </label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {ROLE_LIST.map((role) => {
+                const selected = form.leaderRole === role;
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, leaderRole: role }))}
+                    className="px-4 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition-colors"
+                    style={{
+                      borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',
+                      color: selected ? 'var(--color-primary-hover)' : 'var(--color-text-secondary)',
+                      backgroundColor: selected ? 'var(--color-primary-soft)' : 'var(--color-surface)',
+                    }}
+                  >
+                    {getRoleDisplayName(role)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* 프로젝트 설명 */}
@@ -364,8 +386,8 @@ const CreateProject = () => {
                 onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
               >
                 <option value="">포지션 선택</option>
-                {POSITIONS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                {ROLE_LIST.map((role) => (
+                  <option key={role} value={role}>{getRoleDisplayName(role)}</option>
                 ))}
               </select>
             </div>
