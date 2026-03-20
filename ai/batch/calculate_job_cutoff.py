@@ -14,6 +14,14 @@ NEO4J_PASSWORD = "default-neo4j-password-please-change-in-production"
 EVAL_LIMIT_GRAPH = 500
 EVAL_LIMIT_VECTOR = 3000
 
+# 벡터 점수 정규화 상수 (백엔드 JobRecommendationRepository와 동일하게 유지)
+# 코사인 유사도 분포 실측 기반: 유효 구간 [0.65, 0.80] → [0, 80] 선형 매핑
+VECTOR_BASELINE = 0.65   # 이 미만은 의미 없는 유사도로 간주 → 0점 처리
+VECTOR_SCALE = 533.0     # 80 / (0.80 - 0.65) ≈ 533, [0.65~0.80] 구간을 80점으로 확장
+VECTOR_MAX = 80.0        # 벡터 최고점 상한 (100이 아닌 이유: 공고 != 사람 프로필)
+GRAPH_WEIGHT = 0.5       # 그래프(스킬 매칭) 가중치
+VECTOR_WEIGHT = 0.5      # 벡터(시맨틱 유사도) 가중치 — 임베딩 없으면 0으로 처리됨
+
 def get_users(tx):
     # 최근 접속했거나 유효한 유저들의 ID를 가져옴 (여기서는 최대 1000명 샘플링) 
     query = """
@@ -25,7 +33,6 @@ def get_users(tx):
     return [record["user_id"] for record in result]
 
 def evaluate_user_jobs(tx, user_id):
-    # 최근 백엔드 API 업데이트 된 완벽한 내적 및 혼합 쿼리 적용
     query = """
     MATCH (u:User {id: $user_id})
     CALL {
@@ -39,30 +46,29 @@ def evaluate_user_jobs(tx, user_id):
 
       WITH u
       WITH u WHERE u.embedding IS NOT NULL
-      CALL db.index.vector.queryNodes("job_embedding", $limitVector, u.embedding)     
+      CALL db.index.vector.queryNodes("job_embedding", $limitVector, u.embedding)
       YIELD node AS j, score
       RETURN j, score AS rawVScore
     }
     WITH j, u, sum(rawVScore) AS vectorScore
-    
+
     OPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j)
     WITH j, u, vectorScore, count(s) AS graphScore
-    
+
     WITH j, graphScore, vectorScore,
-         CASE
-           WHEN u.embedding IS NULL THEN
-             (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
-           ELSE
-             ((CASE WHEN vectorScore = 0.0 THEN 0.0
-                    WHEN vectorScore <= 0.50 THEN 10.0
-                    WHEN (vectorScore - 0.50) * 400.0 > 100.0 THEN 100.0        
-                    ELSE (vectorScore - 0.50) * 400.0 END) * 0.5) +
-             ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
-         END AS finalScore
+         CASE WHEN j.total_skills = 0 OR j.total_skills IS NULL THEN 0.0
+              ELSE toFloat(graphScore) / j.total_skills * 100.0
+         END AS graphScoreNorm,
+         CASE WHEN vectorScore = 0.0 THEN 0.0
+              WHEN (vectorScore - 0.65) * 533.0 > 80.0 THEN 80.0
+              WHEN (vectorScore - 0.65) * 533.0 < 0.0 THEN 0.0
+              ELSE (vectorScore - 0.65) * 533.0
+         END AS vectorScoreNorm
+    WITH j, graphScoreNorm * 0.5 + vectorScoreNorm * 0.5 AS finalScore
     RETURN j.id AS job_id, finalScore AS match_percentage
     """
     result = tx.run(query, user_id=user_id, limitGraph=EVAL_LIMIT_GRAPH, limitVector=EVAL_LIMIT_VECTOR)
-    return [{"job_id": record["job_id"], "score": record["match_percentage"]} for record in result]                                                             
+    return [{"job_id": record["job_id"], "score": record["match_percentage"]} for record in result]
 
 def update_job_cutoffs(tx, updates):
     # 계산된 커트라인과 평균을 Job 노드에 업데이트
@@ -75,15 +81,6 @@ def update_job_cutoffs(tx, updates):
     """
     tx.run(query, updates=updates)
 
-def update_global_stats(tx, global_avg, global_high, global_medium):
-    query = '''
-    MERGE (g:GlobalStats {id: "recommendation"})
-    SET g.global_average_score = $global_avg,
-        g.global_cutoff_high = $global_high,
-        g.global_cutoff_medium = $global_medium,
-        g.last_updated = datetime()
-    '''
-    tx.run(query, global_avg=global_avg, global_high=global_high, global_medium=global_medium)
 
 def main():
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)) 
@@ -133,11 +130,7 @@ def main():
         session.execute_write(update_job_cutoffs, updates)
         update_count = len(updates)
 
-        print(f" -> Successfully updated cutoffs for {update_count} jobs.")     
-
-        print("4. Updating GlobalStats node...")
-        session.execute_write(update_global_stats, float(global_avg), float(global_high), float(global_medium))                                                         
-        print(f" -> Global stats updated (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")                                           
+        print(f" -> Successfully updated cutoffs for {update_count} jobs. (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")                                           
     driver.close()
     print("Batch Processing Completed!")
 

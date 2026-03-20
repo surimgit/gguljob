@@ -15,10 +15,6 @@ public class JobRecommendationResponse {
   private Double cutoffHigh;
   private Double cutoffMedium;
   private Double averageScore;
-  private Double globalAverageScore;
-  private Double globalCutoffHigh;
-  private Double globalCutoffMedium;
-
   // Neo4j에서 계산되어 넘어올 최적화 지원 필드
   private Integer topPercentile;
   private String matchStatus;

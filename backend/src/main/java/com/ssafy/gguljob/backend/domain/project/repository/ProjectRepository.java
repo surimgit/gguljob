@@ -26,4 +26,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p JOIN FETCH p.leader WHERE p.id IN :projectIds")
     List<Project> findAllWithLeaderByIdIn(@Param("projectIds") List<Long> projectIds);
+
+    @Query("SELECT p.readme FROM Project p WHERE p.leader.id = :leaderId AND p.status = com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.DONE AND p.readme IS NOT NULL AND p.readme <> '' ORDER BY p.createdAt DESC")
+    java.util.List<String> findReadmesByLeaderId(@Param("leaderId") Long leaderId);
 }

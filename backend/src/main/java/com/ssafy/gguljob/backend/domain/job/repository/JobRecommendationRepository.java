@@ -13,6 +13,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JobRecommendationRepository {
 
+  /*
+   * [스코어링 상수 설명] — Cypher 문자열 내부라 Java 상수로 추출 불가, 주석으로 대신함
+   * calculate_job_cutoff.py 배치와 반드시 동일하게 유지해야 함
+   *
+   * vectorScoreNorm 정규화:
+   *   - VECTOR_BASELINE = 0.65  : 코사인 유사도 실측 최솟값 (이 미만 → 0점)
+   *   - VECTOR_SCALE   = 533.0  : 80 / (0.80 - 0.65) ≈ 533, 유효 구간을 80점으로 선형 확대
+   *   - VECTOR_MAX     = 80.0   : 벡터 최고 상한 (100 미만인 이유: 공고 텍스트 ≠ 사람 프로필)
+   *
+   * finalScore 가중치:
+   *   - graphScoreNorm  * 0.5 : 스킬 매칭 비율 (보유 스킬 / 공고 요구 스킬)
+   *   - vectorScoreNorm * 0.5 : 시맨틱 유사도 보너스 (임베딩 없으면 0으로 처리 → 스킬만으로 최대 50점)
+   *   → 임베딩(포트폴리오/프로필)이 있을 때만 가산점 부여, 없다고 감점하지 않는 구조
+   *
+   * fallback cutoff (Job에 cutoff_high/medium이 미설정된 경우):
+   *   - cutoff_high   = 35.0  : 배치 실측 P70 근사값 (새 공식 기준)
+   *   - cutoff_medium = 20.0  : 배치 실측 P40 근사값
+   *   - average_score = 25.0  : 배치 실측 평균 근사값
+   */
+
   private final Neo4jClient neo4jClient;
 
   public Collection<JobRecommendationResponse> recommendJobsForUser(Long userId, int limit,
@@ -55,32 +75,28 @@ public class JobRecommendationRepository {
                 AND NOT j.title CONTAINS '수강생'
                 AND NOT j.title CONTAINS '훈련생'
               WITH j, graphScore, vectorScore,
-                   CASE
-                     WHEN u.embedding IS NULL THEN
-                      (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
-                     ELSE
-                      ((CASE WHEN vectorScore = 0.0 THEN 0.0
-                             WHEN vectorScore <= 0.50 THEN 10.0
-                             WHEN (vectorScore - 0.50) * 400.0 > 100.0 THEN 100.0
-                             ELSE (vectorScore - 0.50) * 400.0 END) * 0.5) +
-                      ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
-                   END AS rawFinalScore
+                   CASE WHEN j.total_skills = 0 OR j.total_skills IS NULL THEN 0.0
+                        ELSE toFloat(graphScore) / j.total_skills * 100.0
+                   END AS graphScoreNorm,
+                   CASE WHEN vectorScore = 0.0 THEN 0.0
+                        WHEN (vectorScore - 0.65) * 533.0 > 80.0 THEN 80.0
+                        WHEN (vectorScore - 0.65) * 533.0 < 0.0 THEN 0.0
+                        ELSE (vectorScore - 0.65) * 533.0
+                   END AS vectorScoreNorm
+              WITH j, graphScore, vectorScore, graphScoreNorm,
+                   graphScoreNorm * 0.5 + vectorScoreNorm * 0.5 AS rawFinalScore
 
               // finalScore 계산 및 round 처리
               WITH j, graphScore, vectorScore, round(rawFinalScore * 10.0) / 10.0 AS finalScore
-              OPTIONAL MATCH (g:GlobalStats {id: 'recommendation'})
 
               // cutoff 변수들 계산
               WITH j, graphScore, vectorScore, finalScore,
-                   round(coalesce(j.cutoff_high, 70.0) * 10.0) / 10.0 AS cHigh,
-                   round(coalesce(j.cutoff_medium, 40.0) * 10.0) / 10.0 AS cMedium,
-                   coalesce(j.average_score, 50.0) AS averageScore,
-                   coalesce(g.global_average_score, 50.0) AS globalAverageScore,
-                   coalesce(g.global_cutoff_high, 70.0) AS globalCutoffHigh,
-                   coalesce(g.global_cutoff_medium, 40.0) AS globalCutoffMedium
+                   round(coalesce(j.cutoff_high, 35.0) * 10.0) / 10.0 AS cHigh,
+                   round(coalesce(j.cutoff_medium, 20.0) * 10.0) / 10.0 AS cMedium,
+                   coalesce(j.average_score, 25.0) AS averageScore
 
               // topPercentile 및 matchStatus 계산
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium,
+              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore,
                    CASE
                      WHEN finalScore >= cHigh THEN '적합'
                      WHEN finalScore >= cMedium THEN '보통'
@@ -96,7 +112,7 @@ public class JobRecommendationRepository {
                    END AS rawTopPercentile
 
               // topPercentile 범위 1~99 보정 처리
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium, matchStatus,
+              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, matchStatus,
                    CASE
                      WHEN rawTopPercentile < 1 THEN 1
                      WHEN rawTopPercentile > 99 THEN 99
@@ -104,15 +120,11 @@ public class JobRecommendationRepository {
                      ELSE rawTopPercentile
                    END AS topPercentile
 
-              WITH j, graphScore, vectorScore, finalScore,
-                   cHigh, cMedium, averageScore, globalAverageScore,
-                   globalCutoffHigh, globalCutoffMedium, topPercentile, matchStatus
               ORDER BY topPercentile ASC
               LIMIT 200
               RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
                 cHigh AS cutoffHigh, cMedium AS cutoffMedium,
-                averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium,
-                topPercentile, matchStatus
+                averageScore, topPercentile, matchStatus
               SKIP $skip LIMIT $limit
               """;
     } else {
@@ -147,32 +159,28 @@ public class JobRecommendationRepository {
                 AND NOT j.title CONTAINS '수강생'
                 AND NOT j.title CONTAINS '훈련생'
               WITH j, graphScore, vectorScore,
-                   CASE
-                     WHEN u.embedding IS NULL THEN
-                      (CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.7
-                     ELSE
-                      ((CASE WHEN vectorScore = 0.0 THEN 0.0
-                             WHEN vectorScore <= 0.50 THEN 10.0
-                             WHEN (vectorScore - 0.50) * 400.0 > 100.0 THEN 100.0
-                             ELSE (vectorScore - 0.50) * 400.0 END) * 0.5) +
-                      ((CASE WHEN graphScore * 25.0 > 100.0 THEN 100.0 ELSE graphScore * 25.0 END) * 0.5)
-                   END AS rawFinalScore
+                   CASE WHEN j.total_skills = 0 OR j.total_skills IS NULL THEN 0.0
+                        ELSE toFloat(graphScore) / j.total_skills * 100.0
+                   END AS graphScoreNorm,
+                   CASE WHEN vectorScore = 0.0 THEN 0.0
+                        WHEN (vectorScore - 0.65) * 533.0 > 80.0 THEN 80.0
+                        WHEN (vectorScore - 0.65) * 533.0 < 0.0 THEN 0.0
+                        ELSE (vectorScore - 0.65) * 533.0
+                   END AS vectorScoreNorm
+              WITH j, graphScore, vectorScore, graphScoreNorm,
+                   graphScoreNorm * 0.5 + vectorScoreNorm * 0.5 AS rawFinalScore
 
               // finalScore 계산 및 round 처리
               WITH j, graphScore, vectorScore, round(rawFinalScore * 10.0) / 10.0 AS finalScore
-              OPTIONAL MATCH (g:GlobalStats {id: 'recommendation'})
 
               // cutoff 변수들 계산
               WITH j, graphScore, vectorScore, finalScore,
-                   round(coalesce(j.cutoff_high, 70.0) * 10.0) / 10.0 AS cHigh,
-                   round(coalesce(j.cutoff_medium, 40.0) * 10.0) / 10.0 AS cMedium,
-                   coalesce(j.average_score, 50.0) AS averageScore,
-                   coalesce(g.global_average_score, 50.0) AS globalAverageScore,
-                   coalesce(g.global_cutoff_high, 70.0) AS globalCutoffHigh,
-                   coalesce(g.global_cutoff_medium, 40.0) AS globalCutoffMedium
+                   round(coalesce(j.cutoff_high, 35.0) * 10.0) / 10.0 AS cHigh,
+                   round(coalesce(j.cutoff_medium, 20.0) * 10.0) / 10.0 AS cMedium,
+                   coalesce(j.average_score, 25.0) AS averageScore
 
               // topPercentile 및 matchStatus 계산
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium,
+              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore,
                    CASE
                      WHEN finalScore >= cHigh THEN '적합'
                      WHEN finalScore >= cMedium THEN '보통'
@@ -188,7 +196,7 @@ public class JobRecommendationRepository {
                    END AS rawTopPercentile
 
               // topPercentile 범위 1~99 보정 처리
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium, matchStatus,
+              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, matchStatus,
                    CASE
                      WHEN rawTopPercentile < 1 THEN 1
                      WHEN rawTopPercentile > 99 THEN 99
@@ -196,15 +204,11 @@ public class JobRecommendationRepository {
                      ELSE rawTopPercentile
                    END AS topPercentile
 
-              WITH j, graphScore, vectorScore, finalScore,
-                   cHigh, cMedium, averageScore, globalAverageScore,
-                   globalCutoffHigh, globalCutoffMedium, topPercentile, matchStatus
               ORDER BY topPercentile ASC
               LIMIT 200
               RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
                 cHigh AS cutoffHigh, cMedium AS cutoffMedium,
-                averageScore, globalAverageScore, globalCutoffHigh, globalCutoffMedium,
-                topPercentile, matchStatus
+                averageScore, topPercentile, matchStatus
               SKIP $skip LIMIT $limit
               """;
     }
@@ -219,9 +223,6 @@ public class JobRecommendationRepository {
             .cutoffHigh(record.get("cutoffHigh").asDouble())
             .cutoffMedium(record.get("cutoffMedium").asDouble())
             .averageScore(record.get("averageScore").asDouble())
-            .globalAverageScore(record.get("globalAverageScore").asDouble())
-            .globalCutoffHigh(record.get("globalCutoffHigh").asDouble())
-            .globalCutoffMedium(record.get("globalCutoffMedium").asDouble())
             .topPercentile(record.get("topPercentile").asInt())
             .matchStatus(record.get("matchStatus").asString()).build())
         .all();
