@@ -97,6 +97,17 @@ export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
 
+/* ── 모집 공고 ── */
+
+export const createRecruitment = (projectId: number, body: { role: string; targetCount: number; requireSkills: string[] }) =>
+  api.post(`/v1/projects/${projectId}/recruitments`, body);
+
+export const updateRecruitmentStatus = (projectId: number, positionId: number, status: string) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
+
+export const updateRecruitmentTargetCount = (projectId: number, positionId: number, targetCount: number) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
+
 /* ── 프로젝트 참여 수락/거절 ── */
 
 export const acceptRequest = (requestId: number) =>

@@ -152,11 +152,13 @@ public class UserService {
                 // 2. S3에 이미지 업로드하고 URL 받아오기
                 String uploadedImageUrl = s3ImageService.uploadImage(file);
 
+                String fullImageUrl = s3ImageService.getImageUrl(uploadedImageUrl);
                 // 3. 유저 엔티티에 URL 업데이트
-                user.updateImageUrl(uploadedImageUrl);
+
+                user.updateImageUrl(fullImageUrl);
 
                 // 4. 업로드된 URL 반환 (프론트엔드에서 바로 화면에 띄울 수 있게)
-                return uploadedImageUrl;
+                return fullImageUrl;
         }
 
         @Transactional(readOnly = true)

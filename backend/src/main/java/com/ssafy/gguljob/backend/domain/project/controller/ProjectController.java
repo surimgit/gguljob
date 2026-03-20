@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.project.controller;
 
+import com.ssafy.gguljob.backend.domain.matching.dto.MemberCardDto;
 import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
@@ -227,4 +228,30 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "추천 팀원 목록 및 검색", description = "필터(포지션, 숙련도) 및 키워드(이름, 포지션명)를 기반으로 팀원을 추천순으로 페이징 조회합니다.")
+    @GetMapping("/{projectId}/recommended-members")
+    public ResponseEntity<org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.matching.dto.MemberCardDto>> getRecommendedMembersList(
+        @PathVariable Long projectId,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String position,
+        @RequestParam(required = false) String experienceLevel,
+        @org.springframework.data.web.PageableDefault(size = 10) org.springframework.data.domain.Pageable pageable
+    ) {
+        return ResponseEntity.ok(matchingService.getRecommendedMembers(projectId, keyword, position, experienceLevel, pageable));
+    }
+
+    @Operation(summary = "상단 표시 추천 팀원 Top 3 조회", description = "프로젝트 요건에 가장 잘 맞는 팀원 상위 3명을 조회합니다.")
+    @GetMapping("/{projectId}/recommended-members/top")
+    public ResponseEntity<List<MemberCardDto>> getTop3RecommendedMembers(
+        @PathVariable Long projectId
+    ) {
+        org.springframework.data.domain.Page<MemberCardDto> result =
+            matchingService.getRecommendedMembers(
+                projectId,
+                null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 3)
+            );
+
+        return ResponseEntity.ok(result.getContent());
+    }
 }

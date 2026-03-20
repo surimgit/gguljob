@@ -166,15 +166,5 @@ public class UserController {
         return ResponseEntity.ok(userService.getMemberFilters());
     }
 
-    @Operation(summary = "추천 팀원 목록 및 검색", description = "필터(포지션, 숙련도) 및 키워드(이름, 포지션명)를 기반으로 팀원을 추천순으로 페이징 조회합니다.")
-    @GetMapping("/users")
-    public ResponseEntity<org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.matching.dto.MemberCardDto>> getRecommendedMembersList(
-        @RequestParam Long projectId,
-        @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) String position,
-        @RequestParam(required = false) String experienceLevel,
-        @org.springframework.data.web.PageableDefault(size = 10) org.springframework.data.domain.Pageable pageable
-    ) {
-        return ResponseEntity.ok(matchingService.getRecommendedMembers(projectId, keyword, position, experienceLevel, pageable));
-    }
+
 }

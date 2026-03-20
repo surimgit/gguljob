@@ -11,20 +11,14 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
+import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName } from "../../../../constants/skills";
+import type { RoleCode } from "../../../../constants/skills";
 import UserProfileModal from "../../mypage/UserProfileModal";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
-
-type RoleType =
-  | "프론트엔드"
-  | "백엔드"
-  | "인프라/DevOps"
-  | "디자인"
-  | "데이터/AI"
-  | "기획/PM";
 
 interface Role {
   id: string;
@@ -60,32 +54,9 @@ interface TeamManagementProps {
   roles: Role[];
   members: Member[];
   applications: Application[];
-  onAddRole: () => void;
   onDeleteRole: (roleId: string) => void;
-  onUpdateRoleCount: (roleId: string, delta: number) => void;
-  onUpdateRoleStatus: (roleId: string, status: RoleStatus) => void;
-  onAccept: (applicationId: string) => void;
-  onReject: (applicationId: string) => void;
 }
 
-/* ── 직무별 색상 ── */
-const ROLE_COLORS: Record<string, string> = {
-  프론트엔드: "#2196F3",
-  백엔드: "#22C55E",
-  디자인: "#d22ab6",
-  "기획/PM": "#F59E0B",
-  "인프라/DevOps": "#7C3AED",
-  "데이터/AI": "#EC4899",
-  Frontend: "#2196F3",
-  Backend: "#22C55E",
-  Design: "#d22ab6",
-  PM: "#F59E0B",
-  DevOps: "#7C3AED",
-  AI: "#EC4899",
-  Infra: "#7C3AED",
-};
-
-const getRoleColor = (role: string) => ROLE_COLORS[role] ?? "#6B7280";
 
 /* ── 아바타 색상 (해시 기반) ── */
 const AVATAR_COLORS = [
@@ -99,12 +70,6 @@ const getAvatarColor = (name: string) => {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-/* ── 역할 코드→표시명 ── */
-const ROLE_CODE_TO_LABEL: Record<string, string> = {
-  FE: "프론트엔드", BE: "백엔드", AI: "데이터/AI", PM: "기획/PM",
-  INFRA: "인프라/DevOps", DESIGN: "디자인",
-  FRONTEND: "프론트엔드", BACKEND: "백엔드",
-};
 
 // TODO: 백엔드에 팀원 개별 조회/포지션 상세/합류 신청 API 추가 후 교체 필요
 // 현재는 roleCounts(역할별 인원 수)만으로 임시 변환
@@ -112,10 +77,9 @@ const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
   const { roleCounts } = dashboard.teamStats;
   if (!roleCounts) return [];
   return Object.entries(roleCounts).map(([code, count], idx) => {
-    const name = ROLE_CODE_TO_LABEL[code] ?? code;
     return {
       id: `role-${idx}`,
-      name,
+      name: code,
       // TODO: 포지션 API에서 targetCount, status, requireSkills 조회로 교체
       status: (count > 0 ? "closed" : "open") as RoleStatus,
       current: count,
@@ -131,12 +95,11 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
   const members: Member[] = [];
   // TODO: 팀원 목록 API에서 실제 이름/가입일/기여도 조회로 교체
   Object.entries(roleCounts).forEach(([code, count]) => {
-    const roleName = ROLE_CODE_TO_LABEL[code] ?? code;
     for (let i = 0; i < count; i++) {
       members.push({
         id: `${code}-${i}`,
-        name: `${roleName} ${i + 1}`,
-        role: roleName,
+        name: `${code} ${i + 1}`,
+        role: code,
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
@@ -280,30 +243,17 @@ const StatusDropdown = ({
 /* ══════════════════════════════════════
    팀원 모집하기 모달 (RecruitModal)
    ══════════════════════════════════════ */
-const ROLE_LIST: RoleType[] = [
-  "프론트엔드", "백엔드", "인프라/DevOps",
-  "디자인", "데이터/AI", "기획/PM",
-];
 
-/* ── 직무별 추천 스택 ── */
-const ROLE_STACKS: Record<RoleType, string[]> = {
-  "프론트엔드": ["React", "Vue", "Angular", "Next.js", "Nuxt.js", "TypeScript", "JavaScript", "TailwindCSS", "Svelte", "Redux", "Recoil", "Zustand", "Sass", "Webpack", "Vite"],
-  "백엔드": ["Spring Boot", "Django", "FastAPI", "Express", "NestJS", "Node.js", "Java", "Python", "Go", "Rust", "Kotlin", "JPA", "MyBatis", "GraphQL", "gRPC"],
-  "인프라/DevOps": ["Docker", "Kubernetes", "AWS", "GCP", "Azure", "Jenkins", "Nginx", "Linux", "Terraform", "GitHub Actions", "GitLab CI", "Ansible", "Prometheus", "Grafana"],
-  "디자인": ["Figma", "Adobe XD", "Sketch", "Photoshop", "Illustrator", "Framer", "Zeplin", "InVision", "Principle", "After Effects"],
-  "데이터/AI": ["PyTorch", "TensorFlow", "Scikit-learn", "Pandas", "NumPy", "OpenCV", "HuggingFace", "LangChain", "Spark", "Hadoop", "Airflow", "Kafka", "R", "Tableau"],
-  "기획/PM": ["Jira", "Confluence", "Notion", "Slack", "Figma", "Miro", "Google Analytics", "Amplitude", "Mixpanel", "Asana", "Trello"],
-};
 
 interface RecruitModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: { role: RoleType; count: number; stacks: string[] }) => void;
-  addedRoles?: RoleType[];
+  onConfirm: (data: { role: RoleCode; count: number; stacks: string[] }) => void;
+  addedRoles?: RoleCode[];
 }
 
 const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitModalProps) => {
-  const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleCode | null>(null);
   const [count, setCount] = useState(1);
   const [stackInput, setStackInput] = useState("");
   const [stacks, setStacks] = useState<string[]>([]);
@@ -314,7 +264,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
   const listRef = useRef<HTMLDivElement>(null);
   const [listPos, setListPos] = useState({ top: 0, left: 0, width: 0 });
 
-  const handleSelectRole = (role: RoleType) => {
+  const handleSelectRole = (role: RoleCode) => {
     setSelectedRole(role);
     setStacks([]);
     setStackInput("");
@@ -532,7 +482,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
                           : "var(--color-text-primary)",
                       }}
                     >
-                      {role}
+                      {getRoleDisplayName(role)}
                     </span>
                     {isAdded && (
                       <span
@@ -754,12 +704,7 @@ const TeamManagement = ({
   members,
   applications: initialApps,
   projectId,
-  onAddRole,
   onDeleteRole,
-  onUpdateRoleCount,
-  onUpdateRoleStatus,
-  onAccept,
-  onReject,
 }: TeamManagementProps) => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
@@ -767,8 +712,14 @@ const TeamManagement = ({
   const [applications, setApplications] = useState(initialApps);
 
   useEffect(() => {
+    setRoles(initialRoles);
+  }, [initialRoles]);
+  useEffect(() => {
     setLocalMembers(members);
   }, [members]);
+  useEffect(() => {
+    setApplications(initialApps);
+  }, [initialApps]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
@@ -791,28 +742,41 @@ const TeamManagement = ({
     return acc;
   }, {});
 
-  const addedRoles = roles.map((r) => r.name) as RoleType[];
+  const addedRoles = roles.map((r) => r.name) as RoleCode[];
 
-  const handleUpdateCount = (roleId: string, delta: number) => {
-    setRoles((prev) =>
-      prev.map((r) => {
-        if (r.id !== roleId) return r;
-        const newTotal = Math.max(r.current, r.total + delta);
-        return {
-          ...r,
-          total: newTotal,
-          status: r.current >= newTotal ? "closed" : "open",
-        };
-      }),
-    );
-    onUpdateRoleCount(roleId, delta);
+  const handleUpdateCount = async (roleId: string, delta: number) => {
+    if (!projectId) return;
+    const role = roles.find((r) => r.id === roleId);
+    if (!role) return;
+    const newTotal = Math.max(role.current, role.total + delta);
+    try {
+      await updateRecruitmentTargetCount(projectId, Number(roleId), newTotal);
+      setRoles((prev) =>
+        prev.map((r) => {
+          if (r.id !== roleId) return r;
+          return {
+            ...r,
+            total: newTotal,
+            status: r.current >= newTotal ? "closed" : "open",
+          };
+        }),
+      );
+    } catch (err) {
+      console.error('모집 인원 변경 실패:', err);
+    }
   };
 
-  const handleUpdateStatus = (roleId: string, status: RoleStatus) => {
-    setRoles((prev) =>
-      prev.map((r) => (r.id === roleId ? { ...r, status } : r)),
-    );
-    onUpdateRoleStatus(roleId, status);
+  const handleUpdateStatus = async (roleId: string, status: RoleStatus) => {
+    if (!projectId) return;
+    const apiStatus = status === "open" ? "RECRUITING" : "DONE";
+    try {
+      await updateRecruitmentStatus(projectId, Number(roleId), apiStatus);
+      setRoles((prev) =>
+        prev.map((r) => (r.id === roleId ? { ...r, status } : r)),
+      );
+    } catch (err) {
+      console.error('모집 상태 변경 실패:', err);
+    }
   };
 
   const handleDeleteRole = (roleId: string) => {
@@ -848,7 +812,6 @@ const TeamManagement = ({
         );
       }
       setApplications((prev) => prev.filter((a) => a.id !== appId));
-      onAccept(appId);
     } catch (err) {
       console.error('참여 수락 실패:', err);
     }
@@ -858,24 +821,32 @@ const TeamManagement = ({
     try {
       await rejectRequest(Number(appId));
       setApplications((prev) => prev.filter((a) => a.id !== appId));
-      onReject(appId);
     } catch (err) {
       console.error('참여 거절 실패:', err);
     }
   };
 
-  const handleRecruitConfirm = (data: { role: RoleType; count: number; stacks: string[] }) => {
-    const newRole: Role = {
-      id: `r${Date.now()}`,
-      name: data.role,
-      status: "open",
-      current: 0,
-      total: data.count,
-      stacks: data.stacks,
-    };
-    setRoles((prev) => [...prev, newRole]);
-    setShowRecruitModal(false);
-    onAddRole();
+  const handleRecruitConfirm = async (data: { role: RoleCode; count: number; stacks: string[] }) => {
+    if (!projectId) return;
+    try {
+      const { data: res } = await createRecruitment(projectId, {
+        role: data.role,
+        targetCount: data.count,
+        requireSkills: data.stacks,
+      });
+      const newRole: Role = {
+        id: String(res.positionId),
+        name: data.role,
+        status: "open",
+        current: 0,
+        total: data.count,
+        stacks: data.stacks,
+      };
+      setRoles((prev) => [...prev, newRole]);
+      setShowRecruitModal(false);
+    } catch (err: any) {
+      console.error('모집 공고 생성 실패:', err.response?.data ?? err);
+    }
   };
 
   return (
@@ -935,7 +906,7 @@ const TeamManagement = ({
                   {/* 카드 상단: 직무명 + 상태 드롭다운 + 삭제 */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-bold" style={{ color }}>
-                      {role.name}
+                      {getRoleDisplayName(role.name)}
                     </span>
                     <div className="flex items-center gap-2">
                       <StatusDropdown
@@ -1055,7 +1026,7 @@ const TeamManagement = ({
                 <div key={role}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold" style={{ color }}>
-                      {role} {roleMembers.length}
+                      {getRoleDisplayName(role)} {roleMembers.length}
                     </span>
                     <div
                       className="flex-1 h-px"
@@ -1196,7 +1167,7 @@ const TeamManagement = ({
                       className="px-2 py-0.5 rounded-md text-[11px] font-bold"
                       style={{ background: `${color}20`, color }}
                     >
-                      {app.role}
+                      {getRoleDisplayName(app.role)}
                     </span>
                     <span
                       className="text-xs"
@@ -1643,43 +1614,48 @@ const TeamManagement = ({
 /* ── 기본 export ── */
 const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
   const [detail, setDetail] = useState<TeamManagementData | null>(null);
+  const [loading, setLoading] = useState(!!projectId);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
     if (!projectId) return;
+    setLoading(true);
     getTeamManagement(projectId)
       .then(({ data }) => setDetail(data.data))
-      .catch((e) => console.error("팀원 정보 조회 실패", e));
+      .catch((e) => console.error("팀원 정보 조회 실패", e))
+      .finally(() => setLoading(false));
   }, [projectId]);
 
   const roles: Role[] = useMemo(() => {
     if (detail) {
       return detail.recruitments.map((r) => ({
         id: r.positionId.toString(),
-        name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+        name: r.role,
         status: r.status === "RECRUITING" ? "open" : "closed",
         current: r.currentCount,
         total: r.targetCount,
         stacks: r.requireSkills,
       }));
     }
+    if (loading) return [];
     return dashboard ? dashboardToRoles(dashboard) : [];
-  }, [detail, dashboard]);
+  }, [detail, dashboard, loading]);
 
   const members: Member[] = useMemo(() => {
     if (detail) {
       return detail.currentMembers.map((m, i) => ({
         id: m.userId.toString(),
         name: m.userName,
-        role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+        role: m.role,
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
         isLeader: i === 0,
         isMe: m.userId === currentUserId,
       }));
     }
+    if (loading) return [];
     return dashboard ? dashboardToMembers(dashboard) : [];
-  }, [detail, dashboard, currentUserId]);
+  }, [detail, dashboard, currentUserId, loading]);
 
   const applications: Application[] = useMemo(() => {
     if (!detail) return [];
@@ -1701,16 +1677,11 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
       roles={roles}
       members={members}
       applications={applications}
-      onAddRole={() => console.log("직무 추가")}
       onDeleteRole={(id) => console.log("직무 삭제:", id)}
-      onUpdateRoleCount={(id, delta) => console.log("인원 변경:", id, delta)}
-      onUpdateRoleStatus={(id, status) => console.log("상태 변경:", id, status)}
-      onAccept={(id) => acceptRequest(Number(id)).catch(() => {})}
-      onReject={(id) => rejectRequest(Number(id)).catch(() => {})}
     />
   );
 };
 
 export default TeamMembers;
 export { TeamManagement, RecruitModal };
-export type { Role, Member, Application, TeamManagementProps, RoleType, RoleStatus, RecruitModalProps };
+export type { Role, Member, Application, TeamManagementProps, RoleStatus, RecruitModalProps };
