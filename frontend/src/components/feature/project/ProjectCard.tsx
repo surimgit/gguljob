@@ -1,24 +1,5 @@
 import { useState } from 'react';
-
-export type ProjectStatus = '모집중' | '마감' | `마감 D-${number}`;
-
-export interface Project {
-  id: number;
-  category: string;
-  status: ProjectStatus;
-  title: string;
-  description: string;
-  techStack: string[];
-  slots: {
-    fe: { current: number; total: number; positionId?: number };
-    be: { current: number; total: number; positionId?: number };
-  };
-  author: {
-    initial: string;
-    name: string;
-    avatarColor?: string;
-  };
-}
+import type { ProjectCardDto, BackendProjectStatus } from '../../../types/project';
 
 export interface ProjectCardProps {
   project: ProjectCardDto;

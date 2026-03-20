@@ -17,8 +17,8 @@ import type { PageResponse } from '../types/common';
 
 /* ── 프로젝트 찾기 ── */
 
-export const getProjects = (params?: ProjectQueryParams) =>
-  api.get<PageResponse<Project>>('/v1/projects/list', { params });
+export const getProjects = (params?: ProjectListParams) =>
+  api.get<PageResponse<ProjectCardDto>>('/v1/projects/list', { params });
 
 export const getRecommendedProjects = () =>
   api.get<ProjectCardDto[]>('/v1/projects/recommended/top');

@@ -145,8 +145,8 @@ const ProjectFind = () => {
 
         {/* 카드 그리드 */}
         <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-[16px] gap-y-[16px]">
-          {paginatedProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} onClick={setSelectedProject} />
+          {projects.map((project) => (
+            <ProjectCard key={project.projectId} project={project} onClick={setSelectedProject} />
           ))}
         </div>
 

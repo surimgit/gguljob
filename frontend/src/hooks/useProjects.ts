@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProjects, getRecommendedProjects, getProjectFilters } from '../api/projects';
-import type { ProjectFilters } from '../api/projects';
+import type { ProjectFilters, SkillGroup } from '../api/projects';
 import type { ProjectCardDto, ProjectListParams } from '../types/project';
 import type { PageResponse } from '../types/common';
+import { SKILLS_BY_CATEGORY } from '../constants/skills';
 
 /** 객체에서 문자열 값을 추출 (name, skillName, domainName, label, value, title 순으로 탐색) */
 const extractString = (obj: unknown): string => {
@@ -86,11 +87,20 @@ export const useProjectFilters = () => {
         PM: 'PM',
         TOOLS: '도구',
       };
-      const skillGroups = (raw?.skillCategories ?? []).map((cat: any) => ({
+      const rawSkillGroups: SkillGroup[] = (raw?.skillCategories ?? []).map((cat: any) => ({
         category: cat.category,
         label: CATEGORY_LABELS[cat.category] ?? cat.category,
         skills: (cat?.skills ?? []).map((s: any) => s?.name ?? String(s)),
       }));
+
+      // API에서 skillCategories가 비어있으면 constants/skills.ts 폴백
+      const skillGroups: SkillGroup[] = rawSkillGroups.length > 0
+        ? rawSkillGroups
+        : Object.entries(SKILLS_BY_CATEGORY).map(([category, skills]) => ({
+            category,
+            label: CATEGORY_LABELS[category] ?? category,
+            skills,
+          }));
 
       // roles: [{value, label}] → label 배열
       const roles = (raw?.roles ?? []).map((r: any) => r?.label ?? r?.value ?? String(r));
