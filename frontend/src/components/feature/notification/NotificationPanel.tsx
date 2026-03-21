@@ -227,7 +227,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        <span className="text-white font-semibold text-[20x]">알림</span>
+        <span className="text-white font-semibold text-[20px]">알림</span>
         {notifications.some(n => !n.isRead) && (
           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white text-primary-hover text-[11px] font-bold">
             {notifications.filter(n => !n.isRead).length}
