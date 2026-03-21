@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs } from '../../../api/jobs';
+import { getJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 
@@ -22,6 +22,7 @@ interface JobListing {
   match: MatchType;
   techStacks: string[];
   jobCategory: string;
+  topPercentile?: number;
 }
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────────
@@ -76,10 +77,10 @@ const BACKEND_PAGE_SIZE = 10;
 
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
-const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
-  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
-  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705' },
-  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444' },
+const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
+  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E', percent: 100 },
+  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705', percent: 66 },
+  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444', percent: 33 },
 };
 
 const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insufficient: 1 };
@@ -114,6 +115,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
+  topPercentile: item.topPercentile,
 });
 
 
@@ -380,7 +382,13 @@ const Pagination = ({
 };
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-const JobListingSection = () => {
+interface JobListingSectionProps {
+  bookmarkedIds: Set<number>;
+  onToggleBookmark: (id: number) => void;
+}
+
+const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
   const [activeSkill, setActiveSkill] = useState('전체');
@@ -389,7 +397,6 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [hasNextPage, setHasNextPage] = useState(true);
 
@@ -401,21 +408,6 @@ const JobListingSection = () => {
       })
       .catch(() => {});
   }, [currentPage]);
-
-  useEffect(() => {
-    getBookmarkedJobs()
-      .then(({ data }) => setBookmarkedIds(new Set(data.map(j => j.jobId))))
-      .catch(() => {});
-  }, []);
-
-  const toggleBookmark = (id: number) => {
-    toggleBookmarkApi(id).catch(() => {});
-    setBookmarkedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
 
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
@@ -456,10 +448,11 @@ const JobListingSection = () => {
     if (page < 1) return;
     if (page > currentPage && !hasNextPage) return;
     setCurrentPage(page);
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <div className="bg-background max-w-[1400px] mx-auto px-3">
+    <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-3 scroll-mt-20">
       {/* 섹션 제목 */}
       <div className="px-[42px] pt-8 pb-5">
         <h2 className="font-semibold text-[25px]">
@@ -525,7 +518,7 @@ const JobListingSection = () => {
               key={job.id}
               job={job}
               bookmarked={bookmarkedIds.has(job.id)}
-              onToggleBookmark={toggleBookmark}
+              onToggleBookmark={onToggleBookmark}
             />
           ))
         ) : showBookmarked ? (

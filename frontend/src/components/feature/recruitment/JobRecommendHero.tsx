@@ -19,6 +19,7 @@ const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 type Badge = 'NEW' | 'HOT';
 
 interface JobCardProps {
+  jobId: number;
   tint: string;
   rank: number;
   badges: Badge[];
@@ -30,14 +31,15 @@ interface JobCardProps {
   experience: string;
   employmentType: string;
   salary: string;
+  bookmarked: boolean;
+  onToggleBookmark: (id: number) => void;
 }
 
 const BadgeChip = ({ type }: { type: Badge }) => {
   if (type === 'NEW') {
     return (
       <span
-        className="text-[11px] font-bold px-2 py-0.5 rounded"
-        style={{ background: '#FFF2C6', color: '#705401' }}
+        className="text-[11px] font-bold px-2 py-0.5 rounded bg-primary-soft text-text-brown"
       >
         NEW
       </span>
@@ -67,24 +69,8 @@ const RankMedal = ({ rank }: { rank: number }) => (
   />
 );
 
-const BookmarkIcon = () => (
-  <svg
-    className="w-5 h-5"
-    style={{ color: '#9CA3AF' }}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-    />
-  </svg>
-);
-
 const JobCard = ({
+  jobId,
   tint,
   rank,
   badges,
@@ -96,17 +82,19 @@ const JobCard = ({
   experience,
   employmentType,
   salary,
+  bookmarked,
+  onToggleBookmark,
 }: JobCardProps) => (
   <div
     className="relative flex-shrink-0 flex flex-col"
     style={{
-      width: '308px',
-      height: '208px',
+      width: '400px',
+      minHeight: '250px',
       border: '2px solid #E5E7EB',
       borderRadius: '15px',
       boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
       background: tint,
-      padding: '14px 16px 14px 16px',
+      padding: '20px 20px 20px 20px',
     }}
   >
     {/* 랭킹 메달 — 원이 카드 위로 돌출, 리본이 원 하단부를 가로지름 */}
@@ -115,8 +103,24 @@ const JobCard = ({
     </div>
 
     {/* 북마크 */}
-    <button className="absolute top-3 right-3" aria-label="북마크">
-      <BookmarkIcon />
+    <button
+      className="absolute top-3 right-3"
+      aria-label="북마크"
+      onClick={(e) => { e.stopPropagation(); onToggleBookmark(jobId); }}
+    >
+      <svg
+        className="w-7 h-7"
+        fill={bookmarked ? '#F2B705' : 'none'}
+        stroke={bookmarked ? '#F2B705' : '#9CA3AF'}
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+        />
+      </svg>
     </button>
 
     {/* 회사 로고 + 배지 + 회사명 */}
@@ -135,29 +139,27 @@ const JobCard = ({
         {logoText}
       </div>
 
-      {/* 배지 + 회사명 */}
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5">
-          {badges.map(b => (
-            <BadgeChip key={b} type={b} />
-          ))}
-        </div>
-        <p className="font-bold" style={{ fontSize: '20px', color: '#111827', lineHeight: '1.2' }}>
+      {/* 회사명 + 배지 */}
+      <div className="flex items-center gap-1.5">
+        <p className="font-bold" style={{ fontSize: '22px', color: '#111827', lineHeight: '1.2' }}>
           {company}
         </p>
+        {badges.map(b => (
+          <BadgeChip key={b} type={b} />
+        ))}
       </div>
     </div>
 
     {/* 직무 */}
     <p
-      className="font-bold mt-2"
-      style={{ fontSize: '15px', color: '#111827', lineHeight: '1.3' }}
+      className="font-bold mt-3"
+      style={{ fontSize: '17px', color: '#111827', lineHeight: '1.3' }}
     >
       {role}
     </p>
 
     {/* 위치 · 경력 */}
-    <div className="flex items-center gap-1.5 mt-1">
+    <div className="flex items-center gap-1.5 mt-3">
       <span className="text-sm" style={{ color: '#6B7280' }}>{location}</span>
       <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
       <span className="text-sm" style={{ color: '#6B7280' }}>{experience}</span>
@@ -167,12 +169,17 @@ const JobCard = ({
     <div className="flex items-center gap-1.5 mt-auto">
       <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
       <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-      <span className="text-sm font-bold" style={{ color: '#F2B705' }}>{salary}</span>
+      <span className="text-sm font-bold text-primary-hover">{salary}</span>
     </div>
   </div>
 );
 
-const JobRecommendHero = () => {
+interface JobRecommendHeroProps {
+  bookmarkedIds: Set<number>;
+  onToggleBookmark: (id: number) => void;
+}
+
+const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
   const [top3, setTop3] = useState<JobItem[]>([]);
 
   useEffect(() => {
@@ -268,9 +275,10 @@ const JobRecommendHero = () => {
           {top3.map((job, idx) => (
             <JobCard
               key={job.jobId}
+              jobId={job.jobId}
               tint={RANK_TINTS[idx]}
               rank={idx + 1}
-              badges={job.matchStatus === '적합' ? ['NEW', 'HOT'] : job.matchStatus === '보통' ? ['NEW'] : ['HOT']}
+              badges={['NEW']}
               company={job.companyName}
               logoText={job.companyName.charAt(0)}
               logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
@@ -279,6 +287,8 @@ const JobRecommendHero = () => {
               experience={job.experience}
               employmentType={job.contractType}
               salary={job.salary}
+              bookmarked={bookmarkedIds.has(job.jobId)}
+              onToggleBookmark={onToggleBookmark}
             />
           ))}
         </div>
