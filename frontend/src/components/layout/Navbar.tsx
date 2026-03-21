@@ -136,66 +136,47 @@ const Navbar = () => {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 bg-white border-b-2 border-primary shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={gguljobLogo} alt="꿀잡" className="h-18" />
+          <img src={gguljobLogo} alt="꿀잡" className="h-26" />
         </Link>
 
         {/* 데스크톱 네비게이션 */}
-        <nav className="hidden lg:flex items-center justify-center gap-12 xl:gap-30 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+        <nav className="hidden lg:flex items-center justify-center gap-24 xl:gap-48 absolute left-1/2 -translate-x-[65%]">
+          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
             내 프로젝트
           </Link>
-          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-text-secondary font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
 
         {/* 데스크톱 우측 영역 */}
         <div className="hidden lg:flex items-center gap-6 ml-auto">
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search"
-              disabled
-              className="w-40 pl-9 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface text-text-primary placeholder-text-tertiary focus:outline-none disabled:cursor-not-allowed"
-            />
-          </div>
-
           {isAuthenticated ? (
             <div className="flex items-center gap-5">
               <div className="relative flex items-center" ref={notifRef}>
                 <button
                   onClick={() => setShowNotification(prev => !prev)}
-                  className="relative text-icon hover:text-text-primary transition-colors"
+                  className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all"
                   aria-label="알림"
                 >
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-error text-white text-[10px] font-bold leading-none">
+                    <span className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-error text-white text-[10px] font-bold leading-none">
                       {unreadCount}
                     </span>
                   )}
+                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                    알림
+                  </span>
                 </button>
                 {showNotification && (
                   <NotificationPanel
@@ -207,15 +188,21 @@ const Navbar = () => {
                   />
                 )}
               </div>
-              <Link to="/mypage" className="text-icon hover:text-text-primary transition-colors" aria-label="마이페이지">
+              <Link to="/mypage" className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="마이페이지">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
+                <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                  마이페이지
+                </span>
               </Link>
-              <button onClick={handleLogout} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
+              <button onClick={handleLogout} className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="로그아웃">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
+                <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                  로그아웃
+                </span>
               </button>
             </div>
           ) : (
@@ -243,7 +230,7 @@ const Navbar = () => {
 
       {/* 모바일 메뉴 드롭다운 */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-surface border-t border-border shadow-lg">
+        <div className="lg:hidden bg-white border-t border-primary/20 shadow-lg">
           <div className="px-4 py-3 space-y-1">
             <Link
               to="/my-projects"
@@ -269,28 +256,6 @@ const Navbar = () => {
           </div>
 
           <div className="px-4 py-3 border-t border-border">
-            <div className="relative mb-3">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search"
-                disabled
-                className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background text-text-primary placeholder-text-tertiary focus:outline-none disabled:cursor-not-allowed"
-              />
-            </div>
-
             {isAuthenticated ? (
               <div className="flex items-center justify-end gap-4">
                 <div className="relative flex items-center" ref={notifRef}>
