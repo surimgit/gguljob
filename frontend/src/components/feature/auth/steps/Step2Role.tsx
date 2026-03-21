@@ -1,14 +1,22 @@
 import { type FC } from 'react';
-import { Monitor, Server, Pen, Briefcase, Database, Shield } from 'lucide-react';
+import {
+  Monitor, Server, Shield, BarChart3, Brain, HardDrive,
+  Smartphone, Wrench, Briefcase, Pen, type LucideIcon,
+} from 'lucide-react';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES, type RoleCode } from '../../../../constants/skills';
 
-const ROLES = [
-  { id: 'frontend', Icon: Monitor, label: '프론트엔드' },
-  { id: 'backend', Icon: Server, label: '백엔드' },
-  { id: 'designer', Icon: Pen, label: '디자이너' },
-  { id: 'pm', Icon: Briefcase, label: '기획자 / PM' },
-  { id: 'data', Icon: Database, label: '데이터 / AI' },
-  { id: 'infra', Icon: Shield, label: '인프라' },
-];
+const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
+  FRONTEND: Monitor,
+  BACKEND:  Server,
+  DEVOPS:   Shield,
+  DATA:     BarChart3,
+  AI:       Brain,
+  DATABASE: HardDrive,
+  MOBILE:   Smartphone,
+  TOOLS:    Wrench,
+  PM:       Briefcase,
+  DESIGN:   Pen,
+};
 
 interface Props {
   selected: string;
@@ -24,12 +32,14 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {ROLES.map(({ id, Icon, label }) => {
-          const isSelected = selected === id;
+        {ROLE_LIST.map((code) => {
+          const Icon = ROLE_ICONS[code];
+          const label = ROLE_DISPLAY_NAMES[code];
+          const isSelected = selected === code;
           return (
             <button
-              key={id}
-              onClick={() => onChange(id)}
+              key={code}
+              onClick={() => onChange(code)}
               className={`flex flex-col items-center justify-center py-6 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2.5 border-2
                 ${isSelected ? 'border-primary bg-amber-50' : 'border-border bg-white'}`}
             >

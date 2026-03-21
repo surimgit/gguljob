@@ -1,14 +1,15 @@
 import type { PositionType } from '../../../../types/user';
 import type { OnboardingRequest } from '../../../../api/user';
+import { ROLE_TO_API, type RoleCode } from '../../../../constants/skills';
 
-export const ROLE_MAP: Record<string, PositionType> = {
-  frontend: 'FE',
-  backend: 'BE',
-  designer: 'DESIGN',
-  pm: 'PM',
-  data: 'AI',
-  infra: 'INFRA',
-};
+/** skills.ts RoleCode → 백엔드 PositionType */
+const toApiRole = (code: string): PositionType | undefined =>
+  ROLE_TO_API[code as RoleCode] as PositionType | undefined;
+
+/** 백엔드 PositionType → skills.ts RoleCode (역매핑) */
+const API_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
+  Object.entries(ROLE_TO_API).map(([k, v]) => [v, k as RoleCode])
+) as Record<string, RoleCode>;
 
 export const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
   beginner: 'BEGINNER',
@@ -26,11 +27,6 @@ export const GOAL_MAP: Record<string, { label: string; type: string }> = {
   job: { label: '취업 준비', type: 'EMPLOYMENT' },
 };
 
-// 역매핑: 백엔드 값 → 프론트 폼 값
-const REVERSE_ROLE_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(ROLE_MAP).map(([k, v]) => [v, k])
-);
-
 const REVERSE_EXPERIENCE_MAP: Record<string, string> = Object.fromEntries(
   Object.entries(EXPERIENCE_MAP).map(([k, v]) => [v, k])
 );
@@ -41,9 +37,9 @@ const REVERSE_GOAL_MAP: Record<string, string> = Object.fromEntries(
 
 export interface OnboardingFormData {
   goals: string[];
-  role: string;
+  position: string;      // RoleCode (FRONTEND, BACKEND, …)
   experience: string;
-  languages: string[];
+  skills: string[];       // 기술스택 이름 배열
   mbti: string;
   leaderScore: number;
 }
@@ -57,9 +53,9 @@ export const userToFormData = (user: {
   goals?: string[];
 }): OnboardingFormData => ({
   goals: (user.goals ?? []).map((g) => REVERSE_GOAL_MAP[g] ?? g).filter(Boolean),
-  role: user.position ? (REVERSE_ROLE_MAP[user.position] ?? '') : '',
+  position: user.position ? (API_TO_ROLE[user.position] ?? '') : '',
   experience: user.experience ? (REVERSE_EXPERIENCE_MAP[user.experience] ?? '') : '',
-  languages: user.techStacks ?? [],
+  skills: user.techStacks ?? [],
   mbti: user.mbti ?? '',
   leaderScore: user.teamTendency === 'LEADER' ? 70 : 30,
 });
@@ -67,7 +63,7 @@ export const userToFormData = (user: {
 export const buildOnboardingPayload = (
   formData: OnboardingFormData
 ): OnboardingRequest | null => {
-  const mappedRole = ROLE_MAP[formData.role];
+  const mappedRole = toApiRole(formData.position);
   const mappedExp = EXPERIENCE_MAP[formData.experience];
   if (!mappedRole || !mappedExp) return null;
 
@@ -82,7 +78,7 @@ export const buildOnboardingPayload = (
     description: `${goalsSummary}에 관심이 있습니다.`,
     roles: [mappedRole],
     experience: mappedExp,
-    skills: formData.languages,
+    skills: formData.skills,
     mbti: formData.mbti,
     teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
     goals: goalTypes,
