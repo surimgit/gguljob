@@ -134,7 +134,7 @@ const NotificationItem = ({
         <NotifIcon type={notif.type} />
 
         <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <p className={`text-[14px] leading-[21px] ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
+          <p className={`text-[14px] leading-[21px] break-words ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
             {notif.message}
           </p>
           <p className="text-[12px] text-text-tertiary leading-[19px]">{notif.time}</p>
@@ -219,7 +219,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
   };
 
   return (
-  <div className="absolute top-full mt-2 flex flex-col overflow-hidden z-50 bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)] w-[calc(100vw-32px)] max-w-[360px] right-0 sm:w-[360px]">
+  <div className="absolute top-full mt-2 flex flex-col overflow-hidden z-50 bg-surface rounded-2xl shadow-[0px_4px_24px_0px_rgba(0,0,0,0.1)] w-[calc(100vw-32px)] max-w-[420px] right-0 sm:w-[420px]">
     {/* 헤더 */}
     <div className="flex items-center justify-between px-5 h-[57px] bg-primary-hover">
       <div className="flex items-center gap-2">

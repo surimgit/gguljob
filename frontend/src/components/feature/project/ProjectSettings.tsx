@@ -410,7 +410,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
   }
 
   return (
-    <div className="py-6 flex flex-col gap-5 pb-28">
+    <div className="py-6 flex flex-col gap-5">
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
@@ -877,6 +877,35 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         )}
       </section>
 
+      {/* ── 저장 버튼 ── */}
+      <button
+        disabled={!hasChanges || saving}
+        onClick={handleSave}
+        className="w-full block py-3 rounded-xl text-base font-bold transition-colors"
+        style={
+          hasChanges && !saving
+            ? {
+                background: "var(--color-primary)",
+                color: "var(--color-text-primary)",
+              }
+            : {
+                background: "var(--color-border)",
+                color: "var(--color-text-tertiary)",
+                cursor: "not-allowed",
+              }
+        }
+        onMouseEnter={(e) => {
+          if (hasChanges && !saving)
+            e.currentTarget.style.background = "var(--color-primary-hover)";
+        }}
+        onMouseLeave={(e) => {
+          if (hasChanges && !saving)
+            e.currentTarget.style.background = "var(--color-primary)";
+        }}
+      >
+        {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
+      </button>
+
       {/* ── 위험 영역 배너 ── */}
       <div
         className="rounded-2xl px-5 py-4 flex items-center justify-between"
@@ -909,40 +938,6 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
 
       </div>{/* 우측 컬럼 끝 */}
       </div>{/* 그리드 끝 */}
-
-      {/* ── 하단 고정 저장 버튼 ── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3"
-        style={{ background: "var(--color-background)" }}
-      >
-        <button
-          disabled={!hasChanges || saving}
-          onClick={handleSave}
-          className="w-full max-w-[1400px] mx-auto block py-4 rounded-2xl text-base font-bold transition-colors"
-          style={
-            hasChanges && !saving
-              ? {
-                  background: "var(--color-primary)",
-                  color: "var(--color-text-primary)",
-                }
-              : {
-                  background: "var(--color-border)",
-                  color: "var(--color-text-tertiary)",
-                  cursor: "not-allowed",
-                }
-          }
-          onMouseEnter={(e) => {
-            if (hasChanges && !saving)
-              e.currentTarget.style.background = "var(--color-primary-hover)";
-          }}
-          onMouseLeave={(e) => {
-            if (hasChanges && !saving)
-              e.currentTarget.style.background = "var(--color-primary)";
-          }}
-        >
-          {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
-        </button>
-      </div>
     </div>
   );
 };

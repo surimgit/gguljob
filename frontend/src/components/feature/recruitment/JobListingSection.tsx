@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs, getJobFilters } from '../../../api/jobs';
+import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -20,16 +21,58 @@ interface JobListing {
   deadline: string;
   match: MatchType;
   techStacks: string[];
+  jobCategory: string;
 }
 
-// ── 상수 ──────────────────────────────────────────────────────────────────────
-const JOBS_PER_PAGE = 5;
+// ── 유틸 ──────────────────────────────────────────────────────────────────────
 
-const DEFAULT_TECH_STACKS = [
-  '전체', 'React', 'TypeScript', 'Next.js', 'GraphQL',
-  'Spring Boot', 'MySQL', 'Kubernetes', 'Node.js', 'Redis',
-  'Webpack', 'Jest', 'Kafka', 'Storybook', 'MobX', 'Emotion', 'AWS',
-];
+/** 백엔드 techStacks 파싱: `["[\"React\"", "\"Java\"]"]` → `["React", "Java"]` */
+const parseTechStacks = (raw: string[] | undefined): string[] => {
+  if (!raw || raw.length === 0) return [];
+  const joined = raw.join(',');
+  return joined
+    .replace(/[\[\]"]/g, '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+};
+
+/** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
+const formatSalary = (salary: string): string => {
+  if (!salary) return '회사내규';
+  if (/만원|원|억/.test(salary)) return salary;
+  if (/\d/.test(salary)) return `${salary}만원`;
+  return salary;
+};
+
+/** 크롤링 jobCategory(한글) → RoleCode 매핑 */
+const JOB_CATEGORY_MAP: Record<string, RoleCode> = {
+  '백엔드개발자': 'BACKEND',
+  '프론트엔드개발자': 'FRONTEND',
+  '웹개발자': 'FRONTEND',
+  '앱개발자': 'MOBILE',
+  '시스템엔지니어': 'DEVOPS',
+  '네트워크엔지니어': 'DEVOPS',
+  'DBA': 'DATABASE',
+  '데이터엔지니어': 'DATA',
+  '데이터사이언티스트': 'DATA',
+  '보안엔지니어': 'DEVOPS',
+  '소프트웨어개발자': 'BACKEND',
+  '게임개발자': 'MOBILE',
+  'AI/ML엔지니어': 'AI',
+  '클라우드엔지니어': 'DEVOPS',
+  'IT컨설팅': 'PM',
+  'AI/ML연구원': 'AI',
+  'AI서비스개발자': 'AI',
+};
+
+const mapJobCategory = (category: string): RoleCode | null => {
+  if (!category) return null;
+  return JOB_CATEGORY_MAP[category] ?? null;
+};
+
+// ── 상수 ──────────────────────────────────────────────────────────────────────
+const BACKEND_PAGE_SIZE = 10;
 
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
@@ -66,10 +109,11 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   location: item.region,
   experience: item.experience,
   employmentType: item.contractType,
-  salary: item.salary,
+  salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
-  techStacks: [],
+  techStacks: parseTechStacks(item.techStacks),
+  jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
 });
 
 
@@ -98,26 +142,101 @@ const BookmarkBtn = ({
   </button>
 );
 
-const FilterPill = ({
-  label,
-  active,
-  onClick,
+function FilterButton({ text, selected, onClick }: { text: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        selected
+          ? 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[#111827] text-[13px] shadow-[0px_2px_8px_0px_rgba(245,200,66,0.3)] whitespace-nowrap transition-all'
+          : 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[#9ca3af] text-[13px] whitespace-nowrap hover:text-[#111827] transition-all'
+      }
+      style={
+        selected
+          ? { backgroundImage: 'linear-gradient(150.6deg, #F7C948 0%, #F2B705 100%)' }
+          : {}
+      }
+    >
+      {text}
+    </button>
+  );
+}
+
+const SkillCategoryFilter = ({
+  activeCategory,
+  activeSkill,
+  onCategoryChange,
+  onSkillChange,
 }: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={`h-[33px] px-4 rounded-full text-[13px] transition-colors whitespace-nowrap ${
-      active
-        ? 'bg-primary-hover text-text-primary font-bold border-0'
-        : 'bg-background border-2 border-border text-text-secondary font-medium hover:border-primary-hover'
-    }`}
-  >
-    {label}
-  </button>
-);
+  activeCategory: RoleCode | null;
+  activeSkill: string;
+  onCategoryChange: (category: RoleCode | null) => void;
+  onSkillChange: (skill: string) => void;
+}) => {
+  const subSkills = activeCategory ? (SKILLS_BY_CATEGORY[activeCategory] ?? []) : [];
+  const activeLabel = activeCategory ? ROLE_DISPLAY_NAMES[activeCategory] : null;
+
+  return (
+    <div className="flex flex-col gap-[8px]">
+      {/* 카테고리 탭 */}
+      <div className="flex items-start min-h-[32px] relative w-full">
+        <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] w-[56px] shrink-0">
+          기술스택
+        </span>
+        <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+          <FilterButton
+            text="전체"
+            selected={activeCategory === null && activeSkill === '전체'}
+            onClick={() => { onCategoryChange(null); onSkillChange('전체'); }}
+          />
+          {ROLE_LIST.map((role) => (
+            <FilterButton
+              key={role}
+              text={ROLE_DISPLAY_NAMES[role]}
+              selected={activeCategory === role}
+              onClick={() => {
+                if (activeCategory === role) {
+                  onCategoryChange(null);
+                  onSkillChange('전체');
+                } else {
+                  onCategoryChange(role);
+                  onSkillChange('전체');
+                }
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 선택된 카테고리의 스킬 목록 */}
+      {activeCategory && subSkills.length > 0 && (
+        <>
+          <div className="ml-[68px] border-t border-dashed border-[#e0d3b8]" />
+          <div className="flex items-start min-h-[32px] relative w-full">
+            <span className="font-bold text-[#b8a88a] text-[12px] leading-[31.5px] w-[56px] shrink-0 text-right pr-[4px]">
+              {activeLabel}
+            </span>
+            <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+              <FilterButton
+                text="전체"
+                selected={activeSkill === '전체'}
+                onClick={() => onSkillChange('전체')}
+              />
+              {subSkills.map((skill) => (
+                <FilterButton
+                  key={skill}
+                  text={skill}
+                  selected={activeSkill === skill}
+                  onClick={() => onSkillChange(skill)}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const JobCard = ({
   job,
@@ -182,56 +301,89 @@ const JobCard = ({
   );
 };
 
+const PAGE_WINDOW = 5;
+
+const NAV_BTN = "w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors";
+
 const Pagination = ({
   current,
-  total,
+  hasNext,
   onChange,
 }: {
   current: number;
-  total: number;
+  hasNext: boolean;
   onChange: (page: number) => void;
-}) => (
-  <div className="flex items-center justify-center gap-2 mt-8 pb-12">
-    <button
-      onClick={() => onChange(current - 1)}
-      disabled={current === 1}
-      className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-      </svg>
-    </button>
+}) => {
+  const groupStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
+  const groupEnd = groupStart + PAGE_WINDOW - 1;
+  const pages = Array.from({ length: PAGE_WINDOW }, (_, i) => groupStart + i)
+    .filter(p => p >= 1 && (hasNext || p <= current));
 
-    {Array.from({ length: total }, (_, i) => i + 1).map(page => (
+  return (
+    <div className="flex items-center justify-center gap-1 mt-8 pb-12">
+      {/* << 5페이지 뒤로 */}
       <button
-        key={page}
-        onClick={() => onChange(page)}
-        className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold transition-colors ${
-          page === current
-            ? 'bg-primary-hover text-text-primary'
-            : 'text-text-secondary hover:bg-gray-100'
-        }`}
+        onClick={() => onChange(groupStart - PAGE_WINDOW)}
+        disabled={groupStart <= 1}
+        className={NAV_BTN}
       >
-        {page}
+        <span className="text-[13px] font-bold">&laquo;</span>
       </button>
-    ))}
 
-    <button
-      onClick={() => onChange(current + 1)}
-      disabled={current === total}
-      className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
-    </button>
-  </div>
-);
+      {/* < 이전 */}
+      <button
+        onClick={() => onChange(current - 1)}
+        disabled={current === 1}
+        className={NAV_BTN}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {/* 페이지 번호 */}
+      {pages.map(page => (
+        <button
+          key={page}
+          onClick={() => onChange(page)}
+          className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold transition-colors ${
+            page === current
+              ? 'bg-primary-hover text-text-primary'
+              : 'text-text-secondary hover:bg-gray-100'
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+      {/* > 다음 */}
+      <button
+        onClick={() => onChange(current + 1)}
+        disabled={!hasNext}
+        className={NAV_BTN}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* >> 5페이지 앞으로 */}
+      <button
+        onClick={() => onChange(groupEnd + 1)}
+        disabled={!hasNext}
+        className={NAV_BTN}
+      >
+        <span className="text-[13px] font-bold">&raquo;</span>
+      </button>
+    </div>
+  );
+};
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 const JobListingSection = () => {
   const [searchParams] = useSearchParams();
-  const [activeFilter, setActiveFilter] = useState('전체');
+  const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
+  const [activeSkill, setActiveSkill] = useState('전체');
   const [activeSort, setActiveSort] = useState('매칭순');
   const [showBookmarked, setShowBookmarked] = useState(
     searchParams.get('filter') === 'bookmarked'
@@ -239,20 +391,14 @@ const JobListingSection = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
   const [jobs, setJobs] = useState<JobListing[]>([]);
-  const [techStacks, setTechStacks] = useState<string[]>(DEFAULT_TECH_STACKS);
-
-  useEffect(() => {
-    getJobFilters()
-      .then(({ data }) => {
-        if (data.techStacks?.length > 0)
-          setTechStacks(["전체", ...data.techStacks]);
-      })
-      .catch(() => {});
-  }, []);
+  const [hasNextPage, setHasNextPage] = useState(true);
 
   useEffect(() => {
     getJobs({ page: currentPage })
-      .then(({ data }) => setJobs(data.map(mapToJobListing)))
+      .then(({ data }) => {
+        setJobs(data.map(mapToJobListing));
+        setHasNextPage(data.length >= BACKEND_PAGE_SIZE);
+      })
       .catch(() => {});
   }, [currentPage]);
 
@@ -272,10 +418,18 @@ const JobListingSection = () => {
   };
 
   // 필터링 → 정렬 → 페이지네이션
-  const jobsFilteredByStack =
-    activeFilter === '전체'
-      ? jobs
-      : jobs.filter(job => job.techStacks.includes(activeFilter));
+  const jobsFilteredByStack = (() => {
+    if (!activeCategory) return jobs;
+    if (activeSkill !== '전체') {
+      return jobs.filter(job => job.techStacks.includes(activeSkill));
+    }
+    // 카테고리 선택 시: jobCategory 일치 또는 해당 카테고리 스킬 보유
+    const categorySkills = SKILLS_BY_CATEGORY[activeCategory] ?? [];
+    return jobs.filter(job =>
+      job.jobCategory === activeCategory ||
+      job.techStacks.some(t => categorySkills.includes(t))
+    );
+  })();
 
   const finalFilteredJobs = showBookmarked
     ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
@@ -283,11 +437,13 @@ const JobListingSection = () => {
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / JOBS_PER_PAGE));
-  const pagedJobs = sorted;
+  const handleCategoryChange = (category: RoleCode | null) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
 
-  const handleFilterChange = (stack: string) => {
-    setActiveFilter(stack);
+  const handleSkillChange = (skill: string) => {
+    setActiveSkill(skill);
     setCurrentPage(1);
   };
 
@@ -297,7 +453,8 @@ const JobListingSection = () => {
   };
 
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1) return;
+    if (page > currentPage && !hasNextPage) return;
     setCurrentPage(page);
   };
 
@@ -311,54 +468,59 @@ const JobListingSection = () => {
         </h2>
       </div>
 
-      {/* 기술스택 필터 */}
+      {/* 필터 박스 */}
       <div className="px-[39px] pb-4">
-        <div className="flex flex-wrap gap-2">
-          {techStacks.map(stack => (
-            <FilterPill
-              key={stack}
-              label={stack}
-              active={activeFilter === stack}
-              onClick={() => handleFilterChange(stack)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 정렬 + 북마크 버튼 */}
-      <div className="flex items-center gap-2 px-[39px] pb-5">
-        <button
-          onClick={() => setShowBookmarked(prev => !prev)}
-          className={`h-[33px] px-4 rounded-full text-[13px] font-bold flex items-center gap-1.5 transition-colors ${
-            showBookmarked
-              ? 'bg-primary-hover text-text-primary border-0'
-              : 'bg-background border-2 border-primary-hover text-text-primary'
-          }`}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-          북마크 ({bookmarkedIds.size})
-        </button>
-        {SORT_OPTIONS.map(option => (
-          <FilterPill
-            key={option}
-            label={option}
-            active={activeSort === option}
-            onClick={() => handleSortChange(option)}
+        <div className="bg-[#f7f8fa] border-2 border-[#f2b705] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] px-[25px] pt-[20px] pb-[14px] flex flex-col gap-[12px]">
+          <SkillCategoryFilter
+            activeCategory={activeCategory}
+            activeSkill={activeSkill}
+            onCategoryChange={handleCategoryChange}
+            onSkillChange={handleSkillChange}
           />
-        ))}
+
+          <div className="bg-[#f2b705] h-px w-full" />
+
+          {/* 정렬 + 북마크 */}
+          <div className="flex items-start min-h-[32px] relative w-full">
+            <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] w-[56px] shrink-0">
+              정렬
+            </span>
+            <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+              <button
+                onClick={() => setShowBookmarked(prev => !prev)}
+                className={
+                  showBookmarked
+                    ? 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[#111827] text-[13px] shadow-[0px_2px_8px_0px_rgba(245,200,66,0.3)] whitespace-nowrap transition-all flex items-center gap-1.5'
+                    : 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[#9ca3af] text-[13px] whitespace-nowrap hover:text-[#111827] transition-all flex items-center gap-1.5'
+                }
+                style={
+                  showBookmarked
+                    ? { backgroundImage: 'linear-gradient(150.6deg, #F7C948 0%, #F2B705 100%)' }
+                    : {}
+                }
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                북마크 ({bookmarkedIds.size})
+              </button>
+              {SORT_OPTIONS.map(option => (
+                <FilterButton
+                  key={option}
+                  text={option}
+                  selected={activeSort === option}
+                  onClick={() => handleSortChange(option)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 공고 카드 목록 */}
       <div className="px-[39px] flex flex-col gap-4 pb-2">
-        {pagedJobs.length > 0 ? (
-          pagedJobs.map(job => (
+        {sorted.length > 0 ? (
+          sorted.map(job => (
             <JobCard
               key={job.id}
               job={job}
@@ -382,7 +544,7 @@ const JobListingSection = () => {
       </div>
 
       {/* 페이지네이션 — 항상 표시 */}
-      <Pagination current={currentPage} total={totalPages} onChange={handlePageChange} />
+      <Pagination current={currentPage} hasNext={hasNextPage} onChange={handlePageChange} />
     </div>
   );
 };

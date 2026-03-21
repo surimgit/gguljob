@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.troubleshooting.repository;
 
 import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
 import com.ssafy.gguljob.backend.domain.troubleshooting.entity.Troubleshooting;
+import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,25 +22,31 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
 
     long countByProject_IdAndUser_Id(Long projectId, Long userId);
 
-    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem(" +
-        "t.id, t.title, t.situation, t.createdAt) " +
-        "FROM Troubleshooting t " +
+    // List 반환 (마이페이지 최근 5개 조회용)
+    @Query("SELECT t FROM Troubleshooting t JOIN FETCH t.pullRequest p " +
         "WHERE t.project.id = :projectId AND t.user.id = :userId " +
         "ORDER BY t.createdAt DESC")
-    List<TroubleshootingItem> findMyTsItems(
+    List<Troubleshooting> findMyTsItems(
         @org.springframework.data.repository.query.Param("projectId") Long projectId,
         @org.springframework.data.repository.query.Param("userId") Long userId,
         org.springframework.data.domain.Pageable pageable
     );
 
-    @Query("SELECT new com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem(" +
-        "t.id, t.title, t.situation, t.createdAt) " +
-        "FROM Troubleshooting t " +
-        "WHERE t.project.id = :projectId AND t.user.id = :userId " +
-        "ORDER BY t.createdAt DESC")
-    org.springframework.data.domain.Page<com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem> findPagedMyTsItems(
+    // Page 반환 (전체 목록 페이징 조회용)
+    @Query(value = "SELECT t FROM Troubleshooting t JOIN FETCH t.pullRequest p " +
+        "WHERE t.project.id = :projectId AND t.user.id = :userId",
+        countQuery = "SELECT count(t) FROM Troubleshooting t WHERE t.project.id = :projectId AND t.user.id = :userId")
+    org.springframework.data.domain.Page<Troubleshooting> findPagedMyTsItems(
         @org.springframework.data.repository.query.Param("projectId") Long projectId,
         @org.springframework.data.repository.query.Param("userId") Long userId,
         org.springframework.data.domain.Pageable pageable
     );
+
+    @Query("""
+    SELECT t FROM Troubleshooting t
+    JOIN FETCH t.user u
+    JOIN FETCH t.project p
+    WHERE t.id IN :ids
+    """)
+    List<Troubleshooting> findAllByIdIn(@Param("ids") List<Long> ids);
 }

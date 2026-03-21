@@ -81,6 +81,20 @@ export const getGitLog = (projectId: number) =>
 export const getTeamManagement = (projectId: number) =>
   api.get<{ data: TeamManagement }>(`/v1/projects/${projectId}/members/detail`);
 
+/* ── 포지션(모집 직무) 관리 ── */
+
+export const addPosition = (projectId: number, data: { role: string; targetCount: number; requireSkills?: string[] }) =>
+  api.post(`/v1/projects/${projectId}/recruitments`, data);
+
+export const deletePosition = (projectId: number, positionId: number) =>
+  api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
+
+export const updatePositionTargetCount = (projectId: number, positionId: number, targetCount: number) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
+
+export const updatePositionStatus = (projectId: number, positionId: number, status: string) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
+
 /* ── 합류 요청 ── */
 
 export const applyToPosition = (projectId: number, positionId: number, appealContent?: string) =>
@@ -116,6 +130,11 @@ export const acceptRequest = (requestId: number) =>
 export const rejectRequest = (requestId: number) =>
   api.post(`/v1/projects/requests/${requestId}/reject`);
 
+/* ── 팀원 목록 (일반) ── */
+
+export const getProjectMembers = (projectId: number) =>
+  api.get<{ data: { memberId: number; userId: number; role: string; userName: string; profileImageUrl: string | null }[] }>(`/v1/projects/${projectId}/members`);
+
 /* ── 팀원 내보내기 / 팀 나가기 ── */
 
 export const removeMember = (projectId: number, memberId: number) =>
@@ -123,6 +142,11 @@ export const removeMember = (projectId: number, memberId: number) =>
 
 export const leaveProject = (projectId: number) =>
   api.delete(`/v1/projects/${projectId}/members/leave`);
+
+/* 팀장 위임 */
+
+export const delegateLeader = (projectId: number, targetUserId: number) =>
+  api.patch(`/v1/projects/${projectId}/members/${targetUserId}/delegate`);
 
 /* 나만의 공간 */
 
@@ -185,7 +209,7 @@ export interface RecommendedMembersParams {
 }
 
 export const getRecommendedMembersTop = (projectId: number) =>
-  api.get<RecommendedMember[]>(`/v1/projects/${projectId}/recommended-members/top`);
+  api.get<RecommendedMember[]>(`/v1/projects/${projectId}/recommended-members/top`, { timeout: 60000 });
 
 export const getRecommendedMembers = (projectId: number, params?: RecommendedMembersParams) =>
-  api.get(`/v1/projects/${projectId}/recommended-members`, { params: { ...params, page: params?.page ?? 0, size: params?.size ?? 6 } });
+  api.get(`/v1/projects/${projectId}/recommended-members`, { params: { ...params, page: params?.page ?? 0, size: params?.size ?? 6 }, timeout: 60000 });
