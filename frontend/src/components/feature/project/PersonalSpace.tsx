@@ -6,6 +6,7 @@ import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } f
 import type { TroubleshootingListItem } from '../../../api/troubleshooting';
 import { getPullRequests } from '../../../api/projects';
 import type { PullRequestListItem } from '../../../api/projects';
+import { getRoleDisplayName } from '../../../constants/skills';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -37,22 +38,6 @@ interface TroubleshootingItem {
   codeSnippet: string;
   sources: { label: string; color: string }[];
 }
-
-const POSITION_DISPLAY: Record<string, string> = {
-  FE: 'Frontend Developer',
-  BE: 'Backend Developer',
-  AI: 'AI Developer',
-  PM: 'Project Manager',
-  INFRA: 'Infra Developer',
-  DESIGN: 'Designer',
-  FRONTEND: 'Frontend Developer',
-  BACKEND: 'Backend Developer',
-  DEVOPS: 'DevOps Engineer',
-  DATA: 'Data Engineer',
-  DATABASE: 'Database Engineer',
-  MOBILE: 'Mobile Developer',
-  TOOLS: 'Tools Engineer',
-};
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: MrStatus }) => {
@@ -243,7 +228,7 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubleshooting' }: { projectId?: number; projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const userPosition = useAuthStore((s) => s.user?.position);
-  const positionLabel = (userPosition && POSITION_DISPLAY[userPosition]) || 'Developer';
+  const positionLabel = userPosition ? getRoleDisplayName(userPosition) : 'Developer';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
   const [tsList, setTsList] = useState<TroubleshootingItem[]>([]);

@@ -71,14 +71,6 @@ const getAvatarColor = (name: string) => {
 };
 
 
-const ROLE_LABEL_TO_CODE: Record<string, string> = {
-  "프론트엔드": "FE", "백엔드": "BE", "데이터/AI": "AI", "기획/PM": "PM",
-  "인프라/DevOps": "INFRA", "디자인": "DESIGN",
-};
-
-const ROLE_CODE_TO_LABEL: Record<string, string> = Object.fromEntries(
-  Object.entries(ROLE_LABEL_TO_CODE).map(([k, v]) => [v, k]),
-);
 
 // TODO: 백엔드에 팀원 개별 조회/포지션 상세/합류 신청 API 추가 후 교체 필요
 // 현재는 roleCounts(역할별 인원 수)만으로 임시 변환
@@ -88,7 +80,7 @@ const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
   return Object.entries(roleCounts).map(([code, count], idx) => {
     return {
       id: `role-${idx}`,
-      name: code,
+      name: getRoleDisplayName(code),
       // TODO: 포지션 API에서 targetCount, status, requireSkills 조회로 교체
       status: (count > 0 ? "closed" : "open") as RoleStatus,
       current: count,
@@ -107,8 +99,8 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
     for (let i = 0; i < count; i++) {
       members.push({
         id: `${code}-${i}`,
-        name: `${code} ${i + 1}`,
-        role: code,
+        name: `${getRoleDisplayName(code)} ${i + 1}`,
+        role: getRoleDisplayName(code),
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
@@ -1650,7 +1642,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           setRealMembers(detail.currentMembers.map((m: any, i: number) => ({
             id: m.userId?.toString() ?? String(i),
             name: m.userName ?? "팀원",
-            role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+            role: getRoleDisplayName(m.role),
             joinDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("ko-KR") : "-",
             contribution: 0,
             isLeader: i === 0,
@@ -1662,7 +1654,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             const memberCount = (detail.currentMembers ?? []).filter((m: any) => m.role === r.role).length;
             return {
               id: r.positionId?.toString() ?? String(r.role),
-              name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+              name: getRoleDisplayName(r.role),
               status: r.status === "RECRUITING" ? "open" : "closed",
               current: r.currentCount > 0 ? r.currentCount : memberCount,
               total: r.targetCount,
@@ -1808,7 +1800,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                 <div key={role}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold" style={{ color }}>
-                      {role} {roleMembers.length}
+                      {getRoleDisplayName(role)} {roleMembers.length}
                     </span>
                     <div
                       className="flex-1 h-px"
@@ -1985,7 +1977,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
         const current = r.currentCount > 0 ? r.currentCount : computedCount;
         return {
           id: r.positionId.toString(),
-          name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+          name: getRoleDisplayName(r.role),
           status: r.status === "RECRUITING" ? "open" : "closed",
           current,
           total: r.targetCount,
@@ -1998,7 +1990,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     ? detail.currentMembers.map((m, i) => ({
         id: m.userId.toString(),
         name: m.userName,
-        role: m.role,
+        role: getRoleDisplayName(m.role),
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
         isLeader: i === 0,
