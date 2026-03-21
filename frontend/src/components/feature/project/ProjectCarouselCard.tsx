@@ -1,4 +1,5 @@
 import type { ProjectCardDto } from '../../../types/project';
+import { CATEGORY_COLORS } from '../../../constants/domains';
 
 export interface ProjectCarouselCardProps {
   project: ProjectCardDto;
@@ -16,19 +17,6 @@ const THUMBNAIL_GRADIENTS: Record<string, string> = {
   자율주행: 'linear-gradient(149deg, #E0F7FA, #B2EBF2)',
   핀테크:   'linear-gradient(149deg, #E8F5E9, #C8E6C9)',
   메타버스: 'linear-gradient(149deg, #F3E5F5, #E1BEE7)',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  웹기술:   '#3b82f6',
-  웹디자인: '#ec4899',
-  모바일:   '#f97316',
-  AIoT:    '#14b8a6',
-  인공지능: '#6366f1',
-  빅데이터: '#8b5cf6',
-  블록체인: '#f59e0b',
-  자율주행: '#06b6d4',
-  핀테크:   '#22c55e',
-  메타버스: '#a855f7',
 };
 
 const TECH_BADGE_STYLES: Record<string, { bg: string; border: string; text: string }> = {

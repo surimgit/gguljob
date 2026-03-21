@@ -5,6 +5,7 @@ import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
 import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
+import { getCategoryColorPair } from '../../../constants/domains';
 
 interface ProjectApplyModalProps {
   project: ProjectCardDto;
@@ -12,22 +13,7 @@ interface ProjectApplyModalProps {
   onApplied?: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  웹기술:   { bg: '#E3F2FD', text: '#2196F3' },
-  웹디자인: { bg: '#FCE4EC', text: '#E91E63' },
-  모바일:   { bg: '#FFF3E0', text: '#F57C00' },
-  AIoT:    { bg: '#E0F2F1', text: '#00897B' },
-  인공지능: { bg: '#EDE7F6', text: '#5E35B1' },
-  빅데이터: { bg: '#F3E5F5', text: '#8E24AA' },
-  블록체인: { bg: '#FFFDE7', text: '#F9A825' },
-  자율주행: { bg: '#E0F7FA', text: '#0097A7' },
-  핀테크:   { bg: '#E8F5E9', text: '#2E7D32' },
-  메타버스: { bg: '#F3E5F5', text: '#AB47BC' },
-};
 
-const DEFAULT_CATEGORY_COLOR = { bg: '#F5F5F5', text: '#757575' };
-
-const AVATAR_COLORS = ['#6366f1', '#3b82f6', '#f97316', '#8b5cf6', '#14b8a6', '#ec4899', '#22c55e', '#f59e0b', '#06b6d4', '#a855f7'];
 
 const STATUS_LABEL: Record<string, string> = {
   RECRUITING: '모집중',
@@ -104,8 +90,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
   const [intro, setIntro] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const catColor = CATEGORY_COLORS[project.domain] ?? DEFAULT_CATEGORY_COLOR;
-  const avatarColor = AVATAR_COLORS[project.projectId % AVATAR_COLORS.length];
+  const catColor = getCategoryColorPair(project.domain);
 
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
@@ -167,12 +152,20 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
         {/* 작성자 */}
         <div className="flex items-center gap-[10px] mt-[12px]">
-          <div
-            className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
-            style={{ backgroundColor: avatarColor }}
-          >
-            <span className="text-white text-[12px] font-bold">{project.leaderName?.[0] ?? '?'}</span>
-          </div>
+          {project.leaderProfileImageUrl ? (
+            <img
+              src={project.leaderProfileImageUrl}
+              alt={project.leaderName}
+              className="w-[28px] h-[28px] rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#6366f1' }}
+            >
+              <span className="text-white text-[12px] font-bold">{project.leaderName?.[0] ?? '?'}</span>
+            </div>
+          )}
           <span className="text-[#111827] text-base font-semibold">{project.leaderName}</span>
         </div>
 

@@ -28,6 +28,8 @@ import api from "../api/index";
 import type { PersonalSpaceData, MrRanking } from "../types/project";
 import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
+import { getCategoryColorPair } from "../constants/domains";
+import { getRoleDisplayName, getRoleColor } from "../constants/skills";
 
 /* ── 탭 설정 ── */
 const TABS = [
@@ -37,52 +39,6 @@ const TABS = [
   { key: "settings", label: "설정", icon: Settings },
 ] as const;
 
-/* ── 헥사곤 컴포넌트 ── */
-const HEX_CLIP = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
-
-const HexStat = ({
-  label,
-  value,
-  subLabel,
-  large,
-  children,
-}: {
-  label: string;
-  value: string | number;
-  subLabel?: string;
-  large?: boolean;
-  children?: React.ReactNode;
-}) => (
-  <div
-    className="relative"
-    style={{
-      width: large ? 128 : 112,
-      height: large ? 144 : 128,
-      filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
-    }}
-  >
-    <div
-      className="bg-white flex flex-col items-center justify-center w-full h-full"
-      style={{ clipPath: HEX_CLIP }}
-    >
-      <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-        {label}
-      </span>
-      <span
-        className={`font-black ${large ? "text-4xl" : "text-2xl"}`}
-        style={{ color: "var(--color-text-primary)" }}
-      >
-        {value}
-      </span>
-      {children}
-      {subLabel && (
-        <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-          {subLabel}
-        </span>
-      )}
-    </div>
-  </div>
-);
 
 const AVATAR_COLORS = [
   "var(--color-primary)",
@@ -206,8 +162,7 @@ const ProjectDashboard = () => {
   const activities = gitLog?.recentActivities ?? [];
   const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
 
-  const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
-  const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
+  const roleEntries = teamStats.roleCounts ? Object.entries(teamStats.roleCounts).filter(([, count]) => count > 0) : [];
 
   return (
     <>
@@ -349,25 +304,27 @@ const ProjectDashboard = () => {
         <>
         {/* ── 프로젝트 히어로 배너 ── */}
         <div
-          className="rounded-2xl p-5 md:p-8 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-soft) 100%)",
-          }}
+          className="rounded-2xl p-5 md:p-8 relative overflow-hidden bg-primary-soft"
         >
-          <div className="flex items-start justify-between gap-8">
+          <div className="flex items-stretch justify-between gap-8">
             {/* 좌측 프로젝트 정보 */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-center gap-3 mb-1">
+                <h1
+                  className="text-3xl font-bold"
+                  style={{ color: "var(--color-text-brown)" }}
+                >
+                  {projectInfo.title}
+                </h1>
                 <span
-                  className="px-2.5 py-0.5 rounded-full text-xs font-bold"
-                  style={{ background: "rgba(0,0,0,0.1)", color: "var(--color-text-primary)" }}
+                  className="px-2.5 py-0.5 rounded-full text-sm font-semibold flex-shrink-0"
+                  style={{ background: getCategoryColorPair(projectInfo.domain).bg, color: getCategoryColorPair(projectInfo.domain).text }}
                 >
                   {projectInfo.domain || "미정"}
                 </span>
                 <span
-                  className="flex items-center gap-1 text-xs font-medium"
-                  style={{ color: "var(--color-text-primary)" }}
+                  className="flex items-center gap-1 text-sm font-semibold flex-shrink-0"
+                  style={{ color: "var(--color-success)" }}
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full"
@@ -375,22 +332,16 @@ const ProjectDashboard = () => {
                   />
                   진행중
                 </span>
-                <span
-                  className="text-xs"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {projectInfo.teamName}
-                </span>
               </div>
-              <h1
-                className="text-3xl font-bold mb-3"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                {projectInfo.title}
-              </h1>
-              <p
-                className="text-sm leading-relaxed mb-5 max-w-lg"
+              <span
+                className="text-xs font-medium mb-1"
                 style={{ color: "var(--color-text-secondary)" }}
+              >
+                {projectInfo.teamName}
+              </span>
+              <p
+                className="text-base leading-relaxed mb-5 max-w-lg mt-3"
+                style={{ color: "var(--color-text-primary)" }}
               >
                 {projectInfo.description}
               </p>
@@ -400,9 +351,9 @@ const ProjectDashboard = () => {
                     key={stack}
                     className="px-3 py-1 rounded-full text-xs font-medium border"
                     style={{
-                      background: "rgba(0,0,0,0.08)",
+                      background: "var(--color-primary)",
                       color: "var(--color-text-primary)",
-                      borderColor: "rgba(0,0,0,0.15)",
+                      borderColor: "var(--color-primary-hover)",
                     }}
                   >
                     {stack}
@@ -411,29 +362,32 @@ const ProjectDashboard = () => {
               </div>
             </div>
 
-            {/* 우측 헥사곤 스탯 */}
-            <div className="hidden md:flex flex-col items-center flex-shrink-0">
-              <HexStat label="팀원" value={teamStats.totalMembers} large>
-                <div className="flex items-center gap-2 text-xs font-bold">
-                  <span style={{ color: "var(--color-blue)" }}>
-                    FE {feCount}
-                  </span>
-                  <span style={{ color: "var(--color-success)" }}>
-                    BE {beCount}
-                  </span>
+            {/* 우측 스탯 */}
+            <div className="hidden md:flex items-stretch gap-10 flex-shrink-0">
+              <div className="flex flex-col items-center px-6 pt-4 pb-4">
+                <span className="text-lg font-semibold" style={{ color: "var(--color-text-brown)" }}>팀원</span>
+                <div className="flex-1 flex flex-col items-center justify-center gap-1 mt-2">
+                  {roleEntries.map(([role, count]) => (
+                    <div key={role} className="flex items-center gap-2">
+                      <span className="text-xl font-bold" style={{ color: getRoleColor(role) }}>{getRoleDisplayName(role)}</span>
+                      <span className="text-xl font-bold" style={{ color: getRoleColor(role) }}>{count}</span>
+                    </div>
+                  ))}
                 </div>
-              </HexStat>
-              <div className="flex gap-4" style={{ marginTop: -20 }}>
-                <HexStat
-                  label="커밋"
-                  value={teamStats.totalCommits}
-                  subLabel="total"
-                />
-                <HexStat
-                  label="트러블슈팅"
-                  value={teamStats.totalTroubleshootings}
-                  subLabel="total"
-                />
+              </div>
+              <div className="flex flex-col items-center px-6 pt-4 pb-4">
+                <span className="text-lg font-semibold" style={{ color: "var(--color-text-brown)" }}>커밋</span>
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <span className="text-xl font-bold mt-2" style={{ color: "var(--color-text-primary)" }}>total</span>
+                  <span className="text-5xl font-extrabold" style={{ color: "var(--color-text-primary)" }}>{teamStats.totalCommits}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-center px-6 pt-4 pb-4">
+                <span className="text-lg font-medium" style={{ color: "var(--color-text-brown)" }}>트러블슈팅</span>
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <span className="text-xl font-bold mt-2" style={{ color: "var(--color-text-primary)" }}>total</span>
+                  <span className="text-5xl font-extrabold" style={{ color: "var(--color-text-primary)" }}>{teamStats.totalTroubleshootings}</span>
+                </div>
               </div>
             </div>
           </div>
