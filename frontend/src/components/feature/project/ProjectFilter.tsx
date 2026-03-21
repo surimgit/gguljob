@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import type { SkillGroup } from '../../../api/projects';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES } from '../../../constants/skills';
 
 export interface ProjectFilterProps {
   searchQuery: string;
@@ -17,7 +18,7 @@ export interface ProjectFilterProps {
 }
 
 const DEFAULT_DOMAIN_OPTIONS = ['웹기술', '웹디자인', '모바일', 'AIoT', '인공지능', '빅데이터', '블록체인', '자율주행', '핀테크', '메타버스'];
-const DEFAULT_POSITION_OPTIONS = ['FE 모집중', 'BE 모집중'];
+const DEFAULT_POSITION_OPTIONS = ROLE_LIST.map((role) => `${ROLE_DISPLAY_NAMES[role]} 모집중`);
 
 interface FilterRowProps {
   label: string;
