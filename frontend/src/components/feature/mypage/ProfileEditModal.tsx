@@ -103,13 +103,6 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
     }
   };
 
-  const updateMyRole = (id: string, myRole: string) => {
-    setForm((prev) => ({
-      ...prev,
-      projects: prev.projects.map((p) => (p.id === id ? { ...p, myRole } : p)),
-    }));
-  };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -292,23 +285,6 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               <span className="text-xs text-text-tertiary">{form.projects.length}/2 선택</span>
             </div>
 
-            {/* 선택된 프로젝트 태그 */}
-            {form.projects.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {form.projects.map((project) => (
-                  <span
-                    key={project.id}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full border border-primary bg-primary-soft text-sm text-text-primary"
-                  >
-                    {project.name}
-                    <button type="button" onClick={() => removeProject(project.id)}>
-                      <X className="w-3 h-3 text-text-secondary hover:text-text-primary" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
             {/* 프로젝트 리스트박스 */}
             {eligibleProjects.length === 0 ? (
               <p className="text-sm text-text-tertiary py-4 text-center">
@@ -345,24 +321,6 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               </ul>
             )}
 
-            {/* 선택된 프로젝트 역할 입력 */}
-            {form.projects.length > 0 && (
-              <div className="mt-3 flex flex-col gap-2">
-                <p className="text-xs font-medium text-text-secondary">나의 역할 입력</p>
-                {form.projects.map((project) => (
-                  <div key={project.id} className="flex items-center gap-3 px-3 py-2 bg-white rounded-xl border border-border">
-                    <p className="text-sm font-medium text-text-primary flex-1 truncate">{project.name}</p>
-                    <input
-                      type="text"
-                      value={project.myRole}
-                      onChange={(e) => updateMyRole(project.id, e.target.value)}
-                      placeholder="예: Frontend"
-                      className="text-xs text-text-secondary px-2 py-1.5 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary w-36 flex-shrink-0"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 

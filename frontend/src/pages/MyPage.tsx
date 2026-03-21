@@ -92,8 +92,9 @@ const MyPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSave = (_data: ProfileData) => {
+  const handleSave = (data: ProfileData) => {
     // API 호출은 ProfileEditModal에서 이미 완료, 여기서는 최신 데이터 반영
+    setProfile((prev) => ({ ...prev, projects: data.projects }));
     getMe().then((u) => setUser(u)).catch(() => {});
   };
 
