@@ -33,7 +33,7 @@ const Pagination = ({
     <div className={`flex items-center justify-center gap-1 ${className}`}>
       {/* << 5페이지 뒤로 */}
       <button
-        onClick={() => onChange(groupStart - PAGE_WINDOW)}
+        onClick={() => onChange(Math.max(1, groupStart - PAGE_WINDOW))}
         disabled={groupStart <= 1}
         className={NAV_BTN}
       >
