@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,7 +31,7 @@ public class JobRecommendationService {
 
   private final JobRecommendationRepository jobRecommendationRepository;
   private final JobPostingRepository jobPostingRepository;
-  @Autowired private ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
     return getRecommendations(userId, 3, 0, false);
