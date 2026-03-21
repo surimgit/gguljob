@@ -131,7 +131,7 @@ const MyPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8] px-4 py-12">
+    <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         <ProfileHeader
           name={profile.name}

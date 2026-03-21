@@ -6,7 +6,6 @@ import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel
 import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
 import { useProjects, useRecommendedProjects, useProjectFilters } from '../hooks/useProjects';
 import Pagination from '../components/common/Pagination';
-
 const ITEMS_PER_PAGE = 9;
 
 const ProjectFind = () => {
@@ -76,6 +75,7 @@ const ProjectFind = () => {
       {/* Hero 섹션 */}
       <section
         ref={heroRef}
+        data-navbar-hero
         className="pt-[64px] pb-[48px] text-center overflow-hidden"
         style={{
           background: 'linear-gradient(to bottom, #FFF9F0, #FFF5E4)',

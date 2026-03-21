@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { logoutApi } from '../../api/user';
 import {
@@ -37,9 +37,10 @@ const toNotification = (dto: NotificationDto): Notification => {
   };
 };
 
-const Navbar = ({ bgClassName = 'bg-background' }: { bgClassName?: string }) => {
+const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+  const headerRef = useRef<HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -135,8 +136,64 @@ const Navbar = ({ bgClassName = 'bg-background' }: { bgClassName?: string }) => 
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  const location = useLocation();
+
+  // data-navbar-hero 속성을 가진 섹션의 배경색을 따라가고, 벗어나면 흰색
+  useEffect(() => {
+    let rafId: number;
+    let lastHeroEl: Element | null = null;
+    let heroColor: string | null = null;
+
+    // rgba 반투명 색상을 불투명으로 변환 (흰색 배경 기준 블렌딩)
+    const toOpaque = (color: string): string => {
+      const m = color.match(/rgba\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)/);
+      if (!m) return color;
+      const a = parseFloat(m[4]);
+      if (a >= 1) return color;
+      const blend = (fg: number) => Math.round(fg * a + 255 * (1 - a));
+      return `rgb(${blend(parseFloat(m[1]))}, ${blend(parseFloat(m[2]))}, ${blend(parseFloat(m[3]))})`;
+    };
+
+    // data-navbar-hero 요소의 배경색 추출
+    const extractColor = (el: Element): string | null => {
+      const cs = getComputedStyle(el);
+      const bg = cs.backgroundColor;
+      if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return toOpaque(bg);
+      const bgImg = cs.backgroundImage;
+      if (bgImg && bgImg !== 'none') {
+        const m = bgImg.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
+        if (m) return toOpaque(m[0]);
+      }
+      return null;
+    };
+
+    const findHeroes = () => {
+      const heroes = document.querySelectorAll('[data-navbar-hero]');
+      if (heroes.length === 0) return;
+      heroColor = extractColor(heroes[0]);
+      lastHeroEl = heroes[heroes.length - 1];
+    };
+
+    const sync = () => {
+      const hdr = headerRef.current;
+      if (!hdr) return;
+      if (!lastHeroEl || !heroColor) { hdr.style.backgroundColor = '#ffffff'; return; }
+      const heroBottom = lastHeroEl.getBoundingClientRect().bottom;
+      const navBottom = hdr.getBoundingClientRect().bottom;
+      hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '#ffffff';
+    };
+
+    const onScroll = () => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(sync); };
+
+    const timerId = setTimeout(() => {
+      requestAnimationFrame(() => { findHeroes(); sync(); });
+    }, 50);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { clearTimeout(timerId); cancelAnimationFrame(rafId); window.removeEventListener('scroll', onScroll); };
+  }, [location.pathname]);
+
   return (
-    <header className={`sticky top-0 z-50 pt-1 ${bgClassName}`}>
+    <header ref={headerRef} className="sticky top-0 z-50 pt-1 bg-background transition-[background-color] duration-300">
       <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">
