@@ -5,6 +5,7 @@ import type { PositionType } from '../../../types/user';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
+import toast from 'react-hot-toast';
 
 const POSITION_LABEL: Record<PositionType, string> = {
   FE: 'Frontend',
@@ -126,13 +127,19 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
     setForm((prev) => ({ ...prev, avatarUrl: url }));
   };
 
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
+
   const handleImageDelete = async () => {
+    setIsDeletingImage(true);
     try {
       await deleteProfileImageApi();
       setImageFile(null);
       setForm((prev) => ({ ...prev, avatarUrl: undefined }));
+      toast.success('프로필 이미지가 삭제되었습니다.');
     } catch {
-      alert('이미지 삭제에 실패했습니다.');
+      toast.error('이미지 삭제에 실패했습니다.');
+    } finally {
+      setIsDeletingImage(false);
     }
   };
 
@@ -226,11 +233,12 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                 {form.avatarUrl && (
                   <button
                     type="button"
+                    disabled={isDeletingImage}
                     onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    사진 삭제
+                    {isDeletingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    {isDeletingImage ? '삭제 중...' : '사진 삭제'}
                   </button>
                 )}
               </div>
