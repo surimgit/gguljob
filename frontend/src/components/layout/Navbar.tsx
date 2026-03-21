@@ -37,7 +37,7 @@ const toNotification = (dto: NotificationDto): Notification => {
   };
 };
 
-const Navbar = () => {
+const Navbar = ({ bgClassName = 'bg-background' }: { bgClassName?: string }) => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -136,7 +136,7 @@ const Navbar = () => {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b-2 border-primary shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+    <header className={`sticky top-0 z-50 pt-1 ${bgClassName}`}>
       <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">
@@ -145,13 +145,13 @@ const Navbar = () => {
 
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden lg:flex items-center justify-center gap-24 xl:gap-48 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             내 프로젝트
           </Link>
-          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover font-semibold text-[15px] whitespace-nowrap transition-colors">
+          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
