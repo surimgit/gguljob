@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
+import Pagination from "../components/common/Pagination";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
 import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
@@ -295,43 +296,7 @@ const MemberRecommend = () => {
             </div>
 
             {/* ── 페이지네이션 ── */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-                  style={{
-                    color: currentPage === 1 ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
-                  }}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
-                    style={{
-                      background: currentPage === page ? "var(--color-primary)" : "transparent",
-                      color: currentPage === page ? "white" : "var(--color-text-secondary)",
-                    }}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-                  style={{
-                    color: currentPage === totalPages ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
-                  }}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            <Pagination current={currentPage} totalPages={totalPages} onChange={setCurrentPage} className="mt-0 pb-0" />
           </>
         )}
       </div>

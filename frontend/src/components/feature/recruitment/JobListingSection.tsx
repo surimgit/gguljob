@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getJobs, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
+import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -327,83 +328,6 @@ const JobCard = ({
   );
 };
 
-const PAGE_WINDOW = 5;
-
-const NAV_BTN = "w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors";
-
-const Pagination = ({
-  current,
-  hasNext,
-  onChange,
-}: {
-  current: number;
-  hasNext: boolean;
-  onChange: (page: number) => void;
-}) => {
-  const groupStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
-  const groupEnd = groupStart + PAGE_WINDOW - 1;
-  const pages = Array.from({ length: PAGE_WINDOW }, (_, i) => groupStart + i)
-    .filter(p => p >= 1 && (hasNext || p <= current));
-
-  return (
-    <div className="flex items-center justify-center gap-1 mt-8 pb-12">
-      {/* << 5페이지 뒤로 */}
-      <button
-        onClick={() => onChange(groupStart - PAGE_WINDOW)}
-        disabled={groupStart <= 1}
-        className={NAV_BTN}
-      >
-        <span className="text-[13px] font-bold">&laquo;</span>
-      </button>
-
-      {/* < 이전 */}
-      <button
-        onClick={() => onChange(current - 1)}
-        disabled={current === 1}
-        className={NAV_BTN}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* 페이지 번호 */}
-      {pages.map(page => (
-        <button
-          key={page}
-          onClick={() => onChange(page)}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold transition-colors ${
-            page === current
-              ? 'bg-primary-hover text-text-primary'
-              : 'text-text-secondary hover:bg-gray-100'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      {/* > 다음 */}
-      <button
-        onClick={() => onChange(current + 1)}
-        disabled={!hasNext}
-        className={NAV_BTN}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* >> 5페이지 앞으로 */}
-      <button
-        onClick={() => onChange(groupEnd + 1)}
-        disabled={!hasNext}
-        className={NAV_BTN}
-      >
-        <span className="text-[13px] font-bold">&raquo;</span>
-      </button>
-    </div>
-  );
-};
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 interface JobListingSectionProps {

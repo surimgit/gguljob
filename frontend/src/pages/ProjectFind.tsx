@@ -5,6 +5,7 @@ import ProjectFilter from '../components/feature/project/ProjectFilter';
 import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel';
 import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
 import { useProjects, useRecommendedProjects, useProjectFilters } from '../hooks/useProjects';
+import Pagination from '../components/common/Pagination';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -66,12 +67,6 @@ const ProjectFind = () => {
     gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const getPageNumbers = () => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    if (currentPage <= 4) return [1, 2, 3, 4, 5, '...', totalPages];
-    if (currentPage >= totalPages - 3) return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
-  };
 
   const carouselProjects = recommendedProjects ?? [];
 
@@ -152,52 +147,7 @@ const ProjectFind = () => {
         </div>
 
         {/* 페이지네이션 */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-[8px] py-[56px]">
-            <button
-              onClick={() => goToPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="w-[36px] h-[36px] flex items-center justify-center rounded-full text-[#9ca3af] hover:text-[#2d2a24] disabled:opacity-30 transition-colors"
-            >
-              <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-                <path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-
-            {getPageNumbers().map((page, idx) =>
-              page === '...'
-                ? (
-                  <span key={`ellipsis-${idx}`} className="w-[36px] h-[36px] flex items-center justify-center text-[#9ca3af] text-[14px] font-bold">
-                    ...
-                  </span>
-                )
-                : (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page as number)}
-                    className={`w-[36px] h-[36px] flex items-center justify-center rounded-full font-bold text-[14px] transition-all duration-200 ${
-                      currentPage === page
-                        ? 'text-[#2d2a24] shadow-[0px_2px_8px_0px_rgba(245,200,66,0.4)]'
-                        : 'text-[#6b7280] hover:text-[#2d2a24]'
-                    }`}
-                    style={currentPage === page ? { backgroundColor: '#F7C948' } : {}}
-                  >
-                    {page}
-                  </button>
-                )
-            )}
-
-            <button
-              onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="w-[36px] h-[36px] flex items-center justify-center rounded-full text-[#9ca3af] hover:text-[#2d2a24] disabled:opacity-30 transition-colors"
-            >
-              <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-                <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        )}
+        <Pagination current={currentPage} totalPages={totalPages} onChange={goToPage} className="py-14" />
 
       </div>
 

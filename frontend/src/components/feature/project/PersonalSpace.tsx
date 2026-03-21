@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
+import { Sparkles, MessageSquare } from 'lucide-react';
+import Pagination from '../../common/Pagination';
 import { useAuthStore } from '../../../stores/authStore';
 import type { PersonalSpaceData } from '../../../types/project';
 import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } from '../../../api/troubleshooting';
@@ -445,37 +446,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {tsTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setTsPage(p => Math.max(0, p - 1))}
-                      disabled={tsPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: tsTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setTsPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          tsPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setTsPage(p => Math.min(tsTotalPages - 1, p + 1))}
-                      disabled={tsPage >= tsTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={tsPage + 1}
+                  totalPages={tsTotalPages}
+                  onChange={(page) => setTsPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>
@@ -509,37 +485,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {mrTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setMrPage(p => Math.max(0, p - 1))}
-                      disabled={mrPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: mrTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setMrPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          mrPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setMrPage(p => Math.min(mrTotalPages - 1, p + 1))}
-                      disabled={mrPage >= mrTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={mrPage + 1}
+                  totalPages={mrTotalPages}
+                  onChange={(page) => setMrPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>

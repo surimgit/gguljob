@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import { getRoleDisplayName, getRoleColor } from "../constants/skills";
+import { Pagination } from "../components/common";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
 
 /* ── 컴포넌트 ── */
@@ -25,14 +26,9 @@ function getStatusStyle(status: BackendProjectStatus) {
 
 const ProjectCard = ({ project }: { project: ProjectSimple }) => {
   const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
 
   const categoryColor = CATEGORY_COLORS[project.domain] ?? '#6b7280';
   const statusStyle = getStatusStyle(project.status);
-
-  const bgColor = hovered
-    ? '#FFF2C6'
-    : project.status === 'DONE' ? '#EDEBE6' : '#ffffff';
 
   const roles = Object.entries(project.roleCounts ?? {}).filter(([, count]) => count > 0);
   const visibleSkills = project.skills.slice(0, 3);
@@ -40,10 +36,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
 
   return (
     <div
-      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
-      style={{ backgroundColor: bgColor }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-200 ${project.status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
       onClick={() => navigate(`/my-projects/${project.projectId}`)}
     >
       {/* 상단: 카테고리 + 상태 */}
@@ -125,6 +118,7 @@ type TabStatus = "active" | "done";
 const MyProjects = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabStatus>("active");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { myProjects, myProjectsLoading, fetchMyProjects } = useProjectStore();
 
@@ -142,6 +136,18 @@ const MyProjects = () => {
     (p) => p.status === "RECRUITING" || p.status === "PROCEEDING"
   ).length;
   const doneCount = myProjects.filter((p) => p.status === "DONE").length;
+
+  // 최신순 정렬 (projectId 높은 순)
+  const sortedProjects = [...currentProjects].sort((a, b) => b.projectId - a.projectId);
+
+  // 페이지네이션: active 탭은 "만들기" 버튼이 1슬롯 차지 → 프로젝트 8개씩
+  const GRID_SIZE = 9;
+  const projectsPerPage = tab === "active" ? GRID_SIZE - 1 : GRID_SIZE;
+  const totalPages = Math.max(1, Math.ceil(sortedProjects.length / projectsPerPage));
+  const pageProjects = sortedProjects.slice(
+    (currentPage - 1) * projectsPerPage,
+    currentPage * projectsPerPage,
+  );
 
   return (
     <div
@@ -172,7 +178,7 @@ const MyProjects = () => {
             <button
               key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => { setTab(t.key); setCurrentPage(1); }}
               className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-colors"
               style={{
                 backgroundColor:
@@ -228,18 +234,14 @@ const MyProjects = () => {
         )}
 
         {/* 카드 그리드 */}
-        {!myProjectsLoading && (
+        {!myProjectsLoading && (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {currentProjects.map((project) => (
-              <ProjectCard key={project.projectId} project={project} />
-            ))}
-
-            {/* 새 프로젝트 만들기 (진행중 탭) */}
+            {/* 새 프로젝트 만들기 — 항상 첫 번째 칸 (진행중 탭) */}
             {tab === "active" && (
               <button
                 type="button"
                 onClick={() => navigate("/projects/new")}
-                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer h-[280px] transition-all duration-300 hover:border-[#f2b705] hover:shadow-lg"
+                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer h-[280px] transition-all duration-200 hover:border-primary-hover hover:bg-primary-soft hover:shadow-lg"
                 style={{ borderColor: "#e5e7eb" }}
               >
                 <span
@@ -265,8 +267,20 @@ const MyProjects = () => {
                 </span>
               </button>
             )}
+
+            {pageProjects.map((project) => (
+              <ProjectCard key={project.projectId} project={project} />
+            ))}
           </div>
-        )}
+
+          {/* 페이지네이션 */}
+          <Pagination
+            current={currentPage}
+            totalPages={totalPages}
+            onChange={setCurrentPage}
+            className="py-10"
+          />
+        </>)}
       </div>
     </div>
   );
