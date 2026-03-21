@@ -54,10 +54,14 @@ public class JobRecommendationService {
 
     // 현재 페이지가 꽉 차면 → 아직 더 있음 (최대 풀 기반 totalPages)
     // 현재 페이지가 덜 차면 → 여기가 마지막
-    int totalPages = pageData.size() < size ? page
+    boolean isLastPage = pageData.size() < size;
+    int totalPages = isLastPage ? page
         : (int) Math.ceil((double) MAX_RECOMMENDATION_POOL / size);
+    long totalElements = isLastPage
+        ? (long) (page - 1) * size + pageData.size()
+        : MAX_RECOMMENDATION_POOL;
 
-    return new PagedRecommendationResponse(pageData, totalPages, pageData.size(), page, size);
+    return new PagedRecommendationResponse(pageData, totalPages, totalElements, page, size);
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,

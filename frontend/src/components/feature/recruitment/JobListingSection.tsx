@@ -355,7 +355,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
         })
         .catch(() => {});
     } else {
-      getJobs({ page: currentPage })
+      getJobs({ page: currentPage, size: 10 })
         .then(({ data }) => {
           if (Array.isArray(data)) {
             // 백엔드 미배포 시 호환: 옛날 배열 응답
