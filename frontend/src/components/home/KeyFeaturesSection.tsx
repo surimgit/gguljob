@@ -12,7 +12,7 @@ type FeatureItemProps = {
 const FeatureItem = ({ number, badge, title, description, emoji, bg }: FeatureItemProps) => (
   <div className="py-14" style={{ backgroundColor: bg }}>
     <Container>
-      <div className="flex flex-col md:flex-row items-center gap-10 py-12">
+      <div className="flex flex-col md:flex-row items-center gap-10 px-20 py-12">
         {/* 텍스트 */}
         <div className="flex-1 flex flex-col gap-4">
           <span className="text-5xl font-extrabold text-text-tertiary">{number}</span>
