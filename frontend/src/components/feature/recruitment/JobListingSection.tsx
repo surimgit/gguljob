@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
+import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -19,6 +20,7 @@ interface JobListing {
   employmentType: string;
   salary: string;
   deadline: string;
+  url: string;
   match: MatchType;
   techStacks: string[];
   jobCategory: string;
@@ -111,6 +113,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   employmentType: item.contractType,
   salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
+  url: item.url ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
@@ -248,9 +251,22 @@ const JobCard = ({
   onToggleBookmark: (id: number) => void;
 }) => {
   const match = MATCH_CONFIG[job.match];
+  const dday = calcDday(job.deadline);
+  const ddayColor = getDdayColor(dday);
+
+  const handleClick = () => {
+    if (job.url) window.open(job.url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
-    <div className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer">
+    <div
+      role="link"
+      tabIndex={0}
+      aria-label={`${job.company} - ${job.title}`}
+      onClick={handleClick}
+      onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
+      className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
+    >
       {/* 로고 */}
       <div
         className="flex-shrink-0 flex items-center justify-center rounded-[15px] font-extrabold text-white"
@@ -266,6 +282,14 @@ const JobCard = ({
           {job.isNew && (
             <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-[4px] bg-primary-soft text-text-brown">
               NEW
+            </span>
+          )}
+          {dday && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full -translate-y-px"
+              style={{ background: `${ddayColor}18`, color: ddayColor }}
+            >
+              {dday}
             </span>
           )}
         </div>
