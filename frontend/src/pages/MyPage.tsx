@@ -12,10 +12,10 @@ import {
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
 import { buildOnboardingPayload, userToFormData } from '../components/feature/auth/utils/onboardingMappers';
-import type { PositionType } from '../types/user';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { getMe, withdrawApi, updateProfileApi } from '../api/user';
+import { getRoleDisplayName } from '../constants/skills';
 
 interface Project {
   id: string;
@@ -30,16 +30,12 @@ interface Project {
 
 interface ProfileData {
   name: string;
-  role: PositionType | null;
+  role: string | null;
   bio: string;
   avatarUrl?: string;
   techStacks: string[];
   projects: Project[];
 }
-
-const POSITION_LABEL: Record<PositionType, string> = {
-  FE: 'Frontend', BE: 'Backend', AI: 'AI', PM: 'PM', INFRA: 'Infra', DESIGN: 'Design',
-};
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -162,7 +158,7 @@ const MyPage = () => {
         user={{
           id: String(user?.id ?? ''),
           name: profile.name,
-          role: profile.role ? POSITION_LABEL[profile.role] : '',
+          role: profile.role ? getRoleDisplayName(profile.role) : '',
           bio: profile.bio,
           avatarUrl: profile.avatarUrl,
           techStacks: profile.techStacks,

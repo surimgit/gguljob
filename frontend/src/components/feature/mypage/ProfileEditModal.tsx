@@ -1,20 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, Trash2, Check, Loader2 } from 'lucide-react';
 import { BaseModal, TechStackInput } from '../../common';
-import type { PositionType } from '../../../types/user';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES, ROLE_TO_API } from '../../../constants/skills';
 import toast from 'react-hot-toast';
-
-const POSITION_LABEL: Record<PositionType, string> = {
-  FE: 'Frontend',
-  BE: 'Backend',
-  AI: 'AI',
-  PM: 'PM',
-  INFRA: 'Infra',
-  DESIGN: 'Design',
-};
 
 
 const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
@@ -33,7 +24,7 @@ interface Project {
 
 interface ProfileEditForm {
   name: string;
-  role: PositionType | null;
+  role: string | null;
   bio: string;
   avatarUrl?: string;
   techStacks: string[];
@@ -258,15 +249,15 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-text-secondary">역할</label>
+                <label className="text-xs font-medium text-text-secondary">희망 직무</label>
                 <select
                   value={form.role ?? ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as PositionType || null }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value || null }))}
                   className="px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">선택</option>
-                  {(Object.keys(POSITION_LABEL) as PositionType[]).map((key) => (
-                    <option key={key} value={key}>{POSITION_LABEL[key]}</option>
+                  {ROLE_LIST.map((code) => (
+                    <option key={code} value={ROLE_TO_API[code]}>{ROLE_DISPLAY_NAMES[code]}</option>
                   ))}
                 </select>
               </div>
