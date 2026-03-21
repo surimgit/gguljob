@@ -154,7 +154,7 @@ public class UserEmbeddingService {
                 MATCH (u:User {id: $uid})
                 SET u.embedding = $embedding
                 """)
-            .bind(String.valueOf(userId)).to("uid")
+            .bind(userId).to("uid")
             .bind(embedding).to("embedding")
             .run();
     }

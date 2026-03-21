@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,6 +31,7 @@ public class JobRecommendationService {
 
   private final JobRecommendationRepository jobRecommendationRepository;
   private final JobPostingRepository jobPostingRepository;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
     return getRecommendations(userId, 3, 0, false);
@@ -146,9 +149,13 @@ public class JobRecommendationService {
 
   private List<String> parseTechStacks(String raw) {
     if (raw == null || raw.isBlank()) return Collections.emptyList();
-    return Arrays.stream(raw.split(","))
-        .map(String::trim)
-        .filter(s -> !s.isEmpty())
-        .collect(Collectors.toList());
+    try {
+      return objectMapper.readValue(raw, new TypeReference<List<String>>() {});
+    } catch (Exception e) {
+      return Arrays.stream(raw.split(","))
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .collect(Collectors.toList());
+    }
   }
 }
