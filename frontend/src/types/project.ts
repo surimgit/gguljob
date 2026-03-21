@@ -46,6 +46,7 @@ export interface ProjectSimple {
   teamName: string;
   domain: string;
   leaderName: string;
+  leaderProfileImageUrl: string | null;
   status: BackendProjectStatus;
   finishedAt: string | null;
   imageUrl: string | null;
