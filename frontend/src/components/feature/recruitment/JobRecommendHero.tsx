@@ -219,6 +219,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
       <div className="relative w-[calc(100%+48px)] -mx-6 -mt-8">
         {/* 배너 배경 */}
         <div
+          data-navbar-hero
           className="overflow-hidden"
           style={{
             minHeight: '380px',

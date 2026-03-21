@@ -134,7 +134,7 @@ const FlowSection = () => {
   }, [maxIndex]);
 
   return (
-    <section ref={sectionRef} className="py-20" style={{ backgroundColor: '#FFFAEB' }}>
+    <section ref={sectionRef} data-navbar-hero className="py-20" style={{ backgroundColor: '#FFFAEB' }}>
       <Container>
         {/* 헤더 */}
         <div className="text-center mb-12">

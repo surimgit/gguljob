@@ -138,10 +138,10 @@ const Navbar = () => {
 
   const location = useLocation();
 
-  // 첫 번째 섹션(히어로)의 배경색을 따라가고, 벗어나면 흰색
+  // data-navbar-hero 속성을 가진 섹션의 배경색을 따라가고, 벗어나면 흰색
   useEffect(() => {
     let rafId: number;
-    let heroEl: Element | null = null;
+    let lastHeroEl: Element | null = null;
     let heroColor: string | null = null;
 
     // rgba 반투명 색상을 불투명으로 변환 (흰색 배경 기준 블렌딩)
@@ -154,71 +154,39 @@ const Navbar = () => {
       return `rgb(${blend(parseFloat(m[1]))}, ${blend(parseFloat(m[2]))}, ${blend(parseFloat(m[3]))})`;
     };
 
-    // 요소를 재귀적으로 탐색하여 특수 배경색을 가진 첫 히어로 요소를 찾음
-    // 히어로는 최소 150px 이상 높이를 가진 섹션만 인정
-    const findHeroIn = (el: Element, depth: number): { el: Element; color: string } | null => {
-      if (depth > 5) return null;
+    // data-navbar-hero 요소의 배경색 추출
+    const extractColor = (el: Element): string | null => {
       const cs = getComputedStyle(el);
       const bg = cs.backgroundColor;
-      const isSpecial = bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)'
-        && bg !== 'rgb(255, 255, 255)' && bg !== 'rgb(247, 248, 250)';
-
-      if (isSpecial) {
-        if (el.getBoundingClientRect().height >= 150) return { el, color: toOpaque(bg) };
-        return null;
-      }
-
+      if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return toOpaque(bg);
       const bgImg = cs.backgroundImage;
       if (bgImg && bgImg !== 'none') {
         const m = bgImg.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
-        if (m) {
-          if (el.getBoundingClientRect().height >= 150) return { el, color: toOpaque(m[0]) };
-          return null;
-        }
+        if (m) return toOpaque(m[0]);
       }
-
-      const child = el.firstElementChild;
-      if (child) return findHeroIn(child, depth + 1);
       return null;
     };
 
-    const findHero = () => {
-      const main = document.querySelector('main');
-      const first = main?.firstElementChild;
-      if (!first) return;
-      const result = findHeroIn(first, 0);
-      if (!result) return;
-
-      heroColor = result.color;
-      heroEl = result.el;
-
-      // 같은 배경색을 가진 연속 형제 섹션까지 히어로 범위 확장
-      let sibling = first.nextElementSibling;
-      while (sibling) {
-        const bg = toOpaque(getComputedStyle(sibling).backgroundColor);
-        if (bg === heroColor) {
-          heroEl = sibling;
-          sibling = sibling.nextElementSibling;
-        } else {
-          break;
-        }
-      }
+    const findHeroes = () => {
+      const heroes = document.querySelectorAll('[data-navbar-hero]');
+      if (heroes.length === 0) return;
+      heroColor = extractColor(heroes[0]);
+      lastHeroEl = heroes[heroes.length - 1];
     };
 
     const sync = () => {
       const hdr = headerRef.current;
       if (!hdr) return;
-      if (!heroEl || !heroColor) { hdr.style.backgroundColor = '#ffffff'; return; }
-      const heroBottom = heroEl.getBoundingClientRect().bottom;
+      if (!lastHeroEl || !heroColor) { hdr.style.backgroundColor = '#ffffff'; return; }
+      const heroBottom = lastHeroEl.getBoundingClientRect().bottom;
       const navBottom = hdr.getBoundingClientRect().bottom;
       hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '#ffffff';
     };
 
     const onScroll = () => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(sync); };
 
-    // DOM이 그려진 후 히어로 탐색 (페이지 전환 시 렌더링 대기)
     const timerId = setTimeout(() => {
-      requestAnimationFrame(() => { findHero(); sync(); });
+      requestAnimationFrame(() => { findHeroes(); sync(); });
     }, 50);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => { clearTimeout(timerId); cancelAnimationFrame(rafId); window.removeEventListener('scroll', onScroll); };

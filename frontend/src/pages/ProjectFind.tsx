@@ -75,6 +75,7 @@ const ProjectFind = () => {
       {/* Hero 섹션 */}
       <section
         ref={heroRef}
+        data-navbar-hero
         className="pt-[64px] pb-[48px] text-center overflow-hidden"
         style={{
           background: 'linear-gradient(to bottom, #FFF9F0, #FFF5E4)',
