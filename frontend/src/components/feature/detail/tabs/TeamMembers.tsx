@@ -1639,6 +1639,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [realMembers, setRealMembers] = useState<Member[]>([]);
   const [realRoles, setRealRoles] = useState<Role[]>([]);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1934,6 +1935,14 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             </div>
           </div>
         </div>
+      )}
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
       )}
     </div>
   );
