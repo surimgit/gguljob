@@ -2,133 +2,117 @@ import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
+import { getRoleDisplayName, getRoleColor } from "../constants/skills";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
-
-/* ── 상수 ── */
-
-const AVATAR_COLORS = [
-  "var(--color-primary)",
-  "var(--color-blue)",
-  "var(--color-success-dark)",
-  "#EC4899",
-];
 
 /* ── 컴포넌트 ── */
 
+const CATEGORY_COLORS: Record<string, string> = {
+  웹기술: '#3b82f6', 웹디자인: '#ec4899', 모바일: '#f97316',
+  AIoT: '#14b8a6', 인공지능: '#6366f1', 빅데이터: '#8b5cf6',
+  블록체인: '#f59e0b', 자율주행: '#06b6d4', 핀테크: '#22c55e', 메타버스: '#a855f7',
+};
+
+const STATUS_LABEL: Record<BackendProjectStatus, string> = {
+  RECRUITING: '모집중', PROCEEDING: '진행중', DONE: '완료',
+};
+
+function getStatusStyle(status: BackendProjectStatus) {
+  if (status === 'RECRUITING') return { dot: '#43b581', text: '#22c55e' };
+  if (status === 'DONE') return { dot: '#9ca3af', text: '#9ca3af' };
+  return { dot: '#f59e0b', text: '#f59e0b' };
+}
+
 const ProjectCard = ({ project }: { project: ProjectSimple }) => {
   const navigate = useNavigate();
-  const isActive = project.status !== "DONE";
-  const avatarColor = AVATAR_COLORS[project.projectId % AVATAR_COLORS.length];
+  const [hovered, setHovered] = useState(false);
 
-  const feCount = project.roleCounts?.["FRONTEND"] ?? project.roleCounts?.["FE"] ?? 0;
-  const beCount = project.roleCounts?.["BACKEND"] ?? project.roleCounts?.["BE"] ?? 0;
+  const categoryColor = CATEGORY_COLORS[project.domain] ?? '#6b7280';
+  const statusStyle = getStatusStyle(project.status);
+
+  const bgColor = hovered
+    ? '#FFF2C6'
+    : project.status === 'DONE' ? '#EDEBE6' : '#ffffff';
+
+  const roles = Object.entries(project.roleCounts ?? {}).filter(([, count]) => count > 0);
+  const visibleSkills = project.skills.slice(0, 3);
+  const extraCount = project.skills.length - visibleSkills.length;
 
   return (
     <div
-      className="rounded-2xl p-5 shadow-sm flex flex-col gap-3 border cursor-pointer hover:shadow-md transition-shadow"
-      style={{
-        backgroundColor: "var(--color-surface)",
-        borderColor: "var(--color-border)",
-      }}
+      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
+      style={{ backgroundColor: bgColor }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={() => navigate(`/my-projects/${project.projectId}`)}
     >
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <span
-          className="text-xs font-bold"
-          style={{ color: "var(--color-amber)" }}
-        >
+      {/* 상단: 카테고리 + 상태 */}
+      <div className="flex items-center justify-between w-full">
+        <p className="font-bold text-[12px] leading-[18px]" style={{ color: categoryColor }}>
           {project.domain || "미정"}
-        </span>
-        <span
-          className="flex items-center gap-1 text-xs font-medium"
-          style={{
-            color: isActive
-              ? "var(--color-success-dark)"
-              : "var(--color-text-tertiary)",
-          }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{
-              backgroundColor: isActive
-                ? "var(--color-success-dark)"
-                : "var(--color-text-tertiary)",
-            }}
-          />
-          {project.status === "RECRUITING"
-            ? "모집중"
-            : project.status === "PROCEEDING"
-              ? "진행중"
-              : "완료"}
-        </span>
-      </div>
-
-      {/* 본문 */}
-      <div>
-        <h3
-          className="text-lg font-bold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {project.title}
-        </h3>
-        {project.teamName && (
-          <p
-            className="text-sm leading-relaxed mt-1"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {project.teamName}
+        </p>
+        <div className="flex items-center gap-[5px]">
+          <div className="rounded-[3.5px] size-[7px]" style={{ backgroundColor: statusStyle.dot }} />
+          <p className="font-bold text-[12px] leading-[18px]" style={{ color: statusStyle.text }}>
+            {STATUS_LABEL[project.status]}
           </p>
-        )}
+        </div>
       </div>
 
-      {/* 기술 스택 */}
+      {/* 제목 */}
+      <p className="font-black text-[#2d2a24] text-[17px] tracking-[-0.3px] w-full">
+        {project.title}
+      </p>
+
+      {/* 설명 */}
+      <p className="font-bold text-[#8a8073] text-[13px] leading-[20.8px] line-clamp-2 w-full">
+        {project.description || project.teamName || "\u00A0"}
+      </p>
+
+      {/* 기술 스택 뱃지 */}
       {project.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {project.skills.map((stack) => (
-            <span
-              key={stack}
-              className="px-3 py-1 rounded-full border text-xs font-medium"
-              style={{
-                borderColor: "var(--color-border)",
-                color: "var(--color-text-secondary)",
-                backgroundColor: "var(--color-background)",
-              }}
-            >
-              {stack}
+        <div className="flex flex-wrap gap-x-[5px] gap-y-[5px] w-full">
+          {visibleSkills.map((tech) => (
+            <span key={tech} className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]">
+              {tech}
             </span>
           ))}
+          {extraCount > 0 && (
+            <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]">
+              +{extraCount}
+            </span>
+          )}
         </div>
       )}
 
-      {/* 하단 */}
-      <div className="flex items-center justify-between mt-auto pt-2">
-        <div className="flex items-center gap-2 text-xs font-bold">
-          <span style={{ color: "var(--color-blue)" }}>FE {feCount}</span>
-          <span style={{ color: "var(--color-success)" }}>BE {beCount}</span>
+      {/* 하단: 직무 + 프로필 */}
+      <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
+        <div className="flex gap-[12px]">
+          {roles.map(([role, count]) => (
+            <p key={role} className="font-bold text-[12px]" style={{ color: getRoleColor(role) }}>
+              {getRoleDisplayName(role)} <span className="font-black">{count}</span>
+            </p>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-            style={{ backgroundColor: avatarColor }}
-          >
-            {project.leaderName?.[0] ?? "?"}
-          </span>
-          <span
-            className="text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {project.leaderName}
-          </span>
+        <div className="flex items-center gap-[8px]">
+          {project.leaderProfileImageUrl ? (
+            <img
+              src={project.leaderProfileImageUrl}
+              alt={project.leaderName}
+              className="rounded-full size-[24px] object-cover"
+            />
+          ) : (
+            <div className="rounded-full size-[24px] flex items-center justify-center bg-[#6366f1]">
+              <p className="font-bold text-white text-[11px]">{project.leaderName?.[0] ?? '?'}</p>
+            </div>
+          )}
+          <p className="font-bold text-[#8a8073] text-[12px]">{project.leaderName}</p>
         </div>
       </div>
 
       {/* 완료일 */}
       {project.finishedAt && (
-        <p
-          className="text-xs"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
+        <p className="text-[11px] text-[#9ca3af]">
           완료: {new Date(project.finishedAt).toLocaleDateString()}
         </p>
       )}
@@ -255,14 +239,8 @@ const MyProjects = () => {
               <button
                 type="button"
                 onClick={() => navigate("/projects/new")}
-                className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[280px] transition-colors group"
-                style={{ borderColor: "var(--color-border)" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--color-primary)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--color-border)")
-                }
+                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer h-[280px] transition-all duration-300 hover:border-[#f2b705] hover:shadow-lg"
+                style={{ borderColor: "#e5e7eb" }}
               >
                 <span
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
