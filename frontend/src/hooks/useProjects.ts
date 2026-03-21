@@ -103,9 +103,10 @@ export const useProjectFilters = () => {
           }));
 
       // skills.ts ROLE_LIST 순서대로 정렬
+      const roleOrder = ROLE_LIST as readonly string[];
       const skillGroups = [...unsorted].sort((a, b) => {
-        const idxA = ROLE_LIST.indexOf(a.category as any);
-        const idxB = ROLE_LIST.indexOf(b.category as any);
+        const idxA = roleOrder.indexOf(a.category);
+        const idxB = roleOrder.indexOf(b.category);
         return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
       });
 

@@ -8,20 +8,7 @@ import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayou
 import beeImg from "../assets/images/memberfind.png";
 import { getRecommendedMembers, getRecommendedMembersTop } from "../api/projects";
 import type { RecommendedMember } from "../api/projects";
-import { ROLE_DISPLAY_NAMES, SKILL_NAMES, type RoleCode } from "../constants/skills";
-
-/* skills.ts 표시명 → 백엔드 Role 노드 name 매핑 */
-const ROLE_TO_API: Record<RoleCode, string> = {
-  FRONTEND: "FE",
-  BACKEND:  "BE",
-  DEVOPS:   "INFRA",
-  DATA:     "DATA",
-  AI:       "AI",
-  DATABASE: "DATABASE",
-  MOBILE:   "MOBILE",
-  TOOLS:    "TOOLS",
-  PM:       "PM",
-};
+import { ROLE_DISPLAY_NAMES, ROLE_TO_API, SKILL_NAMES, type RoleCode } from "../constants/skills";
 
 /* ── 필터 옵션 ── */
 const POSITION_FILTERS = [
