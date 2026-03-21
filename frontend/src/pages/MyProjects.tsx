@@ -40,7 +40,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
 
   return (
     <div
-      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
+      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
       style={{ backgroundColor: bgColor }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -64,12 +64,10 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
         {project.title}
       </p>
 
-      {/* 팀명 */}
-      {project.teamName && (
-        <p className="font-bold text-[#8a8073] text-[13px] leading-[20.8px] w-full">
-          {project.teamName}
-        </p>
-      )}
+      {/* 설명 */}
+      <p className="font-bold text-[#8a8073] text-[13px] leading-[20.8px] line-clamp-2 w-full">
+        {project.description || project.teamName || "\u00A0"}
+      </p>
 
       {/* 기술 스택 뱃지 */}
       {project.skills.length > 0 && (
@@ -241,7 +239,7 @@ const MyProjects = () => {
               <button
                 type="button"
                 onClick={() => navigate("/projects/new")}
-                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300 hover:border-[#f2b705] hover:shadow-lg"
+                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer h-[280px] transition-all duration-300 hover:border-[#f2b705] hover:shadow-lg"
                 style={{ borderColor: "#e5e7eb" }}
               >
                 <span

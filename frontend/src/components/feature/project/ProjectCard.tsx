@@ -54,7 +54,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
 
   return (
     <a
-      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
+      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
       style={{ backgroundColor: bgColor }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

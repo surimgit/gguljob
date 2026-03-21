@@ -44,6 +44,7 @@ export interface ProjectSimple {
   projectId: number;
   title: string;
   teamName: string;
+  description: string | null;
   domain: string;
   leaderName: string;
   leaderProfileImageUrl: string | null;
