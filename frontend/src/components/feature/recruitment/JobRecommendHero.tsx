@@ -6,6 +6,7 @@ import jobMatchingImg from '../../../assets/images/jobmatching.png';
 import { getRecommendedTop3 } from '../../../api/jobs';
 import { useAuthStore } from '../../../stores/authStore';
 import type { JobItem } from '../../../types/recruitment';
+import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 const RANK_TINTS = [
   'rgba(255,239,156,0.21)',
@@ -33,25 +34,6 @@ interface JobCardProps {
   deadline: string;
 }
 
-/** 디데이 계산 */
-const calcDday = (deadline: string): string => {
-  if (!deadline) return '';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(deadline);
-  target.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return '마감';
-  if (diff === 0) return 'D-Day';
-  return `D-${diff}`;
-};
-
-const getDdayColor = (dday: string): string => {
-  if (dday === '마감') return '#9CA3AF';
-  if (dday === 'D-Day' || dday.match(/^D-[1-3]$/)) return '#EF4444';
-  if (dday.match(/^D-[4-7]$/)) return '#F2B705';
-  return '#6B7280';
-};
 
 const BadgeChip = ({ type }: { type: Badge }) => {
   if (type === 'NEW') {
@@ -125,7 +107,11 @@ const JobCard = ({
 
   return (
     <div
+      role="link"
+      tabIndex={0}
+      aria-label={`${company} - ${role}`}
       onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
+      onKeyDown={e => { if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
       className="relative flex-shrink-0 flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
       style={{
         width: '308px',

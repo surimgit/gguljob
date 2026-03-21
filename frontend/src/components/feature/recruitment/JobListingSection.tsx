@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
+import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -36,26 +37,6 @@ const parseTechStacks = (raw: string[] | undefined): string[] => {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-};
-
-/** 디데이 계산 */
-const calcDday = (deadline: string): string => {
-  if (!deadline) return '';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(deadline);
-  target.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return '마감';
-  if (diff === 0) return 'D-Day';
-  return `D-${diff}`;
-};
-
-const getDdayColor = (dday: string): string => {
-  if (dday === '마감') return '#9CA3AF';
-  if (dday === 'D-Day' || dday.match(/^D-[1-3]$/)) return '#EF4444';
-  if (dday.match(/^D-[4-7]$/)) return '#F2B705';
-  return '#6B7280';
 };
 
 /** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
@@ -279,7 +260,11 @@ const JobCard = ({
 
   return (
     <div
+      role="link"
+      tabIndex={0}
+      aria-label={`${job.company} - ${job.title}`}
       onClick={handleClick}
+      onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
       className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
     >
       {/* 로고 */}
