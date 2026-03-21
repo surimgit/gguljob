@@ -57,6 +57,9 @@ export const uploadProfileImageApi = (file: File) => {
   });
 };
 
+export const deleteProfileImageApi = () =>
+  api.delete('/v1/user/me/profile/image');
+
 export const logoutApi = () => api.post('/v1/auth/logout');
 
 export const withdrawApi = () => api.delete('/v1/user/withdraw');
