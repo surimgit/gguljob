@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { useNavbarStore } from '../../stores/navbarStore';
 import { logoutApi } from '../../api/user';
 import {
   getNotifications,
@@ -38,10 +37,10 @@ const toNotification = (dto: NotificationDto): Notification => {
   };
 };
 
-const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
+const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
-  const storeBg = useNavbarStore((s) => s.bgClassName);
+  const headerRef = useRef<HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -137,8 +136,96 @@ const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  const location = useLocation();
+
+  // 첫 번째 섹션(히어로)의 배경색을 따라가고, 벗어나면 흰색
+  useEffect(() => {
+    let rafId: number;
+    let heroEl: Element | null = null;
+    let heroColor: string | null = null;
+
+    // rgba 반투명 색상을 불투명으로 변환 (흰색 배경 기준 블렌딩)
+    const toOpaque = (color: string): string => {
+      const m = color.match(/rgba\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)/);
+      if (!m) return color;
+      const a = parseFloat(m[4]);
+      if (a >= 1) return color;
+      const blend = (fg: number) => Math.round(fg * a + 255 * (1 - a));
+      return `rgb(${blend(parseFloat(m[1]))}, ${blend(parseFloat(m[2]))}, ${blend(parseFloat(m[3]))})`;
+    };
+
+    // 요소를 재귀적으로 탐색하여 특수 배경색을 가진 첫 히어로 요소를 찾음
+    // 히어로는 최소 150px 이상 높이를 가진 섹션만 인정
+    const findHeroIn = (el: Element, depth: number): { el: Element; color: string } | null => {
+      if (depth > 5) return null;
+      const cs = getComputedStyle(el);
+      const bg = cs.backgroundColor;
+      const isSpecial = bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)'
+        && bg !== 'rgb(255, 255, 255)' && bg !== 'rgb(247, 248, 250)';
+
+      if (isSpecial) {
+        if (el.getBoundingClientRect().height >= 150) return { el, color: toOpaque(bg) };
+        return null;
+      }
+
+      const bgImg = cs.backgroundImage;
+      if (bgImg && bgImg !== 'none') {
+        const m = bgImg.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
+        if (m) {
+          if (el.getBoundingClientRect().height >= 150) return { el, color: toOpaque(m[0]) };
+          return null;
+        }
+      }
+
+      const child = el.firstElementChild;
+      if (child) return findHeroIn(child, depth + 1);
+      return null;
+    };
+
+    const findHero = () => {
+      const main = document.querySelector('main');
+      const first = main?.firstElementChild;
+      if (!first) return;
+      const result = findHeroIn(first, 0);
+      if (!result) return;
+
+      heroColor = result.color;
+      heroEl = result.el;
+
+      // 같은 배경색을 가진 연속 형제 섹션까지 히어로 범위 확장
+      let sibling = first.nextElementSibling;
+      while (sibling) {
+        const bg = toOpaque(getComputedStyle(sibling).backgroundColor);
+        if (bg === heroColor) {
+          heroEl = sibling;
+          sibling = sibling.nextElementSibling;
+        } else {
+          break;
+        }
+      }
+    };
+
+    const sync = () => {
+      const hdr = headerRef.current;
+      if (!hdr) return;
+      if (!heroEl || !heroColor) { hdr.style.backgroundColor = '#ffffff'; return; }
+      const heroBottom = heroEl.getBoundingClientRect().bottom;
+      const navBottom = hdr.getBoundingClientRect().bottom;
+      hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '#ffffff';
+    };
+
+    const onScroll = () => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(sync); };
+
+    // DOM이 그려진 후 히어로 탐색 (페이지 전환 시 렌더링 대기)
+    const timerId = setTimeout(() => {
+      requestAnimationFrame(() => { findHero(); sync(); });
+    }, 50);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { clearTimeout(timerId); cancelAnimationFrame(rafId); window.removeEventListener('scroll', onScroll); };
+  }, [location.pathname]);
+
   return (
-    <header className={`sticky top-0 z-50 pt-1 ${bgClassName ?? storeBg}`}>
+    <header ref={headerRef} className="sticky top-0 z-50 pt-1 bg-background transition-[background-color] duration-300">
       <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">

@@ -6,12 +6,9 @@ import AutoScrollCarousel from '../components/feature/project/AutoScrollCarousel
 import ProjectApplyModal from '../components/feature/project/ProjectApplyModal';
 import { useProjects, useRecommendedProjects, useProjectFilters } from '../hooks/useProjects';
 import Pagination from '../components/common/Pagination';
-import useNavbarBg from '../hooks/useNavbarBg';
-
 const ITEMS_PER_PAGE = 9;
 
 const ProjectFind = () => {
-  useNavbarBg('bg-[#FFF9F0]');
   const [searchQuery, setSearchQuery] = useState('');
   const [techFilter, setTechFilter] = useState('전체');
   const [domainFilter, setDomainFilter] = useState('전체');
