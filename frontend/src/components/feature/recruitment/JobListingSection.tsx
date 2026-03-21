@@ -266,7 +266,7 @@ const JobCard = ({
       aria-label={`${job.company} - ${job.title}`}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
-      className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
+      className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
     >
       {/* 로고 */}
       <div

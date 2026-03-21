@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { ProjectCardDto, BackendProjectStatus } from '../../../types/project';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 
@@ -35,7 +34,6 @@ function getStatusStyle(status: BackendProjectStatus) {
 }
 
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
-  const [hovered, setHovered] = useState(false);
   const { domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl } = project;
 
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
@@ -46,18 +44,9 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const visibleTech = skills.slice(0, 3);
   const extraCount = skills.length - visibleTech.length;
 
-  const bgColor = hovered
-    ? '#FFF2C6'
-    : status === 'DONE'
-    ? '#EDEBE6'
-    : '#ffffff';
-
   return (
     <a
-      className="border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-[#f2b705] transition-all duration-300"
-      style={{ backgroundColor: bgColor }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 ${status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
       onClick={() => onClick?.(project)}
     >
       {/* 상단: 카테고리 + 상태 */}

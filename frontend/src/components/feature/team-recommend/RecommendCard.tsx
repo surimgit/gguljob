@@ -40,10 +40,9 @@ const RecommendCard = ({
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl p-5 min-h-[280px] shadow-md"
+      className="relative flex flex-col rounded-2xl p-5 min-h-[280px] shadow-md border border-border hover:bg-primary-soft hover:border-primary-hover transition-all duration-200"
       style={{
         background: "rgba(var(--color-primary-soft-rgb, 255,243,200), 0.23)",
-        border: "1px solid var(--color-border)",
       }}
     >
       {/* 적합도 배지 (우상단) */}

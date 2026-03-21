@@ -56,7 +56,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
 
   return (
     <div
-      className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[300px] h-[300px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)] hover:border-[#e0d8cc]"
+      className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[300px] h-[300px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
       onClick={() => onClick?.(project)}
     >
       {/* 상단 썸네일 */}
