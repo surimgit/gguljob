@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import JobRecommendHero from '../components/feature/recruitment/JobRecommendHero';
 import JobListingSection from '../components/feature/recruitment/JobListingSection';
 import { getBookmarkedJobs, toggleBookmark as toggleBookmarkApi } from '../api/jobs';
+import useNavbarBg from '../hooks/useNavbarBg';
 
 const Recruitment = () => {
+  useNavbarBg('bg-[#FAF6E7]');
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {

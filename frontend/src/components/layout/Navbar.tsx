@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useNavbarStore } from '../../stores/navbarStore';
 import { logoutApi } from '../../api/user';
 import {
   getNotifications,
@@ -37,9 +38,10 @@ const toNotification = (dto: NotificationDto): Notification => {
   };
 };
 
-const Navbar = ({ bgClassName = 'bg-background' }: { bgClassName?: string }) => {
+const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+  const storeBg = useNavbarStore((s) => s.bgClassName);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -136,7 +138,7 @@ const Navbar = ({ bgClassName = 'bg-background' }: { bgClassName?: string }) => 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <header className={`sticky top-0 z-50 pt-1 ${bgClassName}`}>
+    <header className={`sticky top-0 z-50 pt-1 ${bgClassName ?? storeBg}`}>
       <Container className="h-16 flex items-center justify-between px-4">
         {/* 로고 */}
         <Link to="/" className="flex items-center shrink-0">
