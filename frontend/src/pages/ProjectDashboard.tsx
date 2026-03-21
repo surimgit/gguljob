@@ -304,7 +304,12 @@ const ProjectDashboard = () => {
         <>
         {/* ── 프로젝트 히어로 배너 ── */}
         <div
-          className="rounded-2xl p-5 md:p-8 relative overflow-hidden bg-primary-soft"
+          className="rounded-2xl p-5 md:p-8 relative overflow-hidden backdrop-blur-xl"
+          style={{
+            background: "rgba(255, 248, 230, 0.55)",
+            border: "1px solid rgba(255, 255, 255, 0.6)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.06), inset 0 2px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+          }}
         >
           <div className="flex items-stretch justify-between gap-8">
             {/* 좌측 프로젝트 정보 */}
