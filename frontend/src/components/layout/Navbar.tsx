@@ -147,13 +147,13 @@ const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
 
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden lg:flex items-center justify-center gap-24 xl:gap-48 absolute left-1/2 -translate-x-[65%]">
-          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
+          <Link to="/my-projects" onClick={() => window.scrollTo(0, 0)} className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             내 프로젝트
           </Link>
-          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
+          <Link to="/projects" onClick={() => window.scrollTo(0, 0)} className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             프로젝트 찾기
           </Link>
-          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-primary hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
+          <Link to="/recruitment" onClick={() => window.scrollTo(0, 0)} className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors">
             채용
           </Link>
         </nav>
@@ -165,7 +165,7 @@ const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
               <div className="relative flex items-center" ref={notifRef}>
                 <button
                   onClick={() => setShowNotification(prev => !prev)}
-                  className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all"
+                  className="group relative p-2 rounded-lg text-text-brown hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all"
                   aria-label="알림"
                 >
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
                       {unreadCount}
                     </span>
                   )}
-                  <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                  <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
                     알림
                   </span>
                 </button>
@@ -190,19 +190,19 @@ const Navbar = ({ bgClassName }: { bgClassName?: string } = {}) => {
                   />
                 )}
               </div>
-              <Link to="/mypage" className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="마이페이지">
+              <Link to="/mypage" className="group relative p-2 rounded-lg text-text-brown hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="마이페이지">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
                   마이페이지
                 </span>
               </Link>
-              <button onClick={handleLogout} className="group relative p-2 rounded-lg text-icon hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="로그아웃">
+              <button onClick={handleLogout} className="group relative p-2 rounded-lg text-text-brown hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="로그아웃">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-primary text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
+                <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150">
                   로그아웃
                 </span>
               </button>

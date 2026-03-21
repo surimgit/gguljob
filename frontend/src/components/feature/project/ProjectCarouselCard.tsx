@@ -66,7 +66,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
       >
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
-          <p className="font-bold text-[10px] leading-[15px]" style={{ color: categoryColor }}>
+          <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
             {domain}
           </p>
         </div>
@@ -76,12 +76,12 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
       <div className="absolute top-[160px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[22px] pb-[14px]">
 
         {/* 제목 */}
-        <p className="font-black text-[#2d2a24] text-[15px] leading-[20px] truncate">
+        <p className="font-bold text-text-primary text-lg leading-[20px] truncate">
           {title}
         </p>
 
         {/* 설명 */}
-        <p className="mt-[6px] font-extrabold text-[#a09888] text-[12.5px] leading-[17.5px] line-clamp-2 flex-1">
+        <p className="mt-[10px] font-bold text-text-secondary text-sm leading-[17.5px] line-clamp-2 flex-1">
           {description}
         </p>
 
@@ -92,7 +92,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
             return (
               <span
                 key={tech}
-                className="h-[21px] rounded-[12px] px-[9px] py-[3px] font-bold text-[10px] leading-[15px] border"
+                className="h-[21px] rounded-[12px] px-[9px] py-[3px] font-bold text-[10px] leading-[15px] border mt-2"
                 style={{ backgroundColor: style.bg, borderColor: style.border, color: style.text }}
               >
                 {tech}
@@ -100,7 +100,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
             );
           })}
           {extraCount > 0 && (
-            <span className="h-[21px] bg-[#f5f5f5] rounded-[12px] px-[6px] py-[2px] font-bold text-[#8a8073] text-[10px] leading-[15px]">
+            <span className="h-[21px] bg-[#f5f5f5] rounded-[12px] px-[6px] py-[2px] font-bold text-[#8a8073] text-[10px] leading-[15px] mt-2">
               +{extraCount}
             </span>
           )}

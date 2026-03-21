@@ -228,15 +228,15 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
           <div className="max-w-[1400px] mx-auto px-[42px] relative flex flex-col justify-center pt-20 pb-14 pl-[6%]">
             {/* 메인 타이틀 */}
             <p
-              className="font-semibold"
-              style={{ fontSize: '38px', color: '#111827', lineHeight: '1.35' }}
+              className="font-bold"
+              style={{ fontSize: '40px', color: '#111827', lineHeight: '1.35' }}
             >
               {userName}님의 기술 스택과<br />
               가장 잘 맞는 채용 공고를 추천해드려요!
             </p>
 
             {/* 부제목 */}
-            <p className="mt-6" style={{ fontSize: '20px', color: '#4A5565' }}>
+            <p className="mt-6" style={{ fontSize: '22px', color: '#4A5565' }}>
               포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
             </p>
 
@@ -246,11 +246,11 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
                 {userSkills.slice(0, 8).map(stack => (
                   <span
                     key={stack}
-                    className="font-bold"
+                    className="font-semibold"
                     style={{
                       background: '#BFE8F5',
                       borderRadius: '8px',
-                      fontSize: '14px',
+                      fontSize: '16px',
                       color: '#6B7280',
                       padding: '6px 14px',
                       boxShadow: '2px 2px 4px rgba(0,0,0,0.15)',
@@ -275,7 +275,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
 
       {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
       <div className="max-w-[1400px] mx-auto" style={{ paddingTop: '35px', paddingLeft: '42px', paddingRight: '42px', paddingBottom: '40px' }}>
-        <h2 className="font-semibold" style={{ fontSize: '25px' }}>
+        <h2 className="font-bold" style={{ fontSize: '30px' }}>
           <span style={{ color: '#111827' }}>맞춤 공고 </span>
           <span style={{ color: '#F2B705' }}>TOP 3</span>
         </h2>

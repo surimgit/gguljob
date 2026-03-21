@@ -37,7 +37,7 @@ const FlowCard = ({ step, title, description, link, image }: FlowCardProps) => {
       />
 
       {/* STEP 번호 */}
-      <span className="self-start text-base font-bold text-primary-hover tracking-widest">
+      <span className="self-start text-xl font-extrabold text-primary-hover ">
         STEP {String(step).padStart(2, '0')}
       </span>
 
@@ -51,11 +51,11 @@ const FlowCard = ({ step, title, description, link, image }: FlowCardProps) => {
 
       {/* 카드 내용 */}
       <h3 className="text-3xl font-extrabold text-text-brown text-center">{title}</h3>
-      <p className="text-lg font-bold text-text-brown-2 text-center leading-relaxed flex-1 whitespace-nowrap">{description}</p>
+      <p className="text-xl font-bold text-text-brown-2 text-center leading-relaxed flex-1 whitespace-nowrap">{description}</p>
 
       <button
         onClick={handleClick}
-        className="mt-2 px-15 py-3 rounded-xl text-lg font-semibold text-text-brown transition-opacity hover:opacity-80"
+        className="mt-2 px-15 py-3 rounded-xl text-xl font-semibold text-text-brown transition-opacity hover:opacity-80"
         style={{
           background: 'linear-gradient(to right, rgba(247,201,72,0.2), rgba(242,183,5,0.2))',
           boxShadow: '0 4px 14px rgba(0,0,0,0.15)',

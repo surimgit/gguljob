@@ -869,7 +869,7 @@ const TeamManagement = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div className="flex items-center gap-3">
               <h3
-                className="text-base font-bold"
+                className="text-lg font-bold"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 팀원 모집 현황
@@ -1123,7 +1123,7 @@ const TeamManagement = ({
         >
         <div className="flex items-center justify-between mb-4">
           <h3
-            className="text-base font-bold"
+            className="text-lg font-bold"
             style={{ color: "var(--color-text-primary)" }}
           >
             합류 신청 목록
@@ -1787,7 +1787,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           }}
         >
           <h3
-            className="text-base font-bold mb-4"
+            className="text-lg font-bold mb-4"
             style={{ color: "var(--color-text-primary)" }}
           >
             현재 팀원
@@ -1799,7 +1799,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
               return (
                 <div key={role}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold" style={{ color }}>
+                    <span className="text-sm font-bold" style={{ color }}>
                       {getRoleDisplayName(role)} {roleMembers.length}
                     </span>
                     <div

@@ -52,7 +52,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       {/* 상단: 카테고리 + 상태 */}
       <div className="flex items-center justify-between w-full">
         <p
-          className="font-bold text-[12px] leading-[18px]"
+          className="font-semibold text-base leading-[18px]"
           style={{ color: categoryColor }}
         >
           {domain}
@@ -63,7 +63,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
             style={{ backgroundColor: statusStyle.dot }}
           />
           <p
-            className="font-bold text-[12px] leading-[18px]"
+            className="font-bold text-sm leading-[18px]"
             style={{ color: statusStyle.text }}
           >
             {STATUS_LABEL[status]}
@@ -72,12 +72,12 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       </div>
 
       {/* 제목 */}
-      <p className="font-black text-[#2d2a24] text-[17px] tracking-[-0.3px] w-full">
+      <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
         {title}
       </p>
 
       {/* 설명 */}
-      <p className="font-bold text-[#8a8073] text-[13px] leading-[20.8px] line-clamp-3 w-full">
+      <p className="font-bold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
         {description}
       </p>
 
@@ -86,13 +86,13 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
         {visibleTech.map((tech) => (
           <span
             key={tech}
-            className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]"
+            className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2"
           >
             {tech}
           </span>
         ))}
         {extraCount > 0 && (
-          <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]">
+          <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
             +{extraCount}
           </span>
         )}
@@ -102,7 +102,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
         <div className="flex gap-[12px]">
           {activePositions.map((pos) => (
-            <p key={pos.positionId} className="font-bold text-[12px]" style={{ color: getRoleColor(pos.role) }}>
+            <p key={pos.positionId} className="font-semibold text-xs" style={{ color: getRoleColor(pos.role) }}>
               {getRoleDisplayName(pos.role)} <span className="font-black">{pos.currentCount}/{pos.targetCount}</span>
             </p>
           ))}
@@ -122,7 +122,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
               <p className="font-bold text-white text-[11px]">{leaderName?.[0] ?? '?'}</p>
             </div>
           )}
-          <p className="font-bold text-[#8a8073] text-[12px]">{leaderName}</p>
+          <p className="font-semibold text-text-secondary text-sm">{leaderName}</p>
         </div>
       </div>
     </a>

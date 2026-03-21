@@ -134,7 +134,7 @@ const NotificationItem = ({
         <NotifIcon type={notif.type} />
 
         <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <p className={`text-[14px] leading-[21px] break-words ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-semibold'}`}>
+          <p className={`text-base leading-[21px] break-words ${notif.isRead ? 'text-text-secondary font-normal' : 'text-text-primary font-bold'}`}>
             {notif.message}
           </p>
           <p className="text-[12px] text-text-tertiary leading-[19px]">{notif.time}</p>
@@ -171,7 +171,7 @@ const NotificationItem = ({
           <button
             onClick={handleAccept}
             disabled={loading}
-            className="flex-1 py-2 rounded-lg text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex-1 py-2 rounded-lg text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ background: '#16a34a' }}
           >
             수락
@@ -179,7 +179,7 @@ const NotificationItem = ({
           <button
             onClick={handleReject}
             disabled={loading}
-            className="flex-1 py-2 rounded-lg text-[13px] font-bold text-text-secondary border border-border bg-white transition-colors hover:bg-[#f9fafb] disabled:opacity-50"
+            className="flex-1 py-2 rounded-lg text-[13px] font-semibold text-text-secondary border border-border bg-white transition-colors hover:bg-[#f9fafb] disabled:opacity-50"
           >
             거절
           </button>
@@ -227,7 +227,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        <span className="text-white font-bold text-[16px]">알림</span>
+        <span className="text-white font-semibold text-[20x]">알림</span>
         {notifications.some(n => !n.isRead) && (
           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white text-primary-hover text-[11px] font-bold">
             {notifications.filter(n => !n.isRead).length}
@@ -238,7 +238,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
         {notifications.length > 0 && (
           <button
             onClick={handleClearAll}
-            className="text-white text-[13px] font-bold opacity-90 hover:opacity-100 transition-opacity"
+            className="text-white text-[15px] font-semibold opacity-90 hover:opacity-100 transition-opacity"
           >
             모두 지우기
           </button>

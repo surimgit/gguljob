@@ -89,10 +89,10 @@ const ProjectFind = () => {
           willChange: 'transform',
         }}
       >
-        <h1 className="font-black text-[#2d2a24] text-[36px] tracking-[-0.5px] mb-[12px]">
+        <h1 className="font-black text-[#2d2a24] text-4xl tracking-[-0.5px] mb-[12px]">
           프로젝트 찾기
         </h1>
-        <p className="font-bold text-[#8a8073] text-[16px] mb-[48px]">
+        <p className="font-bold text-[#8a8073] text-lg mt-4 mb-[48px]">
           다양한 프로젝트를 살펴보세요.
         </p>
 
@@ -122,8 +122,8 @@ const ProjectFind = () => {
         />
 
         {/* 결과 카운트 */}
-        <p className="font-bold text-[#8a8073] text-[13px] mt-[32px] mb-[24px]">
-          총 <span className="font-black text-[#2d2a24]">{totalElements}</span>개 프로젝트
+        <p className="font-semibold text-text-secondary text-base mt-[40px] mb-[24px]">
+          총 <span className="font-bold text-text-secondary">{totalElements}</span>개 프로젝트
         </p>
 
         {/* 로딩 */}
