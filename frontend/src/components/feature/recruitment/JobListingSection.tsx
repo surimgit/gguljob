@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs } from '../../../api/jobs';
+import { getJobs, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
@@ -425,13 +425,22 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   const [hasNextPage, setHasNextPage] = useState(true);
 
   useEffect(() => {
-    getJobs({ page: currentPage })
-      .then(({ data }) => {
-        setJobs(data.map(mapToJobListing));
-        setHasNextPage(data.length >= BACKEND_PAGE_SIZE);
-      })
-      .catch(() => {});
-  }, [currentPage]);
+    if (showBookmarked) {
+      getBookmarkedJobs()
+        .then(({ data }) => {
+          setJobs(data.map(mapToJobListing));
+          setHasNextPage(false);
+        })
+        .catch(() => {});
+    } else {
+      getJobs({ page: currentPage })
+        .then(({ data }) => {
+          setJobs(data.map(mapToJobListing));
+          setHasNextPage(data.length >= BACKEND_PAGE_SIZE);
+        })
+        .catch(() => {});
+    }
+  }, [currentPage, showBookmarked]);
 
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
@@ -447,9 +456,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     );
   })();
 
-  const finalFilteredJobs = showBookmarked
-    ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
-    : jobsFilteredByStack;
+  const finalFilteredJobs = jobsFilteredByStack;
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
