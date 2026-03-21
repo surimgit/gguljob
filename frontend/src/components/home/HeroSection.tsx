@@ -6,12 +6,12 @@ const HeroSection = () => {
   return (
     <section className="min-h-[520px] flex flex-col items-center justify-start relative overflow-hidden pt-14 pb-16" style={{ backgroundColor: '#FFFAEB' }}>
       {/* 슬로건 이미지 - 중앙 상단 */}
-      <img src={heroSectionSlogan} alt="개발자를 위한 올인원 꿀 서비스" className="h-30 w-auto -mb-20" />
+      <img src={heroSectionSlogan} alt="개발자를 위한 올인원 꿀 서비스" className="h-27 w-auto -mb-20" />
 
       {/* 메인 콘텐츠 */}
       <div className="flex items-center gap-16 px-20">
         {/* 벌 캐릭터 이미지 + 그라데이션 원 */}
-        <div className="relative flex items-center justify-center w-130 h-130">
+        <div className="relative flex items-center justify-center w-120 h-120">
           {/* 우측 상단 그라데이션 원 */}
           <div className="absolute top-4 right-4 w-2/5 h-2/5 rounded-full bg-primary-hover/50 blur-2xl" />
           {/* 좌측 하단 그라데이션 원 */}
@@ -20,7 +20,7 @@ const HeroSection = () => {
         </div>
 
         {/* 텍스트 */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 mt-8 -ml-6">
           <h1 className="text-6xl font-bold text-text-brown leading-tight whitespace-nowrap">
             개발 프로젝트의 시작부터
             <br />
