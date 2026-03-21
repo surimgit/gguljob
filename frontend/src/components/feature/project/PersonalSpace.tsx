@@ -372,8 +372,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
             {/* AI 트러블슈팅 자동 생성 섹션 */}
             {showAiSection && (
               <div className="mb-6 rounded-2xl px-7 py-6 border border-[#c7d2fe] relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)' }}>
-                {/* 상단 보라 글로우 */}
-                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: 'linear-gradient(90deg, #6366f1, #7c3aed, #6366f1)' }} />
 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
