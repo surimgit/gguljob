@@ -832,12 +832,13 @@ const ProjectDashboard = () => {
                 {rankings.map((member: any, idx: number) => (
                   <div
                     key={member.userId}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
                     style={
                       idx === 0
                         ? { background: "var(--color-primary-soft)" }
                         : {}
                     }
+                    onClick={() => setProfileUserId(member.userId)}
                   >
                     <span
                       className="text-sm font-black w-5 text-center"
