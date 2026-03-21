@@ -1050,7 +1050,11 @@ const TeamManagement = ({
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        role="button"
+                        tabIndex={0}
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                        onClick={() => setProfileUserId(Number(member.id))}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1635,6 +1639,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [realMembers, setRealMembers] = useState<Member[]>([]);
   const [realRoles, setRealRoles] = useState<Role[]>([]);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1815,7 +1820,11 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                        onClick={() => setProfileUserId(Number(member.id))}
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1926,6 +1935,14 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             </div>
           </div>
         </div>
+      )}
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
       )}
     </div>
   );

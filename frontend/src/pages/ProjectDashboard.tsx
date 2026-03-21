@@ -25,7 +25,7 @@ import chatbotImg from "../assets/images/chatbot.png";
 import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
-import type { PersonalSpaceData } from "../types/project";
+import type { PersonalSpaceData, MrRanking } from "../types/project";
 import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
@@ -204,7 +204,7 @@ const ProjectDashboard = () => {
   const gitRepoInfo = dashboard?.gitRepoInfo ?? null;
   const rankings = gitLog?.mrRankings ?? [];
   const activities = gitLog?.recentActivities ?? [];
-  const maxCommits = Math.max(1, ...rankings.map((m: { mrCount: number }) => m.mrCount));
+  const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
 
   const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
@@ -612,12 +612,6 @@ const ProjectDashboard = () => {
                       {copied ? "복사됨" : "복사"}
                     </button>
                   )}
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    {gitRepoInfo?.lastSyncTime ? `${formatTime(gitRepoInfo.lastSyncTime)} 동기화` : ""}
-                  </span>
                 </div>
               </div>
             </div>
@@ -640,8 +634,8 @@ const ProjectDashboard = () => {
               {/* 현재 주제 */}
               <div className="mb-4">
                 <p
-                  className="text-base font-bold mb-1"
-                  style={{ color: "var(--color-primary-hover)" }}
+                  className="text-lg font-bold mb-1"
+                  style={{ color: "var(--color-text-brown)" }}
                 >
                   {projectInfo.title}
                 </p>
@@ -655,17 +649,12 @@ const ProjectDashboard = () => {
 
               {/* AI 주제 추천 서브카드 */}
               <div
-                className="rounded-xl p-4"
-                style={{ border: "1px solid var(--color-border)" }}
+                className="rounded-2xl px-5 py-4 border border-[#c7d2fe] relative overflow-hidden"
+                style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)' }}
               >
-                <div className="flex items-center justify-between mb-3">
+<div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center"
-                      style={{ background: "#EDE9FE" }}
-                    >
-                      <Sparkles className="w-3.5 h-3.5" style={{ color: "#7C3AED" }} />
-                    </div>
+                    <Sparkles className="w-5 h-5 text-[#6366f1]" />
                     <span
                       className="text-sm font-bold"
                       style={{ color: "var(--color-text-primary)" }}
@@ -681,9 +670,8 @@ const ProjectDashboard = () => {
                   </div>
                   <button
                     onClick={() => handleRecommend(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#c7d2fe] bg-white"
                     style={{
-                      border: "1px solid var(--color-border)",
                       color: "var(--color-text-secondary)",
                     }}
                   >
@@ -699,21 +687,21 @@ const ProjectDashboard = () => {
                     placeholder="키워드를 입력하세요 (예: 인증, 배포)"
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                    className="flex-1 px-3 py-2 rounded-lg text-sm outline-none bg-white"
                     style={{
-                      border: "1px solid var(--color-border)",
+                      border: "1px solid #c7d2fe",
                     }}
                     onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--color-primary)")
+                      (e.currentTarget.style.borderColor = "#6366f1")
                     }
                     onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--color-border)")
+                      (e.currentTarget.style.borderColor = "#c7d2fe")
                     }
                   />
                   <button
                     onClick={() => handleRecommend(true)}
                     className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
-                    style={{ background: "#7C3AED" }}
+                    style={{ background: "#6366f1" }}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     생성
@@ -742,12 +730,12 @@ const ProjectDashboard = () => {
                         }
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm text-left"
                         style={{
-                          border: `1px solid ${isSelected ? "#7C3AED" : "var(--color-border)"}`,
+                          border: `1px solid ${isSelected ? "#6366f1" : "#c7d2fe"}`,
                           background: isSelected
-                            ? "#EDE9FE"
+                            ? "#eef2ff"
                             : "var(--color-background)",
                           color: isSelected
-                            ? "#7C3AED"
+                            ? "#6366f1"
                             : "var(--color-text-primary)",
                         }}
                       >
@@ -755,7 +743,7 @@ const ProjectDashboard = () => {
                           className="text-xs font-bold w-4"
                           style={{
                             color: isSelected
-                              ? "#7C3AED"
+                              ? "#6366f1"
                               : "var(--color-text-tertiary)",
                           }}
                         >
@@ -829,15 +817,19 @@ const ProjectDashboard = () => {
                     아직 MR 기록이 없습니다
                   </p>
                 )}
-                {rankings.map((member: any, idx: number) => (
+                {rankings.map((member: MrRanking, idx: number) => (
                   <div
                     key={member.userId}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(member.userId); } }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
                     style={
                       idx === 0
                         ? { background: "var(--color-primary-soft)" }
                         : {}
                     }
+                    onClick={() => setProfileUserId(member.userId)}
                   >
                     <span
                       className="text-sm font-black w-5 text-center"
@@ -948,24 +940,24 @@ const ProjectDashboard = () => {
                         />
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                       {activity.userName && (
                         <p
-                          className="text-xs font-bold mb-0.5"
+                          className="text-sm font-bold"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
                           {activity.userName}
                         </p>
                       )}
                       <p
-                        className="text-sm font-medium line-clamp-2"
+                        className="text-xs font-medium line-clamp-2"
                         style={{ color: "var(--color-text-primary)" }}
                       >
                         {activity.content}
                       </p>
                       {activity.label && (
                         <p
-                          className="text-xs font-mono mt-0.5 font-semibold"
+                          className="text-xs font-mono font-semibold"
                           style={{ color: "var(--color-blue)" }}
                         >
                           {activity.label}
