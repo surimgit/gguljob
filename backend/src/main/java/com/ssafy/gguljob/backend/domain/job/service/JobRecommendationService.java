@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
+import com.ssafy.gguljob.backend.domain.job.dto.response.PagedRecommendationResponse;
 import com.ssafy.gguljob.backend.domain.job.dto.response.RecommendedJobDto;
 import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
 import com.ssafy.gguljob.backend.domain.job.repository.JobPostingRepository;
@@ -37,9 +38,26 @@ public class JobRecommendationService {
     return getRecommendations(userId, 3, 0, false);
   }
 
-  public List<RecommendedJobDto> getRegularRecommendations(Long userId, int skip, String sort) {
+  // Neo4j 추천 풀 상한
+  private static final int MAX_RECOMMENDATION_POOL = 200;
+
+  public PagedRecommendationResponse getRegularRecommendations(Long userId, int page, int size,
+      String sort) {
+    if (size < 1) size = 10;
+    if (page < 1) page = 1;
+
     boolean sortByDeadline = "deadline".equalsIgnoreCase(sort);
-    return getRecommendations(userId, 10, skip, sortByDeadline);
+    int skip = (page - 1) * size;
+
+    // 페이지 단위로 조회 (Neo4j SKIP/LIMIT)
+    List<RecommendedJobDto> pageData = getRecommendations(userId, size, skip, sortByDeadline);
+
+    // 현재 페이지가 꽉 차면 → 아직 더 있음 (최대 풀 기반 totalPages)
+    // 현재 페이지가 덜 차면 → 여기가 마지막
+    int totalPages = pageData.size() < size ? page
+        : (int) Math.ceil((double) MAX_RECOMMENDATION_POOL / size);
+
+    return new PagedRecommendationResponse(pageData, totalPages, pageData.size(), page, size);
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,

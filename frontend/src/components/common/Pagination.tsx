@@ -21,6 +21,8 @@ const Pagination = ({
   const effectiveHasNext = hasNext ?? (totalPages != null && current < totalPages);
   const groupStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
   const groupEnd = groupStart + PAGE_WINDOW - 1;
+  // >> 버튼: 다음 그룹의 첫 페이지가 totalPages를 넘으면 비활성화
+  const hasNextGroup = totalPages != null ? groupEnd < totalPages : effectiveHasNext;
 
   const pages = totalPages != null
     ? Array.from({ length: PAGE_WINDOW }, (_, i) => groupStart + i).filter(p => p >= 1 && p <= totalPages)
@@ -83,7 +85,7 @@ const Pagination = ({
       {/* >> 5페이지 앞으로 */}
       <button
         onClick={() => onChange(groupEnd + 1)}
-        disabled={!effectiveHasNext}
+        disabled={!hasNextGroup}
         className={NAV_BTN}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
