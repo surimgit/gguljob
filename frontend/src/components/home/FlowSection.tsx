@@ -23,11 +23,7 @@ const FlowCard = ({ step, title, description, link, image }: FlowCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (link.startsWith('http') || link.startsWith('/api')) {
-      window.location.href = link;
-    } else {
-      navigate(link);
-    }
+    navigate(link);
   };
 
   return (
@@ -71,8 +67,6 @@ const FlowCard = ({ step, title, description, link, image }: FlowCardProps) => {
     </div>
   );
 };
-
-const GITHUB_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1/auth/github`;
 
 const FLOW_CARDS: FlowCardProps[] = [
   { step: 1, title: '프로젝트 생성', description: '새로운 프로젝트를 만들고 팀원을 초대해요.', link: '/projects/new', image: cardCreate         },
