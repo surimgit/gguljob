@@ -1,18 +1,9 @@
 import { Settings, UserX } from 'lucide-react';
-import type { PositionType } from '../../../types/user';
-
-const POSITION_LABEL: Record<PositionType, string> = {
-  FE: 'Frontend',
-  BE: 'Backend',
-  AI: 'AI',
-  PM: 'PM',
-  INFRA: 'Infra',
-  DESIGN: 'Design',
-};
+import { getRoleDisplayName } from '../../../constants/skills';
 
 interface ProfileHeaderProps {
   name: string;
-  role: PositionType | null;
+  role: string | null;
   bio: string;
   techStacks: string[];
   avatarUrl?: string;
@@ -56,7 +47,7 @@ const ProfileHeader = ({
             <span className="text-2xl font-bold text-text-primary">{name}</span>
             {role && (
               <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
-                {POSITION_LABEL[role]}
+                {getRoleDisplayName(role)}
               </span>
             )}
           </div>
