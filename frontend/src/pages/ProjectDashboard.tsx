@@ -25,7 +25,7 @@ import chatbotImg from "../assets/images/chatbot.png";
 import ChatbotPopup from "../components/common/ChatbotPopup";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
-import type { PersonalSpaceData } from "../types/project";
+import type { PersonalSpaceData, MrRanking } from "../types/project";
 import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 
@@ -204,7 +204,7 @@ const ProjectDashboard = () => {
   const gitRepoInfo = dashboard?.gitRepoInfo ?? null;
   const rankings = gitLog?.mrRankings ?? [];
   const activities = gitLog?.recentActivities ?? [];
-  const maxCommits = Math.max(1, ...rankings.map((m: { mrCount: number }) => m.mrCount));
+  const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
 
   const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
   const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
@@ -829,9 +829,12 @@ const ProjectDashboard = () => {
                     아직 MR 기록이 없습니다
                   </p>
                 )}
-                {rankings.map((member: any, idx: number) => (
+                {rankings.map((member: MrRanking, idx: number) => (
                   <div
                     key={member.userId}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(member.userId); } }}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
                     style={
                       idx === 0
