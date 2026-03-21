@@ -107,11 +107,8 @@ public class ProjectService {
                     row -> (Long) row[1]
                 ));
 
-            // 스킬 이름 최대 4개 조회
-            List<String> allSkills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
-            List<String> skills = allSkills.stream()
-                .limit(4)
-                .toList();
+            // 스킬 이름 전체 조회 (프론트에서 표시 개수 제어)
+            List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
 
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());
@@ -132,8 +129,7 @@ public class ProjectService {
         Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(project.getId())
             .stream().collect(Collectors.toMap(row -> row[0].toString(), row -> (Long) row[1]));
 
-        List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId())
-            .stream().limit(4).toList();
+        List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
 
         return ProjectResponse.Simple.of(project, roleCounts, skills);
     }
