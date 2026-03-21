@@ -118,13 +118,14 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
       onClose={onClose}
       containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
     >
-      {/* 상단 그라디언트 바 */}
-      <div
-        className="relative h-[48px] rounded-t-[24px] flex items-center justify-end px-[16px]"
-        style={{ background: 'linear-gradient(150.6deg, #F7C948 0%, #F2B705 100%)' }}
-      >
-        <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-          <X size={20} />
+      {/* 상단 바 */}
+      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+        >
+          <X className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
