@@ -8,16 +8,15 @@ import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayou
 import beeImg from "../assets/images/memberfind.png";
 import { getRecommendedMembers, getRecommendedMembersTop } from "../api/projects";
 import type { RecommendedMember } from "../api/projects";
+import { ROLE_DISPLAY_NAMES, ROLE_TO_API, SKILL_NAMES, type RoleCode } from "../constants/skills";
 
 /* ── 필터 옵션 ── */
 const POSITION_FILTERS = [
   { label: "전체", value: "" },
-  { label: "Frontend", value: "FE" },
-  { label: "Backend", value: "BE" },
-  { label: "AI", value: "AI" },
-  { label: "PM", value: "PM" },
-  { label: "Infra", value: "INFRA" },
-  { label: "Design", value: "DESIGN" },
+  ...(Object.entries(ROLE_DISPLAY_NAMES) as [RoleCode, string][]).map(([code, label]) => ({
+    label,
+    value: ROLE_TO_API[code],
+  })),
 ];
 
 const LEVEL_FILTERS = [
@@ -29,6 +28,13 @@ const LEVEL_FILTERS = [
 
 const ITEMS_PER_PAGE = 6;
 
+const sortBySkillOrder = (skills: string[]) =>
+  [...skills].sort((a, b) => {
+    const idxA = SKILL_NAMES.indexOf(a);
+    const idxB = SKILL_NAMES.indexOf(b);
+    return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+  });
+
 const toCardData = (m: RecommendedMember) => ({
   id: String(m.userId),
   name: m.userName,
@@ -36,7 +42,7 @@ const toCardData = (m: RecommendedMember) => ({
   level: m.experienceLevel,
   matchRate: m.matchScore,
   introduction: m.bio,
-  techStacks: m.skills,
+  techStacks: sortBySkillOrder(m.skills),
   profileImage: "",
 });
 

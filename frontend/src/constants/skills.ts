@@ -117,12 +117,12 @@ export const SKILL_ID_TO_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.na
 
 export type RoleCode =
   | "FRONTEND" | "BACKEND" | "DEVOPS" | "DATA"
-  | "AI" | "DATABASE" | "MOBILE" | "TOOLS" | "PM";
+  | "AI" | "DATABASE" | "MOBILE" | "TOOLS" | "PM" | "DESIGN";
 
 /** 전체 직무 목록 */
 export const ROLE_LIST: RoleCode[] = [
   "FRONTEND", "BACKEND", "DEVOPS", "DATA",
-  "AI", "DATABASE", "MOBILE", "TOOLS", "PM",
+  "AI", "DATABASE", "MOBILE", "TOOLS", "PM", "DESIGN",
 ];
 
 /** 직무별 색상 */
@@ -136,6 +136,7 @@ export const ROLE_COLORS: Record<string, string> = {
   MOBILE:   "#F97316",
   TOOLS:    "#6366F1",
   PM:       "#F59E0B",
+  DESIGN:   "#8B5CF6",
 };
 
 export const getRoleColor = (role: string): string => ROLE_COLORS[role] ?? "#6B7280";
@@ -151,6 +152,7 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
   MOBILE:   "Mobile",
   TOOLS:    "Tools",
   PM:       "PM",
+  DESIGN:   "Design",
 };
 
 export const getRoleDisplayName = (role: string): string =>
@@ -167,4 +169,19 @@ export const ROLE_STACKS: Record<RoleCode, string[]> = {
   MOBILE:   SKILLS_BY_CATEGORY["MOBILE"] ?? [],
   TOOLS:    SKILLS_BY_CATEGORY["TOOLS"] ?? [],
   PM:       SKILLS_BY_CATEGORY["PM"] ?? [],
+  DESIGN:   SKILLS_BY_CATEGORY["DESIGN"] ?? [],
+};
+
+/** 직무 코드 → 백엔드 API Role 값 매핑 */
+export const ROLE_TO_API: Record<RoleCode, string> = {
+  FRONTEND: "FE",
+  BACKEND:  "BE",
+  DEVOPS:   "INFRA",
+  DATA:     "DATA",
+  AI:       "AI",
+  DATABASE: "DATABASE",
+  MOBILE:   "MOBILE",
+  TOOLS:    "TOOLS",
+  PM:       "PM",
+  DESIGN:   "DESIGN",
 };

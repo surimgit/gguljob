@@ -3,7 +3,7 @@ import { getProjects, getRecommendedProjects, getProjectFilters } from '../api/p
 import type { ProjectFilters, SkillGroup } from '../api/projects';
 import type { ProjectCardDto, ProjectListParams } from '../types/project';
 import type { PageResponse } from '../types/common';
-import { SKILLS_BY_CATEGORY } from '../constants/skills';
+import { SKILLS_BY_CATEGORY, ROLE_LIST } from '../constants/skills';
 
 /** 객체에서 문자열 값을 추출 (name, skillName, domainName, label, value, title 순으로 탐색) */
 const extractString = (obj: unknown): string => {
@@ -94,13 +94,21 @@ export const useProjectFilters = () => {
       }));
 
       // API에서 skillCategories가 비어있으면 constants/skills.ts 폴백
-      const skillGroups: SkillGroup[] = rawSkillGroups.length > 0
+      const unsorted: SkillGroup[] = rawSkillGroups.length > 0
         ? rawSkillGroups
         : Object.entries(SKILLS_BY_CATEGORY).map(([category, skills]) => ({
             category,
             label: CATEGORY_LABELS[category] ?? category,
             skills,
           }));
+
+      // skills.ts ROLE_LIST 순서대로 정렬
+      const roleOrder = ROLE_LIST as readonly string[];
+      const skillGroups = [...unsorted].sort((a, b) => {
+        const idxA = roleOrder.indexOf(a.category);
+        const idxB = roleOrder.indexOf(b.category);
+        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+      });
 
       // roles: [{value, label}] → label 배열
       const roles = (raw?.roles ?? []).map((r: any) => r?.label ?? r?.value ?? String(r));
