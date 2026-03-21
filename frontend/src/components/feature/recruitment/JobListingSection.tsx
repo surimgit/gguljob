@@ -299,6 +299,14 @@ const JobCard = ({
               NEW
             </span>
           )}
+          {dday && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full -translate-y-px"
+              style={{ background: `${ddayColor}18`, color: ddayColor }}
+            >
+              {dday}
+            </span>
+          )}
         </div>
         <p className="text-[17px] font-extrabold text-text-primary mb-1 truncate">{job.title}</p>
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-text-secondary flex-wrap">
@@ -312,16 +320,8 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 디데이 + 매칭 뱃지 + 북마크 */}
+      {/* 매칭 뱃지 + 북마크 */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        {dday && (
-          <span
-            className="text-[12px] font-bold px-2.5 py-1 rounded-full"
-            style={{ background: `${ddayColor}18`, color: ddayColor }}
-          >
-            {dday}
-          </span>
-        )}
         <span
           className="text-[12px] font-bold px-3 py-1 rounded-full"
           style={{ background: match.bg, color: match.color }}
