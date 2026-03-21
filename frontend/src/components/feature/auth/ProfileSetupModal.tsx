@@ -12,9 +12,9 @@ import ProfileEditCompletePopup from "./ProfileEditCompletePopup";
 
 interface FormData {
   goals: string[];
-  role: string;
+  position: string;
   experience: string;
-  languages: string[];
+  skills: string[];
   mbti: string;
   leaderScore: number;
 }
@@ -35,11 +35,11 @@ const isStepValid = (step: number, formData: FormData): boolean => {
     case 1:
       return formData.goals.length > 0;
     case 2:
-      return formData.role !== "";
+      return formData.position !== "";
     case 3:
       return formData.experience !== "";
     case 4:
-      return formData.languages.length > 0;
+      return formData.skills.length > 0;
     case 5:
       return formData.mbti !== "";
     case 6:
@@ -51,9 +51,9 @@ const isStepValid = (step: number, formData: FormData): boolean => {
 
 const DEFAULT_FORM: FormData = {
   goals: [],
-  role: "",
+  position: "",
   experience: "",
-  languages: [],
+  skills: [],
   mbti: "",
   leaderScore: 30,
 };
@@ -110,7 +110,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
-        <div className="bg-surface rounded-[20px] w-full max-w-[480px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
+        <div className="bg-surface rounded-[20px] w-full max-w-[620px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
           {/* Header */}
           <div className="px-6 pt-3 flex-shrink-0">
             {/* 로고 + X 버튼 */}
@@ -157,8 +157,8 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
             )}
             {step === 2 && (
               <Step2Role
-                selected={formData.role}
-                onChange={(v) => update("role", v)}
+                selected={formData.position}
+                onChange={(v) => update("position", v)}
               />
             )}
             {step === 3 && (
@@ -169,8 +169,8 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
             )}
             {step === 4 && (
               <Step4Languages
-                selected={formData.languages}
-                onChange={(v) => update("languages", v)}
+                selected={formData.skills}
+                onChange={(v) => update("skills", v)}
               />
             )}
             {step === 5 && (
@@ -188,7 +188,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 border-t border-border flex-shrink-0">
+          <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 flex-shrink-0">
             {step > 1 && (
               <button
                 onClick={handlePrev}

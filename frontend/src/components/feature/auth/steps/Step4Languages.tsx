@@ -3,7 +3,7 @@ import { TechStackInput } from '../../../common';
 
 interface Props {
   selected: string[];
-  onChange: (languages: string[]) => void;
+  onChange: (skills: string[]) => void;
 }
 
 const Step4Languages: FC<Props> = ({ selected, onChange }) => (

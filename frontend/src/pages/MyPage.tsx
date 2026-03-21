@@ -103,9 +103,9 @@ const MyPage = () => {
 
   const handleOnboardingComplete = async (formData: {
     goals: string[];
-    role: string;
+    position: string;
     experience: string;
-    languages: string[];
+    skills: string[];
     mbti: string;
     leaderScore: number;
   }) => {

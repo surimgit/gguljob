@@ -83,7 +83,7 @@ const OAuthCallback = () => {
           try {
             const payload = buildOnboardingPayload(formData);
             if (!payload) {
-              console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
+              console.error('[온보딩] 매핑 실패 - position:', formData.position, 'experience:', formData.experience);
               setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
               return;
             }
