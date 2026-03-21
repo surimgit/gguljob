@@ -38,30 +38,24 @@ public class JobRecommendationService {
     return getRecommendations(userId, 3, 0, false);
   }
 
-  // Neo4j 추천 풀 상한
-  private static final int MAX_RECOMMENDATION_POOL = 200;
-
   public PagedRecommendationResponse getRegularRecommendations(Long userId, int page, int size,
       String sort) {
     if (size < 1) size = 10;
     if (page < 1) page = 1;
 
     boolean sortByDeadline = "deadline".equalsIgnoreCase(sort);
-    int skip = (page - 1) * size;
 
-    // 페이지 단위로 조회 (Neo4j SKIP/LIMIT)
-    List<RecommendedJobDto> pageData = getRecommendations(userId, size, skip, sortByDeadline);
+    // 전체 후보를 한번에 조회하여 정확한 totalElements 확보
+    List<RecommendedJobDto> allCandidates = getRecommendations(userId, 200, 0, sortByDeadline);
 
-    // 현재 페이지가 꽉 차면 → 아직 더 있음 (최대 풀 기반 totalPages)
-    // 현재 페이지가 덜 차면 → 여기가 마지막
-    boolean isLastPage = pageData.size() < size;
-    int totalPages = isLastPage ? page
-        : (int) Math.ceil((double) MAX_RECOMMENDATION_POOL / size);
-    long totalElements = isLastPage
-        ? (long) (page - 1) * size + pageData.size()
-        : MAX_RECOMMENDATION_POOL;
+    long totalElements = allCandidates.size();
+    int totalPages = (int) Math.ceil((double) totalElements / size);
 
-    return new PagedRecommendationResponse(pageData, totalPages, totalElements, page, size);
+    int fromIndex = Math.min((page - 1) * size, allCandidates.size());
+    int toIndex = Math.min(fromIndex + size, allCandidates.size());
+    List<RecommendedJobDto> pageContent = allCandidates.subList(fromIndex, toIndex);
+
+    return new PagedRecommendationResponse(pageContent, totalPages, totalElements, page, size);
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,

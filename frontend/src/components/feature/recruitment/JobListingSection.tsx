@@ -76,6 +76,7 @@ const mapJobCategory = (category: string): RoleCode | null => {
 };
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
+const DEFAULT_PAGE_SIZE = 10;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
@@ -355,13 +356,13 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
         })
         .catch(() => {});
     } else {
-      getJobs({ page: currentPage, size: 10 })
+      getJobs({ page: currentPage, size: DEFAULT_PAGE_SIZE })
         .then(({ data }) => {
           if (Array.isArray(data)) {
             // 백엔드 미배포 시 호환: 옛날 배열 응답
             // Neo4j 풀 상한 200 / 페이지당 10 = 최대 20페이지
             setJobs(data.map(mapToJobListing));
-            setTotalPages(data.length >= 10 ? 20 : currentPage);
+            setTotalPages(data.length >= DEFAULT_PAGE_SIZE ? 20 : currentPage);
           } else {
             setJobs((data.content ?? []).map(mapToJobListing));
             setTotalPages(data.totalPages ?? 1);
