@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../common/Container';
 import mainsectionHoney from '../../assets/images/mainsection_honey.png';
-import cardLogin from '../../assets/images/card_login.png';
 import cardCreate from '../../assets/images/card_create.png';
 import cardProject from '../../assets/images/card_project.png';
 import cardMember from '../../assets/images/card_member.png';
