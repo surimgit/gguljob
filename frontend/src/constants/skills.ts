@@ -139,7 +139,8 @@ export const ROLE_COLORS: Record<string, string> = {
   DESIGN:   "#8B5CF6",
 };
 
-export const getRoleColor = (role: string): string => ROLE_COLORS[role] ?? "#6B7280";
+export const getRoleColor = (role: string): string =>
+  ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? "#6B7280";
 
 /** 직무 코드 → 화면 표시 이름 (영어 풀네임) */
 export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
@@ -156,7 +157,7 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
 };
 
 export const getRoleDisplayName = (role: string): string =>
-  ROLE_DISPLAY_NAMES[role as RoleCode] ?? role;
+  ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? role;
 
 /** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
 export const ROLE_STACKS: Record<RoleCode, string[]> = {
@@ -185,3 +186,8 @@ export const ROLE_TO_API: Record<RoleCode, string> = {
   PM:       "PM",
   DESIGN:   "DESIGN",
 };
+
+/** 백엔드 API Role 값 → RoleCode 역매핑 */
+export const API_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
+  Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
+);
