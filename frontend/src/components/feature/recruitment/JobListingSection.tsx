@@ -76,8 +76,7 @@ const mapJobCategory = (category: string): RoleCode | null => {
 };
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
-const BACKEND_PAGE_SIZE = 10;
-
+const DEFAULT_PAGE_SIZE = 10;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
@@ -346,23 +345,30 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [jobs, setJobs] = useState<JobListing[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(true);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     if (showBookmarked) {
       getBookmarkedJobs()
         .then(({ data }) => {
           setJobs(data.map(mapToJobListing));
-          setHasNextPage(false);
+          setTotalPages(1);
         })
         .catch(() => {});
     } else {
-      getJobs({ page: currentPage })
+      getJobs({ page: currentPage, size: DEFAULT_PAGE_SIZE })
         .then(({ data }) => {
-          setJobs(data.map(mapToJobListing));
-          setHasNextPage(data.length >= BACKEND_PAGE_SIZE);
+          if (Array.isArray(data)) {
+            // 백엔드 미배포 시 호환: 옛날 배열 응답
+            // Neo4j 풀 상한 200 / 페이지당 10 = 최대 20페이지
+            setJobs(data.map(mapToJobListing));
+            setTotalPages(data.length >= DEFAULT_PAGE_SIZE ? 20 : currentPage);
+          } else {
+            setJobs((data.content ?? []).map(mapToJobListing));
+            setTotalPages(data.totalPages ?? 1);
+          }
         })
-        .catch(() => {});
+        .catch(console.error);
     }
   }, [currentPage, showBookmarked]);
 
@@ -400,8 +406,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   };
 
   const handlePageChange = (page: number) => {
-    if (page < 1) return;
-    if (page > currentPage && !hasNextPage) return;
+    if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -492,7 +497,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
       </div>
 
       {/* 페이지네이션 — 항상 표시 */}
-      <Pagination current={currentPage} hasNext={hasNextPage} onChange={handlePageChange} />
+      <Pagination current={currentPage} totalPages={totalPages} onChange={handlePageChange} />
     </div>
   );
 };
