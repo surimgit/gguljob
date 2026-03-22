@@ -1,17 +1,21 @@
 package com.ssafy.gguljob.backend.domain.oauth.controller;
 
-import com.ssafy.gguljob.backend.domain.oauth.dto.TokenRequestDto;
 import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
+import com.ssafy.gguljob.backend.global.auth.CookieUtil;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
+import com.ssafy.gguljob.backend.global.auth.JwtProperties;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import com.ssafy.gguljob.backend.global.exception.UnAuthorizedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,11 +24,13 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 import com.ssafy.gguljob.backend.domain.oauth.service.GithubOAuthService;
 
@@ -38,25 +44,34 @@ public class AuthController {
         private final GithubOAuthService githubOAuthService;
         private final RedisService redisService;
         private final JwtTokenProvider jwtTokenProvider;
+        private final JwtProperties jwtProperties;
+        private final UserRepository userRepository;
+        private final Environment environment;
 
         @Value("${spring.security.oauth2.client.registration.github.client-id}")
         private String githubClientId;
 
+        @Value("${app.frontend.redirect-url}")
+        private String frontendRedirectUrl;
+
+        /**
+         * local 프로파일이면 secure=false (HTTP 환경), 그 외에는 secure=true (HTTPS 환경)
+         */
+        private boolean isSecureCookie() {
+                return !Arrays.asList(environment.getActiveProfiles()).contains("local");
+        }
+
         @Operation(summary = "깃허브 소셜 로그인 연동",
-                        description = "깃허브 로그인 창(http://localhost:8080/api/v1/auth/github)으로 강제 이동(Redirect) 시킵니다.")
+                        description = "깃허브 로그인 창으로 강제 이동(Redirect) 시킵니다.")
         @SecurityRequirements()
         @GetMapping("/github")
         public void redirectToGithub(HttpServletResponse response) throws IOException {
-                // 깃허브 로그인 공식 URL로 리다이렉트
                 String githubLoginUrl = "https://github.com/login/oauth/authorize?client_id="
                                 + githubClientId;
                 response.sendRedirect(githubLoginUrl);
         }
 
-        @Value("${app.frontend.redirect-url}")
-        private String frontendRedirectUrl;
-
-        @Operation(summary = "깃허브 로그인 콜백", description = "깃허브에서 인가 코드를 받아와 JWT 토큰을 발급합니다.")
+        @Operation(summary = "깃허브 로그인 콜백", description = "깃허브에서 인가 코드를 받아와 JWT 토큰을 HttpOnly 쿠키로 발급합니다.")
         @SecurityRequirements()
         @GetMapping("/github/callback")
         public void githubCallback(@RequestParam(value = "code", required = false) String code,
@@ -79,32 +94,61 @@ public class AuthController {
 
                 log.info("깃허브에서 받아온 인가 코드: {}", code);
 
-                TokenResponseDto tokenDto = githubOAuthService.loginWithGithub(code);
+                try {
+                        TokenResponseDto tokenDto = githubOAuthService.loginWithGithub(code);
 
-                String redirectUri = String.format("%s?accessToken=%s&refreshToken=%s&isNewUser=%b",
-                                frontendRedirectUrl, tokenDto.getAccessToken(),
-                                tokenDto.getRefreshToken(), tokenDto.isNewUser());
+                        // 토큰을 HttpOnly 쿠키로 세팅
+                        long accessMaxAge = jwtProperties.getAccessMinutes() * 60L;
+                        long refreshMaxAge = jwtProperties.getRefreshDays() * 24L * 60L * 60L;
+                        boolean secure = isSecureCookie();
+                        CookieUtil.addAccessTokenCookie(response, tokenDto.getAccessToken(), accessMaxAge, secure);
+                        CookieUtil.addRefreshTokenCookie(response, tokenDto.getRefreshToken(), refreshMaxAge, secure);
 
-                response.sendRedirect(redirectUri);
+                        // isNewUser만 쿼리 파라미터로 전달 (토큰은 쿠키로)
+                        String redirectUri = String.format("%s?isNewUser=%b",
+                                        frontendRedirectUrl, tokenDto.isNewUser());
+
+                        response.sendRedirect(redirectUri);
+                } catch (UnAuthorizedException e) {
+                        log.error("GitHub 로그인 처리 중 인증 오류: {}", e.getMessage());
+                        response.sendRedirect(frontendRedirectUrl + "?error=auth_failed");
+                } catch (Exception e) {
+                        log.error("GitHub 콜백 처리 중 예상치 못한 오류: {}", e.getMessage(), e);
+                        response.sendRedirect(frontendRedirectUrl + "?error=server_error");
+                }
         }
 
         @Operation(summary = "[개발용] 프리패스 로그인",
-                        description = "테스트할 때 깃허브 안 거치고 강제로 토큰을 뱉어줍니다. (실서버 배포 전 삭제하기)")
+                        description = "로컬 환경에서만 동작합니다. 깃허브 안 거치고 강제로 토큰을 쿠키로 발급합니다.")
         @GetMapping("/test-login")
-        public ResponseEntity<ApiResponseDto<TokenResponseDto>> testLogin(
+        public ResponseEntity<ApiResponseDto<Map<String, Object>>> testLogin(
                         @Parameter(description = "테스트할 유저 ID (기본값 1)") @RequestParam(
-                                        name = "userId", defaultValue = "1") Long userId) {
+                                        name = "userId", defaultValue = "1") Long userId,
+                        HttpServletResponse response) {
+
+                // local 프로파일이 아니면 차단
+                boolean isLocal = Arrays.asList(environment.getActiveProfiles()).contains("local");
+                if (!isLocal) {
+                        return ResponseEntity.status(404).build();
+                }
 
                 String testAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
                 String testRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
                 redisService.setValues("RT:" + userId, testRefreshToken,
-                                java.time.Duration.ofDays(14));
+                                java.time.Duration.ofDays(jwtProperties.getRefreshDays()));
 
-                TokenResponseDto tokenDto =
-                                new TokenResponseDto(testAccessToken, testRefreshToken, false);
+                long accessMaxAge = jwtProperties.getAccessMinutes() * 60L;
+                long refreshMaxAge = jwtProperties.getRefreshDays() * 24L * 60L * 60L;
+                boolean secure = isSecureCookie();
+                CookieUtil.addAccessTokenCookie(response, testAccessToken, accessMaxAge, secure);
+                CookieUtil.addRefreshTokenCookie(response, testRefreshToken, refreshMaxAge, secure);
 
-                return ResponseEntity.ok(new ApiResponseDto<>(200, "백도어 로그인 성공", tokenDto));
+                Map<String, Object> data = new HashMap<>();
+                data.put("userId", userId);
+                data.put("isNewUser", false);
+
+                return ResponseEntity.ok(new ApiResponseDto<>(200, "백도어 로그인 성공", data));
         }
 
         @Operation(summary = "현재 로그인한 유저 ID 조회(테스트용)",
@@ -140,82 +184,84 @@ public class AuthController {
         }
 
         @Operation(summary = "토큰 재발급 (Refresh)",
-                        description = "만료된 AccessToken을 대체하기 위해 유효한 RefreshToken을 보내 새 토큰 세트를 발급받습니다.")
+                        description = "쿠키의 RefreshToken으로 새 토큰 세트를 HttpOnly 쿠키로 재발급합니다.")
         @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
-                                        content = @Content(schema = @Schema(
-                                                        implementation = TokenResponseDto.class))),
-                        @ApiResponse(responseCode = "400",
-                                        description = "Redis에 토큰이 없거나 정보가 일치하지 않음 (재로그인 필요)",
-                                        content = @Content(schema = @Schema(
-                                                        example = "{\"status\": 400, \"message\": \"토큰 정보가 일치하지 않거나 로그아웃된 유저입니다.\", \"data\": null}")))})
+                        @ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
+                        @ApiResponse(responseCode = "401",
+                                        description = "Refresh Token이 유효하지 않거나 만료됨 (재로그인 필요)")})
         @PostMapping("/refresh")
-        public ResponseEntity<ApiResponseDto<TokenResponseDto>> refresh(
-                        @RequestBody TokenRequestDto requestDto) {
+        public ResponseEntity<ApiResponseDto<Void>> refresh(
+                        HttpServletRequest request,
+                        HttpServletResponse response) {
 
-                // 1. Refresh Token 자체가 정상인지 검증
-                if (!jwtTokenProvider.validateToken(requestDto.getRefreshToken())) {
-                        throw new RuntimeException("Refresh Token이 유효하지 않습니다.");
+                // 1. 쿠키에서 Refresh Token 추출
+                String refreshToken = CookieUtil.resolveTokenFromCookie(request, CookieUtil.REFRESH_TOKEN_COOKIE);
+                if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+                        throw new UnAuthorizedException("Refresh Token이 유효하지 않습니다.");
                 }
 
                 // 2. 토큰에서 유저 ID 꺼내기
-                Long userId = jwtTokenProvider.getUserIdFromToken(requestDto.getRefreshToken());
+                Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
 
-                // 3. Redis에서 우리가 저장해둔 토큰 가져오기
+                // 3. Redis에서 저장해둔 토큰 가져오기
                 String redisRefreshToken = redisService.getValues("RT:" + userId);
 
-                // 4. 레디스에 없거나, 프론트가 준 거랑 다르면
-                if (redisRefreshToken == null
-                                || !redisRefreshToken.equals(requestDto.getRefreshToken())) {
-                        throw new RuntimeException("토큰 정보가 일치하지 않거나 로그아웃된 유저입니다.");
+                // 4. 레디스에 없거나, 쿠키에서 온 거랑 다르면
+                if (redisRefreshToken == null || !redisRefreshToken.equals(refreshToken)) {
+                        throw new UnAuthorizedException("토큰 정보가 일치하지 않거나 로그아웃된 유저입니다.");
                 }
 
-                // 5. 검증 통과
-                String newAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
+                // 5. DB에서 최신 role 조회 후 새 토큰 발급
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 유저입니다."));
+                String newAccessToken = jwtTokenProvider.createAccessToken(userId, user.getAuthority().name());
                 String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
                 // 6. Redis에 새 Refresh Token으로 덮어쓰기
                 redisService.setValues("RT:" + userId, newRefreshToken,
-                                java.time.Duration.ofDays(14));
+                                java.time.Duration.ofDays(jwtProperties.getRefreshDays()));
 
-                TokenResponseDto newTokenDto =
-                                new TokenResponseDto(newAccessToken, newRefreshToken, false);
-                ApiResponseDto<TokenResponseDto> response =
-                                new ApiResponseDto<>(200, "토큰 갱신", newTokenDto);
+                // 7. 새 토큰을 쿠키로 세팅
+                long accessMaxAge = jwtProperties.getAccessMinutes() * 60L;
+                long refreshMaxAge = jwtProperties.getRefreshDays() * 24L * 60L * 60L;
+                boolean secure = isSecureCookie();
+                CookieUtil.addAccessTokenCookie(response, newAccessToken, accessMaxAge, secure);
+                CookieUtil.addRefreshTokenCookie(response, newRefreshToken, refreshMaxAge, secure);
 
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(new ApiResponseDto<>(200, "토큰 갱신 성공", null));
         }
 
         @Operation(summary = "로그아웃",
-                        description = "현재 사용 중인 AccessToken을 블랙리스트에 등록하고, Redis의 RefreshToken을 삭제하여 로그아웃 처리합니다.")
-        @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "로그아웃 성공",
-                        content = @Content(schema = @Schema(
-                                        example = "{\"status\": 200, \"message\": \"로그아웃 성공\", \"data\": null}"))),
-                        @ApiResponse(responseCode = "401",
-                                        description = "인증되지 않은 사용자 (이미 로그아웃 되었거나 만료된 토큰)",
-                                        content = @Content(schema = @Schema(
-                                                        example = "{\"status\": 401, \"message\": \"인증에 실패했습니다.\", \"data\": null}")))})
+                        description = "AccessToken을 블랙리스트에 등록하고, 쿠키를 삭제하여 로그아웃 처리합니다. AT가 만료되어도 로그아웃 가능합니다.")
+        @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "로그아웃 성공")})
         @PostMapping("/logout")
         public ResponseEntity<ApiResponseDto<Void>> logout(
-                        @AuthenticationPrincipal CustomUserDetails userDetails,
-                        HttpServletRequest request) {
-                String accessToken = resolveToken(request);
+                        HttpServletRequest request,
+                        HttpServletResponse response) {
 
-                redisService.deleteValues("RT:" + userDetails.getId());
+                String accessToken = CookieUtil.resolveTokenFromCookie(request, CookieUtil.ACCESS_TOKEN_COOKIE);
+                String refreshToken = CookieUtil.resolveTokenFromCookie(request, CookieUtil.REFRESH_TOKEN_COOKIE);
 
-                if (accessToken != null) {
+                // RT에서 userId 꺼내서 Redis RT 삭제 (AT 만료돼도 RT로 식별 가능)
+                if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
+                        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+                        redisService.deleteValues("RT:" + userId);
+                }
+
+                // AT 블랙리스트 (유효한 경우에만)
+                if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
                         Long expiration = jwtTokenProvider.getExpiration(accessToken);
-                        redisService.setValues(accessToken, "logout",
-                                        java.time.Duration.ofMillis(expiration));
+                        if (expiration > 0) {
+                                redisService.setValues(accessToken, "logout",
+                                                java.time.Duration.ofMillis(expiration));
+                        }
                 }
-                return ResponseEntity.ok(new ApiResponseDto<>(200, "로그아웃 성공", null));
-        }
 
-        private String resolveToken(HttpServletRequest request) {
-                String bearerToken = request.getHeader("Authorization");
-                if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-                        return bearerToken.substring(7);
-                }
-                return null;
+                // 쿠키 삭제는 무조건
+                boolean secure = isSecureCookie();
+                CookieUtil.deleteAccessTokenCookie(response, secure);
+                CookieUtil.deleteRefreshTokenCookie(response, secure);
+
+                return ResponseEntity.ok(new ApiResponseDto<>(200, "로그아웃 성공", null));
         }
 }
