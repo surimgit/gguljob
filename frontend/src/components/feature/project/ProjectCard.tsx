@@ -1,23 +1,11 @@
 import type { ProjectCardDto, BackendProjectStatus } from '../../../types/project';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
+import { CATEGORY_COLORS } from '../../../constants/domains';
 
 export interface ProjectCardProps {
   project: ProjectCardDto;
   onClick?: (project: ProjectCardDto) => void;
 }
-
-const CATEGORY_COLORS: Record<string, string> = {
-  웹기술: '#3b82f6',
-  웹디자인: '#ec4899',
-  모바일: '#f97316',
-  AIoT: '#14b8a6',
-  인공지능: '#6366f1',
-  빅데이터: '#8b5cf6',
-  블록체인: '#f59e0b',
-  자율주행: '#06b6d4',
-  핀테크: '#22c55e',
-  메타버스: '#a855f7',
-};
 
 const FALLBACK_AVATAR_COLOR = '#6366f1';
 

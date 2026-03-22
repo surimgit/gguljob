@@ -3,16 +3,11 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import { getRoleDisplayName, getRoleColor } from "../constants/skills";
+import { CATEGORY_COLORS } from "../constants/domains";
 import { Pagination } from "../components/common";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
 
 /* ── 컴포넌트 ── */
-
-const CATEGORY_COLORS: Record<string, string> = {
-  웹기술: '#3b82f6', 웹디자인: '#ec4899', 모바일: '#f97316',
-  AIoT: '#14b8a6', 인공지능: '#6366f1', 빅데이터: '#8b5cf6',
-  블록체인: '#f59e0b', 자율주행: '#06b6d4', 핀테크: '#22c55e', 메타버스: '#a855f7',
-};
 
 const STATUS_LABEL: Record<BackendProjectStatus, string> = {
   RECRUITING: '모집중', PROCEEDING: '진행중', DONE: '완료',

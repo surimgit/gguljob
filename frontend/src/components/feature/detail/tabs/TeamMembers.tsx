@@ -389,20 +389,14 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
           boxShadow: "0px 24px 60px 0px rgba(0,0,0,0.18)",
         }}
       >
-        {/* 상단 헤더 바 */}
-        <div
-          className="h-[27px] flex items-center justify-end px-2"
-          style={{
-            background: "var(--color-primary-hover)",
-            borderRadius: "18px 18px 0 0",
-          }}
-        >
+        {/* 상단 바 */}
+        <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5" style={{ borderRadius: "18px 18px 0 0" }}>
           <button
+            type="button"
             onClick={onClose}
-            className="w-5 h-5 flex items-center justify-center rounded-[9px] cursor-pointer"
-            style={{ background: "rgba(255,255,255,0.5)", color: "#5c5647" }}
+            className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
           >
-            <X className="w-3 h-3" />
+            <X className="w-4 h-4 text-gray-600" />
           </button>
         </div>
 
