@@ -240,7 +240,7 @@ const PortfolioCreate = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto py-10 px-4 flex flex-col gap-8">
+    <div className="max-w-[1400px] mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col gap-8">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
         <button

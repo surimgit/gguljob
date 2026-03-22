@@ -226,7 +226,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
             background: 'linear-gradient(to bottom, rgba(255,242,198,0.36), rgba(247,201,72,0.36))',
           }}
         >
-          <div className="max-w-[1400px] mx-auto px-[42px] relative flex flex-col justify-center pt-20 pb-14 pl-[6%]">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-20 pb-14 pl-[6%]">
             {/* 메인 타이틀 */}
             <p
               className="font-bold"
@@ -275,7 +275,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
       </div>
 
       {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
-      <div className="max-w-[1400px] mx-auto" style={{ paddingTop: '35px', paddingLeft: '42px', paddingRight: '42px', paddingBottom: '40px' }}>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: '35px', paddingBottom: '40px' }}>
         <h2 className="font-bold" style={{ fontSize: '30px' }}>
           <span style={{ color: '#111827' }}>맞춤 공고 </span>
           <span style={{ color: '#F2B705' }}>TOP 3</span>

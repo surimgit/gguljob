@@ -102,7 +102,7 @@ const ProjectFind = () => {
         )}
       </section>
 
-      <div className="max-w-[1400px] mx-auto pt-[48px]">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-[48px]">
 
         {/* 필터 */}
         <ProjectFilter

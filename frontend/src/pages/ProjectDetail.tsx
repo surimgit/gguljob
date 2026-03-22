@@ -68,7 +68,7 @@ const ProjectDetail = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-8">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 프로젝트 헤더 */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
