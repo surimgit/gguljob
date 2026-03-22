@@ -2,7 +2,9 @@ package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
+import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
@@ -41,7 +43,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.access.AccessDeniedException;
+import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,6 +64,8 @@ public class ProjectService {
     private final JoinRequestRepository joinRequestRepository;
     private final GithubSyncService githubSyncService;
     private final UserRepProjectRepository userRepProjectRepository;
+    private final TroubleshootingRepository troubleshootingRepository;
+    private final PullRequestRepository pullRequestRepository;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -143,7 +147,7 @@ public class ProjectService {
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
 
         if (!project.getLeader().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("수정 권한이 없습니다.");
+            throw new ForbiddenException("수정 권한이 없습니다.");
         }
 
         List<Long> skillIds = projectSkillRepository.findAllByProjectId(projectId).stream()
@@ -228,7 +232,7 @@ public class ProjectService {
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
 
         if (!project.getLeader().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("프로젝트 수정 권한이 없습니다.");
+            throw new ForbiddenException("프로젝트 수정 권한이 없습니다.");
         }
 
         // 기본 정보 업데이트
@@ -447,5 +451,29 @@ public class ProjectService {
         }
 
         project.updateTitle(selectedTopic);
+    }
+
+    @Transactional
+    public void deleteProject(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 삭제는 팀장만 가능합니다.");
+        }
+
+        // FK 연관 데이터 삭제 (순서 중요)
+        userRepProjectRepository.deleteAllByProjectId(projectId);
+        joinRequestRepository.deleteAllByProjectId(projectId);
+        troubleshootingRepository.deleteAllByProjectId(projectId);
+        pullRequestRepository.deleteAllByProjectId(projectId);
+        gitRepositoryRepository.deleteAllByProjectId(projectId);
+        projectPositionRepository.deleteAllByProjectId(projectId);
+        projectMemberRepository.deleteAllByProjectId(projectId);
+        projectSkillRepository.deleteAllByProjectId(projectId);
+
+        projectRepository.delete(project);
+
+        log.info("프로젝트 삭제 완료 - projectId: {}, userId: {}", projectId, userId);
     }
 }

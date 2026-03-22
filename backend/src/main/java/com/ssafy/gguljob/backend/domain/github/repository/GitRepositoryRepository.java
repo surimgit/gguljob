@@ -11,4 +11,6 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
     Optional<GitRepository> findByProject_Id(Long projectId);
 
     Optional<GitRepository> findByRepoUrl(String repoUrl);
+
+    void deleteAllByProjectId(Long projectId);
 }

@@ -49,4 +49,6 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
     WHERE t.id IN :ids
     """)
     List<Troubleshooting> findAllByIdIn(@Param("ids") List<Long> ids);
+
+    void deleteAllByProjectId(Long projectId);
 }
