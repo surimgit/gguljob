@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.matching.event.UserProfileSyncEvent;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.UserRepProjectRepository;
 import com.ssafy.gguljob.backend.domain.skill.repository.UserSkillRepository;
@@ -46,6 +47,7 @@ public class UserService {
         private final UserSkillRepository userSkillRepository;
         private final RedisService redisService;
         private final ProjectMemberRepository projectMemberRepository;
+        private final ProjectRepository projectRepository;
         private final S3ImageService s3ImageService;
         private final UserRepProjectRepository userRepProjectRepository;
         private final ProjectSkillRepository projectSkillRepository;
@@ -94,6 +96,38 @@ public class UserService {
                                                         .user(user).goal(goalType).build())
                                         .toList();
                         userGoalRepository.saveAll(newGoals);
+                }
+
+                if (requestDto.getRepProjectIds() != null) {
+                        userRepProjectRepository.deleteAllByUserId(userId);
+
+                        if (!requestDto.getRepProjectIds().isEmpty()) {
+                                List<Long> requestedIds = requestDto.getRepProjectIds();
+
+                                // 유저가 실제 참여한 프로젝트인지 검증
+                                List<Long> validProjectIds = projectMemberRepository
+                                                .findByUserIdAndProjectIdIn(userId, requestedIds)
+                                                .stream()
+                                                .map(pm -> pm.getProject().getId())
+                                                .toList();
+
+                                if (validProjectIds.size() != requestedIds.size()) {
+                                        throw new IllegalArgumentException(
+                                                        "참여하지 않은 프로젝트는 대표 프로젝트로 설정할 수 없습니다.");
+                                }
+
+                                Map<Long, Project> projectMap = projectRepository
+                                                .findAllById(requestedIds).stream()
+                                                .collect(Collectors.toMap(Project::getId,
+                                                                p -> p));
+                                List<UserRepProject> repProjects = requestedIds.stream()
+                                                .map(id -> UserRepProject.builder()
+                                                                .user(user)
+                                                                .project(projectMap.get(id))
+                                                                .build())
+                                                .toList();
+                                userRepProjectRepository.saveAll(repProjects);
+                        }
                 }
 
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));

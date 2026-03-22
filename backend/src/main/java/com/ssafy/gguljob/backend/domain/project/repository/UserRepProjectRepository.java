@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserRepProjectRepository extends JpaRepository<UserRepProject, Long> {
 
-    @Query("SELECT u FROM UserRepProject u JOIN FETCH u.project WHERE u.user.id = :userId")
+    @Query("SELECT u FROM UserRepProject u JOIN FETCH u.project WHERE u.user.id = :userId ORDER BY u.id ASC")
     List<UserRepProject> findByUserIdWithProject(@Param("userId") Long userId);
+
+    void deleteAllByUserId(Long userId);
 }

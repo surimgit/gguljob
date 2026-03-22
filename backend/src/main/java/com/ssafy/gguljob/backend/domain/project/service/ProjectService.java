@@ -19,7 +19,9 @@ import com.ssafy.gguljob.backend.domain.project.dto.RecruitmentStatusDto;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
+import com.ssafy.gguljob.backend.domain.project.entity.UserRepProject;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.repository.UserRepProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
@@ -59,6 +61,7 @@ public class ProjectService {
     private final ProjectPositionRepository projectPositionRepository;
     private final JoinRequestRepository joinRequestRepository;
     private final GithubSyncService githubSyncService;
+    private final UserRepProjectRepository userRepProjectRepository;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -114,24 +117,25 @@ public class ProjectService {
         }).collect(Collectors.toList());
     }
 
-    // 마이페이지 위젯용: 가장 최근에 참여한 진행 중 프로젝트 1개 조회
-    public ProjectResponse.Simple getMyRepProject(Long userId) {
-        // (주의: findFirstBy... 쿼리메서드는 ProjectMemberRepository에 추가하셔야 합니다!)
-        Optional<ProjectMember> repMemberOpt = projectMemberRepository
-            .findFirstByUserIdAndProjectStatusOrderByProjectCreatedAtDesc(userId, ProjectStatus.RECRUITING); // 형님 기본값이 RECRUITING이길래 맞췄습니다!
+    // 마이페이지 위젯용: 사용자가 설정한 대표 프로젝트 조회 (최대 2개)
+    public List<ProjectResponse.Simple> getMyRepProjects(Long userId) {
+        List<UserRepProject> repProjectEntities = userRepProjectRepository
+            .findByUserIdWithProject(userId);
 
-        if (repMemberOpt.isEmpty()) {
-            return null; // 참여 중인 프로젝트 없으면 깔끔하게 null 리턴
+        if (repProjectEntities.isEmpty()) {
+            return List.of();
         }
 
-        Project project = repMemberOpt.get().getProject();
+        return repProjectEntities.stream().limit(2).map(rep -> {
+            Project project = rep.getProject();
 
-        Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(project.getId())
-            .stream().collect(Collectors.toMap(row -> row[0].toString(), row -> (Long) row[1]));
+            Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(project.getId())
+                .stream().collect(Collectors.toMap(row -> row[0].toString(), row -> (Long) row[1]));
 
-        List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
+            List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
 
-        return ProjectResponse.Simple.of(project, roleCounts, skills);
+            return ProjectResponse.Simple.of(project, roleCounts, skills);
+        }).toList();
     }
 
     public ProjectResponse.UpdateFormInfo getUpdateForm(Long projectId, Long currentUserId) {
