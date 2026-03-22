@@ -17,7 +17,7 @@ import {
   PieChart,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
-import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY } from '../constants/skills';
+import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY, SKILL_CATEGORY_META } from '../constants/skills';
 
 /* ── 상수 ── */
 
@@ -26,20 +26,14 @@ const DOMAINS = [
   '빅데이터', '블록체인', '자율주행', '콘텐츠',
 ];
 
-const CATEGORY_META: { key: string; label: string; icon: React.ElementType }[] = [
-  { key: "FRONTEND", label: "Frontend", icon: Monitor },
-  { key: "BACKEND",  label: "Backend",  icon: Server },
-  { key: "DEVOPS",   label: "DevOps",   icon: Cloud },
-  { key: "DATA",     label: "Data",     icon: PieChart },
-  { key: "AI",       label: "AI",       icon: Bot },
-  { key: "DATABASE", label: "Database", icon: Database },
-  { key: "MOBILE",   label: "Mobile",   icon: Smartphone },
-  { key: "TOOLS",    label: "Tools",    icon: Wrench },
-  { key: "PM",       label: "PM",       icon: Briefcase },
-];
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+};
 
-const TECH_CATEGORIES = CATEGORY_META.map((meta) => ({
+const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
   ...meta,
+  icon: CATEGORY_ICONS[meta.key] ?? Info,
   stacks: SKILLS_BY_CATEGORY[meta.key] ?? [],
 }));
 

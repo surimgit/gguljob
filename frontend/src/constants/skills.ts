@@ -187,6 +187,19 @@ export const getRoleColor = (role: string): string =>
 export const getRoleDisplayName = (role: string): string =>
   ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
 
+/** 기술 스택 카테고리 메타 (아이콘 제외 — UI에서 매핑) */
+export const SKILL_CATEGORY_META: { key: string; label: string }[] = [
+  { key: "FRONTEND", label: "Frontend" },
+  { key: "BACKEND",  label: "Backend" },
+  { key: "DEVOPS",   label: "DevOps" },
+  { key: "DATA",     label: "Data" },
+  { key: "AI",       label: "AI" },
+  { key: "DATABASE", label: "Database" },
+  { key: "MOBILE",   label: "Mobile" },
+  { key: "TOOLS",    label: "Tools" },
+  { key: "PM",       label: "PM" },
+];
+
 /** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
 export const ROLE_STACKS: Record<RoleCode, string[]> = {
   FRONTEND: SKILLS_BY_CATEGORY["FRONTEND"] ?? [],
