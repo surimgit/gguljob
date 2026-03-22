@@ -28,6 +28,7 @@ import api from "../api/index";
 import type { PersonalSpaceData, MrRanking } from "../types/project";
 import { getPersonalSpace, getTeamManagement, recommendTopics, updateProjectTitle } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
+import { getRoleDisplayName, getRoleColor } from "../constants/skills";
 
 /* ── 탭 설정 ── */
 const TABS = [
@@ -206,8 +207,7 @@ const ProjectDashboard = () => {
   const activities = gitLog?.recentActivities ?? [];
   const maxCommits = Math.max(1, ...rankings.map((m) => m.mrCount));
 
-  const feCount = teamStats.roleCounts?.["FRONTEND"] ?? teamStats.roleCounts?.["FE"] ?? 0;
-  const beCount = teamStats.roleCounts?.["BACKEND"] ?? teamStats.roleCounts?.["BE"] ?? 0;
+  const roleCountEntries = Object.entries(teamStats.roleCounts ?? {}).filter(([, count]) => count > 0);
 
   return (
     <>
@@ -414,13 +414,12 @@ const ProjectDashboard = () => {
             {/* 우측 헥사곤 스탯 */}
             <div className="hidden md:flex flex-col items-center flex-shrink-0">
               <HexStat label="팀원" value={teamStats.totalMembers} large>
-                <div className="flex items-center gap-2 text-xs font-bold">
-                  <span style={{ color: "var(--color-blue)" }}>
-                    FE {feCount}
-                  </span>
-                  <span style={{ color: "var(--color-success)" }}>
-                    BE {beCount}
-                  </span>
+                <div className="flex items-center gap-2 text-xs font-bold flex-wrap justify-center">
+                  {roleCountEntries.map(([role, count]) => (
+                    <span key={role} style={{ color: getRoleColor(role) }}>
+                      {getRoleDisplayName(role)} {count}
+                    </span>
+                  ))}
                 </div>
               </HexStat>
               <div className="flex gap-4" style={{ marginTop: -20 }}>

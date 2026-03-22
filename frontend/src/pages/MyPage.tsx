@@ -15,7 +15,6 @@ import { buildOnboardingPayload, userToFormData } from '../components/feature/au
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { getMe, withdrawApi, updateProfileApi } from '../api/user';
-import { getRoleDisplayName } from '../constants/skills';
 
 interface Project {
   id: string;
@@ -159,7 +158,7 @@ const MyPage = () => {
         user={{
           id: String(user?.id ?? ''),
           name: profile.name,
-          role: profile.role ? getRoleDisplayName(profile.role) : '',
+          role: profile.role ?? '',
           bio: profile.bio,
           avatarUrl: profile.avatarUrl,
           techStacks: profile.techStacks,
