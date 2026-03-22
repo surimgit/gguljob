@@ -119,18 +119,12 @@ public class AuthController {
         }
 
         @Operation(summary = "[개발용] 프리패스 로그인",
-                        description = "로컬 환경에서만 동작합니다. 깃허브 안 거치고 강제로 토큰을 쿠키로 발급합니다.")
+                        description = "깃허브 안 거치고 강제로 토큰을 쿠키로 발급합니다.")
         @GetMapping("/test-login")
         public ResponseEntity<ApiResponseDto<Map<String, Object>>> testLogin(
                         @Parameter(description = "테스트할 유저 ID (기본값 1)") @RequestParam(
                                         name = "userId", defaultValue = "1") Long userId,
                         HttpServletResponse response) {
-
-                // local 프로파일이 아니면 차단
-                boolean isLocal = Arrays.asList(environment.getActiveProfiles()).contains("local");
-                if (!isLocal) {
-                        return ResponseEntity.status(404).build();
-                }
 
                 String testAccessToken = jwtTokenProvider.createAccessToken(userId, "ROLE_USER");
                 String testRefreshToken = jwtTokenProvider.createRefreshToken(userId);
