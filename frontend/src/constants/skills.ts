@@ -168,9 +168,13 @@ export const ROLE_TO_API: Record<RoleCode, string> = {
 };
 
 /** 백엔드 API Role 값 → RoleCode 역매핑 */
-export const API_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
-  Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
-);
+export const API_TO_ROLE: Record<string, RoleCode> = {
+  ...Object.fromEntries(
+    Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
+  ),
+  /* PositionType enum에서 ROLE_TO_API와 다른 이름으로 내려오는 값 보정 */
+  DB: "DATABASE",
+};
 
 /** 화면 표시 이름 → RoleCode 역매핑 (예: "Frontend" → "FRONTEND") */
 export const DISPLAY_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(

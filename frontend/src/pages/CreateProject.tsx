@@ -11,9 +11,13 @@ import {
   Bot,
   Smartphone,
   X,
+  HardDrive,
+  Wrench,
+  Briefcase,
+  PieChart,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
-import { ROLE_LIST, getRoleDisplayName } from '../constants/skills';
+import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY } from '../constants/skills';
 
 /* ── 상수 ── */
 
@@ -22,16 +26,22 @@ const DOMAINS = [
   '빅데이터', '블록체인', '자율주행', '콘텐츠',
 ];
 
-const TECH_CATEGORIES = {
-  Frontend:  { icon: Monitor,    stacks: ['React', 'Vue', 'Angular', 'Next.js', 'Nuxt.js', 'TypeScript', 'JavaScript', 'TailwindCSS', 'Svelte'] },
-  Backend:   { icon: Server,     stacks: ['Spring', 'Django', 'FastAPI', 'Express', 'NestJS', 'Node.js', 'Java', 'Python', 'Go', 'Rust', 'Kotlin'] },
-  Database:  { icon: Database,   stacks: ['MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase', 'Oracle', 'SQLite'] },
-  Infra:     { icon: Cloud,      stacks: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins', 'Nginx', 'Linux'] },
-  AI:        { icon: Bot,        stacks: ['PyTorch', 'TensorFlow', 'Scikit-learn', 'Pandas', 'NumPy', 'OpenCV', 'HuggingFace'] },
-  Mobile:    { icon: Smartphone, stacks: ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Android', 'iOS'] },
-} as const;
+const CATEGORY_META: { key: string; label: string; icon: React.ElementType }[] = [
+  { key: "FRONTEND", label: "Frontend", icon: Monitor },
+  { key: "BACKEND",  label: "Backend",  icon: Server },
+  { key: "DEVOPS",   label: "DevOps",   icon: Cloud },
+  { key: "DATA",     label: "Data",     icon: PieChart },
+  { key: "AI",       label: "AI",       icon: Bot },
+  { key: "DATABASE", label: "Database", icon: Database },
+  { key: "MOBILE",   label: "Mobile",   icon: Smartphone },
+  { key: "TOOLS",    label: "Tools",    icon: Wrench },
+  { key: "PM",       label: "PM",       icon: Briefcase },
+];
 
-type TechCategory = keyof typeof TECH_CATEGORIES;
+const TECH_CATEGORIES = CATEGORY_META.map((meta) => ({
+  ...meta,
+  stacks: SKILLS_BY_CATEGORY[meta.key] ?? [],
+}));
 
 
 /* ── 타입 ── */
@@ -68,7 +78,7 @@ const CreateProject = () => {
     leaderRole: '',
   });
 
-  const [openCategory, setOpenCategory] = useState<TechCategory | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [memberDraft, setMemberDraft] = useState<Member>({ name: '', position: '', email: '' });
 
   /* ── 핸들러 ── */
@@ -284,16 +294,16 @@ const CreateProject = () => {
           </p>
 
           <div className="flex flex-col gap-2">
-            {(Object.keys(TECH_CATEGORIES) as TechCategory[]).map((cat) => {
-              const { icon: Icon, stacks } = TECH_CATEGORIES[cat];
-              const isOpen = openCategory === cat;
-              const selectedStacks = form.techStacks[cat] ?? [];
+            {TECH_CATEGORIES.map((cat) => {
+              const { key, label, icon: Icon, stacks } = cat;
+              const isOpen = openCategory === key;
+              const selectedStacks = form.techStacks[key] ?? [];
 
               return (
-                <div key={cat}>
+                <div key={key}>
                   <button
                     type="button"
-                    onClick={() => setOpenCategory(isOpen ? null : cat)}
+                    onClick={() => setOpenCategory(isOpen ? null : key)}
                     className="flex items-center justify-between w-full px-4 py-3 rounded-xl cursor-pointer transition-colors"
                     style={{
                       backgroundColor: isOpen ? 'var(--color-primary-soft)' : 'var(--color-background)',
@@ -303,7 +313,7 @@ const CreateProject = () => {
                   >
                     <span className="flex items-center gap-2 text-sm font-semibold">
                       <Icon className="w-4 h-4" />
-                      {cat}
+                      {label}
                       {selectedStacks.length > 0 && (
                         <span
                           className="text-xs font-normal px-2 py-0.5 rounded-full"
@@ -327,7 +337,7 @@ const CreateProject = () => {
                           <button
                             key={stack}
                             type="button"
-                            onClick={() => toggleStack(cat, stack)}
+                            onClick={() => toggleStack(key, stack)}
                             className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
                             style={{
                               borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',
