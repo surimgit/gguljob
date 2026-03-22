@@ -139,9 +139,6 @@ export const ROLE_COLORS: Record<string, string> = {
   DESIGN:   "#8B5CF6",
 };
 
-export const getRoleColor = (role: string): string =>
-  ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? "#6B7280";
-
 /** 직무 코드 → 화면 표시 이름 (영어 풀네임) */
 export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
   FRONTEND: "Frontend",
@@ -154,23 +151,6 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
   TOOLS:    "Tools",
   PM:       "PM",
   DESIGN:   "Design",
-};
-
-export const getRoleDisplayName = (role: string): string =>
-  ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? role;
-
-/** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
-export const ROLE_STACKS: Record<RoleCode, string[]> = {
-  FRONTEND: SKILLS_BY_CATEGORY["FRONTEND"] ?? [],
-  BACKEND:  SKILLS_BY_CATEGORY["BACKEND"] ?? [],
-  DEVOPS:   SKILLS_BY_CATEGORY["DEVOPS"] ?? [],
-  DATA:     SKILLS_BY_CATEGORY["DATA"] ?? [],
-  AI:       SKILLS_BY_CATEGORY["AI"] ?? [],
-  DATABASE: SKILLS_BY_CATEGORY["DATABASE"] ?? [],
-  MOBILE:   SKILLS_BY_CATEGORY["MOBILE"] ?? [],
-  TOOLS:    SKILLS_BY_CATEGORY["TOOLS"] ?? [],
-  PM:       SKILLS_BY_CATEGORY["PM"] ?? [],
-  DESIGN:   SKILLS_BY_CATEGORY["DESIGN"] ?? [],
 };
 
 /** 직무 코드 → 백엔드 API Role 값 매핑 */
@@ -191,3 +171,28 @@ export const ROLE_TO_API: Record<RoleCode, string> = {
 export const API_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
   Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
 );
+
+/** 화면 표시 이름 → RoleCode 역매핑 (예: "Frontend" → "FRONTEND") */
+export const DISPLAY_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
+  Object.entries(ROLE_DISPLAY_NAMES).map(([code, display]) => [display, code as RoleCode]),
+);
+
+export const getRoleColor = (role: string): string =>
+  ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? ROLE_COLORS[DISPLAY_TO_ROLE[role]] ?? "#6B7280";
+
+export const getRoleDisplayName = (role: string): string =>
+  ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
+
+/** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
+export const ROLE_STACKS: Record<RoleCode, string[]> = {
+  FRONTEND: SKILLS_BY_CATEGORY["FRONTEND"] ?? [],
+  BACKEND:  SKILLS_BY_CATEGORY["BACKEND"] ?? [],
+  DEVOPS:   SKILLS_BY_CATEGORY["DEVOPS"] ?? [],
+  DATA:     SKILLS_BY_CATEGORY["DATA"] ?? [],
+  AI:       SKILLS_BY_CATEGORY["AI"] ?? [],
+  DATABASE: SKILLS_BY_CATEGORY["DATABASE"] ?? [],
+  MOBILE:   SKILLS_BY_CATEGORY["MOBILE"] ?? [],
+  TOOLS:    SKILLS_BY_CATEGORY["TOOLS"] ?? [],
+  PM:       SKILLS_BY_CATEGORY["PM"] ?? [],
+  DESIGN:   SKILLS_BY_CATEGORY["DESIGN"] ?? [],
+};

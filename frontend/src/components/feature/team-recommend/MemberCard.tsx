@@ -53,7 +53,7 @@ const MemberCard = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className="text-sm font-bold px-1.0 py-0.5 rounded"
+              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
