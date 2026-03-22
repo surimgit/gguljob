@@ -412,9 +412,9 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   };
 
   return (
-    <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-3 scroll-mt-20">
+    <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* 섹션 제목 */}
-      <div className="px-[42px] pt-8 pb-5">
+      <div className="pt-8 pb-5">
         <h2 className="font-bold text-[30px]">
           <span className="text-text-primary">전체 </span>
           <span className="text-primary-hover">채용 정보</span>
@@ -422,7 +422,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
       </div>
 
       {/* 필터 박스 */}
-      <div className="px-[39px] pb-4">
+      <div className="pb-4">
         <div className="bg-[#f7f8fa] border-2 border-[#f2b705] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] px-[25px] pt-[20px] pb-[14px] flex flex-col gap-[12px]">
           <SkillCategoryFilter
             activeCategory={activeCategory}
@@ -471,7 +471,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
       </div>
 
       {/* 공고 카드 목록 */}
-      <div className="px-[39px] flex flex-col gap-4 pb-2">
+      <div className="flex flex-col gap-4 pb-2">
         {sorted.length > 0 ? (
           sorted.map(job => (
             <JobCard

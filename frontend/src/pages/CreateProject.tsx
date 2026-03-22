@@ -131,7 +131,7 @@ const CreateProject = () => {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)' }} className="min-h-screen pb-24 sm:pb-28">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
         {/* 페이지 헤더 */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -470,7 +470,7 @@ const CreateProject = () => {
 
       {/* ─── 하단 고정 CTA ─── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3"
+        className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 pt-3"
         style={{ backgroundColor: 'var(--color-background)' }}
       >
         <button

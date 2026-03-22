@@ -205,7 +205,7 @@ const ProjectDashboard = () => {
         className="min-h-screen"
         style={{ background: "var(--color-background)" }}
       >
-        <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-3">
+        <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-4 sm:px-6 lg:px-8">
           {/* ── 상단 탭 네비게이션 ── */}
           <div
             className="flex flex-wrap gap-1 rounded-2xl px-2 py-1.5 w-fit"

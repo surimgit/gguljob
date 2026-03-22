@@ -7,7 +7,7 @@ import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } f
 import type { TroubleshootingListItem } from '../../../api/troubleshooting';
 import { getPullRequests } from '../../../api/projects';
 import type { PullRequestListItem } from '../../../api/projects';
-import { getRoleDisplayName } from '../../../constants/skills';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -324,7 +324,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
           <div className="flex flex-col gap-0.5">
             <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
             <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
-              <span className="text-text-secondary">{positionLabel} · </span>
+              <span style={{ color: getRoleColor(userPosition ?? '') }}>{positionLabel} · </span>
               <span className="text-text-brown">{projectTitle ?? 'DevLog 트러블슈팅 플랫폼'}</span>
             </p>
           </div>

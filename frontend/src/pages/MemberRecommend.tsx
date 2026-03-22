@@ -120,7 +120,7 @@ const MemberRecommend = () => {
       className="min-h-screen pb-16"
       style={{ background: "var(--color-background)" }}
     >
-      <div className="max-w-[1400px] mx-auto px-4 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 페이지 타이틀 */}
         <div className="flex items-center gap-3 mb-3">
           <button
