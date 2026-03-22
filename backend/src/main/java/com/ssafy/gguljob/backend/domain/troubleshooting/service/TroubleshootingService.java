@@ -47,7 +47,7 @@ public class TroubleshootingService {
     private static final int TOP_K = 5;
 
     public List<TroubleshootingResponse.Widget> getMyWidgetList(Long userId) {
-        return troubleshootingRepository.findTop2ByProject_IdOrderByCreatedAtDesc(userId)
+        return troubleshootingRepository.findTop2ByUser_IdOrderByCreatedAtDesc(userId)
             .stream()
             .map(TroubleshootingResponse.Widget::from)
             .collect(Collectors.toList());
