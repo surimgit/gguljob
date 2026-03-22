@@ -83,6 +83,14 @@ public class PortfolioService {
         </example_case>
         """;
 
+    @Transactional(readOnly = true)
+    public List<PortfolioResponse.Summary> getMyPortfolios(Long userId) {
+        return portfolioRepository.findByUserIdOrderByUpdatedAtDesc(userId)
+            .stream()
+            .map(PortfolioResponse.Summary::from)
+            .toList();
+    }
+
     @Transactional
     public PortfolioResponse.GenerateResult generatePortfolio(
         long userId,
