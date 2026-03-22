@@ -162,7 +162,7 @@ public class AiChatService {
 
         Map<String, Object> body = Map.of(
             "model", "claude-opus-4-1-20250805",
-            "max_tokens", 1024,
+            "max_tokens", 8192,
             "system", systemPrompt,
             "messages", List.of(
                 Map.of("role", "user", "content", userPrompt)
