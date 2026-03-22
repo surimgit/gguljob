@@ -4,6 +4,9 @@ import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Builder
@@ -18,7 +21,7 @@ public class JobBookmarkResponseDto {
     private String url;
     private LocalDateTime deadline;
     private String jobCategory;
-    private String techStacks;
+    private List<String> techStacks;
     private String logoUrl;
 
     public static JobBookmarkResponseDto from(JobPosting jobPosting) {
@@ -33,8 +36,16 @@ public class JobBookmarkResponseDto {
             .url(jobPosting.getHyperlink())
             .deadline(jobPosting.getDeadline())
             .jobCategory(jobPosting.getJobCategory())
-            .techStacks(jobPosting.getTechStacks())
+            .techStacks(parseTechStacks(jobPosting.getTechStacks()))
             .logoUrl(jobPosting.getLogoUrl())
             .build();
+    }
+
+    private static List<String> parseTechStacks(String raw) {
+        if (raw == null || raw.isBlank()) return Collections.emptyList();
+        return Arrays.stream(raw.replaceAll("[\\[\\]\"]", "").split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }
