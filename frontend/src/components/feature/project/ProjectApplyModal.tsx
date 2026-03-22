@@ -5,6 +5,7 @@ import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
 import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import { getCategoryColorPair } from '../../../constants/domains';
 
 interface ProjectApplyModalProps {
