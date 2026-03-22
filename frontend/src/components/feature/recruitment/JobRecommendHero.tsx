@@ -216,7 +216,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
   return (
     <>
       {/* ── 히어로 배너 + 이미지 래퍼 ── */}
-      <div className="relative w-[calc(100%+48px)] -mx-6 -mt-8">
+      <div className="relative w-[calc(100%+32px)] sm:w-[calc(100%+48px)] lg:w-[calc(100%+64px)] -mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
         {/* 배너 배경 */}
         <div
           data-navbar-hero
