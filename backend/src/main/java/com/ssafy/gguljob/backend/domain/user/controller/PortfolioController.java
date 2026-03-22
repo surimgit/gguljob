@@ -38,13 +38,13 @@ public class PortfolioController {
 
     @Operation(summary = "포트폴리오 생성")
     @PostMapping("/generate")
-    public ResponseEntity<PortfolioResponse.GenerateResult> generatePortfolio(
+    public ResponseEntity<ApiResponseDto<PortfolioResponse.GenerateResult>> generatePortfolio(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody PortfolioRequest.Generate request
     ) {
         PortfolioResponse.GenerateResult result =
             portfolioService.generatePortfolio(userDetails.getId(), request);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "포트폴리오 생성 성공", result));
     }
 }
 
