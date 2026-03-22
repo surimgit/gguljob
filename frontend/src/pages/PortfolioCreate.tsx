@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
+import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
 import chatbotImg from '../assets/images/chatbot.png';
 
 // ── 더미 마크다운 결과 ────────────────────────────────────────────────────────
@@ -245,9 +245,9 @@ const PortfolioCreate = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background transition-colors"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ArrowLeft className="w-6 h-6" />
         </button>
         <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
       </div>
@@ -458,7 +458,7 @@ const PortfolioCreate = () => {
 
               {/* AI 챗봇 안내 */}
               <div className="flex items-start gap-2 mt-2">
-                <div className="w-12 h-12 overflow-hidden flex-shrink-0">
+                <div className="w-9 h-12 overflow-hidden flex-shrink-0">
                   <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-3 border border-border">

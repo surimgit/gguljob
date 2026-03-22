@@ -458,7 +458,7 @@ const ProjectDashboard = () => {
                     style={{ color: "var(--color-primary)" }}
                   />
                   <span
-                    className="text-base font-bold"
+                    className="text-lg font-bold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     Git 레포지토리
@@ -590,7 +590,7 @@ const ProjectDashboard = () => {
                       className="text-sm font-bold"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      연동된 레포 없���
+                      연동된 레포 없음
                     </span>
                   )}
                 </div>
@@ -625,7 +625,7 @@ const ProjectDashboard = () => {
               }}
             >
               <div
-                className="flex items-center gap-2 text-base font-bold mb-4"
+                className="flex items-center gap-2 text-lg font-bold mb-4"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 🚀 프로젝트 주제
@@ -634,13 +634,13 @@ const ProjectDashboard = () => {
               {/* 현재 주제 */}
               <div className="mb-4">
                 <p
-                  className="text-lg font-bold mb-1"
+                  className="text-xl font-bold mb-1"
                   style={{ color: "var(--color-text-brown)" }}
                 >
                   {projectInfo.title}
                 </p>
                 <p
-                  className="text-sm leading-relaxed"
+                  className="text-base leading-relaxed"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   {projectInfo.description}
@@ -656,13 +656,13 @@ const ProjectDashboard = () => {
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-[#6366f1]" />
                     <span
-                      className="text-sm font-bold"
+                      className="text-base font-bold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       AI 주제 추천
                     </span>
                     <span
-                      className="text-xs"
+                      className="text-sm"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
                       팀에 맞는 주제를 추천해요
@@ -802,7 +802,7 @@ const ProjectDashboard = () => {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <div className="flex items-center gap-2 text-base font-bold mb-4">
+              <div className="flex items-center gap-2 text-lg font-bold mb-4">
                 <BarChart2
                   className="w-5 h-5"
                   style={{ color: "var(--color-primary)" }}
@@ -895,7 +895,7 @@ const ProjectDashboard = () => {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <div className="flex items-center gap-2 text-base font-bold mb-4">
+              <div className="flex items-center gap-2 text-lg font-bold mb-4">
                 <Zap
                   className="w-5 h-5"
                   style={{ color: "var(--color-primary)" }}

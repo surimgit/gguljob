@@ -163,7 +163,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
         </div>
 
         {/* 제목 */}
-        <h2 className="font-black text-[#111827] text-[22px] mt-[12px]">{project.title}</h2>
+        <h2 className="font-bold text-[#111827] text-xl mt-[12px]">{project.title}</h2>
 
         {/* 작성자 */}
         <div className="flex items-center gap-[10px] mt-[12px]">
@@ -173,13 +173,13 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           >
             <span className="text-white text-[12px] font-bold">{project.leaderName?.[0] ?? '?'}</span>
           </div>
-          <span className="text-[#111827] text-[14px] font-bold">{project.leaderName}</span>
+          <span className="text-[#111827] text-base font-semibold">{project.leaderName}</span>
         </div>
 
         <hr className="border-[#f0ebe3] my-[24px]" />
 
         {/* 팀원 모집 */}
-        <h3 className="font-black text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
+        <h3 className="font-extrabold text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
 
         <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
           <div className="flex items-center gap-[8px]">
@@ -209,7 +209,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
         {/* 자기소개 */}
         <div className="mt-[20px]">
-          <label className="block text-[14px] font-black text-[#111827] mb-[8px]">
+          <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
             자기소개
           </label>
           <textarea

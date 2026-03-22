@@ -134,14 +134,14 @@ const CreateProject = () => {
           <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             새 프로젝트 생성
           </h1>
-          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="text-xs sm:text-base mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
             프로젝트 정보를 입력하고 팀원을 모집하세요
           </p>
         </div>
 
         {/* ─── 섹션 1: 기본 정보 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-4 sm:mb-5" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-4 sm:mb-5" style={{ color: 'var(--color-text-primary)' }}>
             📋 기본 정보
           </h2>
 
@@ -276,7 +276,7 @@ const CreateProject = () => {
 
         {/* ─── 섹션 2: 기술 스택 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             🛠 기술 스택
           </h2>
           <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -349,7 +349,7 @@ const CreateProject = () => {
 
         {/* ─── 섹션 3: 팀원 등록 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             👥 팀원 등록
           </h2>
           <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>

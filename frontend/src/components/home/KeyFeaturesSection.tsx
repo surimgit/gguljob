@@ -15,12 +15,12 @@ const FeatureItem = ({ number, badge, title, description, emoji, bg }: FeatureIt
       <div className="flex flex-col md:flex-row items-center gap-10 px-20 py-12">
         {/* 텍스트 */}
         <div className="flex-1 flex flex-col gap-4">
-          <span className="text-5xl font-extrabold text-text-tertiary">{number}</span>
-          <span className="inline-flex self-start items-center bg-primary-hover text-text-brown text-xl font-extrabold px-10 py-2 rounded-full">
+          <span className="text-5xl font-extrabold text-primary-hover">{number}</span>
+          <span className="inline-flex self-start items-center bg-primary-hover text-text-brown text-2xl font-extrabold px-10 py-2 rounded-full">
             {badge}
           </span>
           <h3 className="text-5xl font-bold text-text-brown">{title}</h3>
-          <p className="text-lg font-semibold text-text-secondary leading-[3rem] whitespace-pre-line mt-4">{description}</p>
+          <p className="text-xl font-semibold text-text-brown-2 leading-[3rem] whitespace-pre-line mt-2">{description}</p>
         </div>
 
         {/* 목업 이미지 플레이스홀더 */}
@@ -70,7 +70,7 @@ const KeyFeaturesSection = () => (
   <section>
     <div className="py-10" style={{ backgroundColor: '#FFFAEB' }}>
       <Container>
-        <h2 className="text-4xl font-bold text-text-brown text-center">Key Features</h2>
+        <h2 className="text-5xl font-bold text-text-brown text-center mt-6 mb-4">Key Features</h2>
       </Container>
     </div>
     {FEATURES.map((feature) => (
