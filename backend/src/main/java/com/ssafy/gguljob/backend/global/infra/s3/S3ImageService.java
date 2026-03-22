@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.global.infra.s3;
 
+import com.amazonaws.services.s3.model.S3Object;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -68,5 +69,15 @@ public class S3ImageService {
     public String getImageUrl(String s3Key) {
         // DB에서 꺼낸 s3Key 앞에 CDN 도메인을 붙여서 프론트엔드로 반환
         return cdnUrl + "/" + s3Key;
+    }
+
+    public String extractS3Key(String cdnUrl) {
+        // "https://cdn.example.com/portfolios/1/파일.md" → "portfolios/1/파일.md"
+        return cdnUrl.replace(this.cdnUrl + "/", "");
+    }
+
+    // S3에서 객체 가져오기
+    public S3Object getObject(String s3Key) {
+        return amazonS3.getObject(bucket, s3Key);
     }
 }
