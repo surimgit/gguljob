@@ -5,6 +5,7 @@ import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
 import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import { getCategoryColorPair } from '../../../constants/domains';
 
 interface ProjectApplyModalProps {
@@ -73,14 +74,6 @@ function PositionCard({
   );
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  FE: '프론트엔드',
-  BE: '백엔드',
-  AI: 'AI',
-  PM: 'PM',
-  INFRA: '인프라',
-  DESIGN: '디자인',
-};
 
 const MAX_INTRO_LENGTH = 200;
 
@@ -192,8 +185,8 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           {openPositions.map((pos) => (
             <PositionCard
               key={pos.role}
-              label={ROLE_LABELS[pos.role] ?? pos.role}
-              color="#F97316"
+              label={getRoleDisplayName(pos.role)}
+              color={getRoleColor(pos.role)}
               position={pos}
               selected={selectedRole === pos.role}
               onSelect={() => setSelectedRole(pos.role)}

@@ -20,12 +20,22 @@ import {
   Link,
   Eye,
   Pencil,
+  HardDrive,
+  Wrench,
+  Briefcase,
+  PieChart,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
 import { getProjectEditForm, updateProject } from "../../../api/projects";
+import {
+  SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
+  SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
+  SKILLS_BY_CATEGORY,
+  SKILL_CATEGORY_META,
+} from "../../../constants/skills";
 
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
@@ -49,27 +59,8 @@ const BACKEND_TO_STATUS: Record<BackendProjectEditStatus, ProjectStatus> = {
   STOPPED: "paused",
 };
 
-/* ── 스킬 이름 ↔ ID 매핑 (DB 기준) ── */
-const SKILL_NAME_TO_ID: Record<string, number> = {
-  React: 1, "Vue.js": 2, "Vue": 2, "Next.js": 19, JavaScript: 16, TypeScript: 17,
-  "HTML/CSS": 18, Swift: 66, jQuery: 46,
-  Java: 3, "Spring Boot": 4, Python: 5, MySQL: 6, "Node.js": 20,
-  C: 13, "C#": 14, "C++": 15, PostgreSQL: 22, MariaDB: 23, MongoDB: 24,
-  PHP: 25, ".NET": 26, "Nest.js": 27, NestJS: 27, Kafka: 28, "Oracle DB": 21,
-  JPA: 43, MyBatis: 44, FastAPI: 45, Django: 63, Flask: 64, MSA: 59,
-  JSP: 42, MSSQL: 41,
-  "RDBMS/DBMS": 54, Tibero: 60,
-  AWS: 7, Docker: 8, Kubernetes: 9, Jenkins: 10, Git: 11, Redis: 12,
-  Linux: 29, Azure: 30, GCP: 31, Nginx: 65,
-  PyTorch: 37, TensorFlow: 38, OpenCV: 50, Hadoop: 51,
-  RAG: 56, LLM: 57, MLOps: 67, AI: 70,
-  Android: 32, iOS: 33, Kotlin: 34, Flutter: 35, "React Native": 36, Unity: 52,
-  Figma: 40, Jira: 39,
-};
-const SKILL_ID_TO_NAME: Record<number, string> = {};
-for (const [name, id] of Object.entries(SKILL_NAME_TO_ID)) {
-  if (!SKILL_ID_TO_NAME[id]) SKILL_ID_TO_NAME[id] = name;
-}
+const SKILL_NAME_TO_ID = CANONICAL_SKILL_NAME_TO_ID;
+const SKILL_ID_TO_NAME = CANONICAL_SKILL_ID_TO_NAME;
 
 /* ── 상수 ── */
 const STATUS_OPTIONS: {
@@ -127,106 +118,16 @@ const DOMAINS = [
   "메타버스",
 ];
 
-const TECH_CATEGORIES: {
-  key: string;
-  label: string;
-  icon: React.ElementType;
-  stacks: string[];
-}[] = [
-  {
-    key: "frontend",
-    label: "Frontend",
-    icon: Monitor,
-    stacks: [
-      "React",
-      "Vue",
-      "Angular",
-      "Next.js",
-      "Nuxt.js",
-      "Svelte",
-      "TypeScript",
-      "JavaScript",
-      "TailwindCSS",
-      "Sass",
-    ],
-  },
-  {
-    key: "backend",
-    label: "Backend",
-    icon: Server,
-    stacks: [
-      "Spring Boot",
-      "Django",
-      "FastAPI",
-      "Express",
-      "NestJS",
-      "Go",
-      "Rust",
-      "Node.js",
-      "Kotlin",
-      "Java",
-    ],
-  },
-  {
-    key: "database",
-    label: "Database",
-    icon: Database,
-    stacks: [
-      "MySQL",
-      "PostgreSQL",
-      "MongoDB",
-      "Redis",
-      "SQLite",
-      "MariaDB",
-      "Elasticsearch",
-      "DynamoDB",
-    ],
-  },
-  {
-    key: "infra",
-    label: "Infra",
-    icon: Cloud,
-    stacks: [
-      "Docker",
-      "Kubernetes",
-      "AWS",
-      "GCP",
-      "Azure",
-      "Nginx",
-      "Jenkins",
-      "GitHub Actions",
-      "Terraform",
-    ],
-  },
-  {
-    key: "ai",
-    label: "AI",
-    icon: Bot,
-    stacks: [
-      "PyTorch",
-      "TensorFlow",
-      "OpenAI",
-      "Hugging Face",
-      "LangChain",
-      "scikit-learn",
-      "Pandas",
-      "NumPy",
-    ],
-  },
-  {
-    key: "mobile",
-    label: "Mobile",
-    icon: Smartphone,
-    stacks: [
-      "React Native",
-      "Flutter",
-      "Swift",
-      "Kotlin",
-      "Jetpack Compose",
-      "SwiftUI",
-    ],
-  },
-];
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+};
+
+const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
+  ...meta,
+  icon: CATEGORY_ICONS[meta.key] ?? Info,
+  stacks: SKILLS_BY_CATEGORY[meta.key] ?? [],
+}));
 
 /* ── 스킬을 카테고리에 매핑 ── */
 const SKILL_TO_CATEGORY: Record<string, string> = {};

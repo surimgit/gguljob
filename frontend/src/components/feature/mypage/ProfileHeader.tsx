@@ -1,5 +1,5 @@
 import { Settings, UserX } from 'lucide-react';
-import { getRoleDisplayName } from '../../../constants/skills';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 
 interface ProfileHeaderProps {
   name: string;
@@ -46,7 +46,7 @@ const ProfileHeader = ({
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{name}</span>
             {role && (
-              <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
+              <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
                 {getRoleDisplayName(role)}
               </span>
             )}

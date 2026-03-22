@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
 
 interface MemberCardProps {
   name: string;
@@ -10,14 +11,6 @@ interface MemberCardProps {
   profileImage: string;
   onClickProfile: () => void;
 }
-
-/* 포지션별 색상 */
-const getPositionColor = (position: string) => {
-  const lower = position.toLowerCase();
-  if (lower.includes("backend") || lower === "be") return "var(--color-success)";
-  if (lower.includes("frontend") || lower === "fe") return "var(--color-blue)";
-  return "var(--color-primary-hover)";
-};
 
 /* 적합도별 색상 + 배경 */
 const getMatchStyle = (rate: number) => {
@@ -35,7 +28,7 @@ const MemberCard = ({
   techStacks,
   onClickProfile,
 }: MemberCardProps) => {
-  const posColor = getPositionColor(position);
+  const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
 
   return (
@@ -60,13 +53,13 @@ const MemberCard = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className="text-sm font-bold px-1.0 py-0.5 rounded"
+              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
               }}
             >
-              {position}
+              {getRoleDisplayName(position)}
             </span>
             <span
               className="text-sm font-bold"

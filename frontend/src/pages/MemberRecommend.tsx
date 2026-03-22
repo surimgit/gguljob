@@ -125,10 +125,9 @@ const MemberRecommend = () => {
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={() => navigate(`/my-projects/${projectId}?tab=members`)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-colors"
-            style={{ border: "1px solid var(--color-border)" }}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" style={{ color: "var(--color-text-primary)" }} />
+            <ArrowLeft className="w-6 h-6" />
           </button>
           <h1
             className="text-2xl font-bold"

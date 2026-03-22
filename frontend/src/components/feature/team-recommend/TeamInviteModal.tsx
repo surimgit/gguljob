@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import { BaseModal } from '../../common';
 import { getMyProjects, inviteUser } from '../../../api/projects';
 import type { ProjectSimple } from '../../../types/project';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES, ROLE_TO_API } from '../../../constants/skills';
 
 interface TeamInviteModalProps {
   isOpen: boolean;
@@ -13,14 +14,10 @@ interface TeamInviteModalProps {
   userId: number;
 }
 
-const JOB_OPTIONS: { label: string; role: string }[] = [
-  { label: '프론트엔드', role: 'FE' },
-  { label: '백엔드', role: 'BE' },
-  { label: '인프라/DevOps', role: 'INFRA' },
-  { label: '데이터/AI', role: 'AI' },
-  { label: '기획/PM', role: 'PM' },
-  { label: '디자인', role: 'DESIGN' },
-];
+const JOB_OPTIONS = ROLE_LIST.map(code => ({
+  label: ROLE_DISPLAY_NAMES[code],
+  role: ROLE_TO_API[code],
+}));
 
 const MAX_MESSAGE_LENGTH = 200;
 

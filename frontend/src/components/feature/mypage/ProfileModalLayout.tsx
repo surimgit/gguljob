@@ -1,6 +1,7 @@
 import { useReducer, useRef, useEffect, type ReactNode } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BaseModal } from '../../common';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 
 export const STACK_COLORS = [
   'border-sky-300 text-sky-600',
@@ -132,8 +133,8 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
         <div className="flex flex-col gap-1 flex-1">
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{user.name}</span>
-            <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
-              {user.role}
+            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(user.role)}1a`, color: getRoleColor(user.role) }}>
+              {getRoleDisplayName(user.role)}
             </span>
           </div>
           <p className="text-sm text-text-secondary whitespace-pre-line leading-relaxed">{user.bio}</p>

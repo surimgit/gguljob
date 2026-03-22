@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import type { SkillGroup } from '../../../api/projects';
-import { ROLE_LIST, ROLE_DISPLAY_NAMES } from '../../../constants/skills';
+import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILL_NAMES } from '../../../constants/skills';
 
 export interface ProjectFilterProps {
   searchQuery: string;
@@ -173,7 +173,7 @@ export default function ProjectFilter({
         ) : (
           <FilterRow
             label="기술스택"
-            options={['전체', 'React', 'TypeScript', 'Spring Boot', 'Python', 'Node.js', 'Vue.js', 'Next.js']}
+            options={['전체', ...SKILL_NAMES]}
             selected={techFilter}
             onChange={onTechChange}
           />
