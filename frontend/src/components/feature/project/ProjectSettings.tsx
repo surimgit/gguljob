@@ -20,7 +20,6 @@ import {
   Link,
   Eye,
   Pencil,
-  HardDrive,
   Wrench,
   Briefcase,
   PieChart,

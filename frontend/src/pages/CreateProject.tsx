@@ -11,7 +11,6 @@ import {
   Bot,
   Smartphone,
   X,
-  HardDrive,
   Wrench,
   Briefcase,
   PieChart,
