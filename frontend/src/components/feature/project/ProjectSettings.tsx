@@ -456,7 +456,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-5"
+          className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
           <BarChart2
@@ -502,7 +502,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-5"
+          className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
           📋 기본 정보
@@ -762,7 +762,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-1"
+          className="flex items-center gap-2 text-lg font-bold mb-1"
           style={{ color: "var(--color-text-primary)" }}
         >
           ⚙️ 기술 스택

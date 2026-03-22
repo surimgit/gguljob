@@ -3,16 +3,11 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import { getRoleDisplayName, getRoleColor } from "../constants/skills";
+import { CATEGORY_COLORS } from "../constants/domains";
 import { Pagination } from "../components/common";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
 
 /* ── 컴포넌트 ── */
-
-const CATEGORY_COLORS: Record<string, string> = {
-  웹기술: '#3b82f6', 웹디자인: '#ec4899', 모바일: '#f97316',
-  AIoT: '#14b8a6', 인공지능: '#6366f1', 빅데이터: '#8b5cf6',
-  블록체인: '#f59e0b', 자율주행: '#06b6d4', 핀테크: '#22c55e', 메타버스: '#a855f7',
-};
 
 const STATUS_LABEL: Record<BackendProjectStatus, string> = {
   RECRUITING: '모집중', PROCEEDING: '진행중', DONE: '완료',
@@ -41,24 +36,24 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
     >
       {/* 상단: 카테고리 + 상태 */}
       <div className="flex items-center justify-between w-full">
-        <p className="font-bold text-[12px] leading-[18px]" style={{ color: categoryColor }}>
+        <p className="font-semibold text-base leading-[18px]" style={{ color: categoryColor }}>
           {project.domain || "미정"}
         </p>
         <div className="flex items-center gap-[5px]">
           <div className="rounded-[3.5px] size-[7px]" style={{ backgroundColor: statusStyle.dot }} />
-          <p className="font-bold text-[12px] leading-[18px]" style={{ color: statusStyle.text }}>
+          <p className="font-bold text-sm leading-[18px]" style={{ color: statusStyle.text }}>
             {STATUS_LABEL[project.status]}
           </p>
         </div>
       </div>
 
       {/* 제목 */}
-      <p className="font-black text-[#2d2a24] text-[17px] tracking-[-0.3px] w-full">
+      <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
         {project.title}
       </p>
 
       {/* 설명 */}
-      <p className="font-bold text-[#8a8073] text-[13px] leading-[20.8px] line-clamp-2 w-full">
+      <p className="font-semibold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
         {project.description || project.teamName || "\u00A0"}
       </p>
 
@@ -66,12 +61,12 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       {project.skills.length > 0 && (
         <div className="flex flex-wrap gap-x-[5px] gap-y-[5px] w-full">
           {visibleSkills.map((tech) => (
-            <span key={tech} className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]">
+            <span key={tech} className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
               {tech}
             </span>
           ))}
           {extraCount > 0 && (
-            <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-bold text-[#6b7280] text-[11.5px] px-[11px] py-[4px] rounded-[16px]">
+            <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
               +{extraCount}
             </span>
           )}
@@ -82,7 +77,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
         <div className="flex gap-[12px]">
           {roles.map(([role, count]) => (
-            <p key={role} className="font-bold text-[12px]" style={{ color: getRoleColor(role) }}>
+            <p key={role} className="font-semibold text-xs" style={{ color: getRoleColor(role) }}>
               {getRoleDisplayName(role)} <span className="font-black">{count}</span>
             </p>
           ))}
@@ -99,13 +94,13 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
               <p className="font-bold text-white text-[11px]">{project.leaderName?.[0] ?? '?'}</p>
             </div>
           )}
-          <p className="font-bold text-[#8a8073] text-[12px]">{project.leaderName}</p>
+          <p className="font-semibold text-text-secondary text-sm">{project.leaderName}</p>
         </div>
       </div>
 
       {/* 완료일 */}
       {project.finishedAt && (
-        <p className="text-[11px] text-[#9ca3af]">
+        <p className="text-xs text-[#9ca3af]">
           완료: {new Date(project.finishedAt).toLocaleDateString()}
         </p>
       )}
@@ -163,7 +158,7 @@ const MyProjects = () => {
           내 프로젝트
         </h1>
         <p
-          className="text-xs sm:text-sm mt-1"
+          className="text-sm sm:text-lg mt-3"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
@@ -179,7 +174,7 @@ const MyProjects = () => {
               key={t.key}
               type="button"
               onClick={() => { setTab(t.key); setCurrentPage(1); }}
-              className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-colors"
+              className="flex items-center gap-2 px-5 py-2 rounded-full text-base font-bold transition-colors"
               style={{
                 backgroundColor:
                   tab === t.key
@@ -197,7 +192,7 @@ const MyProjects = () => {
             >
               {t.label}
               <span
-                className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                className="text-sm px-2 py-0.5 rounded-full font-semibold"
                 style={{
                   backgroundColor:
                     tab === t.key
@@ -217,7 +212,7 @@ const MyProjects = () => {
 
         {/* 카운트 */}
         <p
-          className="text-sm mb-4"
+          className="text-base mb-4 mt-8"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           총 {currentProjects.length}개 프로젝트
@@ -254,13 +249,13 @@ const MyProjects = () => {
                   />
                 </span>
                 <span
-                  className="text-sm font-semibold"
+                  className="text-xl font-semibold mt-2"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   새 프로젝트 만들기
                 </span>
                 <span
-                  className="text-xs"
+                  className="text-base"
                   style={{ color: "var(--color-text-tertiary)" }}
                 >
                   팀원을 모집하고 프로젝트를 시작하세요

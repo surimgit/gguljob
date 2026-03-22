@@ -110,7 +110,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
       containerClassName={containerClassName}
     >
       {/* 상단 바 */}
-      <div className="h-14 bg-primary w-full relative flex items-center justify-end px-5">
+      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
         <button
           type="button"
           onClick={onClose}

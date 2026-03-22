@@ -166,8 +166,8 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       onClose={onClose}
       containerClassName="bg-white rounded-3xl w-[720px] overflow-hidden shadow-2xl"
     >
-      {/* 상단 amber 바 */}
-      <div className="h-14 bg-primary w-full flex items-center justify-between px-6">
+      {/* 상단 바 */}
+      <div className="h-11 bg-primary w-full relative flex items-center justify-between px-5">
         <span className="text-text-primary font-bold text-base">프로필 수정</span>
         <button
           type="button"

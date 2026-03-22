@@ -415,7 +415,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-3 scroll-mt-20">
       {/* 섹션 제목 */}
       <div className="px-[42px] pt-8 pb-5">
-        <h2 className="font-semibold text-[25px]">
+        <h2 className="font-bold text-[30px]">
           <span className="text-text-primary">전체 </span>
           <span className="text-primary-hover">채용 정보</span>
         </h2>

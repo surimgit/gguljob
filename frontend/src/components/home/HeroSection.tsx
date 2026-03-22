@@ -20,7 +20,7 @@ const HeroSection = () => {
         </div>
 
         {/* 텍스트 */}
-        <div className="flex flex-col gap-8 mt-8 -ml-6">
+        <div className="flex flex-col gap-6 mt-8 -ml-6">
           <h1 className="text-6xl font-bold text-text-brown leading-tight whitespace-nowrap">
             개발 프로젝트의 시작부터
             <br />
