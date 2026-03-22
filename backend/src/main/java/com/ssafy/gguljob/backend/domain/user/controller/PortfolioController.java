@@ -8,6 +8,7 @@ import com.ssafy.gguljob.backend.domain.user.repository.PortfolioRepository;
 import com.ssafy.gguljob.backend.domain.user.service.PortfolioService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
+import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -70,7 +71,7 @@ public class PortfolioController {
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포트폴리오입니다."));
 
         if (!portfolio.getUser().getId().equals(userDetails.getId())) {
-            throw new SecurityException("본인의 포트폴리오만 다운로드할 수 있습니다.");
+            throw new ForbiddenException("본인의 포트폴리오만 다운로드할 수 있습니다.");
         }
 
         // ✅ CDN URL → s3Key 파싱
