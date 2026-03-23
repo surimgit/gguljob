@@ -84,7 +84,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public Notification createNotification(User user, NotificationCategory category,
+    public void createNotification(User user, NotificationCategory category,
         String content, Long referenceId, String referenceUrl) {
         Notification notification = Notification.builder()
             .user(user)
@@ -93,6 +93,7 @@ public class NotificationService {
             .referenceId(referenceId)
             .referenceUrl(referenceUrl)
             .build();
-        return notificationRepository.save(notification);
+        
+        notificationRepository.save(notification);
     }
 }

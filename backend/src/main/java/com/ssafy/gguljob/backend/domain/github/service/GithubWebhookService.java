@@ -9,8 +9,7 @@ import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepositor
 import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.type.PrStatus;
-import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
-import com.ssafy.gguljob.backend.domain.notification.repository.NotificationRepository;
+import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
@@ -41,7 +40,7 @@ public class GithubWebhookService {
     private final UserRepository userRepository;
     private final PrReviewRepository prReviewRepository;
     private final GithubSyncService githubSyncService;
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
     @Async("webhookExecutor")
     @Transactional
@@ -205,13 +204,13 @@ public class GithubWebhookService {
                     pullRequestRepository.save(newPr);
                     log.info("✅ 새로운 PR 등록 완료 (PR: {})", prNumber);
 
-                    notificationRepository.save(Notification.builder()
-                        .user(author)
-                        .category(NotificationCategory.GITHUB)
-                        .content("PR #" + prNumber + " \"" + prNode.path("title").asText() + "\" 이(가) 등록되었습니다.")
-                        .referenceId(newPr.getId())
-                        .referenceUrl(prNode.path("html_url").asText())
-                        .build());
+                    notificationService.createNotification(
+                        author,
+                        NotificationCategory.GITHUB,
+                        "PR #" + prNumber + " \"" + prNode.path("title").asText() + "\" 이(가) 등록되었습니다.",
+                        newPr.getId(),
+                        prNode.path("html_url").asText()
+                    );
                 }
                 break;
 
@@ -242,13 +241,13 @@ public class GithubWebhookService {
                     log.info("✅ PR 닫힘 처리 완료 (PR: {}, 최종 상태: {}, 닫힌 시간: {})", prNumber, finalStatus, closedAt);
 
                     String closedMsg = isMerged ? "Merged" : "Closed";
-                    notificationRepository.save(Notification.builder()
-                        .user(author)
-                        .category(NotificationCategory.GITHUB)
-                        .content("PR #" + prNumber + " 이(가) " + closedMsg + " 처리되었습니다.")
-                        .referenceId(existingPr.getId())
-                        .referenceUrl(existingPr.getDiffUrl())
-                        .build());
+                    notificationService.createNotification(
+                        author,
+                        NotificationCategory.GITHUB,
+                        "PR #" + prNumber + " 이(가) " + closedMsg + " 처리되었습니다.",
+                        existingPr.getId(),
+                        existingPr.getDiffUrl()
+                    );
                 }
                 break;
         }
