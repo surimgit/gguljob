@@ -4,14 +4,12 @@ import axios from 'axios';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import ProjectFind from './pages/ProjectFind';
 import Recruitment from './pages/Recruitment';
 import MyPage from './pages/MyPage';
 import ProjectDetail from './pages/ProjectDetail';
 import OAuthCallback from './pages/OAuthCallback';
-import UserProfileTest from './pages/UserProfileTest';
 import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
@@ -80,12 +78,10 @@ const AppRoutes = () => {
 
       <Route element={<Layout />}>
         {/* 공개 라우트 */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/projects" element={<ProjectFind />} />
+<Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
-        <Route path="/user-profile-test" element={<UserProfileTest />} />
 
         {/* 로그인 필요 라우트 */}
         <Route element={<PrivateRoute />}>
