@@ -406,7 +406,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
         </div>
 
         {/* 본문 */}
-        <div className="px-6 pt-5 pb-6">
+        <div className="px-6 pt-5 pb-6 max-h-[70vh] overflow-y-auto">
           {/* 타이틀 */}
           <h3
             className="text-[20px] font-bold mb-0.5"
