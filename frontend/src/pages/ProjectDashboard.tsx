@@ -171,6 +171,7 @@ const ProjectDashboard = () => {
 
   const projectInfo = dashboard?.projectInfo ?? {
     title: "",
+    topic: null,
     teamName: "",
     domain: "",
     description: "",
@@ -789,7 +790,7 @@ const ProjectDashboard = () => {
                         <button
                           onClick={() => {
                             setEditingTopic(true);
-                            setTopicInput(projectInfo.title);
+                            setTopicInput(projectInfo.topic ?? "");
                           }}
                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
                           style={{
@@ -864,7 +865,7 @@ const ProjectDashboard = () => {
                           className="text-base font-semibold"
                           style={{ color: "var(--color-text-primary)" }}
                         >
-                          {projectInfo.title || "주제가 아직 없습니다"}
+                          {projectInfo.topic || "프로젝트 주제가 없습니다."}
                         </p>
                       </div>
                     )}
