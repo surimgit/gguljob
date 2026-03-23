@@ -55,6 +55,7 @@ interface TeamManagementProps {
   members: Member[];
   applications: Application[];
   onDeleteRole: (roleId: string) => void;
+  onLeaderDelegated?: () => void;
 }
 
 
@@ -700,6 +701,7 @@ const TeamManagement = ({
   applications: initialApps,
   projectId,
   onDeleteRole: _onDeleteRole,
+  onLeaderDelegated,
 }: TeamManagementProps) => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
@@ -1007,7 +1009,7 @@ const TeamManagement = ({
 
         {/* ── 우측: 현재 팀원 ── */}
         <div
-          className="rounded-2xl p-5 shadow-sm min-h-[267px]"
+          className="rounded-2xl p-5 shadow-sm min-h-[280px]"
           style={{
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
@@ -1079,7 +1081,7 @@ const TeamManagement = ({
                         {isCurrentUserLeader && !member.isLeader && (
                           <>
                             <button
-                              onClick={() => setDelegateMemberId(member.id)}
+                              onClick={(e) => { e.stopPropagation(); setDelegateMemberId(member.id); }}
                               className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
                               style={{ color: "var(--color-text-tertiary)" }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; e.currentTarget.style.color = "#F59E0B"; }}
@@ -1088,7 +1090,7 @@ const TeamManagement = ({
                               <Crown className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => setKickMemberId(member.id)}
+                              onClick={(e) => { e.stopPropagation(); setKickMemberId(member.id); }}
                               className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
                               style={{ color: "var(--color-text-tertiary)" }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
@@ -1587,14 +1589,8 @@ const TeamManagement = ({
                   if (!projectId || !delegateMemberId) return;
                   delegateLeader(projectId, Number(delegateMemberId))
                     .then(() => {
-                      setLocalMembers((prev) =>
-                        prev.map((m) => ({
-                          ...m,
-                          isLeader: m.id === delegateMemberId,
-                          isMe: m.isMe,
-                        }))
-                      );
                       setDelegateMemberId(null);
+                      onLeaderDelegated?.();
                     })
                     .catch(() => alert('팀장 위임에 실패했습니다. 다시 시도해주세요.'));
                 }}
@@ -1636,13 +1632,14 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
       .then(({ data }: { data: any }) => {
         const detail = data.data ?? data;
         if (detail.currentMembers) {
-          setRealMembers(detail.currentMembers.map((m: any, i: number) => ({
-            id: m.userId?.toString() ?? String(i),
+          const isCurrentLeader = detail.leader === true;
+          setRealMembers(detail.currentMembers.map((m: any) => ({
+            id: m.userId?.toString() ?? String(m.userId),
             name: m.userName ?? "팀원",
             role: getRoleDisplayName(m.role),
             joinDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("ko-KR") : "-",
             contribution: 0,
-            isLeader: m.isLeader ?? m.leader ?? (i === 0),
+            isLeader: m.isLeader ?? (isCurrentLeader && m.userId === currentUserId),
             isMe: m.userId === currentUserId,
           })));
         }
@@ -1775,91 +1772,86 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           </div>
         </div>
 
-        {/* ── 우측: 현재 팀원 ── */}
-        <div
-          className="rounded-2xl p-5 shadow-sm min-h-[280px]"
-          style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <h3
-            className="text-lg font-bold mb-4"
-            style={{ color: "var(--color-text-primary)" }}
+        {/* ── 우측: 현재 팀원 + 팀 나가기 ── */}
+        <div className="flex flex-col gap-3">
+          <div
+            className="rounded-2xl p-5 shadow-sm min-h-[280px]"
+            style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+            }}
           >
-            현재 팀원
-          </h3>
+            <h3
+              className="text-lg font-bold mb-4"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              현재 팀원
+            </h3>
 
-          <div className="flex flex-col gap-4">
-            {Object.entries(membersByRole).map(([role, roleMembers]) => {
-              const color = getRoleColor(role);
-              return (
-                <div key={role}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-bold" style={{ color }}>
-                      {getRoleDisplayName(role)} {roleMembers.length}
-                    </span>
-                    <div
-                      className="flex-1 h-px"
-                      style={{ background: "var(--color-border)" }}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    {roleMembers.map((member) => (
+            <div className="flex flex-col gap-4">
+              {Object.entries(membersByRole).map(([role, roleMembers]) => {
+                const color = getRoleColor(role);
+                return (
+                  <div key={role}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-bold" style={{ color }}>
+                        {getRoleDisplayName(role)} {roleMembers.length}
+                      </span>
                       <div
-                        key={member.id}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
-                        onClick={() => setProfileUserId(Number(member.id))}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ background: getAvatarColor(member.name) }}
-                        >
-                          {member.name.charAt(0)}
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span
-                            className="text-sm font-semibold truncate"
-                            style={{ color: "var(--color-text-primary)" }}
-                          >
-                            {member.name}
-                          </span>
-                          {member.isMe && (
-                            <span
-                              className="text-xs font-medium"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                            >
-                              (나)
-                            </span>
-                          )}
-                          {member.isLeader && (
-                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                          )}
-                        </div>
-                        <span
-                          className="text-xs font-bold flex-shrink-0 w-10 text-right"
-                          style={{ color: "var(--color-text-secondary)" }}
-                        >
-                          {member.contribution}c
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                        className="flex-1 h-px"
+                        style={{ background: "var(--color-border)" }}
+                      />
+                    </div>
 
-      {/* ── 하단 2열: 팀 나가기 버튼 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-        <div />
-        <div className="self-start w-full flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
+                      {roleMembers.map((member) => (
+                        <div
+                          key={member.id}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                          className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                          onClick={() => setProfileUserId(Number(member.id))}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ background: getAvatarColor(member.name) }}
+                          >
+                            {member.name.charAt(0)}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <span
+                              className="text-sm font-semibold truncate"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              {member.name}
+                            </span>
+                            {member.isMe && (
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "var(--color-text-tertiary)" }}
+                              >
+                                (나)
+                              </span>
+                            )}
+                            {member.isLeader && (
+                              <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                            )}
+                          </div>
+                          <span
+                            className="text-xs font-bold flex-shrink-0 w-10 text-right"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
+                            {member.contribution}c
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <button
             onClick={() => setShowLeaveModal(true)}
             className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
@@ -1938,7 +1930,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
 };
 
 /* ── 기본 export ── */
-const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
+const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: TeamDashboard | null; projectId?: number; onLeaderChanged?: () => void }) => {
   const [detail, setDetail] = useState<TeamManagementData | null>(null);
   const [isLeader, setIsLeader] = useState<boolean | null>(null);
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -1947,15 +1939,19 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
+  const fetchDetail = () => {
     if (!projectId) return;
     getTeamManagement(projectId)
       .then(({ data }) => {
-        const detail = data.data ?? data;
-        setDetail(detail);
-        setIsLeader(detail.leader === true);
+        const d = data.data ?? data;
+        setDetail(d);
+        setIsLeader(d.leader === true);
       })
       .catch(() => setIsLeader(false));
+  };
+
+  useEffect(() => {
+    fetchDetail();
   }, [projectId]);
 
   // 리더가 아니면 간소화 뷰
@@ -1992,13 +1988,13 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     : dashboard ? dashboardToRoles(dashboard) : [];
 
   const members: Member[] = detail
-    ? detail.currentMembers.map((m: any, i: number) => ({
+    ? detail.currentMembers.map((m: any) => ({
         id: m.userId.toString(),
         name: m.userName,
         role: getRoleDisplayName(m.role),
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
-        isLeader: m.isLeader ?? m.leader ?? (i === 0),
+        isLeader: m.isLeader ?? (detail.leader === true && m.userId === currentUserId),
         isMe: m.userId === currentUserId,
       }))
     : dashboard ? dashboardToMembers(dashboard) : [];
@@ -2025,6 +2021,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
       onDeleteRole={(id) => {
         if (projectId && !isNaN(Number(id))) deletePosition(projectId, Number(id)).catch(() => alert('직무 삭제에 실패했습니다.'));
       }}
+      onLeaderDelegated={() => { fetchDetail(); onLeaderChanged?.(); }}
     />
   );
 };

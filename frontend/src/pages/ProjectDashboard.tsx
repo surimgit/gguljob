@@ -98,6 +98,7 @@ const ProjectDashboard = () => {
     null,
   );
   const [isLeader, setIsLeader] = useState(false);
+  const [leaderCheckKey, setLeaderCheckKey] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -115,7 +116,7 @@ const ProjectDashboard = () => {
         setIsLeader(detail.leader === true);
       })
       .catch(() => setIsLeader(false));
-  }, [id]);
+  }, [id, leaderCheckKey]);
 
   useEffect(() => {
     if (!id) return;
@@ -373,6 +374,7 @@ const ProjectDashboard = () => {
             <TeamMembers
               dashboard={dashboard}
               projectId={id ? Number(id) : undefined}
+              onLeaderChanged={() => setLeaderCheckKey((k) => k + 1)}
             />
           )}
           {activeTab === "settings" && (
