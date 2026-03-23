@@ -46,6 +46,9 @@ public class Project extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String title;
 
+    @Column(length = 200)
+    private String topic;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
     private Domain domain;
@@ -118,7 +121,7 @@ public class Project extends BaseTimeEntity {
         this.finishedAt = LocalDateTime.now();
     }
 
-    public void updateTitle(String newTitle) {
-        this.title = newTitle;
+    public void updateTopic(String newTopic) {
+        this.topic = newTopic;
     }
 }
