@@ -63,25 +63,6 @@ services:
     restart: always
 
   # =======================================================
-  # [Elasticsearch] - 검색 엔진
-  # =======================================================
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-  #   container_name: gguljob-elasticsearch-dev
-  #   volumes:
-  #     - ./data/elasticsearch:/usr/share/elasticsearch/data    
-  #   environment:
-  #     - discovery.type=single-node
-  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  #   ports:
-  #     - "127.0.0.1:9201:9200" # prod와 포트 충돌 방지: dev는 9201 사용
-  #   networks:
-  #     - gguljob-network-dev
-  #   restart: always
-
-  # =======================================================
-
-  # =======================================================
   # [Frontend - React + Nginx (Development Build)]
   # =======================================================
   frontend-dev:

@@ -12,7 +12,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     env_file:
-      - ./.env
+      - ./.env-prod
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
@@ -81,30 +81,6 @@ services:
         max-file: "3"
 
   # =======================================================
-  # [Elasticsearch] - 검색 엔진
-  # =======================================================
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-  #   container_name: gguljob-elasticsearch-prod
-  #   volumes:
-  #     - ./data/elasticsearch:/usr/share/elasticsearch/data
-  #   environment:
-  #     - discovery.type=single-node
-  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  #   ports:
-  #     - "127.0.0.1:9200:9200" # SSH 터널링 전용
-  #   networks:
-  #     - gguljob-network
-  #   restart: always
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-
-  # =======================================================
-
-  # =======================================================
   # [Frontend - React + Nginx]
   # =======================================================
   frontend:
@@ -130,8 +106,11 @@ services:
   # =======================================================
   backend-blue:
     image: gguljob-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: gguljob-backend-prod-blue
-    env_file: ./.env
+    env_file: ./.env-prod
     environment:
       - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
       - SPRING_PROFILES_ACTIVE=prod
@@ -174,14 +153,16 @@ services:
   # =======================================================
   backend-green:
     image: gguljob-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: gguljob-backend-prod-green
-    env_file: ./.env
+    env_file: ./.env-prod
     environment:
       - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
       - SPRING_PROFILES_ACTIVE=prod
       - SERVER_FORWARD_HEADERS_STRATEGY=native
       - SERVER_PORT=8080
-      - GMS_API_KEY=${GMS_API_KEY}
 
       - DB_HOST=gguljob-db-prod
       - DB_NAME=${DB_NAME}

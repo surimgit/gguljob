@@ -1,16 +1,9 @@
-﻿pipeline {
+pipeline {
     agent any
 
-    // 트리거: master 브랜치 푸시 시, frontend/** 변경 감지
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'master')
-    }
-
     environment {
-        COMPOSE_FILE      = 'docker-compose.prod.yml'
-        SERVICE_NAME      = 'frontend'
-        FRONTEND_DIR      = 'frontend'
-        ENV_CREDENTIAL_ID = 'prod-frontend-env'
+        COMPOSE_FILE = 'docker-compose.prod.yml'
+        SERVICE_NAME = 'frontend'
     }
 
     options {
@@ -25,29 +18,9 @@
             }
         }
 
-        stage('Inject .env') {
-            when {
-                changeset "frontend/**"
-            }
-            steps {
-                echo '=== 2. 프론트엔드 환경변수 주입 ==='
-                // ★ Vite는 빌드 시점에 .env를 번들에 삽입하므로
-                //   docker build 전에 반드시 frontend/.env가 있어야 함
-                dir("${FRONTEND_DIR}") {
-                    withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
-                        sh 'cp $ENV_FILE .env'
-                        sh 'ls -al .env'
-                    }
-                }
-            }
-        }
-
         stage('Build & Deploy') {
-            when {
-                changeset "frontend/**"
-            }
             steps {
-                echo '=== 3. Docker 이미지 빌드 및 컨테이너 재배포 ==='
+                echo '=== 2. Docker 이미지 빌드 및 컨테이너 재배포 ==='
                 script {
                     try {
                         sh "docker compose -f ${COMPOSE_FILE} up -d --build ${SERVICE_NAME}"
@@ -55,8 +28,6 @@
                     } catch (Exception e) {
                         echo "❌ 배포 실패"
                         throw e
-                    } finally {
-                        sh "rm -f ${FRONTEND_DIR}/.env"
                     }
                 }
             }
@@ -64,7 +35,7 @@
 
         stage('Cleanup') {
             steps {
-                echo '=== 4. 미사용 이미지 정리 ==='
+                echo '=== 3. 미사용 이미지 정리 ==='
                 sh 'docker image prune -f'
             }
         }

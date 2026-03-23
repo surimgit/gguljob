@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 # 환경변수 로드
 load_dotenv()
 
-NEO4J_URI = "bolt://127.0.0.1:7688"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "default-neo4j-password-please-change-in-production"
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7688")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+if not NEO4J_PASSWORD:
+    raise ValueError("NEO4J_PASSWORD 환경변수가 설정되지 않았습니다.")
 
 # 백엔드 API와 동일하게 200, 2000 구조 차용
 EVAL_LIMIT_GRAPH = 500

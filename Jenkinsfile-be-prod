@@ -1,16 +1,10 @@
 pipeline {
     agent any
     
-    // [변경 1] 트리거: 'master' 브랜치에 푸시될 때만 실행
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'master')
-    }
-    
     environment {
         DOCKER_COMPOSE_DIR = '.' 
         BACKEND_DIR = 'backend' 
         
-        // 운영용 .env 파일 Credential ID
         ENV_CREDENTIAL_ID = 'prod-backend-env'
     }
 
@@ -45,9 +39,6 @@ pipeline {
         }
 
         stage('Build Backend') {
-            when {
-                changeset "backend/**"
-            }
             steps {
                 echo '=== 2. Build Spring Boot (Prod) ==='
                 dir("${BACKEND_DIR}") {
@@ -60,24 +51,17 @@ pipeline {
         }
 
         stage('Deploy (Blue/Green)') {
-            when {
-                changeset "backend/**"
-            }
             steps {
                 echo "=== 3. Executing Prod Deployment Script ==="
                 dir("${DOCKER_COMPOSE_DIR}") {
                     withCredentials([
-                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE'),
-                        // AWS 키는 공용으로 써도 무방함
-                        string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
-                        string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
+                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')
                     ]) {
                         script {
                             try {
-                                sh 'cp $ENV_FILE .env'
+                                sh 'cp $ENV_FILE .env-prod'
                                 
                                 // [변경 5] 운영용 배포 스크립트 실행 (deploy-prod.sh)
-                                // 이 스크립트는 잠시 후에 만들어드립니다.
                                 sh 'chmod +x deploy-prod.sh'
                                 sh './deploy-prod.sh'
 
@@ -85,7 +69,7 @@ pipeline {
                                 echo "❌ Prod 배포 실패!"
                                 throw e
                             } finally {
-                                sh 'rm -f .env'
+                                sh 'rm -f .env-prod'
                             }
                         }
                     }
