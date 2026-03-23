@@ -15,4 +15,6 @@ public interface ProjectPositionRepository extends JpaRepository<ProjectPosition
     List<ProjectPosition> findByProjectIdIn(List<Long> projectIds);
 
     void deleteAllByProjectId(Long projectId);
+
+    Optional<ProjectPosition> findByIdAndProject_Id(Long id, Long projectId);
 }
