@@ -13,7 +13,7 @@ import {
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
 import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deletePosition } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
-import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName } from "../../../../constants/skills";
+import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName, DISPLAY_TO_ROLE } from "../../../../constants/skills";
 import type { RoleCode } from "../../../../constants/skills";
 import UserProfileModal from "../../mypage/UserProfileModal";
 
@@ -737,7 +737,7 @@ const TeamManagement = ({
     return acc;
   }, {});
 
-  const addedRoles = roles.map((r) => r.name) as RoleCode[];
+  const addedRoles = roles.map((r) => DISPLAY_TO_ROLE[r.name] ?? r.name) as RoleCode[];
 
   const handleUpdateCount = async (roleId: string, delta: number) => {
     if (!projectId) return;
@@ -832,11 +832,14 @@ const TeamManagement = ({
         targetCount: data.count,
         requireSkills: data.stacks,
       });
+      const currentCount = localMembers.filter(
+        (m) => m.role === getRoleDisplayName(data.role),
+      ).length;
       const newRole: Role = {
         id: String(res.positionId),
         name: data.role,
-        status: "open",
-        current: 0,
+        status: currentCount >= data.count ? "closed" : "open",
+        current: currentCount,
         total: data.count,
         stacks: data.stacks,
       };
@@ -850,7 +853,7 @@ const TeamManagement = ({
   return (
     <div className="flex flex-col gap-5">
       {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
         {/* ── 좌측: 팀원 모집 현황 ── */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -1004,7 +1007,7 @@ const TeamManagement = ({
 
         {/* ── 우측: 현재 팀원 ── */}
         <div
-          className="rounded-2xl p-5 shadow-sm"
+          className="rounded-2xl p-5 shadow-sm min-h-[267px]"
           style={{
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
@@ -1639,7 +1642,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             role: getRoleDisplayName(m.role),
             joinDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("ko-KR") : "-",
             contribution: 0,
-            isLeader: i === 0,
+            isLeader: m.isLeader ?? m.leader ?? (i === 0),
             isMe: m.userId === currentUserId,
           })));
         }
@@ -1673,7 +1676,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
   return (
     <div className="flex flex-col gap-5">
       {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
         {/* ── 좌측: 팀원 모집 현황 (읽기전용) ── */}
         <div
           className="rounded-2xl p-5 shadow-sm"
@@ -1774,7 +1777,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
 
         {/* ── 우측: 현재 팀원 ── */}
         <div
-          className="rounded-2xl p-5 shadow-sm"
+          className="rounded-2xl p-5 shadow-sm min-h-[280px]"
           style={{
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
@@ -1941,9 +1944,17 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (!projectId) return;
     getTeamManagement(projectId)
-      .then(({ data }) => { setDetail(data.data); setIsLeader(true); })
+      .then(({ data }) => {
+        const detail = data.data ?? data;
+        setDetail(detail);
+        setIsLeader(detail.leader === true);
+      })
       .catch(() => setIsLeader(false));
   }, [projectId]);
 
@@ -1972,7 +1983,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
         return {
           id: r.positionId.toString(),
           name: getRoleDisplayName(r.role),
-          status: r.status === "RECRUITING" ? "open" : "closed",
+          status: current >= r.targetCount ? "closed" : (r.status === "RECRUITING" ? "open" : "closed"),
           current,
           total: r.targetCount,
           stacks: r.requireSkills,
@@ -1981,13 +1992,13 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     : dashboard ? dashboardToRoles(dashboard) : [];
 
   const members: Member[] = detail
-    ? detail.currentMembers.map((m, i) => ({
+    ? detail.currentMembers.map((m: any, i: number) => ({
         id: m.userId.toString(),
         name: m.userName,
         role: getRoleDisplayName(m.role),
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
-        isLeader: i === 0,
+        isLeader: m.isLeader ?? m.leader ?? (i === 0),
         isMe: m.userId === currentUserId,
       }))
     : dashboard ? dashboardToMembers(dashboard) : [];

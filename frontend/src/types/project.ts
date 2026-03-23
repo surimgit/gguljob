@@ -170,6 +170,7 @@ export interface PendingJoinRequest {
 }
 
 export interface TeamManagement {
+  leader: boolean;
   recruitments: RecruitmentStatus[];
   currentMembers: CurrentMember[];
   pendingRequests: PendingJoinRequest[];

@@ -66,7 +66,7 @@ const formatTime = (dateStr: string) => {
 /* ── 메인 페이지 ── */
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTabFromUrl = searchParams.get("tab") || "team";
   const [activeTab, setActiveTab] = useState<string>(activeTabFromUrl);
 
@@ -100,13 +100,20 @@ const ProjectDashboard = () => {
   const [isLeader, setIsLeader] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (id) fetchDashboard(Number(id));
   }, [id, fetchDashboard]);
 
   useEffect(() => {
     if (!id) return;
     getTeamManagement(Number(id))
-      .then(() => setIsLeader(true))
+      .then(({ data }: { data: any }) => {
+        const detail = data.data ?? data;
+        setIsLeader(detail.leader === true);
+      })
       .catch(() => setIsLeader(false));
   }, [id]);
 
@@ -274,8 +281,10 @@ const ProjectDashboard = () => {
                               key={item.key}
                               onClick={() => {
                                 setActiveTab("personal");
+                                setSearchParams({ tab: "personal" });
                                 setPersonalSubTab(item.key);
                                 setPersonalDropdownOpen(false);
+                                window.scrollTo(0, 0);
                               }}
                               className="w-full text-left px-4 py-2.5 text-sm transition-colors"
                               style={{
@@ -325,7 +334,9 @@ const ProjectDashboard = () => {
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab.key);
+                    setSearchParams({ tab: tab.key });
                     setPersonalDropdownOpen(false);
+                    window.scrollTo(0, 0);
                   }}
                   className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
                     isActive ? "font-bold" : "font-medium"
