@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getJobs, getBookmarkedJobs } from '../../../api/jobs';
@@ -338,6 +339,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   const sectionRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeSkill, setActiveSkill] = useState('전체');
   const [activeSort, setActiveSort] = useState('매칭순');
   const [showBookmarked, setShowBookmarked] = useState(
@@ -351,7 +353,8 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     if (showBookmarked) {
       getBookmarkedJobs()
         .then(({ data }) => {
-          setJobs(data.map(mapToJobListing));
+          const items = (data as any).data?.content ?? [];
+          setJobs(items.map(mapToJobListing));
           setTotalPages(1);
         })
         .catch(() => {});
@@ -386,7 +389,13 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     );
   })();
 
-  const finalFilteredJobs = jobsFilteredByStack;
+  const finalFilteredJobs = searchQuery.trim()
+    ? jobsFilteredByStack.filter(job =>
+        job.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        job.company.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        job.techStacks.some(t => t.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+      )
+    : jobsFilteredByStack;
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
@@ -421,6 +430,19 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
         </h2>
       </div>
 
+      {/* 검색바 */}
+      <div className="pb-4">
+        <div className="bg-[#FFFDF9] border-2 border-[#e5e7eb] rounded-[18px] h-[62px] flex items-center px-[25px] gap-[12px]">
+          <Search className="w-[24px] h-[24px] text-[#9ca3af] shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="채용공고를 검색하세요"
+            className="flex-1 bg-transparent font-normal text-[13px] text-black placeholder:text-[#9ca3af] outline-none"
+          />
+        </div>
+      </div>
       {/* 필터 박스 */}
       <div className="pb-4">
         <div className="bg-[#f7f8fa] border-2 border-[#f2b705] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] px-[25px] pt-[20px] pb-[14px] flex flex-col gap-[12px]">
