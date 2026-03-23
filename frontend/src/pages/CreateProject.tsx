@@ -11,9 +11,12 @@ import {
   Bot,
   Smartphone,
   X,
+  Wrench,
+  Briefcase,
+  PieChart,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
-import { ROLE_LIST, getRoleDisplayName } from '../constants/skills';
+import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY, SKILL_CATEGORY_META } from '../constants/skills';
 
 /* ── 상수 ── */
 
@@ -22,16 +25,16 @@ const DOMAINS = [
   '빅데이터', '블록체인', '자율주행', '콘텐츠',
 ];
 
-const TECH_CATEGORIES = {
-  Frontend:  { icon: Monitor,    stacks: ['React', 'Vue', 'Angular', 'Next.js', 'Nuxt.js', 'TypeScript', 'JavaScript', 'TailwindCSS', 'Svelte'] },
-  Backend:   { icon: Server,     stacks: ['Spring', 'Django', 'FastAPI', 'Express', 'NestJS', 'Node.js', 'Java', 'Python', 'Go', 'Rust', 'Kotlin'] },
-  Database:  { icon: Database,   stacks: ['MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase', 'Oracle', 'SQLite'] },
-  Infra:     { icon: Cloud,      stacks: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins', 'Nginx', 'Linux'] },
-  AI:        { icon: Bot,        stacks: ['PyTorch', 'TensorFlow', 'Scikit-learn', 'Pandas', 'NumPy', 'OpenCV', 'HuggingFace'] },
-  Mobile:    { icon: Smartphone, stacks: ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Android', 'iOS'] },
-} as const;
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+};
 
-type TechCategory = keyof typeof TECH_CATEGORIES;
+const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
+  ...meta,
+  icon: CATEGORY_ICONS[meta.key] ?? Info,
+  stacks: SKILLS_BY_CATEGORY[meta.key] ?? [],
+}));
 
 
 /* ── 타입 ── */
@@ -68,7 +71,7 @@ const CreateProject = () => {
     leaderRole: '',
   });
 
-  const [openCategory, setOpenCategory] = useState<TechCategory | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [memberDraft, setMemberDraft] = useState<Member>({ name: '', position: '', email: '' });
 
   /* ── 핸들러 ── */
@@ -128,20 +131,20 @@ const CreateProject = () => {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)' }} className="min-h-screen pb-24 sm:pb-28">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
         {/* 페이지 헤더 */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             새 프로젝트 생성
           </h1>
-          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="text-xs sm:text-base mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
             프로젝트 정보를 입력하고 팀원을 모집하세요
           </p>
         </div>
 
         {/* ─── 섹션 1: 기본 정보 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-4 sm:mb-5" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-4 sm:mb-5" style={{ color: 'var(--color-text-primary)' }}>
             📋 기본 정보
           </h2>
 
@@ -276,7 +279,7 @@ const CreateProject = () => {
 
         {/* ─── 섹션 2: 기술 스택 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             🛠 기술 스택
           </h2>
           <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -284,16 +287,16 @@ const CreateProject = () => {
           </p>
 
           <div className="flex flex-col gap-2">
-            {(Object.keys(TECH_CATEGORIES) as TechCategory[]).map((cat) => {
-              const { icon: Icon, stacks } = TECH_CATEGORIES[cat];
-              const isOpen = openCategory === cat;
-              const selectedStacks = form.techStacks[cat] ?? [];
+            {TECH_CATEGORIES.map((cat) => {
+              const { key, label, icon: Icon, stacks } = cat;
+              const isOpen = openCategory === key;
+              const selectedStacks = form.techStacks[key] ?? [];
 
               return (
-                <div key={cat}>
+                <div key={key}>
                   <button
                     type="button"
-                    onClick={() => setOpenCategory(isOpen ? null : cat)}
+                    onClick={() => setOpenCategory(isOpen ? null : key)}
                     className="flex items-center justify-between w-full px-4 py-3 rounded-xl cursor-pointer transition-colors"
                     style={{
                       backgroundColor: isOpen ? 'var(--color-primary-soft)' : 'var(--color-background)',
@@ -303,7 +306,7 @@ const CreateProject = () => {
                   >
                     <span className="flex items-center gap-2 text-sm font-semibold">
                       <Icon className="w-4 h-4" />
-                      {cat}
+                      {label}
                       {selectedStacks.length > 0 && (
                         <span
                           className="text-xs font-normal px-2 py-0.5 rounded-full"
@@ -327,7 +330,7 @@ const CreateProject = () => {
                           <button
                             key={stack}
                             type="button"
-                            onClick={() => toggleStack(cat, stack)}
+                            onClick={() => toggleStack(key, stack)}
                             className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
                             style={{
                               borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',
@@ -349,7 +352,7 @@ const CreateProject = () => {
 
         {/* ─── 섹션 3: 팀원 등록 ─── */}
         <section className="rounded-2xl p-4 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)' }}>
-          <h2 className="flex items-center gap-2 text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="flex items-center gap-2 text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
             👥 팀원 등록
           </h2>
           <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -467,7 +470,7 @@ const CreateProject = () => {
 
       {/* ─── 하단 고정 CTA ─── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-3 sm:px-4 pb-4 sm:pb-6 pt-3"
+        className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 pt-3"
         style={{ backgroundColor: 'var(--color-background)' }}
       >
         <button

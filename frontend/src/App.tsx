@@ -29,7 +29,6 @@ const AppRoutes = () => {
   const [searchParams] = useSearchParams();
   const logout = useAuthStore((state) => state.logout);
   const setUser = useAuthStore((state) => state.setUser);
-  const setTokens = useAuthStore((state) => state.setTokens);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -46,12 +45,8 @@ const AppRoutes = () => {
 
     const userId = searchParams.get('login') || '1';
 
-    axios.get(`/api/v1/auth/test-login?userId=${userId}`)
-      .then((res) => {
-        const { accessToken, refreshToken } = res.data.data;
-        setTokens(accessToken, refreshToken);
-        return getMe();
-      })
+    axios.get(`/api/v1/auth/test-login?userId=${userId}`, { withCredentials: true })
+      .then(() => getMe())
       .then((user) => {
         setUser(user);
         const url = new URL(window.location.href);
@@ -61,7 +56,7 @@ const AppRoutes = () => {
       .catch((err) => {
         console.error('[test-login] 실패:', err);
       });
-  }, [searchParams, setTokens, setUser]);
+  }, [searchParams, setUser]);
 
   return (
     <>

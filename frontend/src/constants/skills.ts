@@ -117,12 +117,12 @@ export const SKILL_ID_TO_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.na
 
 export type RoleCode =
   | "FRONTEND" | "BACKEND" | "DEVOPS" | "DATA"
-  | "AI" | "DATABASE" | "MOBILE" | "TOOLS" | "PM";
+  | "AI" | "DATABASE" | "MOBILE" | "TOOLS" | "PM" | "DESIGN";
 
 /** 전체 직무 목록 */
 export const ROLE_LIST: RoleCode[] = [
   "FRONTEND", "BACKEND", "DEVOPS", "DATA",
-  "AI", "DATABASE", "MOBILE", "TOOLS", "PM",
+  "AI", "DATABASE", "MOBILE", "TOOLS", "PM", "DESIGN",
 ];
 
 /** 직무별 색상 */
@@ -136,9 +136,8 @@ export const ROLE_COLORS: Record<string, string> = {
   MOBILE:   "#F97316",
   TOOLS:    "#6366F1",
   PM:       "#F59E0B",
+  DESIGN:   "#8B5CF6",
 };
-
-export const getRoleColor = (role: string): string => ROLE_COLORS[role] ?? "#6B7280";
 
 /** 직무 코드 → 화면 표시 이름 (영어 풀네임) */
 export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
@@ -151,10 +150,55 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
   MOBILE:   "Mobile",
   TOOLS:    "Tools",
   PM:       "PM",
+  DESIGN:   "Design",
 };
 
+/** 직무 코드 → 백엔드 API Role 값 매핑 */
+export const ROLE_TO_API: Record<RoleCode, string> = {
+  FRONTEND: "FE",
+  BACKEND:  "BE",
+  DEVOPS:   "INFRA",
+  DATA:     "DATA",
+  AI:       "AI",
+  DATABASE: "DATABASE",
+  MOBILE:   "MOBILE",
+  TOOLS:    "TOOLS",
+  PM:       "PM",
+  DESIGN:   "DESIGN",
+};
+
+/** 백엔드 API Role 값 → RoleCode 역매핑 */
+export const API_TO_ROLE: Record<string, RoleCode> = {
+  ...Object.fromEntries(
+    Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
+  ),
+  /* PositionType enum에서 ROLE_TO_API와 다른 이름으로 내려오는 값 보정 */
+  DB: "DATABASE",
+};
+
+/** 화면 표시 이름 → RoleCode 역매핑 (예: "Frontend" → "FRONTEND") */
+export const DISPLAY_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
+  Object.entries(ROLE_DISPLAY_NAMES).map(([code, display]) => [display, code as RoleCode]),
+);
+
+export const getRoleColor = (role: string): string =>
+  ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? ROLE_COLORS[DISPLAY_TO_ROLE[role]] ?? "#6B7280";
+
 export const getRoleDisplayName = (role: string): string =>
-  ROLE_DISPLAY_NAMES[role as RoleCode] ?? role;
+  ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
+
+/** 기술 스택 카테고리 메타 (아이콘 제외 — UI에서 매핑) */
+export const SKILL_CATEGORY_META: { key: string; label: string }[] = [
+  { key: "FRONTEND", label: "Frontend" },
+  { key: "BACKEND",  label: "Backend" },
+  { key: "DEVOPS",   label: "DevOps" },
+  { key: "DATA",     label: "Data" },
+  { key: "AI",       label: "AI" },
+  { key: "DATABASE", label: "Database" },
+  { key: "MOBILE",   label: "Mobile" },
+  { key: "TOOLS",    label: "Tools" },
+  { key: "PM",       label: "PM" },
+];
 
 /** 직무별 추천 스킬 (해당 카테고리의 스킬 목록) */
 export const ROLE_STACKS: Record<RoleCode, string[]> = {
@@ -167,4 +211,5 @@ export const ROLE_STACKS: Record<RoleCode, string[]> = {
   MOBILE:   SKILLS_BY_CATEGORY["MOBILE"] ?? [],
   TOOLS:    SKILLS_BY_CATEGORY["TOOLS"] ?? [],
   PM:       SKILLS_BY_CATEGORY["PM"] ?? [],
+  DESIGN:   SKILLS_BY_CATEGORY["DESIGN"] ?? [],
 };

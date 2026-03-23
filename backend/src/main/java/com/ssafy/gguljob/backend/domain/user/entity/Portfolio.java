@@ -10,9 +10,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Table(name = "portfolios")
@@ -37,4 +40,16 @@ public class Portfolio extends BaseTimeEntity {
 
     @Column(name = "is_public", nullable = false, columnDefinition = "TINYINT")
     private Boolean isPublic = true;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Builder
+    public Portfolio(User user, String title, String s3Url, Boolean isPublic) {
+        this.user = user;
+        this.title = title;
+        this.s3Url = s3Url;
+        this.isPublic = isPublic;
+    }
 }

@@ -32,6 +32,9 @@ export interface JobItem {
   cutoffHigh: number;
   cutoffMedium: number;
   averageScore: number;
+  techStacks: string[];
+  jobCategory: string;
+  topPercentile?: number;
 }
 
 // GET /api/v1/jobs/filters 응답

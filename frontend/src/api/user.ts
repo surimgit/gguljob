@@ -38,7 +38,7 @@ export const getMe = async (): Promise<User> => {
 
 export interface ProfileUpdateRequest {
   description?: string;
-  roles: PositionType[];
+  roles: string[];
   mbti?: string;
   teamTendency?: string;
   experience?: string;
@@ -56,6 +56,9 @@ export const uploadProfileImageApi = (file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+
+export const deleteProfileImageApi = () =>
+  api.delete('/v1/user/me/profile/image');
 
 export const logoutApi = () => api.post('/v1/auth/logout');
 

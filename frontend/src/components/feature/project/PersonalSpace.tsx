@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, MessageSquare, Send } from 'lucide-react';
+import { Sparkles, MessageSquare, Send } from 'lucide-react';
+import Pagination from '../../common/Pagination';
 import { useAuthStore } from '../../../stores/authStore';
 import type { PersonalSpaceData } from '../../../types/project';
 import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
 import type { TroubleshootingListItem } from '../../../api/troubleshooting';
 import { getPullRequests } from '../../../api/projects';
 import type { PullRequestListItem } from '../../../api/projects';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -37,99 +39,6 @@ interface TroubleshootingItem {
   codeSnippet: string;
   sources: { label: string; color: string }[];
 }
-
-// ── 더미 데이터 ───────────────────────────────────────────────────────────────
-const MOCK_MR_LIST: MrItem[] = [
-  {
-    id: 1,
-    title: 'feat: 트러블슈팅 상세 페이지 UI 구현 및 마크다운 렌더링 연동',
-    status: 'Open',
-    description: '트러블슈팅 상세 뷰에서 마크다운을 파싱하여 렌더링하는 기능을 구현했습니다. react-markdown 라이브러리 적용 과정에서 코드블록 하이라이팅 이슈가 있었고, rehype-highlight 플러그인으로 해결했습니다. SSR 환경에서 window is not defined 오류도 dynamic import로 처리했습니다.',
-    branch: 'feature/troubleshoot-detail',
-    commits: 4,
-    time: '3분 전',
-    reviews: [
-      { author: '오준혁', role: 'Backend', comment: 'SSR에서 dynamic import 처리 잘 하셨는데, next/dynamic의 ssr: false 옵션도 같이 고려해보시면 좋을 것 같아요.', avatarColor: '#6366f1' },
-      { author: '이준혁', role: 'Frontend', comment: 'rehype-highlight 대신 prism-react-renderer도 번들 사이즈 면에서 더 가벼울 수 있어요.', avatarColor: '#22c55e' },
-      { author: '김도현', role: '본인 · 답변', comment: '말씀해주신 대로 next/dynamic ssr:false 적용하니 훨씬 깔끔해졌어요. prism-react-renderer도 다음 PR에서 교체해볼게요!', avatarColor: '#f59e0b' },
-    ],
-  },
-  {
-    id: 2,
-    title: 'fix: 무한 스크롤 중복 데이터 렌더링 버그 수정',
-    status: 'Merged',
-    description: '커서 기반 페이지네이션에서 동일한 lastId가 두 번 요청되는 Race Condition 이슈를 발견했습니다. useRef로 요청 중 플래그를 관리하고, Intersection Observer 콜백에서 중복 호출을 방지하는 방식으로 해결했습니다.',
-    branch: 'fix/infinite-scroll',
-    commits: 2,
-    time: '어제 병합',
-    reviews: [
-      { author: '정서윤', role: 'Frontend', comment: 'useRef 플래그 방식 좋은데, useSWR이나 react-query 쓰면 이런 중복 요청 처리가 내장되어 있어서 추후 리팩토링 고려해봐요.', avatarColor: '#ec4899' },
-    ],
-  },
-  {
-    id: 3,
-    title: 'refactor: API 호출 로직 커스텀 훅으로 분리',
-    status: 'Open',
-    description: '컴포넌트에 직접 작성되어 있던 fetch 로직을 useApi 커스텀 훅으로 분리했습니다. 로딩, 에러, 데이터 상태를 통합 관리하고 재사용성을 높였습니다.',
-    branch: 'refactor/custom-hook-api',
-    commits: 3,
-    time: '2시간 전',
-    reviews: [
-      { author: '오준혁', role: 'Backend', comment: 'API 에러 핸들링 시 HTTP 상태 코드별 분기 처리도 훅 내부에서 해주면 좋겠어요.', avatarColor: '#6366f1' },
-      { author: '정서윤', role: 'Frontend', comment: '제네릭 타입 적용 깔끔하네요. AbortController도 cleanup에 추가하면 더 안정적일 것 같아요.', avatarColor: '#ec4899' },
-    ],
-  },
-  {
-    id: 4,
-    title: 'feat: 다크모드 토글 및 테마 시스템 구현',
-    status: 'Merged',
-    description: 'CSS 변수 기반 테마 시스템을 구축하고, localStorage에 사용자 테마 설정을 저장하는 다크모드 토글 기능을 구현했습니다. prefers-color-scheme 미디어 쿼리로 시스템 설정도 반영됩니다.',
-    branch: 'feature/dark-mode',
-    commits: 5,
-    time: '2일 전 병합',
-    reviews: [
-      { author: '이준혁', role: 'Frontend', comment: 'CSS 변수 네이밍이 일관성 있어서 좋아요. transition 추가하면 테마 전환이 더 부드러울 것 같아요.', avatarColor: '#22c55e' },
-    ],
-  },
-  {
-    id: 5,
-    title: 'fix: 로그인 토큰 만료 시 자동 리다이렉트 미동작 수정',
-    status: 'Closed',
-    description: 'Axios interceptor에서 401 응답을 받았을 때 로그인 페이지로 리다이렉트가 되지 않는 버그를 수정했습니다. response interceptor의 에러 핸들링 순서가 잘못되어 있었습니다.',
-    branch: 'fix/auth-redirect',
-    commits: 1,
-    time: '3일 전 닫힘',
-    reviews: [
-      { author: '오준혁', role: 'Backend', comment: 'refresh token 로직도 같이 추가하면 사용자 경험이 더 좋아질 것 같아요.', avatarColor: '#6366f1' },
-      { author: '김도현', role: '본인 · 답변', comment: 'refresh token은 별도 MR로 진행하겠습니다. 우선 리다이렉트 버그만 수정했어요.', avatarColor: '#f59e0b' },
-    ],
-  },
-];
-
-const MOCK_TROUBLESHOOTINGS: TroubleshootingItem[] = [
-  {
-    id: 1,
-    title: 'SSR 환경 마크다운 렌더링 window 오류',
-    problemDesc: 'react-markdown + rehype-highlight 적용 시 SSR에서 window is not defined 오류 발생.',
-    solutionDesc: 'next/dynamic으로 SSR 비활성화',
-    codeSnippet: `const ReactMarkdown = dynamic(\n  () => import('react-markdown'),\n  { ssr: false }\n)`,
-    sources: [
-      { label: 'PR #230512', color: '#3b82f6' },
-      { label: 'MR #11', color: '#8b5cf6' },
-    ],
-  },
-  {
-    id: 2,
-    title: '무한 스크롤 Race Condition 해결',
-    problemDesc: 'Intersection Observer 중복 호출로 Race Condition 발생. API 요청이 두 번 실행됨.',
-    solutionDesc: 'useRef로 isFetching 플래그 관리',
-    codeSnippet: `const isFetching = useRef(false)\nif (!isFetching.current) {\n  isFetching.current = true\n  await fetchNextPage()\n  isFetching.current = false\n}`,
-    sources: [
-      { label: 'PR #c6b8152', color: '#3b82f6' },
-      { label: 'MR #10', color: '#8b5cf6' },
-    ],
-  },
-];
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: MrStatus }) => {
@@ -319,6 +228,8 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 
 const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubleshooting' }: { projectId?: number; projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
+  const userPosition = useAuthStore((s) => s.user?.position);
+  const positionLabel = userPosition ? getRoleDisplayName(userPosition) : 'Developer';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
   const [tsList, setTsList] = useState<TroubleshootingItem[]>([]);
@@ -417,9 +328,9 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
     }
   };
 
-  const mrCount = projectId ? mrTotalElements : (personalData ? personalData.stats.prCount : MOCK_MR_LIST.length);
-  const codeReviews = personalData ? personalData.stats.reviewCount : MOCK_MR_LIST.reduce((sum, mr) => sum + mr.reviews.length, 0);
-  const stats = { mrCount, autoGenCount: projectId ? tsTotalElements : (personalData ? personalData.stats.troubleshootingCount : MOCK_TROUBLESHOOTINGS.length) };
+  const mrCount = projectId ? mrTotalElements : (personalData?.stats.prCount ?? 0);
+  const codeReviews = personalData?.stats.reviewCount ?? 0;
+  const stats = { mrCount, autoGenCount: projectId ? tsTotalElements : (personalData?.stats.troubleshootingCount ?? 0) };
 
   return (
     <div className="flex flex-col gap-10">
@@ -437,7 +348,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
           <div className="flex flex-col gap-0.5">
             <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
             <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
-              <span className="text-text-secondary">Frontend Developer · </span>
+              <span style={{ color: getRoleColor(userPosition ?? '') }}>{positionLabel} · </span>
               <span className="text-text-brown">{projectTitle ?? 'DevLog 트러블슈팅 플랫폼'}</span>
             </p>
           </div>
@@ -471,8 +382,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
             {/* AI 트러블슈팅 자동 생성 섹션 */}
             {showAiSection && (
               <div className="mb-6 rounded-2xl px-7 py-6 border border-[#c7d2fe] relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)' }}>
-                {/* 상단 보라 글로우 */}
-                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: 'linear-gradient(90deg, #6366f1, #7c3aed, #6366f1)' }} />
 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -609,37 +518,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {tsTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setTsPage(p => Math.max(0, p - 1))}
-                      disabled={tsPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: tsTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setTsPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          tsPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setTsPage(p => Math.min(tsTotalPages - 1, p + 1))}
-                      disabled={tsPage >= tsTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={tsPage + 1}
+                  totalPages={tsTotalPages}
+                  onChange={(page) => setTsPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>
@@ -673,37 +557,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {mrTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setMrPage(p => Math.max(0, p - 1))}
-                      disabled={mrPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: mrTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setMrPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          mrPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setMrPage(p => Math.min(mrTotalPages - 1, p + 1))}
-                      disabled={mrPage >= mrTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={mrPage + 1}
+                  totalPages={mrTotalPages}
+                  onChange={(page) => setMrPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>

@@ -15,4 +15,6 @@ public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> 
         "WHERE j.project.id = :projectId AND j.status = 'PENDING' " +
         "ORDER BY j.createdAt DESC")
     List<JoinRequest> findPendingRequestsByProjectId(@Param("projectId") Long projectId);
+
+    void deleteAllByProjectId(Long projectId);
 }

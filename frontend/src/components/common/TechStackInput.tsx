@@ -1,19 +1,16 @@
 import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import { SKILLS_BY_CATEGORY, SKILL_NAMES, ROLE_LIST, ROLE_DISPLAY_NAMES, type RoleCode } from '../../constants/skills';
 
-const CATEGORIES = {
-  FE: ['React', 'Vue.js', 'Next.js', 'TypeScript', 'JavaScript', 'HTML/CSS', 'jQuery', 'Swift'],
-  BE: ['Spring Boot', 'Java', 'Python', 'Node.js', 'Django', 'FastAPI', 'Flask', 'Nest.js', 'Kotlin', 'C', 'C++', 'C#', 'PHP', '.NET', 'JPA', 'MyBatis', 'MSA'],
-  DB: ['MySQL', 'PostgreSQL', 'MongoDB', 'MariaDB', 'Oracle DB', 'MSSQL', 'Redis'],
-  Infra: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins', 'Nginx', 'Linux', 'Git', 'Kafka', 'Airflow'],
-  AI: ['AI', 'PyTorch', 'TensorFlow', 'OpenCV', 'RAG', 'LLM', 'MLOps', 'Hadoop'],
-  Mobile: ['React Native', 'Flutter', 'Android', 'iOS', 'Kotlin', 'Unity'],
-  Tools: ['Jira', 'Figma'],
-} as const;
-
-type Category = keyof typeof CATEGORIES;
-
-const ALL_STACKS = [...new Set(Object.values(CATEGORIES).flat())];
+/** skills.ts 카테고리 중 스킬이 있는 것만 탭으로 표시 */
+const CATEGORY_TABS: { code: RoleCode; label: string; skills: string[] }[] =
+  ROLE_LIST
+    .filter((code) => (SKILLS_BY_CATEGORY[code] ?? []).length > 0)
+    .map((code) => ({
+      code,
+      label: ROLE_DISPLAY_NAMES[code],
+      skills: SKILLS_BY_CATEGORY[code],
+    }));
 
 interface Props {
   value: string[];
@@ -21,14 +18,16 @@ interface Props {
 }
 
 const TechStackInput = ({ value, onChange }: Props) => {
-  const [activeCategory, setActiveCategory] = useState<Category>('FE');
+  const [activeCategory, setActiveCategory] = useState<RoleCode>(CATEGORY_TABS[0].code);
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const listRef = useRef<HTMLUListElement>(null);
 
+  const activeSkills = SKILLS_BY_CATEGORY[activeCategory] ?? [];
+
   const suggestions = input.trim()
-    ? ALL_STACKS.filter(
+    ? SKILL_NAMES.filter(
         (s) => s.toLowerCase().includes(input.toLowerCase()) && !value.includes(s)
       )
     : [];
@@ -43,45 +42,50 @@ const TechStackInput = ({ value, onChange }: Props) => {
   const remove = (stack: string) => onChange(value.filter((s) => s !== stack));
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* 선택된 태그 */}
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {value.map((stack) => (
-            <span
-              key={stack}
-              className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-text-primary whitespace-nowrap"
-            >
-              {stack}
-              <button type="button" onClick={() => remove(stack)}>
-                <X className="w-3 h-3 text-text-tertiary hover:text-text-secondary" />
-              </button>
-            </span>
-          ))}
-        </div>
+        <>
+          <div className="flex flex-wrap gap-2">
+            {value.map((stack) => (
+              <span
+                key={stack}
+                className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-text-primary whitespace-nowrap"
+              >
+                {stack}
+                <button type="button" onClick={() => remove(stack)}>
+                  <X className="w-3 h-3 text-text-tertiary hover:text-text-secondary" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <hr className="border-border" />
+        </>
       )}
 
       {/* 카테고리 탭 */}
-      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-        {(Object.keys(CATEGORIES) as Category[]).map((cat) => (
+      <div className="flex gap-1 flex-wrap">
+        {CATEGORY_TABS.map(({ code, label }) => (
           <button
-            key={cat}
+            key={code}
             type="button"
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => setActiveCategory(code)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-              activeCategory === cat
+              activeCategory === code
                 ? 'bg-primary text-text-primary'
                 : 'bg-background text-text-secondary hover:bg-primary-soft'
             }`}
           >
-            {cat}
+            {label}
           </button>
         ))}
       </div>
 
+      <hr className="border-border" />
+
       {/* 추천 칩 */}
       <div className="flex flex-wrap gap-2">
-        {CATEGORIES[activeCategory].map((stack) => {
+        {activeSkills.map((stack) => {
           const selected = value.includes(stack);
           return (
             <button

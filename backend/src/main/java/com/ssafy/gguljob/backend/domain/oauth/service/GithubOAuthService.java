@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.oauth.dto.TokenResponseDto;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
+import com.ssafy.gguljob.backend.global.auth.JwtProperties;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import com.ssafy.gguljob.backend.global.exception.UnAuthorizedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +29,7 @@ public class GithubOAuthService {
 
     private final RestTemplate restTemplate;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
     private final com.ssafy.gguljob.backend.global.redis.RedisService redisService;
 
@@ -35,6 +39,7 @@ public class GithubOAuthService {
     @Value("${spring.security.oauth2.client.registration.github.client-secret}")
     private String clientSecret;
 
+    @Transactional
     public TokenResponseDto loginWithGithub(String code) {
         String githubAccessToken = getGithubAccessToken(code);
 
@@ -83,7 +88,7 @@ public class GithubOAuthService {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getAuthority().name());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
-        redisService.setValues("RT:" + user.getId(), refreshToken, java.time.Duration.ofDays(14));
+        redisService.setValues("RT:" + user.getId(), refreshToken, java.time.Duration.ofDays(jwtProperties.getRefreshDays()));
 
         log.info("JWT 토큰 발급 성공");
 
@@ -110,7 +115,14 @@ public class GithubOAuthService {
 
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
-        return (String) response.getBody().get("access_token");
+        Map<String, Object> body = response.getBody();
+        if (body == null || body.containsKey("error")) {
+            String errorDesc = body != null ? (String) body.get("error_description") : "unknown";
+            log.error("GitHub 토큰 발급 실패: {}", errorDesc);
+            throw new UnAuthorizedException("GitHub 인증에 실패했습니다: " + errorDesc);
+        }
+
+        return (String) body.get("access_token");
     }
 
     /**

@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
 
 interface RecommendCardProps {
   name: string;
@@ -10,14 +11,6 @@ interface RecommendCardProps {
   profileImage: string;
   onClickProfile: () => void;
 }
-
-/* 포지션별 색상 */
-const getPositionColor = (position: string) => {
-  const lower = position.toLowerCase();
-  if (lower.includes("backend") || lower === "be") return "var(--color-success)";
-  if (lower.includes("frontend") || lower === "fe") return "var(--color-blue)";
-  return "var(--color-primary-hover)";
-};
 
 /* 적합도별 색상 + 배경 */
 const getMatchStyle = (rate: number) => {
@@ -35,15 +28,14 @@ const RecommendCard = ({
   techStacks,
   onClickProfile,
 }: RecommendCardProps) => {
-  const posColor = getPositionColor(position);
+  const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl p-5 min-h-[280px] shadow-md"
+      className="relative flex flex-col rounded-2xl p-5 min-h-[280px] shadow-md border border-border hover:bg-primary-soft hover:border-primary-hover transition-all duration-200"
       style={{
         background: "rgba(var(--color-primary-soft-rgb, 255,243,200), 0.23)",
-        border: "1px solid var(--color-border)",
       }}
     >
       {/* 적합도 배지 (우상단) */}
@@ -80,7 +72,7 @@ const RecommendCard = ({
                 color: posColor,
               }}
             >
-              {position}
+              {getRoleDisplayName(position)}
             </span>
             <span
               className="text-xs font-bold whitespace-nowrap"

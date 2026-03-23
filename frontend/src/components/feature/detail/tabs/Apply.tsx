@@ -2,28 +2,11 @@ import { useState, useEffect } from 'react';
 import { getTeamManagement, applyToPosition } from '../../../../api/projects';
 import type { RecruitmentStatus } from '../../../../types/project';
 import { useAuthStore } from '../../../../stores/authStore';
+import { getRoleDisplayName, getRoleColor } from '../../../../constants/skills';
 
 interface ApplyProps {
   projectId: number;
 }
-
-const ROLE_LABEL: Record<string, string> = {
-  FE: '프론트엔드',
-  BE: '백엔드',
-  AI: '데이터/AI',
-  PM: '기획/PM',
-  INFRA: '인프라/DevOps',
-  DESIGN: '디자인',
-};
-
-const ROLE_COLOR: Record<string, string> = {
-  FE: '#2196F3',
-  BE: '#22C55E',
-  AI: '#EC4899',
-  PM: '#F59E0B',
-  INFRA: '#7C3AED',
-  DESIGN: '#d22ab6',
-};
 
 const MAX_APPEAL_LENGTH = 200;
 
@@ -138,7 +121,7 @@ const Apply = ({ projectId }: ApplyProps) => {
         {positions.map((pos) => {
           const openSlots = pos.targetCount - pos.currentCount;
           const progress = pos.targetCount > 0 ? pos.currentCount / pos.targetCount : 0;
-          const color = ROLE_COLOR[pos.role] ?? '#6b7280';
+          const color = getRoleColor(pos.role);
           const isSelected = selectedId === pos.positionId;
 
           return (
@@ -151,7 +134,7 @@ const Apply = ({ projectId }: ApplyProps) => {
             >
               <div className="flex items-center justify-between">
                 <span className="font-black text-text-primary text-[16px]">
-                  {ROLE_LABEL[pos.role] ?? pos.role}
+                  {getRoleDisplayName(pos.role)}
                 </span>
                 <div className="flex items-center gap-2.5">
                   <span className="bg-primary-soft text-text-brown font-bold text-[13px] px-3 py-1 rounded-lg">
