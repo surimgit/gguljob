@@ -181,6 +181,9 @@ public class GithubWebhookService {
                     LocalDateTime githubCreatedAt = ZonedDateTime.parse(prNode.path("created_at").asText()).toLocalDateTime();
                     String branchName = prNode.path("head").path("ref").asText();
                     PrStatus prStatus = PrStatus.valueOf(prNode.path("state").asText().toUpperCase());
+                    String diffUrl = prNode.path("html_url").asText();
+
+                    String diffContent = githubSyncService.fetchDiffFromGithub(diffUrl);
 
                     PullRequest newPr = PullRequest.builder()
                         .project(gitRepo.getProject())
@@ -188,6 +191,7 @@ public class GithubWebhookService {
                         .prNumber(prNumber)
                         .title(prNode.path("title").asText())
                         .diffUrl(prNode.path("html_url").asText())
+                        .diffContent(diffContent)
                         .diffSummary(prNode.path("body").asText())
                         .branchName(branchName)
                         .status(prStatus)
