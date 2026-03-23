@@ -183,6 +183,11 @@ export const getPullRequests = (projectId: number, page = 0, size = 10) =>
 export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
   api.post<{ projectId: number; domain: string; recommendedTopics: string[] }>(`/v1/ai/projects/${projectId}/topics/recommend`, { isRefresh, keyword }, { timeout: 60000 });
 
+/* 프로젝트 명 수정 */
+
+export const updateProjectTitle = (projectId: number, title: string) =>
+  api.patch(`/v1/projects/${projectId}/title`, { title });
+
 /* AI 추천 주제 적용 */
 
 export const updateProjectTopic = (projectId: number, selectedTopic: string) =>

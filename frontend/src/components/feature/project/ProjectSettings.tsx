@@ -42,6 +42,7 @@ type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
   projectId?: number;
+  onSaved?: () => void;
 }
 
 /* ── 상태 매핑 ── */
@@ -148,7 +149,7 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 };
 
 /* ── 컴포넌트 ── */
-const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
+const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps) => {
   const info = dashboard?.projectInfo;
   const gitRepo = dashboard?.gitRepoInfo;
 
@@ -159,6 +160,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [name, setName] = useState("");
+  const [originalTitle, setOriginalTitle] = useState("");
   const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -200,7 +202,8 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       .then(({ data: form }) => {
         const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
         setStatus(mappedStatus);
-        setName(form.title ?? "");
+        setName(form.teamName ?? form.title ?? "");
+        setOriginalTitle(form.title ?? "");
         setDescription(form.description ?? "");
         setDomains(form.domain ? [form.domain] : []);
         setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
@@ -214,7 +217,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         // 초기 스냅샷 저장
         setInitialSnapshot(JSON.stringify({
           status: mappedStatus,
-          name: form.title ?? "",
+          name: form.teamName ?? form.title ?? "",
           description: form.description ?? "",
           domains: form.domain ? [form.domain] : [],
           techStacks: skillsToTechStacks(skillNames),
@@ -225,7 +228,8 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         setIsLeader(false);
         // 폴백: dashboard 데이터 사용
         if (info) {
-          setName(info.title ?? "");
+          setName(info.teamName ?? info.title ?? "");
+          setOriginalTitle(info.title ?? "");
           setDescription(info.description ?? "");
           setDomains(info.domain ? [info.domain] : []);
           if (info.skills?.length) {
@@ -234,7 +238,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }
         setInitialSnapshot(JSON.stringify({
           status: "active",
-          name: info?.title ?? "",
+          name: info?.teamName ?? info?.title ?? "",
           description: info?.description ?? "",
           domains: info?.domain ? [info.domain] : [],
           techStacks: skillsToTechStacks(info?.skills ?? []),
@@ -286,14 +290,15 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     try {
       await updateProject(projectId, {
         status: STATUS_TO_BACKEND[status],
-        title: name,
-        teamName: info?.teamName,
+        title: originalTitle,
+        teamName: name,
         description,
         domain: domains[0] ?? "",
         skillIds,
         members: editMembers,
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
+      onSaved?.();
       // 스냅샷 갱신
       setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
     } catch (err) {
