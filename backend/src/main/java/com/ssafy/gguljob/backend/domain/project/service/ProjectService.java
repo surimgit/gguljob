@@ -175,7 +175,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
+    public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
 
         Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
@@ -222,6 +222,8 @@ public class ProjectService {
             request.githubToken(),
             webhookSecret
         ));
+
+        return new ProjectResponse.GitRepoRegistered(webhookSecret);
     }
 
     // 프로젝트 업데이트
