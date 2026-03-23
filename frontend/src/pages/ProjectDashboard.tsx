@@ -83,6 +83,9 @@ const ProjectDashboard = () => {
   const [keyword, setKeyword] = useState("");
   const [topics, setTopics] = useState<string[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+  const [editingTopic, setEditingTopic] = useState(false);
+  const [topicInput, setTopicInput] = useState("");
+  const [showAiRecommend, setShowAiRecommend] = useState(false);
   const [editingRepo, setEditingRepo] = useState(false);
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
@@ -110,23 +113,6 @@ const ProjectDashboard = () => {
       .catch(() => setIsLeader(false));
   }, [id]);
 
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    const fetchTopics = async () => {
-      try {
-        const { data } = await recommendTopics(Number(id), false);
-        if (!cancelled) setTopics(data.recommendedTopics ?? []);
-      } catch {
-        if (!cancelled) toast.error("주제 추천을 불러오지 못했습니다.");
-      } finally {
-        if (!cancelled) setTopicsLoading(false);
-      }
-    };
-    setTopicsLoading(true);
-    fetchTopics();
-    return () => { cancelled = true; };
-  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -399,7 +385,7 @@ const ProjectDashboard = () => {
                         className="text-3xl font-bold"
                         style={{ color: "var(--color-text-brown)" }}
                       >
-                        {projectInfo.title}
+                        {projectInfo.teamName || projectInfo.title}
                       </h1>
                       <span
                         className="px-2.5 py-0.5 rounded-full text-sm font-semibold flex-shrink-0"
@@ -422,12 +408,6 @@ const ProjectDashboard = () => {
                         진행중
                       </span>
                     </div>
-                    <span
-                      className="text-xs font-medium mb-1"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      {projectInfo.teamName}
-                    </span>
                     <p
                       className="text-base leading-relaxed mb-5 max-w-lg mt-3"
                       style={{ color: "var(--color-text-primary)" }}
@@ -528,12 +508,11 @@ const ProjectDashboard = () => {
               </div>
 
               {/* ── 메인 2열 레이아웃 ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
-                {/* ── 좌측 컬럼 ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
                 <div className="flex flex-col gap-5">
                   {/* Git 레포지토리 카드 */}
                   <div
-                    className="rounded-2xl p-5 shadow-sm"
+                    className="rounded-2xl p-5 shadow-sm min-h-[140px]"
                     style={{
                       background: "var(--color-surface)",
                       border: "1px solid var(--color-border)",
@@ -744,208 +723,285 @@ const ProjectDashboard = () => {
 
                   {/* 프로젝트 주제 카드 */}
                   <div
-                    className="rounded-2xl p-5 shadow-sm"
+                    className="rounded-2xl px-5 py-7 shadow-sm min-h-[140px] flex flex-col gap-6"
                     style={{
                       background: "var(--color-surface)",
                       border: "1px solid var(--color-border)",
                     }}
                   >
-                    <div
-                      className="flex items-center gap-2 text-lg font-bold mb-4"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      🚀 프로젝트 주제
-                    </div>
-
-                    {/* 현재 주제 */}
-                    <div className="mb-4">
-                      <p
-                        className="text-xl font-bold mb-1"
-                        style={{ color: "var(--color-text-brown)" }}
+                    <div className="flex items-center justify-between">
+                      <div
+                        className="flex items-center gap-2 text-lg font-bold"
+                        style={{ color: "var(--color-text-primary)" }}
                       >
-                        {projectInfo.title}
-                      </p>
-                      <p
-                        className="text-base leading-relaxed"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        {projectInfo.description}
-                      </p>
-                    </div>
-
-                    {/* AI 주제 추천 서브카드 */}
-                    <div
-                      className="rounded-2xl px-5 py-4 border border-[#c7d2fe] relative overflow-hidden"
-                      style={{
-                        background:
-                          "linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)",
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-[#6366f1]" />
-                          <span
-                            className="text-base font-bold"
-                            style={{ color: "var(--color-text-primary)" }}
-                          >
-                            AI 주제 추천
-                          </span>
-                          <span
-                            className="text-sm"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                          >
-                            팀에 맞는 주제를 추천해요
-                          </span>
-                        </div>
+                        🚀 프로젝트 주제
+                      </div>
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleRecommend(true)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#c7d2fe] bg-white"
+                          onClick={() => {
+                            setEditingTopic(true);
+                            setTopicInput(projectInfo.title);
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                           style={{
+                            border: "1px solid var(--color-border)",
                             color: "var(--color-text-secondary)",
                           }}
-                        >
-                          <RefreshCw
-                            className={`w-3 h-3 ${topicsLoading ? "animate-spin" : ""}`}
-                          />
-                          새로 추천
-                        </button>
-                      </div>
-
-                      {/* 키워드 입력 */}
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          placeholder="키워드를 입력하세요 (예: 인증, 배포)"
-                          value={keyword}
-                          onChange={(e) => setKeyword(e.target.value)}
-                          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none bg-white"
-                          style={{
-                            border: "1px solid #c7d2fe",
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "var(--color-background)";
                           }}
-                          onFocus={(e) =>
-                            (e.currentTarget.style.borderColor = "#6366f1")
-                          }
-                          onBlur={(e) =>
-                            (e.currentTarget.style.borderColor = "#c7d2fe")
-                          }
-                        />
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "";
+                          }}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          수정
+                        </button>
                         <button
-                          onClick={() => handleRecommend(true)}
-                          className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                          onClick={() => {
+                            setShowAiRecommend((prev) => !prev);
+                            if (!showAiRecommend && topics.length === 0) {
+                              handleRecommend(false);
+                            }
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
                           style={{ background: "#6366f1" }}
                         >
                           <Sparkles className="w-3.5 h-3.5" />
                           생성
                         </button>
                       </div>
+                    </div>
 
-                      {/* 추천 주제 목록 */}
-                      <div className="flex flex-col gap-2 mb-4">
-                        {topicsLoading ? (
-                          <div
-                            className="flex items-center justify-center py-6 gap-2"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                          >
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            <span className="text-sm">
-                              AI가 주제를 추천하고 있어요...
-                            </span>
-                          </div>
-                        ) : topics.length === 0 ? (
-                          <p
-                            className="text-sm text-center py-4"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                          >
-                            키워드를 입력하고 생성 버튼을 눌러보세요
-                          </p>
-                        ) : null}
-                        {!topicsLoading &&
-                          topics.map((topic, idx) => {
-                            const isSelected = selectedTopic === idx;
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() =>
-                                  setSelectedTopic(isSelected ? null : idx)
-                                }
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm text-left"
-                                style={{
-                                  border: `1px solid ${isSelected ? "#6366f1" : "#c7d2fe"}`,
-                                  background: isSelected
-                                    ? "#eef2ff"
-                                    : "var(--color-background)",
-                                  color: isSelected
-                                    ? "#6366f1"
-                                    : "var(--color-text-primary)",
-                                }}
-                              >
-                                <span
-                                  className="text-xs font-bold w-4"
-                                  style={{
-                                    color: isSelected
-                                      ? "#6366f1"
-                                      : "var(--color-text-tertiary)",
-                                  }}
-                                >
-                                  {idx + 1}
-                                </span>
-                                {topic}
-                              </button>
-                            );
-                          })}
+                    {/* 현재 주제 표시 / 수정 모드 */}
+                    {editingTopic ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={topicInput}
+                          onChange={(e) => setTopicInput(e.target.value)}
+                          placeholder="프로젝트 주제를 입력하세요"
+                          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                          style={{ border: "1px solid var(--color-border)" }}
+                          onFocus={(e) =>
+                            (e.currentTarget.style.borderColor = "var(--color-primary)")
+                          }
+                          onBlur={(e) =>
+                            (e.currentTarget.style.borderColor = "var(--color-border)")
+                          }
+                        />
+                        <button
+                          onClick={() => {
+                            if (!id || !topicInput.trim()) return;
+                            updateProjectTitle(Number(id), topicInput.trim())
+                              .then(() => {
+                                fetchDashboard(Number(id));
+                                setEditingTopic(false);
+                              })
+                              .catch(() => toast.error("주제 수정에 실패했습니다."));
+                          }}
+                          disabled={!topicInput.trim()}
+                          className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
+                          style={{ background: "var(--color-primary-hover)" }}
+                        >
+                          저장
+                        </button>
+                        <button
+                          onClick={() => setEditingTopic(false)}
+                          className="px-3 py-2 rounded-lg text-sm font-medium"
+                          style={{
+                            border: "1px solid var(--color-border)",
+                            color: "var(--color-text-secondary)",
+                          }}
+                        >
+                          취소
+                        </button>
                       </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <p
+                          className="text-base font-semibold"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {projectInfo.title || "주제가 아직 없습니다"}
+                        </p>
+                      </div>
+                    )}
 
-                      {/* 적용 버튼 */}
-                      <button
-                        className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors"
-                        style={
-                          selectedTopic !== null
-                            ? { background: "#7C3AED" }
-                            : {
-                                background: "var(--color-border)",
-                                color: "var(--color-text-tertiary)",
-                                cursor: "not-allowed",
-                              }
-                        }
-                        onMouseEnter={(e) => {
-                          if (selectedTopic !== null)
-                            e.currentTarget.style.background = "#6D28D9";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedTopic !== null)
-                            e.currentTarget.style.background = "#7C3AED";
-                        }}
-                        disabled={selectedTopic === null}
-                        onClick={() => {
-                          if (selectedTopic === null || !id) return;
-                          updateProjectTitle(Number(id), topics[selectedTopic])
-                            .then(() => {
-                              fetchDashboard(Number(id));
-                              setSelectedTopic(null);
-                            })
-                            .catch((err) => {
-                              console.error(
-                                "주제 적용 실패:",
-                                err.response?.status,
-                                err.response?.data,
-                              );
-                              alert(
-                                "주제 적용에 실패했습니다. 다시 시도해주세요.",
-                              );
-                            });
+                    {/* AI 주제 추천 서브카드 (생성 버튼으로 토글) */}
+                    {showAiRecommend && (
+                      <div
+                        className="rounded-2xl px-5 py-5 border border-[#c7d2fe] relative overflow-hidden"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)",
                         }}
                       >
-                        선택한 주제 적용하기
-                      </button>
-                    </div>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-[#6366f1]" />
+                            <span
+                              className="text-base font-bold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              AI 주제 추천
+                            </span>
+                            <span
+                              className="text-sm"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              팀에 맞는 주제를 추천해요
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleRecommend(true)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#c7d2fe] bg-white"
+                            style={{
+                              color: "var(--color-text-secondary)",
+                            }}
+                          >
+                            <RefreshCw
+                              className={`w-3 h-3 ${topicsLoading ? "animate-spin" : ""}`}
+                            />
+                            새로 추천
+                          </button>
+                        </div>
+
+                        {/* 키워드 입력 */}
+                        <div className="flex gap-2 mb-3">
+                          <input
+                            type="text"
+                            placeholder="키워드를 입력하세요 (예: 인증, 배포)"
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none bg-white"
+                            style={{
+                              border: "1px solid #c7d2fe",
+                            }}
+                            onFocus={(e) =>
+                              (e.currentTarget.style.borderColor = "#6366f1")
+                            }
+                            onBlur={(e) =>
+                              (e.currentTarget.style.borderColor = "#c7d2fe")
+                            }
+                          />
+                          <button
+                            onClick={() => handleRecommend(true)}
+                            className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                            style={{ background: "#6366f1" }}
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            추천
+                          </button>
+                        </div>
+
+                        {/* 추천 주제 목록 */}
+                        <div className="flex flex-col gap-2 mb-4">
+                          {topicsLoading ? (
+                            <div
+                              className="flex items-center justify-center py-6 gap-2"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              <span className="text-sm">
+                                AI가 주제를 추천하고 있어요...
+                              </span>
+                            </div>
+                          ) : topics.length === 0 ? (
+                            <p
+                              className="text-sm text-center py-4"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              키워드를 입력하고 추천 버튼을 눌러보세요
+                            </p>
+                          ) : null}
+                          {!topicsLoading &&
+                            topics.map((topic, idx) => {
+                              const isSelected = selectedTopic === idx;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() =>
+                                    setSelectedTopic(isSelected ? null : idx)
+                                  }
+                                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm text-left"
+                                  style={{
+                                    border: `1px solid ${isSelected ? "#6366f1" : "#c7d2fe"}`,
+                                    background: isSelected
+                                      ? "#eef2ff"
+                                      : "var(--color-background)",
+                                    color: isSelected
+                                      ? "#6366f1"
+                                      : "var(--color-text-primary)",
+                                  }}
+                                >
+                                  <span
+                                    className="text-xs font-bold w-4"
+                                    style={{
+                                      color: isSelected
+                                        ? "#6366f1"
+                                        : "var(--color-text-tertiary)",
+                                    }}
+                                  >
+                                    {idx + 1}
+                                  </span>
+                                  {topic}
+                                </button>
+                              );
+                            })}
+                        </div>
+
+                        {/* 적용 버튼 */}
+                        <button
+                          className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors"
+                          style={
+                            selectedTopic !== null
+                              ? { background: "#7C3AED" }
+                              : {
+                                  background: "var(--color-border)",
+                                  color: "var(--color-text-tertiary)",
+                                  cursor: "not-allowed",
+                                }
+                          }
+                          onMouseEnter={(e) => {
+                            if (selectedTopic !== null)
+                              e.currentTarget.style.background = "#6D28D9";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (selectedTopic !== null)
+                              e.currentTarget.style.background = "#7C3AED";
+                          }}
+                          disabled={selectedTopic === null}
+                          onClick={() => {
+                            if (selectedTopic === null || !id) return;
+                            updateProjectTitle(Number(id), topics[selectedTopic])
+                              .then(() => {
+                                fetchDashboard(Number(id));
+                                setSelectedTopic(null);
+                              })
+                              .catch((err) => {
+                                console.error(
+                                  "주제 적용 실패:",
+                                  err.response?.status,
+                                  err.response?.data,
+                                );
+                                alert(
+                                  "주제 적용에 실패했습니다. 다시 시도해주세요.",
+                                );
+                              });
+                          }}
+                        >
+                          선택한 주제 적용하기
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* ── 우측 컬럼 ── */}
                 <div className="flex flex-col gap-5">
                   {/* MR 랭킹 카드 */}
                   <div
-                    className="rounded-2xl p-5 shadow-sm"
+                    className="rounded-2xl p-5 shadow-sm min-h-[140px]"
                     style={{
                       background: "var(--color-surface)",
                       border: "1px solid var(--color-border)",
@@ -1047,7 +1103,7 @@ const ProjectDashboard = () => {
 
                   {/* 최근 활동 카드 */}
                   <div
-                    className="rounded-2xl p-5 shadow-sm"
+                    className="rounded-2xl p-5 shadow-sm min-h-[140px]"
                     style={{
                       background: "var(--color-surface)",
                       border: "1px solid var(--color-border)",
