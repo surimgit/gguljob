@@ -4,7 +4,6 @@ import axios from 'axios';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import ProjectFind from './pages/ProjectFind';
 import Recruitment from './pages/Recruitment';
@@ -79,8 +78,7 @@ const AppRoutes = () => {
 
       <Route element={<Layout />}>
         {/* 공개 라우트 */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/projects" element={<ProjectFind />} />
+<Route path="/projects" element={<ProjectFind />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
