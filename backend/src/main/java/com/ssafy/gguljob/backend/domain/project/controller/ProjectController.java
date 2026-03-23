@@ -218,8 +218,8 @@ public class ProjectController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 제목(Title)으로 덮어씁니다.")
-    @PatchMapping("/{projectId}/title")
+    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 주제(topic)로 설정합니다.")
+    @PatchMapping("/{projectId}/topic")
     public ResponseEntity<Void> applyRecommendedTopic(
         @PathVariable Long projectId,
         @AuthenticationPrincipal CustomUserDetails userDetails,

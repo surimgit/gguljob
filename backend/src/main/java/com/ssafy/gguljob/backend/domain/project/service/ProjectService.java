@@ -450,7 +450,7 @@ public class ProjectService {
             throw new IllegalStateException("프로젝트 팀장만 주제를 변경할 수 있습니다.");
         }
 
-        project.updateTitle(selectedTopic);
+        project.updateTopic(selectedTopic);
     }
 
     @Transactional

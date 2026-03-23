@@ -59,6 +59,7 @@ public class ProjectResponse {
 
     public record ProjectOverviewDto(
         String title,
+        String topic,
         String teamName,
         Domain domain,
         String description,
