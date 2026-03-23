@@ -22,14 +22,8 @@ public class GithubWebhookController {
     ) {
         log.info("🔔 깃허브 웹훅 수신: Event Type = {}", eventType);
 
-        // Ping 테스트
-        if ("ping".equals(eventType)) {
-            return ResponseEntity.ok("pong");
-        }
-
         switch (eventType) {
-            case "ping" ->
-                ResponseEntity.ok("pong");
+            case "ping" -> { return ResponseEntity.ok("pong"); }
 
             case "pull_request" ->
                 githubWebhookService.processWebhookAsync(signature, rawPayload);
