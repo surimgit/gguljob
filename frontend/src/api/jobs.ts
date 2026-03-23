@@ -9,9 +9,9 @@ export interface BookmarkItem {
   experience: string;
   contractType: string;
   salary: string;
-  url: string;
-  deadline: string;
-  jobCategory: string;
+  url: string | null;
+  deadline: string | null;
+  jobCategory: string | null;
   techStacks: string[];
   logoUrl: string;
 }

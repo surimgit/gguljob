@@ -370,9 +370,9 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     if (showBookmarked) {
       getBookmarkedJobs()
         .then(({ data }) => {
-          const items = data.data?.content ?? [];
-          setJobs(items.map(mapBookmarkToJobListing));
-          setTotalPages(1);
+          const paged = data.data;
+          setJobs((paged?.content ?? []).map(mapBookmarkToJobListing));
+          setTotalPages(paged?.totalPages ?? 1);
         })
         .catch(() => {});
     } else {
