@@ -85,7 +85,7 @@ const NotificationItem = ({
   const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
 
   const handleClick = () => {
-    if (!notif.isRead) onMarkRead(notif.id);
+    if (!notif.isRead && !(isInvite && !actionDone)) onMarkRead(notif.id);
     if (isInvite && !actionDone) setExpanded(prev => !prev);
   };
 
@@ -98,6 +98,7 @@ const NotificationItem = ({
       localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 수락 실패:', err);
     } finally {
@@ -114,6 +115,7 @@ const NotificationItem = ({
       localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 거절 실패:', err);
     } finally {
@@ -260,7 +262,12 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
     <div className="flex flex-col gap-1.5 p-3 overflow-y-auto max-h-[420px]">
       {notifications.length > 0 ? (
         [...notifications]
-          .sort((a, b) => Number(a.isRead) - Number(b.isRead))
+          .sort((a, b) => {
+            const aPending = a.type === 'TEAM' && a.referenceId !== null && a.message.includes('초대되었습니다') && !localStorage.getItem(`notif-action-${a.id}`);
+            const bPending = b.type === 'TEAM' && b.referenceId !== null && b.message.includes('초대되었습니다') && !localStorage.getItem(`notif-action-${b.id}`);
+            if (aPending !== bPending) return aPending ? -1 : 1;
+            return Number(a.isRead) - Number(b.isRead);
+          })
           .map(notif => (
             <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
           ))
