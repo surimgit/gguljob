@@ -185,7 +185,7 @@ export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?:
 
 /* AI 추천 주제 적용 */
 
-export const updateProjectTitle = (projectId: number, selectedTopic: string) =>
+export const updateProjectTopic = (projectId: number, selectedTopic: string) =>
   api.patch(`/v1/projects/${projectId}/topic`, { selectedTopic });
 
 /* 추천 팀원 */

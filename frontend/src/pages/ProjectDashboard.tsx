@@ -32,7 +32,7 @@ import {
   getPersonalSpace,
   getTeamManagement,
   recommendTopics,
-  updateProjectTitle,
+  updateProjectTopic,
 } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 import { getCategoryColorPair } from "../constants/domains";
@@ -793,7 +793,7 @@ const ProjectDashboard = () => {
                         <button
                           onClick={() => {
                             if (!id || !topicInput.trim()) return;
-                            updateProjectTitle(Number(id), topicInput.trim())
+                            updateProjectTopic(Number(id), topicInput.trim())
                               .then(() => {
                                 fetchDashboard(Number(id));
                                 setEditingTopic(false);
@@ -974,7 +974,7 @@ const ProjectDashboard = () => {
                           disabled={selectedTopic === null}
                           onClick={() => {
                             if (selectedTopic === null || !id) return;
-                            updateProjectTitle(Number(id), topics[selectedTopic])
+                            updateProjectTopic(Number(id), topics[selectedTopic])
                               .then(() => {
                                 fetchDashboard(Number(id));
                                 setSelectedTopic(null);
