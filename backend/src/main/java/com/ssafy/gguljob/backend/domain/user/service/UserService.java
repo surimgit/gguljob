@@ -272,6 +272,18 @@ public class UserService {
                                 .roles(user.getRoles() != null
                                                 ? user.getRoles().stream().map(Enum::name).toList()
                                                 : java.util.Collections.emptyList())
+                                .experience(user.getExperience() != null
+                                                ? user.getExperience().name()
+                                                : null)
+                                .mbti(user.getMbti())
+                                .teamTendency(user.getTeamTendency() != null
+                                                ? user.getTeamTendency().name()
+                                                : null)
+                                .goals(user.getGoals() != null
+                                                ? user.getGoals().stream()
+                                                                .map(UserGoal::getGoal)
+                                                                .toList()
+                                                : java.util.Collections.emptyList())
                                 .skills(skillDtoList).repProjects(repProjectDtoList).build();
         }
 
