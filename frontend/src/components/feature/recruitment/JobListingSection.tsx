@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, getBookmarkedJobs } from '../../../api/jobs';
+import { getJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
@@ -120,6 +120,23 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
   topPercentile: item.topPercentile,
+});
+
+const mapBookmarkToJobListing = (item: BookmarkItem): JobListing => ({
+  id: item.jobId,
+  logoText: item.companyName.charAt(0),
+  logoColor: LOGO_COLORS[item.jobId % LOGO_COLORS.length],
+  company: item.companyName,
+  title: item.title,
+  location: item.region,
+  experience: item.experience,
+  employmentType: item.contractType,
+  salary: formatSalary(item.salary),
+  deadline: item.deadline ?? '',
+  url: item.url ?? '',
+  match: 'insufficient',
+  techStacks: parseTechStacks(item.techStacks),
+  jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
 });
 
 
@@ -353,8 +370,8 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     if (showBookmarked) {
       getBookmarkedJobs()
         .then(({ data }) => {
-          const items = (data as any).data?.content ?? [];
-          setJobs(items.map(mapToJobListing));
+          const items = data.data?.content ?? [];
+          setJobs(items.map(mapBookmarkToJobListing));
           setTotalPages(1);
         })
         .catch(() => {});
@@ -389,13 +406,15 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     );
   })();
 
-  const finalFilteredJobs = searchQuery.trim()
-    ? jobsFilteredByStack.filter(job =>
-        job.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-        job.company.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-        job.techStacks.some(t => t.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-      )
-    : jobsFilteredByStack;
+  const finalFilteredJobs = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return jobsFilteredByStack;
+    return jobsFilteredByStack.filter(job =>
+      job.title.toLowerCase().includes(query) ||
+      job.company.toLowerCase().includes(query) ||
+      job.techStacks.some(t => t.toLowerCase().includes(query))
+    );
+  }, [jobsFilteredByStack, searchQuery]);
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
