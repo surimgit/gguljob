@@ -1,8 +1,10 @@
 package com.ssafy.gguljob.backend.domain.github.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
+import com.ssafy.gguljob.backend.domain.github.entity.PrReview;
 import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.type.PrStatus;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
@@ -30,6 +32,7 @@ import org.springframework.web.client.RestClient;
 public class GithubSyncService {
 
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
     private final ProjectRepository projectRepository;
     private final GitRepositoryRepository gitRepositoryRepository;
     private final UserRepository userRepository;
@@ -52,14 +55,97 @@ public class GithubSyncService {
         }
     }
 
+    /**
+     * 특정 PR에 달린 모든 Issue Comments(Reviews)를 수집하여 DB에 저장
+     */
+    @Transactional
+    public void syncPrReviews(String owner, String repo, String token,
+        Long repoId, Integer prNumber) {
+
+        PullRequest pullRequest = pullRequestRepository
+            .findByGitRepository_IdAndPrNumber(repoId, prNumber)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "리뷰를 저장할 PR을 찾을 수 없습니다. (PR: " + prNumber + ")"));
+
+        // issue_comment API로 교체
+        // GET /repos/{owner}/{repo}/issues/{prNumber}/comments
+        List<Map<String, Object>> comments =
+            fetchAllIssueComments(owner, repo, token, prNumber);
+
+        Set<String> targetEmails = comments.stream()
+            .map(c -> extractGithubEmail(c, "user"))
+            .collect(Collectors.toSet());
+
+        Map<String, User> userMapByEmail = userRepository.findByEmailIn(targetEmails)
+            .stream().collect(Collectors.toMap(User::getEmail, u -> u));
+
+        List<PrReview> reviewEntities = new ArrayList<>();
+
+        for (Map<String, Object> comment : comments) {
+            User commenter = userMapByEmail.get(extractGithubEmail(comment, "user"));
+            if (commenter == null) {
+                log.warn("DB에 없는 댓글 작성자. Skip (login: {})", extractLogin(comment, "user"));
+                continue;
+            }
+            reviewEntities.add(PrReview.builder()
+                .pullRequest(pullRequest)
+                .user(commenter)
+                .comment((String) comment.get("body"))
+                .build());
+        }
+
+        if (!reviewEntities.isEmpty()) {
+            prReviewRepository.saveAll(reviewEntities);
+            log.info("✅ PR #{} 댓글 {}건 저장 완료", prNumber, reviewEntities.size());
+        } else {
+            log.info("PR #{} 에 저장할 댓글이 없습니다.", prNumber);
+        }
+    }
+
+    private List<Map<String, Object>> fetchAllIssueComments(String owner, String repo,
+        String token, Integer prNumber) {
+        List<Map<String, Object>> all = new ArrayList<>();
+        int page = 1;
+        final int PER_PAGE = 100;
+
+        while (true) {
+            List<Map<String, Object>> pageData = restClient.get()
+                .uri("/repos/{owner}/{repo}/issues/{prNumber}/comments?per_page={perPage}&page={page}",
+                    owner, repo, prNumber, PER_PAGE, page)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+            if (pageData == null || pageData.isEmpty()) break;
+            all.addAll(pageData);
+            page++;
+        }
+        log.info("PR #{} 댓글 {}건 수집 완료", prNumber, all.size());
+        return all;
+    }
+
+    /** Map 내 중첩된 user.login 값을 {login}@github.com 형태로 반환 */
+    @SuppressWarnings("unchecked")
+    private String extractGithubEmail(Map<String, Object> map, String userKey) {
+        Map<String, Object> userMap = (Map<String, Object>) map.get(userKey);
+        String login = userMap != null ? (String) userMap.get("login") : "";
+        return login + "@github.com";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractLogin(Map<String, Object> map, String userKey) {
+        Map<String, Object> userMap = (Map<String, Object>) map.get(userKey);
+        return userMap != null ? (String) userMap.get("login") : "unknown";
+    }
+
     private List<Map<String, Object>> fetchAllPullRequests(String owner, String repo, String token) {
         List<Map<String, Object>> allPrs = new ArrayList<>();
         int page = 1;
-        int perPage = 100;
+        final int PER_PAGE = 100;
 
         while (true) {
             List<Map<String, Object>> prs = restClient.get()
-                .uri("/repos/{owner}/{repo}/pulls?state=all&per_page={perPage}&page={page}", owner, repo, perPage, page)
+                .uri("/repos/{owner}/{repo}/pulls?state=all&per_page={perPage}&page={page}", owner, repo, PER_PAGE, page)
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
@@ -87,10 +173,7 @@ public class GithubSyncService {
 
         // 이메일 <-> MR 유저 매칭을 위한 Map 만들기
         Set<String> targetEmails = prList.stream()
-            .map(pr -> {
-                Map<String, Object> userMap = (Map<String, Object>) pr.get("user");
-                return userMap != null ? userMap.get("login") + "@github.com" : "@github.com";
-            })
+            .map(pr -> extractGithubEmail(pr, "user"))
             .collect(Collectors.toSet());
 
         List<User> users = userRepository.findByEmailIn(targetEmails);
