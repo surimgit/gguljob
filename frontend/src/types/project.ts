@@ -120,6 +120,7 @@ export interface RegisterGitRepoRequest {
 export interface TeamDashboard {
   projectInfo: {
     title: string;
+    topic: string | null;
     teamName: string;
     topic?: string;
     domain: string;

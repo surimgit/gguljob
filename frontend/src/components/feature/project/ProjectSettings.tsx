@@ -151,8 +151,6 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 /* ── 컴포넌트 ── */
 const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps) => {
   const info = dashboard?.projectInfo;
-  const gitRepo = dashboard?.gitRepoInfo;
-
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLeader, setIsLeader] = useState(true);
@@ -182,8 +180,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>([]);
-  const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
+  const [domain, setDomain] = useState<string>("");
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
@@ -205,7 +202,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         setName(form.teamName ?? form.title ?? "");
         setOriginalTitle(form.title ?? "");
         setDescription(form.description ?? "");
-        setDomains(form.domain ? [form.domain] : []);
+        setDomain(form.domain ?? "");
         setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
 
         // skillIds → 이름 → 카테고리별 분류
@@ -219,7 +216,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           status: mappedStatus,
           name: form.teamName ?? form.title ?? "",
           description: form.description ?? "",
-          domains: form.domain ? [form.domain] : [],
+          domain: form.domain ?? "",
           techStacks: skillsToTechStacks(skillNames),
         }));
       })
@@ -231,7 +228,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           setName(info.teamName ?? info.title ?? "");
           setOriginalTitle(info.title ?? "");
           setDescription(info.description ?? "");
-          setDomains(info.domain ? [info.domain] : []);
+          setDomain(info.domain ?? "");
           if (info.skills?.length) {
             setTechStacks(skillsToTechStacks(info.skills));
           }
@@ -240,7 +237,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           status: "active",
           name: info?.teamName ?? info?.title ?? "",
           description: info?.description ?? "",
-          domains: info?.domain ? [info.domain] : [],
+          domain: info?.domain ?? "",
           techStacks: skillsToTechStacks(info?.skills ?? []),
         }));
       })
@@ -249,14 +246,12 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
 
   const hasChanges = useMemo(() => {
     if (!initialSnapshot) return false;
-    const current = JSON.stringify({ status, name, description, domains, techStacks });
+    const current = JSON.stringify({ status, name, description, domain, techStacks });
     return current !== initialSnapshot;
-  }, [status, name, description, domains, techStacks, initialSnapshot]);
+  }, [status, name, description, domain, techStacks, initialSnapshot]);
 
-  const toggleDomain = (d: string) =>
-    setDomains((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
+  const selectDomain = (d: string) =>
+    setDomain((prev) => (prev === d ? "" : d));
 
   const toggleStack = (category: string, stack: string) => {
     setTechStacks((prev) => {
@@ -293,14 +288,14 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         title: originalTitle,
         teamName: name,
         description,
-        domain: domains[0] ?? "",
+        domain,
         skillIds,
         members: editMembers,
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
       onSaved?.();
       // 스냅샷 갱신
-      setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
+      setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
     } catch (err) {
       console.error("프로젝트 설정 저장 실패:", err);
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
@@ -590,11 +585,11 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           </label>
           <div className="flex flex-wrap gap-2 mt-2">
             {DOMAINS.map((d) => {
-              const sel = domains.includes(d);
+              const sel = domain === d;
               return (
                 <button
                   key={d}
-                  onClick={() => isLeader && toggleDomain(d)}
+                  onClick={() => isLeader && selectDomain(d)}
                   disabled={!isLeader}
                   className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                   style={{
@@ -616,41 +611,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           </div>
         </div>
 
-        {/* Git URL */}
-        <div>
-          <label
-            className="text-sm font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Git 저장소 URL
-          </label>
-          <input
-            type="text"
-            value={gitUrl}
-            onChange={(e) => isLeader && setGitUrl(e.target.value)}
-            readOnly={!isLeader}
-            placeholder="https://github.com/..."
-            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
-            style={inputStyle(!!gitUrl)}
-            onFocus={(e) => {
-              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
-            }}
-            onBlur={(e) => {
-              if (!gitUrl)
-                e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          />
-          <div
-            className="flex items-center gap-2 mt-2 px-4 py-2.5 rounded-xl text-xs"
-            style={{
-              background: "var(--color-primary-soft)",
-              color: "var(--color-primary-hover)",
-            }}
-          >
-            <Info className="w-3.5 h-3.5 flex-shrink-0" />
-            저장소 URL을 입력하면 커밋, MR 등의 활동이 자동으로 동기화됩니다
-          </div>
-        </div>
       </section>
 
       </div>{/* 좌측 컬럼 끝 */}

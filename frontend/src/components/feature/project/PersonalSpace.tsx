@@ -22,6 +22,7 @@ interface CodeReview {
 
 interface MrItem {
   id: number;
+  prNumber: number;
   title: string;
   status: MrStatus;
   description: string;
@@ -63,10 +64,10 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
       {/* 좌측: 번호 원 + 세로 라인 + 끝 점 */}
       <div className="flex flex-col items-center w-6 flex-shrink-0 mr-2">
         <span
-          className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
           style={{ background: statusColor }}
         >
-          {mr.id}
+          #{mr.prNumber}
         </span>
         <div className="w-px flex-1 -mt-px" style={{ background: statusColor }} />
         <div className="w-2 h-2 rounded-full flex-shrink-0 -mt-px" style={{ background: statusColor }} />
@@ -228,6 +229,7 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 
 const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubleshooting' }: { projectId?: number; projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
+  const userProfileImage = useAuthStore((s) => s.user?.profileImage);
   const userPosition = useAuthStore((s) => s.user?.position);
   const positionLabel = userPosition ? getRoleDisplayName(userPosition) : 'Developer';
   const [mrPage, setMrPage] = useState(0);
@@ -279,6 +281,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
       const { data } = await getPullRequests(projectId, page, MR_PER_PAGE);
       setMrList(data.content.map((pr: PullRequestListItem) => ({
         id: pr.prId,
+        prNumber: pr.prNumber,
         title: pr.title,
         status: pr.status as MrStatus,
         description: '',
@@ -339,12 +342,16 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
       <div className="flex items-center justify-between gap-5 mt-4">
         {/* 프로필 */}
         <div className="flex items-center gap-3">
-          <div className="w-20 h-20 rounded-full bg-primary-hover flex items-center justify-center flex-shrink-0 shadow-sm">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
+          {userProfileImage ? (
+            <img src={userProfileImage} alt={userName} className="w-20 h-20 rounded-full flex-shrink-0 shadow-sm object-cover" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-primary-hover flex items-center justify-center flex-shrink-0 shadow-sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+          )}
           <div className="flex flex-col gap-0.5">
             <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
             <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
@@ -393,7 +400,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 <p className="text-sm text-text-secondary leading-relaxed mb-1">
-                  내 커밋 메시지, MR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
+                  내 커밋 메시지, PR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
                 </p>
                 <p className="text-sm text-text-secondary leading-relaxed mb-5">
                   생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
@@ -402,11 +409,11 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 <div className="flex items-center gap-3 mb-4">
                   <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border border-[#c7d2fe] bg-white text-text-primary">
                     <MessageSquare className="w-3.5 h-3.5 text-[#6366f1]" />
-                    MR 리뷰 <span className="text-[#6366f1] font-bold">{stats.mrCount}건</span>
+                    PR 리뷰 <span className="text-[#6366f1] font-bold">{stats.mrCount}건</span>
                   </span>
                 </div>
 
-                {/* MR 리스트 선택 */}
+                {/* PR 리스트 선택 */}
                 {mrList.length > 0 && (
                   <div className="flex flex-col gap-1.5 mb-5 overflow-y-auto" style={{ maxHeight: Math.min(mrList.length, 4) * 46 }}>
                     {mrList.map((mr) => (
@@ -531,7 +538,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         </div>
       )}
 
-      {/* ── MR 리뷰 탭 ── */}
+      {/* ── PR 리뷰 탭 ── */}
       {subTab === 'mr-review' && (
         <div className="flex flex-col gap-6">
           <div className="rounded-2xl px-8 py-8 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
@@ -542,14 +549,14 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                     <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold tracking-tight text-text-primary">내 MR / 코드 리뷰</span>
+                <span className="text-xl font-bold tracking-tight text-text-primary">내 PR / 코드 리뷰</span>
               </div>
               <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
             </div>
             {mrLoading ? (
               <div className="flex items-center justify-center py-12 text-text-tertiary">불러오는 중...</div>
             ) : mrList.length === 0 ? (
-              <EmptyState message="아직 등록된 MR 리뷰가 없습니다." />
+              <EmptyState message="아직 등록된 PR 리뷰가 없습니다." />
             ) : (
               <>
                 <div className="flex flex-col gap-10">

@@ -25,6 +25,7 @@ import PersonalSpace, {
 import { ChevronDown } from "lucide-react";
 import chatbotImg from "../assets/images/chatbot.png";
 import ChatbotPopup from "../components/common/ChatbotPopup";
+import BaseModal from "../components/common/BaseModal";
 import { useProjectStore } from "../stores/projectStore";
 import api from "../api/index";
 import type { PersonalSpaceData, MrRanking } from "../types/project";
@@ -90,6 +91,12 @@ const ProjectDashboard = () => {
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const storedSecret = id ? localStorage.getItem(`webhook_secret_${id}`) : null;
+  const [webhookSecret, setWebhookSecret] = useState<string | null>(null);
+  const [showWebhookModal, setShowWebhookModal] = useState(false);
+  const [secretCopied, setSecretCopied] = useState(false);
+  const [payloadCopied, setPayloadCopied] = useState(false);
+  const activeSecret = webhookSecret ?? storedSecret;
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
@@ -112,7 +119,6 @@ const ProjectDashboard = () => {
       .then(() => setIsLeader(true))
       .catch(() => setIsLeader(false));
   }, [id]);
-
 
   useEffect(() => {
     if (id) {
@@ -165,6 +171,7 @@ const ProjectDashboard = () => {
 
   const projectInfo = dashboard?.projectInfo ?? {
     title: "",
+    topic: null,
     teamName: "",
     domain: "",
     description: "",
@@ -253,7 +260,7 @@ const ProjectDashboard = () => {
                             },
                             {
                               key: "mr-review" as PersonalSubTab,
-                              label: "MR 리뷰",
+                              label: "PR 리뷰",
                             },
                           ].map((item) => (
                             <button
@@ -465,7 +472,7 @@ const ProjectDashboard = () => {
                         className="text-lg font-semibold"
                         style={{ color: "var(--color-text-brown)" }}
                       >
-                        커밋
+                        PR
                       </span>
                       <div className="flex-1 flex flex-col items-center justify-center">
                         <span
@@ -620,16 +627,33 @@ const ProjectDashboard = () => {
                             onClick={() => {
                               if (!id) return;
                               api
-                                .put(`/v1/projects/${id}/git-repo`, {
-                                  repoUrl: repoInput,
-                                  githubToken: tokenInput,
-                                })
-                                .then(() => {
+                                .put<{ webhookSecret: string }>(
+                                  `/v1/projects/${id}/git-repo`,
+                                  {
+                                    repoUrl: repoInput,
+                                    githubToken: tokenInput,
+                                  },
+                                )
+                                .then((res) => {
                                   setEditingRepo(false);
                                   setTokenInput("");
+                                  const secret = res.data.webhookSecret;
+                                  setWebhookSecret(secret);
+                                  if (id)
+                                    localStorage.setItem(
+                                      `webhook_secret_${id}`,
+                                      secret,
+                                    );
+                                  setShowWebhookModal(true);
                                   fetchDashboard(Number(id));
                                 })
                                 .catch((err) => {
+                                  const msg =
+                                    err.response?.data?.message ??
+                                    err.response?.data?.errors?.[0]
+                                      ?.defaultMessage ??
+                                    "레포 저장에 실패했습니다.";
+                                  toast.error(msg);
                                   console.error("레포 저장 실패:", err);
                                 });
                             }}
@@ -718,6 +742,19 @@ const ProjectDashboard = () => {
                             {copied ? "복사됨" : "복사"}
                           </button>
                         )}
+                        {activeSecret && (
+                          <button
+                            onClick={() => setShowWebhookModal(true)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid var(--color-border)",
+                              color: "var(--color-text-secondary)",
+                            }}
+                          >
+                            <Settings className="w-3 h-3" />
+                            Webhook
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -740,16 +777,30 @@ const ProjectDashboard = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => {
-                            setEditingTopic(true);
-                            setTopicInput(projectInfo.topic ?? projectInfo.title);
+                            setShowAiRecommend((prev) => !prev);
+                            if (!showAiRecommend && topics.length === 0) {
+                              handleRecommend(false);
+                            }
                           }}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white"
+                          style={{ background: "#6366f1" }}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          생성
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingTopic(true);
+                            setTopicInput(projectInfo.topic ?? "");
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
                           style={{
                             border: "1px solid var(--color-border)",
                             color: "var(--color-text-secondary)",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "var(--color-background)";
+                            e.currentTarget.style.background =
+                              "var(--color-background)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = "";
@@ -757,19 +808,6 @@ const ProjectDashboard = () => {
                         >
                           <Pencil className="w-3 h-3" />
                           수정
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowAiRecommend((prev) => !prev);
-                            if (!showAiRecommend && topics.length === 0) {
-                              handleRecommend(false);
-                            }
-                          }}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-                          style={{ background: "#6366f1" }}
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          생성
                         </button>
                       </div>
                     </div>
@@ -785,10 +823,12 @@ const ProjectDashboard = () => {
                           className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
                           style={{ border: "1px solid var(--color-border)" }}
                           onFocus={(e) =>
-                            (e.currentTarget.style.borderColor = "var(--color-primary)")
+                            (e.currentTarget.style.borderColor =
+                              "var(--color-primary)")
                           }
                           onBlur={(e) =>
-                            (e.currentTarget.style.borderColor = "var(--color-border)")
+                            (e.currentTarget.style.borderColor =
+                              "var(--color-border)")
                           }
                         />
                         <button
@@ -799,7 +839,9 @@ const ProjectDashboard = () => {
                                 fetchDashboard(Number(id));
                                 setEditingTopic(false);
                               })
-                              .catch(() => toast.error("주제 수정에 실패했습니다."));
+                              .catch(() =>
+                                toast.error("주제 수정에 실패했습니다."),
+                              );
                           }}
                           disabled={!topicInput.trim()}
                           className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
@@ -824,7 +866,7 @@ const ProjectDashboard = () => {
                           className="text-base font-semibold"
                           style={{ color: "var(--color-text-primary)" }}
                         >
-                          {(projectInfo.topic ?? projectInfo.title) || "주제가 아직 없습니다"}
+                          {projectInfo.topic || "프로젝트 주제가 없습니다."}
                         </p>
                       </div>
                     )}
@@ -975,7 +1017,10 @@ const ProjectDashboard = () => {
                           disabled={selectedTopic === null}
                           onClick={() => {
                             if (selectedTopic === null || !id) return;
-                            updateProjectTopic(Number(id), topics[selectedTopic])
+                            updateProjectTopic(
+                              Number(id),
+                              topics[selectedTopic],
+                            )
                               .then(() => {
                                 fetchDashboard(Number(id));
                                 setSelectedTopic(null);
@@ -1000,7 +1045,7 @@ const ProjectDashboard = () => {
                 </div>
 
                 <div className="flex flex-col gap-5">
-                  {/* MR 랭킹 카드 */}
+                  {/* PR 랭킹 카드 */}
                   <div
                     className="rounded-2xl p-5 shadow-sm min-h-[140px]"
                     style={{
@@ -1014,7 +1059,7 @@ const ProjectDashboard = () => {
                         style={{ color: "var(--color-primary)" }}
                       />
                       <span style={{ color: "var(--color-text-primary)" }}>
-                        MR 랭킹
+                        PR 랭킹
                       </span>
                     </div>
                     <div className="flex flex-col gap-2.5">
@@ -1023,7 +1068,7 @@ const ProjectDashboard = () => {
                           className="text-sm text-center py-4"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          아직 MR 기록이 없습니다
+                          아직 PR 기록이 없습니다
                         </p>
                       )}
                       {rankings.map((member: MrRanking, idx: number) => (
@@ -1056,15 +1101,23 @@ const ProjectDashboard = () => {
                           >
                             {member.rank}
                           </span>
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{
-                              background:
-                                AVATAR_COLORS[idx % AVATAR_COLORS.length],
-                            }}
-                          >
-                            {member.userName?.charAt(0) ?? "?"}
-                          </div>
+                          {member.profileImageUrl ? (
+                            <img
+                              src={member.profileImageUrl}
+                              alt={member.userName}
+                              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              style={{
+                                background:
+                                  AVATAR_COLORS[idx % AVATAR_COLORS.length],
+                              }}
+                            >
+                              {member.userName?.charAt(0) ?? "?"}
+                            </div>
+                          )}
                           <span
                             className="text-sm font-semibold flex-1"
                             style={{ color: "var(--color-text-primary)" }}
@@ -1138,7 +1191,13 @@ const ProjectDashboard = () => {
                               : {}
                           }
                         >
-                          {activity.userName ? (
+                          {activity.profileImageUrl ? (
+                            <img
+                              src={activity.profileImageUrl}
+                              alt={activity.userName}
+                              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                            />
+                          ) : activity.userName ? (
                             <div
                               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                               style={{
@@ -1231,6 +1290,226 @@ const ProjectDashboard = () => {
           userId={profileUserId}
         />
       )}
+
+      {/* Webhook 설정 안내 모달 */}
+      <BaseModal
+        isOpen={showWebhookModal && !!activeSecret}
+        onClose={() => {
+          setShowWebhookModal(false);
+          setSecretCopied(false);
+          setPayloadCopied(false);
+        }}
+        containerClassName="bg-white rounded-3xl p-10 w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <h3
+          className="text-2xl font-bold mb-2"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          GitHub Webhook 설정 안내
+        </h3>
+        <p
+          className="text-base mb-7"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          아래 정보를 GitHub Webhook 설정 페이지에 입력하세요.
+        </p>
+
+        <div className="flex flex-col gap-5 mb-7">
+          {/* Payload URL */}
+          <div>
+            <label
+              className="text-base font-semibold mb-2 block"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Payload URL
+            </label>
+            <div
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
+              style={{
+                background: "var(--color-background)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <code
+                className="flex-1 text-base font-mono break-all"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                https://j14e107.p.ssafy.io:8443/api/v1/github/webhook
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    "https://j14e107.p.ssafy.io:8443/api/v1/github/webhook",
+                  );
+                  setPayloadCopied(true);
+                  setTimeout(() => setPayloadCopied(false), 2000);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium flex-shrink-0 transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: payloadCopied
+                    ? "#16A34A"
+                    : "var(--color-text-secondary)",
+                }}
+              >
+                {payloadCopied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                {payloadCopied ? "복사됨" : "복사"}
+              </button>
+            </div>
+          </div>
+
+          {/* Content type */}
+          <div>
+            <label
+              className="text-base font-semibold mb-2 block"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Content type
+            </label>
+            <div
+              className="px-4 py-3.5 rounded-xl"
+              style={{
+                background: "var(--color-background)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <code
+                className="text-base font-mono"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                application/json
+              </code>
+            </div>
+          </div>
+
+          {/* Secret */}
+          <div>
+            <label
+              className="text-base font-semibold mb-2 block"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Secret
+            </label>
+            <div
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
+              style={{
+                background: "var(--color-background)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <code
+                className="flex-1 text-base font-mono break-all"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {activeSecret}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(activeSecret!);
+                  setSecretCopied(true);
+                  setTimeout(() => setSecretCopied(false), 2000);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium flex-shrink-0 transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: secretCopied
+                    ? "#16A34A"
+                    : "var(--color-text-secondary)",
+                }}
+              >
+                {secretCopied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                {secretCopied ? "복사됨" : "복사"}
+              </button>
+            </div>
+          </div>
+
+          {/* Events 안내 */}
+          <div>
+            <label
+              className="text-base font-bold mb-1.5 block"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Which events would you like to trigger this webhook?
+            </label>
+            <p
+              className="text-sm mb-3"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              <span className="font-semibold">
+                Let me select individual events.
+              </span>{" "}
+              를 선택한 뒤 아래 항목을 체크하세요.
+            </p>
+            <div
+              className="flex flex-wrap gap-2.5 px-4 py-3.5 rounded-xl"
+              style={{
+                background: "var(--color-background)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              {["Pull requests", "Issue comments", "Pushes"].map((event) => (
+                <span
+                  key={event}
+                  className="px-4 py-2 rounded-full text-sm font-semibold"
+                  style={{
+                    background: "var(--color-primary)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  {event}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Webhook 설정 페이지 이동 버튼 */}
+        {(() => {
+          const repoUrl = gitRepoInfo?.repoUrl ?? repoInput;
+          const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+)/);
+          const webhookSettingsUrl = match
+            ? `https://github.com/${match[1]}/settings/hooks/new`
+            : null;
+          return webhookSettingsUrl ? (
+            <a
+              href={webhookSettingsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-base font-semibold text-white mb-3 transition-colors"
+              style={{ background: "#24292e" }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+              GitHub Webhook 설정 페이지로 이동
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          ) : null;
+        })()}
+
+        <button
+          onClick={() => {
+            setShowWebhookModal(false);
+            setSecretCopied(false);
+            setPayloadCopied(false);
+          }}
+          className="w-full px-4 py-3.5 rounded-xl text-base font-semibold transition-colors"
+          style={{
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          닫기
+        </button>
+      </BaseModal>
     </>
   );
 };
