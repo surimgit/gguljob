@@ -118,14 +118,15 @@ public class ProjectController {
 
     @Operation(summary = "팀프로젝트 상세 페이지 (깃 레포 등록하기)", description = "깃 레포 등록하기")
     @PutMapping("/{projectId}/git-repo")
-    public ResponseEntity<Void> registerGitRepository(
+    public ResponseEntity<ProjectResponse.GitRepoRegistered> registerGitRepository(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long projectId,
         @Valid @RequestBody ProjectRequest.RegisterGitRepo request) {
 
-        projectService.registerGitRepository(userDetails.getId(), projectId, request);
+        ProjectResponse.GitRepoRegistered response =
+            projectService.registerGitRepository(userDetails.getId(), projectId, request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     // 팀원 관리 (모집 현황, 현재 팀원, 참가 신청 현황)

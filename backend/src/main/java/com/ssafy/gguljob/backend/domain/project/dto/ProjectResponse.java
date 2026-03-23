@@ -159,4 +159,8 @@ public class ProjectResponse {
         int currentCount,
         int targetCount
     ) {}
+
+    public record GitRepoRegistered(
+        String webhookSecret
+    ) {}
 }
