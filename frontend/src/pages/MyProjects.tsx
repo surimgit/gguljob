@@ -49,7 +49,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
 
       {/* 제목 */}
       <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
-        {project.title}
+        {project.teamName || project.title}
       </p>
 
       {/* 설명 */}

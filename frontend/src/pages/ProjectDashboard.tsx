@@ -354,6 +354,7 @@ const ProjectDashboard = () => {
             <ProjectSettings
               dashboard={dashboard}
               projectId={id ? Number(id) : undefined}
+              onSaved={() => id && fetchDashboard(Number(id))}
             />
           )}
           {activeTab === "personal" && (
@@ -740,7 +741,7 @@ const ProjectDashboard = () => {
                         <button
                           onClick={() => {
                             setEditingTopic(true);
-                            setTopicInput(projectInfo.title);
+                            setTopicInput(projectInfo.topic ?? projectInfo.title);
                           }}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                           style={{
@@ -823,7 +824,7 @@ const ProjectDashboard = () => {
                           className="text-base font-semibold"
                           style={{ color: "var(--color-text-primary)" }}
                         >
-                          {projectInfo.title || "주제가 아직 없습니다"}
+                          {(projectInfo.topic ?? projectInfo.title) || "주제가 아직 없습니다"}
                         </p>
                       </div>
                     )}
