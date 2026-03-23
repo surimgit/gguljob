@@ -90,8 +90,12 @@ const ProjectDashboard = () => {
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const storedSecret = id ? localStorage.getItem(`webhook_secret_${id}`) : null;
   const [webhookSecret, setWebhookSecret] = useState<string | null>(null);
+  const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [secretCopied, setSecretCopied] = useState(false);
+  const [payloadCopied, setPayloadCopied] = useState(false);
+  const activeSecret = webhookSecret ?? storedSecret;
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
@@ -628,10 +632,17 @@ const ProjectDashboard = () => {
                                 .then((res) => {
                                   setEditingRepo(false);
                                   setTokenInput("");
-                                  setWebhookSecret(res.data.webhookSecret);
+                                  const secret = res.data.webhookSecret;
+                                  setWebhookSecret(secret);
+                                  if (id) localStorage.setItem(`webhook_secret_${id}`, secret);
+                                  setShowWebhookModal(true);
                                   fetchDashboard(Number(id));
                                 })
                                 .catch((err) => {
+                                  const msg = err.response?.data?.message
+                                    ?? err.response?.data?.errors?.[0]?.defaultMessage
+                                    ?? "레포 저장에 실패했습니다.";
+                                  toast.error(msg);
                                   console.error("레포 저장 실패:", err);
                                 });
                             }}
@@ -718,6 +729,19 @@ const ProjectDashboard = () => {
                               <Copy className="w-3 h-3" />
                             )}
                             {copied ? "복사됨" : "복사"}
+                          </button>
+                        )}
+                        {activeSecret && (
+                          <button
+                            onClick={() => setShowWebhookModal(true)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid var(--color-border)",
+                              color: "var(--color-text-secondary)",
+                            }}
+                          >
+                            <Settings className="w-3 h-3" />
+                            Webhook
                           </button>
                         )}
                       </div>
@@ -1234,55 +1258,119 @@ const ProjectDashboard = () => {
         />
       )}
 
-      {/* Webhook Secret 모달 */}
-      {webhookSecret && (
+      {/* Webhook 설정 안내 모달 */}
+      {showWebhookModal && activeSecret && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div
-            className="rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl"
+            className="rounded-2xl p-6 w-full max-w-lg mx-4 shadow-xl max-h-[90vh] overflow-y-auto"
             style={{ background: "var(--color-surface)" }}
           >
             <h3
               className="text-lg font-bold mb-1"
               style={{ color: "var(--color-text-primary)" }}
             >
-              Webhook 시크릿 키
+              GitHub Webhook 설정 안내
             </h3>
             <p
-              className="text-sm mb-4"
+              className="text-sm mb-5"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              아래 시크릿 키를 복사한 뒤, GitHub Webhook 설정 페이지에서 등록하세요.
+              아래 정보를 GitHub Webhook 설정 페이지에 입력하세요.
             </p>
 
-            {/* 시크릿 키 복사 영역 */}
-            <div
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg mb-4"
-              style={{
-                background: "var(--color-background)",
-                border: "1px solid var(--color-border)",
-              }}
-            >
-              <code
-                className="flex-1 text-sm font-mono break-all"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                {webhookSecret}
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(webhookSecret);
-                  setSecretCopied(true);
-                  setTimeout(() => setSecretCopied(false), 2000);
-                }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium flex-shrink-0 transition-colors"
-                style={{
-                  border: "1px solid var(--color-border)",
-                  color: secretCopied ? "#16A34A" : "var(--color-text-secondary)",
-                }}
-              >
-                {secretCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {secretCopied ? "복사됨" : "복사"}
-              </button>
+            <div className="flex flex-col gap-3 mb-5">
+              {/* Payload URL */}
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--color-text-secondary)" }}>
+                  Payload URL
+                </label>
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: "var(--color-background)", border: "1px solid var(--color-border)" }}
+                >
+                  <code className="flex-1 text-sm font-mono break-all" style={{ color: "var(--color-text-primary)" }}>
+                    https://j14e107.p.ssafy.io:8443/api/v1/github/webhook
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("https://j14e107.p.ssafy.io:8443/api/v1/github/webhook");
+                      setPayloadCopied(true);
+                      setTimeout(() => setPayloadCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium flex-shrink-0 transition-colors"
+                    style={{ border: "1px solid var(--color-border)", color: payloadCopied ? "#16A34A" : "var(--color-text-secondary)" }}
+                  >
+                    {payloadCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {payloadCopied ? "복사됨" : "복사"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Content type */}
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--color-text-secondary)" }}>
+                  Content type
+                </label>
+                <div
+                  className="px-3 py-2 rounded-lg"
+                  style={{ background: "var(--color-background)", border: "1px solid var(--color-border)" }}
+                >
+                  <code className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                    application/json
+                  </code>
+                </div>
+              </div>
+
+              {/* Secret */}
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--color-text-secondary)" }}>
+                  Secret
+                </label>
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: "var(--color-background)", border: "1px solid var(--color-border)" }}
+                >
+                  <code className="flex-1 text-sm font-mono break-all" style={{ color: "var(--color-text-primary)" }}>
+                    {activeSecret}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(activeSecret!);
+                      setSecretCopied(true);
+                      setTimeout(() => setSecretCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium flex-shrink-0 transition-colors"
+                    style={{ border: "1px solid var(--color-border)", color: secretCopied ? "#16A34A" : "var(--color-text-secondary)" }}
+                  >
+                    {secretCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {secretCopied ? "복사됨" : "복사"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Events 안내 */}
+              <div>
+                <label className="text-xs font-bold mb-0.5 block" style={{ color: "var(--color-text-primary)" }}>
+                  Which events would you like to trigger this webhook?
+                </label>
+                <p className="text-xs mb-2" style={{ color: "var(--color-text-secondary)" }}>
+                  <span className="font-semibold">Let me select individual events.</span> 를 선택한 뒤 아래 항목을 체크하세요.
+                </p>
+                <div
+                  className="flex flex-wrap gap-1.5 px-3 py-2.5 rounded-lg"
+                  style={{ background: "var(--color-background)", border: "1px solid var(--color-border)" }}
+                >
+                  {["Pull requests", "Issue comments", "Pushes"].map((event) => (
+                    <span
+                      key={event}
+                      className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{ background: "var(--color-primary)", color: "var(--color-text-primary)" }}
+                    >
+                      {event}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Webhook 설정 페이지 이동 버튼 */}
@@ -1311,8 +1399,9 @@ const ProjectDashboard = () => {
 
             <button
               onClick={() => {
-                setWebhookSecret(null);
+                setShowWebhookModal(false);
                 setSecretCopied(false);
+                setPayloadCopied(false);
               }}
               className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
               style={{
