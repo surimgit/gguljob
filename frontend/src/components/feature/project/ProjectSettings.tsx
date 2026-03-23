@@ -178,7 +178,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>([]);
+  const [domain, setDomain] = useState<string>("");
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
@@ -199,7 +199,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         setStatus(mappedStatus);
         setName(form.title ?? "");
         setDescription(form.description ?? "");
-        setDomains(form.domain ? [form.domain] : []);
+        setDomain(form.domain ?? "");
         setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
 
         // skillIds → 이름 → 카테고리별 분류
@@ -213,7 +213,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           status: mappedStatus,
           name: form.title ?? "",
           description: form.description ?? "",
-          domains: form.domain ? [form.domain] : [],
+          domain: form.domain ?? "",
           techStacks: skillsToTechStacks(skillNames),
         }));
       })
@@ -224,7 +224,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         if (info) {
           setName(info.title ?? "");
           setDescription(info.description ?? "");
-          setDomains(info.domain ? [info.domain] : []);
+          setDomain(info.domain ?? "");
           if (info.skills?.length) {
             setTechStacks(skillsToTechStacks(info.skills));
           }
@@ -233,7 +233,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           status: "active",
           name: info?.title ?? "",
           description: info?.description ?? "",
-          domains: info?.domain ? [info.domain] : [],
+          domain: info?.domain ?? "",
           techStacks: skillsToTechStacks(info?.skills ?? []),
         }));
       })
@@ -242,14 +242,12 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
 
   const hasChanges = useMemo(() => {
     if (!initialSnapshot) return false;
-    const current = JSON.stringify({ status, name, description, domains, techStacks });
+    const current = JSON.stringify({ status, name, description, domain, techStacks });
     return current !== initialSnapshot;
-  }, [status, name, description, domains, techStacks, initialSnapshot]);
+  }, [status, name, description, domain, techStacks, initialSnapshot]);
 
-  const toggleDomain = (d: string) =>
-    setDomains((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
+  const selectDomain = (d: string) =>
+    setDomain((prev) => (prev === d ? "" : d));
 
   const toggleStack = (category: string, stack: string) => {
     setTechStacks((prev) => {
@@ -286,13 +284,13 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         title: name,
         teamName: info?.teamName,
         description,
-        domain: domains[0] ?? "",
+        domain,
         skillIds,
         members: editMembers,
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
       // 스냅샷 갱신
-      setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
+      setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
     } catch (err) {
       console.error("프로젝트 설정 저장 실패:", err);
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
@@ -582,11 +580,11 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           </label>
           <div className="flex flex-wrap gap-2 mt-2">
             {DOMAINS.map((d) => {
-              const sel = domains.includes(d);
+              const sel = domain === d;
               return (
                 <button
                   key={d}
-                  onClick={() => isLeader && toggleDomain(d)}
+                  onClick={() => isLeader && selectDomain(d)}
                   disabled={!isLeader}
                   className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                   style={{
