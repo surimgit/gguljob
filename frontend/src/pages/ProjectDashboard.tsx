@@ -90,6 +90,8 @@ const ProjectDashboard = () => {
   const [repoInput, setRepoInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [webhookSecret, setWebhookSecret] = useState<string | null>(null);
+  const [secretCopied, setSecretCopied] = useState(false);
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
@@ -619,13 +621,14 @@ const ProjectDashboard = () => {
                             onClick={() => {
                               if (!id) return;
                               api
-                                .put(`/v1/projects/${id}/git-repo`, {
+                                .put<{ webhookSecret: string }>(`/v1/projects/${id}/git-repo`, {
                                   repoUrl: repoInput,
                                   githubToken: tokenInput,
                                 })
-                                .then(() => {
+                                .then((res) => {
                                   setEditingRepo(false);
                                   setTokenInput("");
+                                  setWebhookSecret(res.data.webhookSecret);
                                   fetchDashboard(Number(id));
                                 })
                                 .catch((err) => {
@@ -1229,6 +1232,98 @@ const ProjectDashboard = () => {
           onClose={() => setProfileUserId(null)}
           userId={profileUserId}
         />
+      )}
+
+      {/* Webhook Secret 모달 */}
+      {webhookSecret && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div
+            className="rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+          >
+            <h3
+              className="text-lg font-bold mb-1"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Webhook 시크릿 키
+            </h3>
+            <p
+              className="text-sm mb-4"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              아래 시크릿 키를 복사한 뒤, GitHub Webhook 설정 페이지에서 등록하세요.
+            </p>
+
+            {/* 시크릿 키 복사 영역 */}
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg mb-4"
+              style={{
+                background: "var(--color-background)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <code
+                className="flex-1 text-sm font-mono break-all"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {webhookSecret}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(webhookSecret);
+                  setSecretCopied(true);
+                  setTimeout(() => setSecretCopied(false), 2000);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium flex-shrink-0 transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: secretCopied ? "#16A34A" : "var(--color-text-secondary)",
+                }}
+              >
+                {secretCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {secretCopied ? "복사됨" : "복사"}
+              </button>
+            </div>
+
+            {/* Webhook 설정 페이지 이동 버튼 */}
+            {(() => {
+              const repoUrl = gitRepoInfo?.repoUrl ?? repoInput;
+              const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+)/);
+              const webhookSettingsUrl = match
+                ? `https://github.com/${match[1]}/settings/hooks/new`
+                : null;
+              return webhookSettingsUrl ? (
+                <a
+                  href={webhookSettingsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white mb-3 transition-colors"
+                  style={{ background: "#24292e" }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  GitHub Webhook 설정 페이지로 이동
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              ) : null;
+            })()}
+
+            <button
+              onClick={() => {
+                setWebhookSecret(null);
+                setSecretCopied(false);
+              }}
+              className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              style={{
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
