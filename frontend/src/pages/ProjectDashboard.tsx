@@ -260,7 +260,7 @@ const ProjectDashboard = () => {
                             },
                             {
                               key: "mr-review" as PersonalSubTab,
-                              label: "MR 리뷰",
+                              label: "PR 리뷰",
                             },
                           ].map((item) => (
                             <button
@@ -471,7 +471,7 @@ const ProjectDashboard = () => {
                         className="text-lg font-semibold"
                         style={{ color: "var(--color-text-brown)" }}
                       >
-                        커밋
+                        PR
                       </span>
                       <div className="flex-1 flex flex-col items-center justify-center">
                         <span
@@ -1044,7 +1044,7 @@ const ProjectDashboard = () => {
                 </div>
 
                 <div className="flex flex-col gap-5">
-                  {/* MR 랭킹 카드 */}
+                  {/* PR 랭킹 카드 */}
                   <div
                     className="rounded-2xl p-5 shadow-sm min-h-[140px]"
                     style={{
@@ -1058,7 +1058,7 @@ const ProjectDashboard = () => {
                         style={{ color: "var(--color-primary)" }}
                       />
                       <span style={{ color: "var(--color-text-primary)" }}>
-                        MR 랭킹
+                        PR 랭킹
                       </span>
                     </div>
                     <div className="flex flex-col gap-2.5">
@@ -1067,7 +1067,7 @@ const ProjectDashboard = () => {
                           className="text-sm text-center py-4"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          아직 MR 기록이 없습니다
+                          아직 PR 기록이 없습니다
                         </p>
                       )}
                       {rankings.map((member: MrRanking, idx: number) => (
@@ -1100,15 +1100,23 @@ const ProjectDashboard = () => {
                           >
                             {member.rank}
                           </span>
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{
-                              background:
-                                AVATAR_COLORS[idx % AVATAR_COLORS.length],
-                            }}
-                          >
-                            {member.userName?.charAt(0) ?? "?"}
-                          </div>
+                          {member.profileImageUrl ? (
+                            <img
+                              src={member.profileImageUrl}
+                              alt={member.userName}
+                              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              style={{
+                                background:
+                                  AVATAR_COLORS[idx % AVATAR_COLORS.length],
+                              }}
+                            >
+                              {member.userName?.charAt(0) ?? "?"}
+                            </div>
+                          )}
                           <span
                             className="text-sm font-semibold flex-1"
                             style={{ color: "var(--color-text-primary)" }}
@@ -1182,7 +1190,13 @@ const ProjectDashboard = () => {
                               : {}
                           }
                         >
-                          {activity.userName ? (
+                          {activity.profileImageUrl ? (
+                            <img
+                              src={activity.profileImageUrl}
+                              alt={activity.userName}
+                              className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                            />
+                          ) : activity.userName ? (
                             <div
                               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                               style={{
