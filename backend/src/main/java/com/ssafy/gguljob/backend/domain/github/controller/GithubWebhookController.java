@@ -27,8 +27,22 @@ public class GithubWebhookController {
             return ResponseEntity.ok("pong");
         }
 
-        if ("pull_request".equals(eventType)) {
-            githubWebhookService.processWebhookAsync(signature, rawPayload);
+        switch (eventType) {
+            case "ping" ->
+                ResponseEntity.ok("pong");
+
+            case "pull_request" ->
+                githubWebhookService.processWebhookAsync(signature, rawPayload);
+
+            case "issue_comment" ->
+                githubWebhookService.processIssueCommentWebhookAsync(signature, rawPayload);
+
+            // push 이벤트 - README 변경 감지용
+            case "push" ->
+                githubWebhookService.processPushWebhookAsync(signature, rawPayload);
+
+            default ->
+                log.info("⏭️ 처리하지 않는 이벤트 타입 패스 (Event: {})", eventType);
         }
 
         return ResponseEntity.ok("Webhook processed successfully");
