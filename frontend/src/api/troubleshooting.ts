@@ -32,5 +32,14 @@ export const updateTroubleshooting = (
 ) =>
   api.put(`/v1/troubleshooting/${troubleshootingId}`, data);
 
-export const chatTrouble = () =>
-  api.post('/v1/ai/chat/trouble');
+export interface ChatTroubleRequest {
+  projectId: number;
+  userMessage: string;
+}
+
+export interface ChatTroubleResponse {
+  aiAnswer: string;
+}
+
+export const chatTrouble = (data: ChatTroubleRequest) =>
+  api.post<ChatTroubleResponse>('/v1/ai/chat/trouble', data);

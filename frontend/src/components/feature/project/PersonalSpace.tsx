@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Sparkles, MessageSquare, Send } from 'lucide-react';
 import Pagination from '../../common/Pagination';
 import { useAuthStore } from '../../../stores/authStore';
 import type { PersonalSpaceData } from '../../../types/project';
-import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } from '../../../api/troubleshooting';
+import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
 import type { TroubleshootingListItem } from '../../../api/troubleshooting';
 import { getPullRequests } from '../../../api/projects';
 import type { PullRequestListItem } from '../../../api/projects';
@@ -243,6 +243,10 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [showAiSection, setShowAiSection] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const MR_PER_PAGE = 3;
   const TS_PER_PAGE = 3;
 
@@ -303,6 +307,26 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
       fetchPullRequests(mrPage);
     }
   }, [projectId, mrPage, subTab, fetchPullRequests]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || !projectId || chatLoading) return;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatLoading(true);
+    try {
+      const { data } = await chatTrouble({ projectId, userMessage: userMsg });
+      setChatMessages(prev => [...prev, { role: 'ai', content: data.aiAnswer }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'ai', content: '오류가 발생했습니다. 다시 시도해주세요.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   const mrCount = projectId ? mrTotalElements : (personalData?.stats.prCount ?? 0);
   const codeReviews = personalData?.stats.reviewCount ?? 0;
@@ -406,6 +430,54 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                     ))}
                   </div>
                 )}
+
+                {/* AI 챗봇 대화 영역 */}
+                <div className="flex flex-col gap-3 mb-5">
+                  {chatMessages.length > 0 && (
+                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-xl bg-white border border-border px-4 py-3">
+                      {chatMessages.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                              msg.role === 'user'
+                                ? 'bg-[#6366f1] text-white rounded-br-md'
+                                : 'bg-[#f3f4f6] text-text-primary rounded-bl-md'
+                            }`}
+                          >
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-[#f3f4f6] text-text-tertiary px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm">
+                            답변 생성 중...
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleChatSend(); }}
+                      placeholder="트러블슈팅 관련 질문을 입력하세요..."
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
+                      disabled={chatLoading}
+                    />
+                    <button
+                      onClick={handleChatSend}
+                      disabled={chatLoading || !chatInput.trim()}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
                 <button
                   onClick={async () => {
