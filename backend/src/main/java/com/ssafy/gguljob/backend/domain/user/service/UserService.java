@@ -267,7 +267,6 @@ public class UserService {
                 }
 
                 return ProfileResponseDto.builder().userId(user.getId())
-                                .email(user.getEmail())
                                 .userName(user.getUserName()).imageUrl(user.getProfileImageUrl())
                                 .description(user.getDescription())
                                 .roles(user.getRoles() != null
