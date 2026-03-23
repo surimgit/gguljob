@@ -237,4 +237,22 @@ public class ProjectMemberService {
             .newLeaderId(targetUserId)
             .build();
     }
+
+    @Transactional
+    public void deleteRecruitment(Long projectId, Long recruitmentId, Long userId) {
+        // 프로젝트 존재 여부 확인
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("해당 프로젝트를 찾을 수 없습니다."));
+
+        // 팀장 권한 확인
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("팀장만 모집 공고를 삭제할 수 있습니다.");
+        }
+
+        // 모집 공고 존재 여부 확인 (프로젝트 소속인지도 검증)
+        ProjectPosition position = projectPositionRepository.findByIdAndProject_Id(recruitmentId, projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("해당 모집 공고를 찾을 수 없습니다."));
+
+        projectPositionRepository.delete(position);
+    }
 }
