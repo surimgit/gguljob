@@ -44,7 +44,7 @@ docker rm -f ${CONTAINER_PREFIX}-${NEW_COLOR} 2>/dev/null || true
 # [실행] --no-deps: DB 등 주변기기 건드리지 않고 백엔드만 띄움
 # 주의: docker-compose.yml 서비스 명도 'backend-blue', 'backend-green' 이어야 합니다.
 echo "🚀 [Start] Booting up backend-${NEW_COLOR}..."
-$DOCKER_CMD -f $DOCKER_COMPOSE_FILE up -d --build --no-deps ${SERVICE_PREFIX}-${NEW_COLOR}
+$DOCKER_CMD -f $DOCKER_COMPOSE_FILE --env-file .env-prod up -d --build --no-deps ${SERVICE_PREFIX}-${NEW_COLOR}
 
 # 3. 헬스 체크 (Health Check)
 echo "🏥 [Health Check] Waiting for server to be ready..."
