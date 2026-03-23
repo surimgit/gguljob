@@ -12,7 +12,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     env_file:
-      - ./.env
+      - ./.env-prod
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
@@ -52,6 +52,7 @@ services:
     volumes:
       - ./data/neo4j/data:/data
       - ./data/neo4j/logs:/logs
+      - ./data/neo4j/import:/var/lib/neo4j/import
     networks:
       - gguljob-network
     restart: always
@@ -76,51 +77,6 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m" 
-        max-file: "3"
-
-  # =======================================================
-  # [Elasticsearch] - 검색 엔진
-  # =======================================================
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-    container_name: gguljob-elasticsearch-prod
-    volumes:
-      - ./data/elasticsearch:/usr/share/elasticsearch/data
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "127.0.0.1:9200:9200" # SSH 터널링 전용
-    networks:
-      - gguljob-network
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # =======================================================
-  # [FastAPI AI Service]
-  # =======================================================
-  ai-service:
-    build:
-      context: ./ai
-    container_name: gguljob-ai-prod
-    environment:
-      - REDIS_HOST=gguljob-redis-prod
-      - REDIS_PORT=6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - gguljob-network
-    depends_on:
-      - redis
-      - neo4j
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
         max-size: "10m"
         max-file: "3"
 
@@ -133,7 +89,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: gguljob-frontend-prod
-    
+
     # 내부망(gguljob-network)에서 80번 포트로 대기 중입니다.
     # 외부 Nginx(gguljob-nginx-prod)가 http://gguljob-frontend-prod:80 으로 접속합니다.
     networks:
@@ -150,8 +106,11 @@ services:
   # =======================================================
   backend-blue:
     image: gguljob-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: gguljob-backend-prod-blue
-    env_file: ./.env
+    env_file: ./.env-prod
     environment:
       - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
       - SPRING_PROFILES_ACTIVE=prod
@@ -171,7 +130,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
 
       - AI_SERVICE_URL=http://gguljob-ai-prod:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
@@ -182,7 +141,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
@@ -195,8 +153,11 @@ services:
   # =======================================================
   backend-green:
     image: gguljob-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: gguljob-backend-prod-green
-    env_file: ./.env
+    env_file: ./.env-prod
     environment:
       - JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
       - SPRING_PROFILES_ACTIVE=prod
@@ -216,7 +177,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
 
       - AI_SERVICE_URL=http://gguljob-ai-prod:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
@@ -227,7 +188,6 @@ services:
       - mysql
       - redis
       - neo4j
-      - ai-service
     restart: always
     logging:
       driver: "json-file"
@@ -246,12 +206,13 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/auth/.htpasswd:/etc/nginx/auth/.htpasswd:ro
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
-    depends_on: 
-      - backend-blue
-      - backend-green
-      - frontend
+    # depends_on:
+    #   - backend-blue
+    #   - backend-green
+    #   - frontend
     networks:
       - gguljob-network
     restart: always
@@ -269,7 +230,7 @@ services:
       context: ./jenkins_docker
       args:
         # EC2에서 `stat -c '%g' /var/run/docker.sock` 으로 확인 후 맞출 것 (보통 999)
-        DOCKER_GID: "999"
+        DOCKER_GID: "988"
     container_name: gguljob-jenkins-prod
     environment:
       - JENKINS_OPTS=--prefix=/jenkins
@@ -286,7 +247,29 @@ services:
         max-size: "20m"
         max-file: "5"
 
+  # =======================================================
+  # [Portainer] Docker 관리 UI
+  # =======================================================
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: gguljob-portainer
+    command: [ "-H", "unix:///var/run/docker.sock", "--base-url", "/portainer" ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - gguljob-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   gguljob-network:
     external: true
     name: gguljob-network
+
+volumes:
+  portainer_data:

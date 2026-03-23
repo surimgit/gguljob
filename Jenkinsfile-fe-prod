@@ -1,0 +1,94 @@
+﻿pipeline {
+    agent any
+
+    environment {
+        COMPOSE_FILE = 'docker-compose.prod.yml'
+        SERVICE_NAME = 'frontend'
+    }
+
+    options {
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '=== 1. Checkout (master) ==='
+                checkout scm
+            }
+        }
+
+        stage('Build & Deploy') {
+            steps {
+                echo '=== 2. Docker 이미지 빌드 및 컨테이너 재배포 ==='
+                script {
+                    try {
+                        sh "docker compose -f ${COMPOSE_FILE} up -d --build ${SERVICE_NAME}"
+                        echo "✅ ${SERVICE_NAME} 배포 완료"
+                    } catch (Exception e) {
+                        echo "❌ 배포 실패"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                echo '=== 3. 미사용 이미지 정리 ==='
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def author  = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s",  returnStdout: true).trim()
+                def branch  = env.BRANCH_NAME ?: env.GIT_BRANCH
+
+                def msg = "#### 🚀🔥 [Prod] 프론트엔드 배포 성공! 🔥🚀\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "**시간:** ${currentBuild.durationString}\n\n" +
+                        "[🔗 Jenkins 로그 확인](${env.BUILD_URL})"
+
+                mattermostSend(
+                    color: "#0004ff",
+                    message: msg,
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
+                )
+            }
+        }
+        failure {
+            script {
+                def author  = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s",  returnStdout: true).trim()
+                def branch  = env.BRANCH_NAME ?: env.GIT_BRANCH
+                def logs    = currentBuild.rawBuild.getLog(20).join("\n")
+
+                def msg = "#### ☠️💀☠️ [Prod] 프론트엔드 배포 실패! ☠️💀☠️\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "### 📜 에러 로그\n" +
+                        "```text\n${logs}\n```\n" +
+                        "[🔍 Jenkins 로그 전체 보기](${env.BUILD_URL}console)"
+
+                mattermostSend(
+                    color: "#ff0000",
+                    message: msg,
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
+                )
+            }
+        }
+    }
+}

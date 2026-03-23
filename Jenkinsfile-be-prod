@@ -1,0 +1,141 @@
+pipeline {
+    agent any
+    
+    // [변경 1] 트리거: 'master' 브랜치에 푸시될 때만 실행
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'master')
+    }
+    
+    environment {
+        DOCKER_COMPOSE_DIR = '.' 
+        BACKEND_DIR = 'backend' 
+        
+        ENV_CREDENTIAL_ID = 'prod-backend-env'
+    }
+
+    options {
+        disableConcurrentBuilds() 
+    }
+
+    stages {
+        stage('Verify Version') {
+            steps {
+                echo '=== 0. Verify Production Version ==='
+                dir("${BACKEND_DIR}") {
+                    script {
+                        def version = sh(
+                            script: "grep -E \"^version\" build.gradle | head -1",
+                            returnStdout: true
+                        ).trim()
+                        echo "현재 버전: ${version}"
+                        if (version.contains('SNAPSHOT')) {
+                            error("❌ build.gradle version이 SNAPSHOT입니다. 운영 배포 전 버전을 올려주세요. (예: version = '1.0.0')")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                echo '=== 1. Checkout (Master Branch) ==='
+                checkout scm
+            }
+        }
+
+        stage('Build Backend') {
+            steps {
+                echo '=== 2. Build Spring Boot (Prod) ==='
+                dir("${BACKEND_DIR}") {
+                    script {
+                        sh 'chmod +x gradlew'
+                        sh './gradlew clean build -x test'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy (Blue/Green)') {
+            steps {
+                echo "=== 3. Executing Prod Deployment Script ==="
+                dir("${DOCKER_COMPOSE_DIR}") {
+                    withCredentials([
+                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE'),
+                        // AWS 키는 공용으로 써도 무방함
+                        string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
+                        string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
+                    ]) {
+                        script {
+                            try {
+                                sh 'cp $ENV_FILE .env-prod'
+                                
+                                // [변경 5] 운영용 배포 스크립트 실행 (deploy-prod.sh)
+                                sh 'chmod +x deploy-prod.sh'
+                                sh './deploy-prod.sh'
+
+                            } catch (Exception e) {
+                                echo "❌ Prod 배포 실패!"
+                                throw e
+                            } finally {
+                                sh 'rm -f .env-prod'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
+                def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+
+                def msg = "#### 🚀🔥 [Prod] 운영 서버 배포 성공! 🔥🚀\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "[🔗 Jenkins 로그 확인](${env.BUILD_URL})"
+                
+                mattermostSend (
+                    color: "#00ff00", // 초록색 (운영 성공은 특별하니까)
+                    message: msg,
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
+                )
+            }
+        }
+        failure {
+            script {
+                def author = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def message = sh(script: "git show -s --pretty=%s", returnStdout: true).trim()
+                def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+
+                def msg = "#### 🚨 [Prod] 운영 서버 배포 실패! 비상! 🚨\n" +
+                        "**프로젝트:** ${env.JOB_NAME}\n" +
+                        "**빌드 번호:** #${env.BUILD_NUMBER}\n" +
+                        "**브랜치:** `${branch}`\n" +
+                        "**작성자:** ${author}\n" +
+                        "**커밋:** ${message}\n" +
+                        "[🔍 젠킨스 로그 전체 보기](${env.BUILD_URL}console)"
+
+                mattermostSend (
+                    color: "#ff0000",
+                    message: msg,
+                    channel: "cicde107",
+                    endpoint: "https://meeting.ssafy.com/hooks/m65y6xf4rbrj5f4d15qcmetpza"
+                )
+            }
+        }
+    }
+}

@@ -1,18 +1,15 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import Navbar from './Navbar';
+import Container from '../common/Container';
 
 const Layout = () => {
   return (
-    <div>
-      <header style={{ padding: '20px', background: '#eee' }}>
-        <nav style={{ display: 'flex', gap: '20px' }}>
-          <Link to="/">🏠 홈</Link>
-          <Link to="/login">🔑 로그인</Link>
-        </nav>
-      </header>
-      
-      {/* Outlet: 이 자리에 각 페이지(Home, Login)가 갈아끼워집니다 */}
-      <main style={{ padding: '20px' }}>
-        <Outlet />
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <main className="flex-1">
+        <Container className="py-8">
+          <Outlet />
+        </Container>
       </main>
     </div>
   );

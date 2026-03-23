@@ -42,6 +42,7 @@ services:
     volumes:
       - ./data/neo4j-dev/data:/data
       - ./data/neo4j-dev/logs:/logs
+      - ./data/neo4j-dev/import:/var/lib/neo4j/import
     networks:
       - gguljob-network-dev
     restart: always
@@ -55,47 +56,10 @@ services:
     ports:
       - "127.0.0.1:6379:6379" # Redis 접속 포트
     volumes:
-      - ./data/redis-dev:/data 
+      - ./data/redis-dev:/data
     command: redis-server --appendonly yes
     networks:
       - gguljob-network-dev
-    restart: always
-
-  # =======================================================
-  # [Elasticsearch] - 검색 엔진
-  # =======================================================
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
-    container_name: gguljob-elasticsearch-dev
-    volumes:
-      - ./data/elasticsearch:/usr/share/elasticsearch/data    
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "127.0.0.1:9201:9200" # prod와 포트 충돌 방지: dev는 9201 사용
-    networks:
-      - gguljob-network-dev
-    restart: always
-
-  # =======================================================
-  # [FastAPI AI Service]
-  # =======================================================
-  ai-service-dev:
-    build:
-      context: ./ai
-    container_name: gguljob-ai-dev
-    ports:
-      - "127.0.0.1:8002:8000"
-    environment:
-      - REDIS_HOST=gguljob-redis-dev
-      - REDIS_PORT=6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - gguljob-network-dev
-    depends_on:
-      - redis-dev
-      - neo4j-dev
     restart: always
 
   # =======================================================
@@ -106,17 +70,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: gguljob-frontend-dev
-    
+
     # EC2 내부 SSH 터널링
     ports:
       - "127.0.0.1:3000:80"
-      
+
     # React(Vite)는 빌드 타임(npm run build)
     # 필요한 변수는 ./frontend/.env 파일
     networks:
       - gguljob-network-dev
     restart: always
-    
+
   # =======================================================
   # [Blue Backend] : 기본 포트 8081
   # 보안 핵심: API도 외부 노출 차단. 터널링 필수.
@@ -144,11 +108,12 @@ services:
       - REDIS_PORT=6379
 
       - AI_SERVICE_URL=http://gguljob-ai-dev:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - NEO4J_URI=bolt://gguljob-neo4j-dev:7687
       - NEO4J_USERNAME=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
 
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
@@ -159,7 +124,6 @@ services:
       - db-dev
       - redis-dev
       - neo4j-dev
-      - ai-service-dev
     networks:
       - gguljob-network-dev
     restart: always
@@ -180,7 +144,6 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SERVER_FORWARD_HEADERS_STRATEGY=native
       - SERVER_PORT=8080
-
       - DB_HOST=gguljob-db-dev
       - DB_NAME=gguljob_dev
       - DB_USERNAME=${DB_USERNAME}
@@ -190,11 +153,11 @@ services:
       - REDIS_PORT=6379
 
       - AI_SERVICE_URL=http://gguljob-ai-dev:8000
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - NEO4J_URI=bolt://gguljob-neo4j-dev:7687
       - NEO4J_USERNAME=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-
+      - GMS_API_KEY=${GMS_API_KEY}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       - CDN_URL=${CDN_URL}
@@ -205,7 +168,6 @@ services:
       - db-dev
       - redis-dev
       - neo4j-dev
-      - ai-service-dev
     networks:
       - gguljob-network-dev
     restart: always
@@ -231,6 +193,6 @@ services:
     restart: always
 
 networks:
-  gguljob-network-dev: 
+  gguljob-network-dev:
     external: true
     name: gguljob-network-dev
