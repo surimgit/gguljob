@@ -30,6 +30,17 @@ const AppRoutes = () => {
   const logout = useAuthStore((state) => state.logout);
   const setUser = useAuthStore((state) => state.setUser);
 
+  // 새로고침 시 쿠키 기반 인증 복구
+  useEffect(() => {
+    if (useAuthStore.getState().isAuthenticated) {
+      useAuthStore.getState().setAuthLoading(false);
+      return;
+    }
+    getMe()
+      .then((user) => setUser(user))
+      .catch(() => useAuthStore.getState().setAuthLoading(false));
+  }, [setUser]);
+
   useEffect(() => {
     const handleUnauthorized = () => {
       logout();
