@@ -1,11 +1,6 @@
 pipeline {
     agent any
     
-    // [변경 1] 트리거: 'master' 브랜치에 푸시될 때만 실행
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'NameBasedFilter', includeBranchesSpec: 'master')
-    }
-    
     environment {
         DOCKER_COMPOSE_DIR = '.' 
         BACKEND_DIR = 'backend' 
