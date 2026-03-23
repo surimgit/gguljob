@@ -34,6 +34,7 @@ import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -311,9 +312,14 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
 
-        if (!project.getLeader().getId().equals(loginUserId)) {
-            throw new IllegalArgumentException("프로젝트 리더만 팀원 관리 페이지를 조회할 수 있습니다.");
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_IdAndStatus(
+            projectId, loginUserId, MemberStatus.ATTEND
+        );
+        if (!isMember) {
+            throw new IllegalArgumentException("프로젝트 멤버만 팀원 정보를 조회할 수 있습니다.");
         }
+
+        boolean isLeader = project.getLeader().getId().equals(loginUserId);
 
         // 팀원 모집 현황 리스트
         List<RecruitmentStatusDto> recruitments = projectPositionRepository.findAllByProjectId(projectId).stream()
@@ -325,7 +331,7 @@ public class ProjectService {
             .map(CurrentMemberDto::from)
             .collect(Collectors.toList());
 
-        //참가 신청 현황
+        // 참가 신청 현황
         List<JoinRequest> pendingRequestsEntities = joinRequestRepository.findPendingRequestsByProjectId(projectId);
         List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream().map(request -> {
             String positionName = "미지정";
@@ -343,6 +349,7 @@ public class ProjectService {
         }).collect(Collectors.toList());
 
         return TeamManagementResponseDto.builder()
+            .isLeader(isLeader)
             .recruitments(recruitments)
             .currentMembers(currentMembers)
             .pendingRequests(pendingRequests)

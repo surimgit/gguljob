@@ -361,6 +361,7 @@ const ProjectDashboard = () => {
             <ProjectSettings
               dashboard={dashboard}
               projectId={id ? Number(id) : undefined}
+              onSaved={() => id && fetchDashboard(Number(id))}
             />
           )}
           {activeTab === "personal" && (
