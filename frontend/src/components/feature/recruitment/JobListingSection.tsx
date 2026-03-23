@@ -374,7 +374,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
           setJobs((paged?.content ?? []).map(mapBookmarkToJobListing));
           setTotalPages(paged?.totalPages ?? 1);
         })
-        .catch(() => {});
+        .catch(console.error);
     } else {
       getJobs({ page: currentPage, size: DEFAULT_PAGE_SIZE })
         .then(({ data }) => {
