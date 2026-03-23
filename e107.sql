@@ -49,7 +49,7 @@ CREATE TABLE `chat_logs` (
     CONSTRAINT `fk_chat_logs_pr` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`pr_id`) ON DELETE SET NULL,
     CONSTRAINT `fk_chat_logs_project` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_chat_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 103 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -70,7 +70,7 @@ CREATE TABLE `git_repositories` (
     PRIMARY KEY (`repo_id`),
     KEY `project_id` (`project_id`),
     CONSTRAINT `git_repositories_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 10003 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -93,7 +93,7 @@ CREATE TABLE `job_bookmark` (
     KEY `posting_id` (`posting_id`),
     CONSTRAINT `job_bookmark_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `job_bookmark_ibfk_2` FOREIGN KEY (`posting_id`) REFERENCES `job_posting` (`posting_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -122,6 +122,9 @@ CREATE TABLE `job_posting` (
     `tech_stacks` text COLLATE utf8mb4_unicode_ci COMMENT '정규화된 기술스택(JSON 문자열)',
     `experience_level` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '경력',
     `salary` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '급여',
+    `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '근무지역',
+    `contract_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '고용형태',
+    `logo_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     PRIMARY KEY (`posting_id`),
     UNIQUE KEY `uq_job_posting_origin_job_id` (`origin_job_id`)
 ) ENGINE = InnoDB AUTO_INCREMENT = 18856 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
@@ -203,7 +206,7 @@ CREATE TABLE `join_requests` (
     CONSTRAINT `join_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `join_requests_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `join_requests_ibfk_3` FOREIGN KEY (`position_id`) REFERENCES `project_positions` (`position_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 7 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -228,7 +231,7 @@ CREATE TABLE `notifications` (
     PRIMARY KEY (`notification_id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 27 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -274,7 +277,7 @@ CREATE TABLE `portfolios` (
     PRIMARY KEY (`portfolio_id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `portfolios_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -298,7 +301,7 @@ CREATE TABLE `pr_reviews` (
     KEY `user_id` (`user_id`),
     CONSTRAINT `pr_reviews_ibfk_1` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`pr_id`) ON DELETE CASCADE,
     CONSTRAINT `pr_reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -327,7 +330,7 @@ CREATE TABLE `project_members` (
     CONSTRAINT `project_members_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `project_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `project_members_ibfk_3` FOREIGN KEY (`position_id`) REFERENCES `project_positions` (`position_id`) ON DELETE SET NULL
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -354,7 +357,7 @@ CREATE TABLE `project_positions` (
     PRIMARY KEY (`position_id`),
     KEY `project_id` (`project_id`),
     CONSTRAINT `project_positions_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -377,7 +380,7 @@ CREATE TABLE `project_skills` (
     KEY `skill_id` (`skill_id`),
     CONSTRAINT `project_skills_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `project_skills_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skill` (`skill_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 16 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -431,7 +434,7 @@ CREATE TABLE `projects` (
     PRIMARY KEY (`project_id`),
     KEY `leader_id` (`leader_id`),
     CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`leader_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 10008 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -466,7 +469,7 @@ CREATE TABLE `pull_requests` (
     CONSTRAINT `pull_requests_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `git_repositories` (`repo_id`) ON DELETE CASCADE,
     CONSTRAINT `pull_requests_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `pull_requests_ibfk_3` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 86 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 10000 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -513,6 +516,8 @@ CREATE TABLE `troubleshootings` (
     `solution` text COLLATE utf8mb4_unicode_ci COMMENT '해결 방법(마크다운)',
     `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
     `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `code_snippet` text COLLATE utf8mb4_unicode_ci COMMENT '핵심 변경 코드 스니펫',
+    `confidence` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'AI 분석 신뢰도 (high/medium/low)',
     PRIMARY KEY (`ts_id`),
     KEY `user_id` (`user_id`),
     KEY `project_id` (`project_id`),
@@ -520,7 +525,7 @@ CREATE TABLE `troubleshootings` (
     CONSTRAINT `troubleshootings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `troubleshootings_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`) ON DELETE CASCADE,
     CONSTRAINT `troubleshootings_ibfk_3` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`pr_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 18 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -541,7 +546,7 @@ CREATE TABLE `user_goals` (
     PRIMARY KEY (`user_goal_id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `user_goals_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 72 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -585,7 +590,7 @@ CREATE TABLE `user_roles` (
     PRIMARY KEY (`user_role_id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `user_roles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 86 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -608,7 +613,7 @@ CREATE TABLE `user_skill` (
     KEY `skill_id` (`skill_id`),
     CONSTRAINT `user_skill_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `user_skill_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skill` (`skill_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 30 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 575 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -634,7 +639,7 @@ CREATE TABLE `users` (
     `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '계정 생성 시간',
     `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '계정 수정 시간',
     PRIMARY KEY (`user_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 55 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 10000 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */
@@ -655,4 +660,4 @@ CREATE TABLE `users` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */
 ;
 
--- Dump completed on 2026-03-17 10:04:29
+-- Dump completed on 2026-03-23 10:31:07

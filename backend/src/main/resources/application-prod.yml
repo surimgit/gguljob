@@ -3,13 +3,9 @@ spring:
     activate:
       on-profile: prod
 
-  threads:
-    virtual:
-      enabled: true
-
   datasource:
-    # .env에 적힌 운영용 변수들을 사용
-    url: jdbc:mysql://${DB_HOST}:3306/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    # .env-prod에 적힌 운영용 변수들을 사용
+    url: jdbc:mysql://${DB_HOST}:3306/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
@@ -23,12 +19,12 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
-      
-neo4j:
-  uri: ${NEO4J_URI}
-  authentication:
-    username: ${NEO4J_USERNAME}
-    password: ${NEO4J_PASSWORD}
+
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USERNAME}
+      password: ${NEO4J_PASSWORD}
 
 # ★ 운영 환경에서 Swagger UI 비활성화 (보안)
 springdoc:
@@ -36,3 +32,6 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+cdn:
+  url: ${CDN_URL}
