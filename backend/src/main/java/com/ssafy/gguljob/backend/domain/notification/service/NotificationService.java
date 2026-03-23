@@ -5,6 +5,8 @@ import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto
 import com.ssafy.gguljob.backend.domain.notification.dto.UnreadCountResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
 import com.ssafy.gguljob.backend.domain.notification.repository.NotificationRepository;
+import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.exception.NotificationAccessDeniedException;
 import com.ssafy.gguljob.backend.global.exception.NotificationNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -79,5 +81,18 @@ public class NotificationService {
     public UnreadCountResponseDto getUnreadCount(Long userId) {
         long count = notificationRepository.countByUserIdAndIsReadFalse(userId);
         return new UnreadCountResponseDto(count);
+    }
+
+    @Transactional
+    public Notification createNotification(User user, NotificationCategory category,
+        String content, Long referenceId, String referenceUrl) {
+        Notification notification = Notification.builder()
+            .user(user)
+            .category(category)
+            .content(content)
+            .referenceId(referenceId)
+            .referenceUrl(referenceUrl)
+            .build();
+        return notificationRepository.save(notification);
     }
 }
