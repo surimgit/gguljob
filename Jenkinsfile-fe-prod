@@ -19,9 +19,6 @@ pipeline {
         }
 
         stage('Build & Deploy') {
-            when {
-                changeset "frontend/**"
-            }
             steps {
                 echo '=== 2. Docker 이미지 빌드 및 컨테이너 재배포 ==='
                 script {
