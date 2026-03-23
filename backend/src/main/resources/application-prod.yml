@@ -32,6 +32,3 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
-
-cdn:
-  url: ${CDN_URL}

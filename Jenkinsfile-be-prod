@@ -60,10 +60,7 @@ pipeline {
                 echo "=== 3. Executing Prod Deployment Script ==="
                 dir("${DOCKER_COMPOSE_DIR}") {
                     withCredentials([
-                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE'),
-                        // AWS 키는 공용으로 써도 무방함
-                        string(credentialsId: 'backend-aws-access-key', variable: 'AWS_ACCESS_KEY'),
-                        string(credentialsId: 'backend-aws-secret-key', variable: 'AWS_SECRET_KEY')
+                        file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')
                     ]) {
                         script {
                             try {

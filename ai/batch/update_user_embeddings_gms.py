@@ -1,40 +1,30 @@
+import os
 import pymysql
 from neo4j import GraphDatabase
-import os
 from openai import OpenAI
+from dotenv import load_dotenv
 
-def parse_env_file(file_path):
-    env_vars = {}
-    if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    env_vars[key.strip()] = value.strip()
-    return env_vars
+load_dotenv()
 
-# Load .env vars
-env_vars = parse_env_file('.env')
-GMS_API_KEY = env_vars.get("GMS_API_KEY")
-NEO4J_PASS = env_vars.get("NEO4J_PASSWORD", "12341234")
+GMS_API_KEY = os.getenv("GMS_API_KEY")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3307"))
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASS = os.getenv("MYSQL_PASSWORD")
+MYSQL_DB = os.getenv("MYSQL_DB")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7688")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASS = os.getenv("NEO4J_PASSWORD")
+
+for var_name, var_val in [("GMS_API_KEY", GMS_API_KEY), ("MYSQL_USER", MYSQL_USER), ("MYSQL_PASSWORD", MYSQL_PASS), ("MYSQL_DB", MYSQL_DB), ("NEO4J_PASSWORD", NEO4J_PASS)]:
+    if not var_val:
+        raise ValueError(f"{var_name} 환경변수가 설정되지 않았습니다.")
 
 # GMS API Client Init (SSAFY Gateway format)
 client = OpenAI(
     api_key=GMS_API_KEY,
     base_url="https://gms.ssafy.io/gmsapi/api.openai.com/v1"
 )
-
-# MySQL settings
-MYSQL_HOST = '127.0.0.1'
-MYSQL_PORT = 3307
-MYSQL_USER = 'gguljob_dev_user'
-MYSQL_PASS = 'ggulggule107$8991237!'
-MYSQL_DB = 'gguljob_dev'
-
-# Neo4j settings
-NEO4J_URI = "bolt://127.0.0.1:7688"
-NEO4J_USER = "neo4j"
 
 EXPERIENCE_MAP = {
     'BEGINNER': '신입',
