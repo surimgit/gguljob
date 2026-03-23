@@ -121,6 +121,7 @@ export interface TeamDashboard {
   projectInfo: {
     title: string;
     teamName: string;
+    topic?: string;
     domain: string;
     description: string;
     skills: string[];
