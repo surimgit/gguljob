@@ -10,17 +10,14 @@ import com.ssafy.gguljob.backend.domain.user.entity.Portfolio;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.PortfolioRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +30,7 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final UserRepository userRepository;
     private final AiChatService aiChatService;
-
-    @Value("${portfolio.local-path:./portfolios}")
-    private String localBasePath;
-
-    // 외부에서 파일 접근용 base URL (예: http://localhost:8080/portfolios)
-    @Value("${portfolio.base-url:http://localhost:8080/portfolios}")
-    private String baseUrl;
+    private final S3ImageService s3ImageService;
 
     private static final String SYSTEM_PROMPT = """
         <role>
@@ -50,28 +41,61 @@ public class PortfolioService {
 
         <goal>
         Produce a single, complete Markdown portfolio document that:
-        1. Opens with each project overview section
+        1. Follows the standard portfolio structure defined in <output_format>
         2. Presents each troubleshooting record as a structured case study under its project
-        3. Closes with a "기술 역량 요약" section synthesizing the developer's growth
+        3. Includes at least one Mermaid.js diagram to visualize architecture or problem flow
+        4. Closes with a "기술 역량 요약" section synthesizing the developer's growth
         </goal>
 
         <output_format>
         - Language: Korean only
-        - Format: Valid Markdown with headings (##, ###)
-        - Do NOT wrap the entire output in a code fence
-        - Each troubleshooting case must follow this structure:
+        - Format: Valid Markdown — do NOT wrap the entire output in a code fence
+        - Strictly follow this 5-section structure per project:
+
+          ## 1. 프로젝트 개요
+          | 항목 | 내용 |
+          |------|------|
+          | 프로젝트명 | ... |
+          | 팀명 | ... |
+          | 도메인 | ... |
+          | 기술 스택 | ... |
+
+          ## 2. 시스템 아키텍처
+          > 반드시 아래와 같이 Mermaid 다이어그램을 1개 이상 포함하세요.
+```mermaid
+          graph TD
+            A[클라이언트] --> B[API 서버]
+            B --> C[데이터베이스]
+```
+
+          ## 3. 핵심 트러블슈팅
+          각 케이스는 아래 구조를 따릅니다:
           ### [순번]. [제목]
           **문제 상황**: ...
           **원인 분석**: ...
           **해결 방법**: ...
           **기술적 인사이트**: ...
+
+          ## 4. 성과 및 배운 점
+          - 수치화 가능한 성과 (예: 응답속도 30% 개선)
+          - 트러블슈팅을 통해 얻은 기술적 교훈
+
+          ## 5. 기술 역량 요약
+          - 전체 케이스를 관통하는 기술 패턴과 성장 서사
         </output_format>
 
+        <diagram_rules>
+        - Mermaid 코드 블록은 반드시 ```mermaid 로 열고 ``` 로 닫으세요.
+        - 다이어그램 유형: graph TD(아키텍처), sequenceDiagram(요청 흐름), flowchart LR(문제 해결 흐름) 중 데이터에 가장 적합한 것을 선택하세요.
+        - 다이어그램은 "시스템 아키텍처" 섹션에 반드시 포함되며, 트러블슈팅 케이스에도 흐름이 복잡하면 추가할 수 있습니다.
+        - 노드 레이블에 특수문자([](){})가 포함될 경우 따옴표로 감싸세요: A["레이블"]
+        </diagram_rules>
+
         <constraints>
-        - If a field is missing or blank, skip that field entirely — do not guess or fabricate
-        - Keep each case study concise: 150–300 words
-        - The "기술 역량 요약" must reference specific technologies and patterns observed across all cases
-        - If multiple projects exist, separate each with a ## project heading
+        - 누락된 필드는 건너뛰고 절대 추측하거나 조작하지 마세요.
+        - 각 트러블슈팅 케이스는 150~300 단어를 유지하세요.
+        - 프로젝트가 여러 개인 경우 각 프로젝트를 별도 ## 프로젝트: [프로젝트명] 섹션으로 구분하세요.
+        - 코드 블록(```language ... ```) 형식을 반드시 지키세요.
         </constraints>
 
         <example_case>
@@ -82,6 +106,14 @@ public class PortfolioService {
         **기술적 인사이트**: 멀티테넌트 환경에서 캐시 설계 시 항상 식별자를 키에 포함해야 함.
         </example_case>
         """;
+
+    @Transactional(readOnly = true)
+    public List<PortfolioResponse.Summary> getMyPortfolios(Long userId) {
+        return portfolioRepository.findByUserIdOrderByUpdatedAtDesc(userId)
+            .stream()
+            .map(PortfolioResponse.Summary::from)
+            .toList();
+    }
 
     @Transactional
     public PortfolioResponse.GenerateResult generatePortfolio(
@@ -115,14 +147,14 @@ public class PortfolioService {
         String userPrompt = buildUserPrompt(title, groupedByProject);
         String markdownContent = aiChatService.callClaudeApiWithSystem(SYSTEM_PROMPT, userPrompt);
 
-        // 로컬 파일 저장 (S3 대체 예정)
-        String fileUrl = saveToLocal(userId, markdownContent);
+        // 파일 저장 (S3)
+        String fileUrl = uploadToS3(userId, markdownContent);
 
         // Portfolio 저장
         Portfolio portfolio = Portfolio.builder()
             .user(user)
             .title(title)
-            .s3Url(fileUrl)   // 현재 컬럼명은 s3_url이지만 로컬 URL 저장
+            .s3Url(fileUrl)
             .isPublic(true)
             .build();
 
@@ -140,26 +172,22 @@ public class PortfolioService {
     }
 
     // ----------------------------------------------------------------
-    // 로컬 파일 저장 (S3 변경 예정)
+    // S3 파일 저장
     // ----------------------------------------------------------------
-    private String saveToLocal(long userId, String markdownContent) {
-        try {
-            Path dirPath = Paths.get(localBasePath, String.valueOf(userId));
-            Files.createDirectories(dirPath);
+    private String uploadToS3(long userId, String markdownContent) {
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        // 같은 날짜 중복 방지: 포트폴리오_2025-06-10_1718000000000.md
+        String fileName = "포트폴리오_" + date + "_" + System.currentTimeMillis() + ".md";
+        String s3Key = "portfolios/" + userId + "/" + fileName;
 
-            String fileName = System.currentTimeMillis() + ".md";
-            Path filePath = dirPath.resolve(fileName);
-            Files.writeString(filePath, markdownContent, StandardCharsets.UTF_8);
+        s3ImageService.uploadMarkdown(markdownContent, s3Key);
 
-            log.info("📄 로컬 파일 저장 완료: {}", filePath);
+        log.info("☁️ S3 업로드 완료: {}", s3Key);
 
-            // 프론트에 반환할 URL
-            return baseUrl + "/" + userId + "/" + fileName;
-
-        } catch (IOException e) {
-            throw new RuntimeException("포트폴리오 파일 저장 실패: " + e.getMessage());
-        }
+        // CDN URL 반환 (s3ImageService.getImageUrl = cdnUrl + "/" + s3Key)
+        return s3ImageService.getImageUrl(s3Key);
     }
+
 
     // ----------------------------------------------------------------
     // 유저 프롬프트 빌더 (프로젝트별 그룹핑)

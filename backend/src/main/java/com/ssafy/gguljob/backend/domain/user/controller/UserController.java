@@ -95,9 +95,9 @@ public class UserController {
 
     @Operation(summary = "마이페이지 표시용 대표 프로젝트 조회")
     @GetMapping("/me/rep_project")
-    public ResponseEntity<ApiResponseDto<ProjectResponse.Simple>> getMyRepProject(
+    public ResponseEntity<ApiResponseDto<List<ProjectResponse.Simple>>> getMyRepProjects(
         @AuthenticationPrincipal CustomUserDetails userDetails) {
-        ProjectResponse.Simple response = projectService.getMyRepProject(userDetails.getId());
+        List<ProjectResponse.Simple> response = projectService.getMyRepProjects(userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "대표 프로젝트 조회 성공", response));
     }
 

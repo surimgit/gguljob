@@ -31,6 +31,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -253,5 +254,15 @@ public class ProjectController {
             );
 
         return ResponseEntity.ok(result.getContent());
+    }
+
+    @Operation(summary = "프로젝트 삭제", description = "프로젝트를 삭제합니다. 팀장만 가능합니다.")
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<ApiResponseDto<Void>> deleteProject(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        projectService.deleteProject(projectId, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트가 삭제되었습니다.", null));
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
+import com.ssafy.gguljob.backend.domain.job.dto.response.PagedRecommendationResponse;
 import com.ssafy.gguljob.backend.domain.job.dto.response.RecommendedJobDto;
 import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
 import com.ssafy.gguljob.backend.domain.job.repository.JobPostingRepository;
@@ -37,9 +38,24 @@ public class JobRecommendationService {
     return getRecommendations(userId, 3, 0, false);
   }
 
-  public List<RecommendedJobDto> getRegularRecommendations(Long userId, int skip, String sort) {
+  public PagedRecommendationResponse getRegularRecommendations(Long userId, int page, int size,
+      String sort) {
+    if (size < 1) size = 10;
+    if (page < 1) page = 1;
+
     boolean sortByDeadline = "deadline".equalsIgnoreCase(sort);
-    return getRecommendations(userId, 10, skip, sortByDeadline);
+
+    // 전체 후보를 한번에 조회하여 정확한 totalElements 확보
+    List<RecommendedJobDto> allCandidates = getRecommendations(userId, 200, 0, sortByDeadline);
+
+    long totalElements = allCandidates.size();
+    int totalPages = (int) Math.ceil((double) totalElements / size);
+
+    int fromIndex = Math.min((page - 1) * size, allCandidates.size());
+    int toIndex = Math.min(fromIndex + size, allCandidates.size());
+    List<RecommendedJobDto> pageContent = allCandidates.subList(fromIndex, toIndex);
+
+    return new PagedRecommendationResponse(pageContent, totalPages, totalElements, page, size);
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,

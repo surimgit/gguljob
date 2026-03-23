@@ -20,12 +20,21 @@ import {
   Link,
   Eye,
   Pencil,
+  Wrench,
+  Briefcase,
+  PieChart,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
 import { getProjectEditForm, updateProject } from "../../../api/projects";
+import {
+  SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
+  SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
+  SKILLS_BY_CATEGORY,
+  SKILL_CATEGORY_META,
+} from "../../../constants/skills";
 
 /* ── 타입 ── */
 type ProjectStatus = "active" | "recruiting" | "done" | "paused";
@@ -49,27 +58,8 @@ const BACKEND_TO_STATUS: Record<BackendProjectEditStatus, ProjectStatus> = {
   STOPPED: "paused",
 };
 
-/* ── 스킬 이름 ↔ ID 매핑 (DB 기준) ── */
-const SKILL_NAME_TO_ID: Record<string, number> = {
-  React: 1, "Vue.js": 2, "Vue": 2, "Next.js": 19, JavaScript: 16, TypeScript: 17,
-  "HTML/CSS": 18, Swift: 66, jQuery: 46,
-  Java: 3, "Spring Boot": 4, Python: 5, MySQL: 6, "Node.js": 20,
-  C: 13, "C#": 14, "C++": 15, PostgreSQL: 22, MariaDB: 23, MongoDB: 24,
-  PHP: 25, ".NET": 26, "Nest.js": 27, NestJS: 27, Kafka: 28, "Oracle DB": 21,
-  JPA: 43, MyBatis: 44, FastAPI: 45, Django: 63, Flask: 64, MSA: 59,
-  JSP: 42, MSSQL: 41,
-  "RDBMS/DBMS": 54, Tibero: 60,
-  AWS: 7, Docker: 8, Kubernetes: 9, Jenkins: 10, Git: 11, Redis: 12,
-  Linux: 29, Azure: 30, GCP: 31, Nginx: 65,
-  PyTorch: 37, TensorFlow: 38, OpenCV: 50, Hadoop: 51,
-  RAG: 56, LLM: 57, MLOps: 67, AI: 70,
-  Android: 32, iOS: 33, Kotlin: 34, Flutter: 35, "React Native": 36, Unity: 52,
-  Figma: 40, Jira: 39,
-};
-const SKILL_ID_TO_NAME: Record<number, string> = {};
-for (const [name, id] of Object.entries(SKILL_NAME_TO_ID)) {
-  if (!SKILL_ID_TO_NAME[id]) SKILL_ID_TO_NAME[id] = name;
-}
+const SKILL_NAME_TO_ID = CANONICAL_SKILL_NAME_TO_ID;
+const SKILL_ID_TO_NAME = CANONICAL_SKILL_ID_TO_NAME;
 
 /* ── 상수 ── */
 const STATUS_OPTIONS: {
@@ -127,106 +117,16 @@ const DOMAINS = [
   "메타버스",
 ];
 
-const TECH_CATEGORIES: {
-  key: string;
-  label: string;
-  icon: React.ElementType;
-  stacks: string[];
-}[] = [
-  {
-    key: "frontend",
-    label: "Frontend",
-    icon: Monitor,
-    stacks: [
-      "React",
-      "Vue",
-      "Angular",
-      "Next.js",
-      "Nuxt.js",
-      "Svelte",
-      "TypeScript",
-      "JavaScript",
-      "TailwindCSS",
-      "Sass",
-    ],
-  },
-  {
-    key: "backend",
-    label: "Backend",
-    icon: Server,
-    stacks: [
-      "Spring Boot",
-      "Django",
-      "FastAPI",
-      "Express",
-      "NestJS",
-      "Go",
-      "Rust",
-      "Node.js",
-      "Kotlin",
-      "Java",
-    ],
-  },
-  {
-    key: "database",
-    label: "Database",
-    icon: Database,
-    stacks: [
-      "MySQL",
-      "PostgreSQL",
-      "MongoDB",
-      "Redis",
-      "SQLite",
-      "MariaDB",
-      "Elasticsearch",
-      "DynamoDB",
-    ],
-  },
-  {
-    key: "infra",
-    label: "Infra",
-    icon: Cloud,
-    stacks: [
-      "Docker",
-      "Kubernetes",
-      "AWS",
-      "GCP",
-      "Azure",
-      "Nginx",
-      "Jenkins",
-      "GitHub Actions",
-      "Terraform",
-    ],
-  },
-  {
-    key: "ai",
-    label: "AI",
-    icon: Bot,
-    stacks: [
-      "PyTorch",
-      "TensorFlow",
-      "OpenAI",
-      "Hugging Face",
-      "LangChain",
-      "scikit-learn",
-      "Pandas",
-      "NumPy",
-    ],
-  },
-  {
-    key: "mobile",
-    label: "Mobile",
-    icon: Smartphone,
-    stacks: [
-      "React Native",
-      "Flutter",
-      "Swift",
-      "Kotlin",
-      "Jetpack Compose",
-      "SwiftUI",
-    ],
-  },
-];
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+};
+
+const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
+  ...meta,
+  icon: CATEGORY_ICONS[meta.key] ?? Info,
+  stacks: SKILLS_BY_CATEGORY[meta.key] ?? [],
+}));
 
 /* ── 스킬을 카테고리에 매핑 ── */
 const SKILL_TO_CATEGORY: Record<string, string> = {};
@@ -254,6 +154,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isLeader, setIsLeader] = useState(true);
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
@@ -296,8 +197,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     if (!projectId) return;
     setLoading(true);
     getProjectEditForm(projectId)
-      .then(({ data }) => {
-        const form = data.data;
+      .then(({ data: form }) => {
         const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
         setStatus(mappedStatus);
         setName(form.title ?? "");
@@ -322,7 +222,16 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       })
       .catch((err) => {
         console.error("프로젝트 설정 로드 실패:", err);
+        setIsLeader(false);
         // 폴백: dashboard 데이터 사용
+        if (info) {
+          setName(info.title ?? "");
+          setDescription(info.description ?? "");
+          setDomains(info.domain ? [info.domain] : []);
+          if (info.skills?.length) {
+            setTechStacks(skillsToTechStacks(info.skills));
+          }
+        }
         setInitialSnapshot(JSON.stringify({
           status: "active",
           name: info?.title ?? "",
@@ -414,13 +323,21 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-2xl">✏️</span>
+          <span className="text-2xl">{isLeader ? "✏️" : "📋"}</span>
           <h1
             className="text-2xl font-bold"
             style={{ color: "var(--color-text-primary)" }}
           >
             프로젝트 설정
           </h1>
+          {!isLeader && (
+            <span
+              className="text-xs font-medium px-2.5 py-1 rounded-full"
+              style={{ background: "var(--color-background)", color: "var(--color-text-tertiary)", border: "1px solid var(--color-border)" }}
+            >
+              읽기 전용
+            </span>
+          )}
         </div>
       </div>
 
@@ -439,7 +356,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-5"
+          className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
           <BarChart2
@@ -454,8 +371,9 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
             return (
               <button
                 key={opt.key}
-                onClick={() => setStatus(opt.key)}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition-colors"
+                onClick={() => isLeader && setStatus(opt.key)}
+                disabled={!isLeader}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default opacity-80"}`}
                 style={{
                   background: sel ? opt.selectedBg : "transparent",
                   borderColor: sel
@@ -484,7 +402,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-5"
+          className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
           📋 기본 정보
@@ -502,24 +420,27 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
             type="text"
             maxLength={50}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => isLeader && setName(e.target.value)}
+            readOnly={!isLeader}
             placeholder="프로젝트명을 입력하세요"
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
             style={inputStyle(!!name)}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-primary)")
-            }
+            onFocus={(e) => {
+              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
+            }}
             onBlur={(e) => {
               if (!name)
                 e.currentTarget.style.borderColor = "var(--color-border)";
             }}
           />
+          {isLeader && (
           <p
             className="text-xs text-right mt-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             {name.length}/50
           </p>
+          )}
         </div>
 
         {/* 프로젝트 설명 (마크다운 에디터) */}
@@ -531,6 +452,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
             >
               프로젝트 설명
             </label>
+            {isLeader && (
             <div
               className="flex rounded-lg overflow-hidden"
               style={{ border: "1px solid var(--color-border)" }}
@@ -558,9 +480,10 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                 프리뷰
               </button>
             </div>
+            )}
           </div>
 
-          {descTab === "edit" ? (
+          {descTab === "edit" && isLeader ? (
             <div
               className="rounded-xl overflow-hidden"
               style={{ border: "1px solid var(--color-border)" }}
@@ -642,12 +565,14 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
               )}
             </div>
           )}
+          {isLeader && (
           <p
             className="text-xs text-right mt-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             {description.length} 자
           </p>
+          )}
         </div>
 
         {/* 도메인 */}
@@ -664,8 +589,9 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
               return (
                 <button
                   key={d}
-                  onClick={() => toggleDomain(d)}
-                  className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
+                  onClick={() => isLeader && toggleDomain(d)}
+                  disabled={!isLeader}
+                  className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                   style={{
                     borderColor: sel
                       ? "var(--color-primary)"
@@ -696,13 +622,14 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           <input
             type="text"
             value={gitUrl}
-            onChange={(e) => setGitUrl(e.target.value)}
+            onChange={(e) => isLeader && setGitUrl(e.target.value)}
+            readOnly={!isLeader}
             placeholder="https://github.com/..."
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
             style={inputStyle(!!gitUrl)}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "var(--color-primary)")
-            }
+            onFocus={(e) => {
+              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
+            }}
             onBlur={(e) => {
               if (!gitUrl)
                 e.currentTarget.style.borderColor = "var(--color-border)";
@@ -735,7 +662,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         }}
       >
         <div
-          className="flex items-center gap-2 text-base font-bold mb-1"
+          className="flex items-center gap-2 text-lg font-bold mb-1"
           style={{ color: "var(--color-text-primary)" }}
         >
           ⚙️ 기술 스택
@@ -810,8 +737,9 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                       return (
                         <button
                           key={stack}
-                          onClick={() => toggleStack(cat.key, stack)}
-                          className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
+                          onClick={() => isLeader && toggleStack(cat.key, stack)}
+                          disabled={!isLeader}
+                          className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                           style={{
                             borderColor: sel
                               ? "var(--color-primary)"
@@ -856,6 +784,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                   }}
                 >
                   {stack}
+                  {isLeader && (
                   <button
                     onClick={() => removeStack(stack)}
                     className="transition-colors"
@@ -870,6 +799,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                   >
                     <X className="w-3 h-3" />
                   </button>
+                  )}
                 </span>
               ))}
             </div>
@@ -877,7 +807,8 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         )}
       </section>
 
-      {/* ── 저장 버튼 ── */}
+      {/* ── 저장 버튼 (팀장만) ── */}
+      {isLeader && (
       <button
         disabled={!hasChanges || saving}
         onClick={handleSave}
@@ -905,8 +836,10 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       >
         {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
       </button>
+      )}
 
-      {/* ── 위험 영역 배너 ── */}
+      {/* ── 위험 영역 배너 (팀장만) ── */}
+      {isLeader && (
       <div
         className="rounded-2xl px-5 py-4 flex items-center justify-between"
         style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
@@ -935,6 +868,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           삭제하기
         </button>
       </div>
+      )}
 
       </div>{/* 우측 컬럼 끝 */}
       </div>{/* 그리드 끝 */}

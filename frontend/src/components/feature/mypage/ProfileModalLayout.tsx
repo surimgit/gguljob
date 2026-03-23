@@ -1,6 +1,7 @@
 import { useReducer, useRef, useEffect, type ReactNode } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BaseModal } from '../../common';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 
 export const STACK_COLORS = [
   'border-sky-300 text-sky-600',
@@ -15,6 +16,13 @@ export const PROJECT_BG: Record<string, string> = {
   green: 'bg-green-100',
   sky: 'bg-sky-100',
   purple: 'bg-purple-100',
+};
+
+const STATUS_BADGE: Record<string, { label: string; dot: string; bg: string; text: string }> = {
+  진행중: { label: '진행중', dot: '#22c55e', bg: 'rgba(34,197,94,0.15)', text: '#16a34a' },
+  모집중: { label: '모집중', dot: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: '#d97706' },
+  완료:   { label: '완료',   dot: '#9ca3af', bg: 'rgba(156,163,175,0.15)', text: '#6b7280' },
+  중단:   { label: '중단',   dot: '#ef4444', bg: 'rgba(239,68,68,0.15)', text: '#dc2626' },
 };
 
 const MAX_ROWS_PER_PAGE = 4;
@@ -102,7 +110,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
       containerClassName={containerClassName}
     >
       {/* 상단 바 */}
-      <div className="h-14 bg-primary w-full relative flex items-center justify-end px-5">
+      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
         <button
           type="button"
           onClick={onClose}
@@ -125,8 +133,8 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
         <div className="flex flex-col gap-1 flex-1">
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{user.name}</span>
-            <span className="px-3 py-1 rounded-full bg-primary-soft text-text-brown text-sm font-medium">
-              {user.role}
+            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(user.role)}1a`, color: getRoleColor(user.role) }}>
+              {getRoleDisplayName(user.role)}
             </span>
           </div>
           <p className="text-sm text-text-secondary whitespace-pre-line leading-relaxed">{user.bio}</p>
@@ -216,16 +224,30 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
             </h3>
             <div className="flex gap-3">
               {user.projects.slice(0, 2).map((project, pi) => (
-                <div key={project.id} className="bg-white rounded-2xl overflow-hidden flex-1">
-                  <div className={`p-4 pb-3 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
+                <div key={project.id} className={`rounded-2xl overflow-hidden flex-1 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
+                  <div className="p-4 pb-3">
                     <span className="text-2xl mb-2 block">{project.emoji}</span>
-                    <p className="text-base font-bold text-text-primary">{project.name}</p>
-                    <p className="text-xs text-text-secondary mt-0.5">{project.description}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-base font-bold text-text-primary">{project.name}</p>
+                      {STATUS_BADGE[project.period] && (
+                        <span
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                          style={{
+                            background: STATUS_BADGE[project.period].bg,
+                            color: STATUS_BADGE[project.period].text,
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: STATUS_BADGE[project.period].dot }}
+                          />
+                          {STATUS_BADGE[project.period].label}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary mt-2">{project.description}</p>
                   </div>
                   <div className="px-4 py-3">
-                    <p className="text-xs text-text-tertiary mb-2">
-                      {project.myRole} · {project.period}
-                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {project.techStacks.map((stack, i) => (
                         <span

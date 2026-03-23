@@ -103,7 +103,7 @@ export const applyToPosition = (projectId: number, positionId: number, appealCon
 /* ── 프로젝트 설정 ── */
 
 export const getProjectEditForm = (projectId: number) =>
-  api.get<{ data: ProjectEditForm }>(`/v1/projects/${projectId}/edit`);
+  api.get<ProjectEditForm>(`/v1/projects/${projectId}/edit`);
 
 export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
   api.patch<{ data: ProjectUpdateResponse }>(`/v1/projects/${projectId}`, data);

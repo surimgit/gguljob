@@ -1,17 +1,12 @@
 package com.ssafy.gguljob.backend.global.auth;
 
-import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -21,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.ssafy.gguljob.backend.global.redis.RedisService;
 
 import java.io.IOException;
-import java.util.Collections;
 
 @Slf4j
 @Component
@@ -67,16 +61,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * HTTP Header에서 "Bearer {토큰}" 형식의 진짜 토큰 문자열만 쏙 뽑아오는 헬퍼 메서드
-     */
     private String resolveToken(HttpServletRequest request) {
+        // 1. 쿠키에서 먼저 시도
+        String cookieToken = CookieUtil.resolveTokenFromCookie(request, CookieUtil.ACCESS_TOKEN_COOKIE);
+        if (cookieToken != null) {
+            return cookieToken;
+        }
+
+        // 2. Authorization 헤더 fallback (프론트 전환 전 하위 호환)
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
         return null;
     }
-
-
 }

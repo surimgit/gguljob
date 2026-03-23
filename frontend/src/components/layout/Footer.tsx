@@ -6,41 +6,41 @@ const Footer = () => {
     <footer className="bg-primary-hover py-12">
       <Container>
         {/* 상단: 링크 컬럼 */}
-        <div className="flex gap-16 mb-10">
+        <div className="flex gap-16 mb-10 ml-10">
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-text-primary mb-1">Service</span>
-            <Link to="/projects" className="text-sm text-text-brown hover:underline">
+            <span className="text-2xl font-bold text-text-brown mb-1">Service</span>
+            <Link to="/my-projects" className="text-base text-text-brown-2 hover:underline">
               Project
             </Link>
-            <Link to="/projects" className="text-sm text-text-brown hover:underline">
+            <Link to="/projects" className="text-base text-text-brown-2 hover:underline">
               Searching Project
             </Link>
-            <Link to="/recruitment" className="text-sm text-text-brown hover:underline">
+            <Link to="/recruitment" className="text-base text-text-brown-2 hover:underline">
               Job Matching
             </Link>
-            <Link to="/mypage" className="text-sm text-text-brown hover:underline">
+            <Link to="/mypage" className="text-base text-text-brown-2 hover:underline">
               My Page
             </Link>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-text-primary mb-1">Project</span>
+            <span className="text-2xl font-bold text-text-brown mb-1">Project</span>
             <a
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-text-brown hover:underline"
+              className="text-base text-text-brown-2 hover:underline"
             >
               About
             </a>
             <a
               href="#"
-              className="text-sm text-text-brown hover:underline"
+              className="text-base text-text-brown-2 hover:underline"
             >
               Contact
             </a>
             <a
               href="#"
-              className="text-sm text-text-brown hover:underline"
+              className="text-base text-text-brown-2 hover:underline"
             >
               Github
             </a>

@@ -1,27 +1,10 @@
 import type { TeamDashboard } from '../../../../types/project';
+import { getRoleDisplayName, getRoleColor } from '../../../../constants/skills';
 
 interface OverviewProps {
   projectInfo: TeamDashboard['projectInfo'];
   teamStats: TeamDashboard['teamStats'];
 }
-
-const ROLE_LABEL: Record<string, string> = {
-  FE: 'Frontend',
-  BE: 'Backend',
-  AI: 'AI',
-  PM: 'PM',
-  INFRA: 'Infra',
-  DESIGN: 'Design',
-};
-
-const ROLE_COLOR: Record<string, string> = {
-  FE: '#2196F3',
-  BE: '#22C55E',
-  AI: '#EC4899',
-  PM: '#F59E0B',
-  INFRA: '#7C3AED',
-  DESIGN: '#d22ab6',
-};
 
 const Overview = ({ projectInfo, teamStats }: OverviewProps) => {
   const roleEntries = Object.entries(teamStats.roleCounts);
@@ -59,10 +42,10 @@ const Overview = ({ projectInfo, teamStats }: OverviewProps) => {
               >
                 <div
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: ROLE_COLOR[role] ?? '#6b7280' }}
+                  style={{ backgroundColor: getRoleColor(role) }}
                 />
                 <span className="text-[13px] font-bold text-text-primary">
-                  {ROLE_LABEL[role] ?? role}
+                  {getRoleDisplayName(role)}
                 </span>
                 <span className="text-[13px] font-black text-text-tertiary">{count}명</span>
               </div>

@@ -8,22 +8,23 @@ import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
-  const { setTokens, setUser, logout } = useAuthStore();
+  const { setUser, logout } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
-    if (!accessToken || !refreshToken) {
-      navigate('/', { replace: true });
+
+    // 에러 파라미터 확인 (백엔드 콜백에서 에러 리다이렉트)
+    const errorParam = params.get('error');
+    if (errorParam) {
+      setError('로그인에 실패했습니다. 다시 시도해주세요.');
+      setIsLoading(false);
       return;
     }
 
-    setTokens(accessToken, refreshToken);
-
+    // 쿠키는 이미 브라우저에 세팅되어 있으므로 바로 유저 정보 조회
     getMe()
       .then((user) => {
         setUser(user);
@@ -44,7 +45,7 @@ const OAuthCallback = () => {
           setIsLoading(false);
         }
       });
-  }, []);
+  }, [navigate, setUser, logout]);
 
   if (error) {
     return (
@@ -83,7 +84,7 @@ const OAuthCallback = () => {
           try {
             const payload = buildOnboardingPayload(formData);
             if (!payload) {
-              console.error('[온보딩] 매핑 실패 - role:', formData.role, 'experience:', formData.experience);
+              console.error('[온보딩] 매핑 실패 - position:', formData.position, 'experience:', formData.experience);
               setError('직무 또는 경험 수준 값이 올바르지 않습니다. 다시 시도해주세요.');
               return;
             }

@@ -34,7 +34,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
 
   return (
     <div
-      className={`bg-surface ${style.borderColor} border-l-4 rounded-2xl px-6 py-5 flex flex-col gap-2 shadow-[2px_2px_8px_0px_rgba(0,0,0,0.08)]`}
+      className={`bg-surface ${style.borderColor} border-l-4 rounded-2xl px-6 py-5 flex flex-col gap-2 shadow-[2px_2px_8px_0px_rgba(0,0,0,0.08)] hover:bg-primary-soft hover:border-l-primary-hover transition-all duration-200`}
     >
       {/* 상단: 뱃지 + 날짜 */}
       <div className="flex items-center justify-between">

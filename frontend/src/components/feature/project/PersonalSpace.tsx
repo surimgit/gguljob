@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Sparkles, MessageSquare, Send } from 'lucide-react';
+import Pagination from '../../common/Pagination';
 import { useAuthStore } from '../../../stores/authStore';
 import type { PersonalSpaceData } from '../../../types/project';
-import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting } from '../../../api/troubleshooting';
+import { generateTroubleshooting, getTroubleshootings, updateTroubleshooting, chatTrouble } from '../../../api/troubleshooting';
 import type { TroubleshootingListItem } from '../../../api/troubleshooting';
 import { getPullRequests } from '../../../api/projects';
 import type { PullRequestListItem } from '../../../api/projects';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import EmptyState from './EmptyState';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -37,22 +39,6 @@ interface TroubleshootingItem {
   codeSnippet: string;
   sources: { label: string; color: string }[];
 }
-
-const POSITION_DISPLAY: Record<string, string> = {
-  FE: 'Frontend Developer',
-  BE: 'Backend Developer',
-  AI: 'AI Developer',
-  PM: 'Project Manager',
-  INFRA: 'Infra Developer',
-  DESIGN: 'Designer',
-  FRONTEND: 'Frontend Developer',
-  BACKEND: 'Backend Developer',
-  DEVOPS: 'DevOps Engineer',
-  DATA: 'Data Engineer',
-  DATABASE: 'Database Engineer',
-  MOBILE: 'Mobile Developer',
-  TOOLS: 'Tools Engineer',
-};
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: MrStatus }) => {
@@ -243,7 +229,7 @@ export type PersonalSubTab = 'troubleshooting' | 'mr-review';
 const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubleshooting' }: { projectId?: number; projectTitle?: string; personalData?: PersonalSpaceData | null; subTab?: PersonalSubTab }) => {
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const userPosition = useAuthStore((s) => s.user?.position);
-  const positionLabel = (userPosition && POSITION_DISPLAY[userPosition]) || 'Developer';
+  const positionLabel = userPosition ? getRoleDisplayName(userPosition) : 'Developer';
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
   const [tsList, setTsList] = useState<TroubleshootingItem[]>([]);
@@ -257,6 +243,10 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [showAiSection, setShowAiSection] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const MR_PER_PAGE = 3;
   const TS_PER_PAGE = 3;
 
@@ -318,6 +308,26 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
     }
   }, [projectId, mrPage, subTab, fetchPullRequests]);
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || !projectId || chatLoading) return;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatLoading(true);
+    try {
+      const { data } = await chatTrouble({ projectId, userMessage: userMsg });
+      setChatMessages(prev => [...prev, { role: 'ai', content: data.aiAnswer }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'ai', content: '오류가 발생했습니다. 다시 시도해주세요.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   const mrCount = projectId ? mrTotalElements : (personalData?.stats.prCount ?? 0);
   const codeReviews = personalData?.stats.reviewCount ?? 0;
   const stats = { mrCount, autoGenCount: projectId ? tsTotalElements : (personalData?.stats.troubleshootingCount ?? 0) };
@@ -338,7 +348,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
           <div className="flex flex-col gap-0.5">
             <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
             <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
-              <span className="text-text-secondary">{positionLabel} · </span>
+              <span style={{ color: getRoleColor(userPosition ?? '') }}>{positionLabel} · </span>
               <span className="text-text-brown">{projectTitle ?? 'DevLog 트러블슈팅 플랫폼'}</span>
             </p>
           </div>
@@ -372,8 +382,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
             {/* AI 트러블슈팅 자동 생성 섹션 */}
             {showAiSection && (
               <div className="mb-6 rounded-2xl px-7 py-6 border border-[#c7d2fe] relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)' }}>
-                {/* 상단 보라 글로우 */}
-                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: 'linear-gradient(90deg, #6366f1, #7c3aed, #6366f1)' }} />
 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -423,6 +431,54 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                   </div>
                 )}
 
+                {/* AI 챗봇 대화 영역 */}
+                <div className="flex flex-col gap-3 mb-5">
+                  {chatMessages.length > 0 && (
+                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-xl bg-white border border-border px-4 py-3">
+                      {chatMessages.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                              msg.role === 'user'
+                                ? 'bg-[#6366f1] text-white rounded-br-md'
+                                : 'bg-[#f3f4f6] text-text-primary rounded-bl-md'
+                            }`}
+                          >
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-[#f3f4f6] text-text-tertiary px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm">
+                            답변 생성 중...
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleChatSend(); }}
+                      placeholder="트러블슈팅 관련 질문을 입력하세요..."
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
+                      disabled={chatLoading}
+                    />
+                    <button
+                      onClick={handleChatSend}
+                      disabled={chatLoading || !chatInput.trim()}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
                 <button
                   onClick={async () => {
                     if (!selectedMrId) return;
@@ -462,37 +518,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {tsTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setTsPage(p => Math.max(0, p - 1))}
-                      disabled={tsPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: tsTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setTsPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          tsPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setTsPage(p => Math.min(tsTotalPages - 1, p + 1))}
-                      disabled={tsPage >= tsTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={tsPage + 1}
+                  totalPages={tsTotalPages}
+                  onChange={(page) => setTsPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>
@@ -526,37 +557,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 </div>
 
                 {/* 페이지네이션 */}
-                {mrTotalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setMrPage(p => Math.max(0, p - 1))}
-                      disabled={mrPage === 0}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    {Array.from({ length: mrTotalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setMrPage(i)}
-                        className={`w-10 h-10 rounded-full text-base font-bold transition-all ${
-                          mrPage === i
-                            ? 'bg-[#E8B931] text-[#1e1e2e] shadow-md'
-                            : 'text-text-tertiary hover:text-text-primary'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setMrPage(p => Math.min(mrTotalPages - 1, p + 1))}
-                      disabled={mrPage >= mrTotalPages - 1}
-                      className="text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  current={mrPage + 1}
+                  totalPages={mrTotalPages}
+                  onChange={(page) => setMrPage(page - 1)}
+                  className="mt-6"
+                />
               </>
             )}
           </div>

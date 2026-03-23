@@ -59,4 +59,6 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
         @org.springframework.data.repository.query.Param("userId") Long userId,
         org.springframework.data.domain.Pageable pageable
     );
+
+    void deleteAllByProjectId(Long projectId);
 }

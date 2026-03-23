@@ -71,14 +71,6 @@ const getAvatarColor = (name: string) => {
 };
 
 
-const ROLE_LABEL_TO_CODE: Record<string, string> = {
-  "프론트엔드": "FE", "백엔드": "BE", "데이터/AI": "AI", "기획/PM": "PM",
-  "인프라/DevOps": "INFRA", "디자인": "DESIGN",
-};
-
-const ROLE_CODE_TO_LABEL: Record<string, string> = Object.fromEntries(
-  Object.entries(ROLE_LABEL_TO_CODE).map(([k, v]) => [v, k]),
-);
 
 // TODO: 백엔드에 팀원 개별 조회/포지션 상세/합류 신청 API 추가 후 교체 필요
 // 현재는 roleCounts(역할별 인원 수)만으로 임시 변환
@@ -88,7 +80,7 @@ const dashboardToRoles = (dashboard: TeamDashboard): Role[] => {
   return Object.entries(roleCounts).map(([code, count], idx) => {
     return {
       id: `role-${idx}`,
-      name: code,
+      name: getRoleDisplayName(code),
       // TODO: 포지션 API에서 targetCount, status, requireSkills 조회로 교체
       status: (count > 0 ? "closed" : "open") as RoleStatus,
       current: count,
@@ -107,8 +99,8 @@ const dashboardToMembers = (dashboard: TeamDashboard): Member[] => {
     for (let i = 0; i < count; i++) {
       members.push({
         id: `${code}-${i}`,
-        name: `${code} ${i + 1}`,
-        role: code,
+        name: `${getRoleDisplayName(code)} ${i + 1}`,
+        role: getRoleDisplayName(code),
         joinDate: "-",
         contribution: 0,
         isLeader: members.length === 0,
@@ -397,20 +389,14 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
           boxShadow: "0px 24px 60px 0px rgba(0,0,0,0.18)",
         }}
       >
-        {/* 상단 헤더 바 */}
-        <div
-          className="h-[27px] flex items-center justify-end px-2"
-          style={{
-            background: "var(--color-primary-hover)",
-            borderRadius: "18px 18px 0 0",
-          }}
-        >
+        {/* 상단 바 */}
+        <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5" style={{ borderRadius: "18px 18px 0 0" }}>
           <button
+            type="button"
             onClick={onClose}
-            className="w-5 h-5 flex items-center justify-center rounded-[9px] cursor-pointer"
-            style={{ background: "rgba(255,255,255,0.5)", color: "#5c5647" }}
+            className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
           >
-            <X className="w-3 h-3" />
+            <X className="w-4 h-4 text-gray-600" />
           </button>
         </div>
 
@@ -877,7 +863,7 @@ const TeamManagement = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div className="flex items-center gap-3">
               <h3
-                className="text-base font-bold"
+                className="text-lg font-bold"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 팀원 모집 현황
@@ -1050,7 +1036,11 @@ const TeamManagement = ({
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        role="button"
+                        tabIndex={0}
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                        onClick={() => setProfileUserId(Number(member.id))}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1127,7 +1117,7 @@ const TeamManagement = ({
         >
         <div className="flex items-center justify-between mb-4">
           <h3
-            className="text-base font-bold"
+            className="text-lg font-bold"
             style={{ color: "var(--color-text-primary)" }}
           >
             합류 신청 목록
@@ -1635,6 +1625,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [realMembers, setRealMembers] = useState<Member[]>([]);
   const [realRoles, setRealRoles] = useState<Role[]>([]);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1645,7 +1636,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           setRealMembers(detail.currentMembers.map((m: any, i: number) => ({
             id: m.userId?.toString() ?? String(i),
             name: m.userName ?? "팀원",
-            role: ROLE_CODE_TO_LABEL[m.role] ?? m.role,
+            role: getRoleDisplayName(m.role),
             joinDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("ko-KR") : "-",
             contribution: 0,
             isLeader: i === 0,
@@ -1657,7 +1648,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             const memberCount = (detail.currentMembers ?? []).filter((m: any) => m.role === r.role).length;
             return {
               id: r.positionId?.toString() ?? String(r.role),
-              name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+              name: getRoleDisplayName(r.role),
               status: r.status === "RECRUITING" ? "open" : "closed",
               current: r.currentCount > 0 ? r.currentCount : memberCount,
               total: r.targetCount,
@@ -1790,7 +1781,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           }}
         >
           <h3
-            className="text-base font-bold mb-4"
+            className="text-lg font-bold mb-4"
             style={{ color: "var(--color-text-primary)" }}
           >
             현재 팀원
@@ -1802,8 +1793,8 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
               return (
                 <div key={role}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold" style={{ color }}>
-                      {role} {roleMembers.length}
+                    <span className="text-sm font-bold" style={{ color }}>
+                      {getRoleDisplayName(role)} {roleMembers.length}
                     </span>
                     <div
                       className="flex-1 h-px"
@@ -1815,7 +1806,11 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                     {roleMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                        onClick={() => setProfileUserId(Number(member.id))}
                       >
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1927,6 +1922,14 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
           </div>
         </div>
       )}
+
+      {profileUserId !== null && (
+        <UserProfileModal
+          isOpen
+          onClose={() => setProfileUserId(null)}
+          userId={profileUserId}
+        />
+      )}
     </div>
   );
 };
@@ -1968,7 +1971,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
         const current = r.currentCount > 0 ? r.currentCount : computedCount;
         return {
           id: r.positionId.toString(),
-          name: ROLE_CODE_TO_LABEL[r.role] ?? r.role,
+          name: getRoleDisplayName(r.role),
           status: r.status === "RECRUITING" ? "open" : "closed",
           current,
           total: r.targetCount,
@@ -1981,7 +1984,7 @@ const TeamMembers = ({ dashboard, projectId }: { dashboard?: TeamDashboard | nul
     ? detail.currentMembers.map((m, i) => ({
         id: m.userId.toString(),
         name: m.userName,
-        role: m.role,
+        role: getRoleDisplayName(m.role),
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
         isLeader: i === 0,

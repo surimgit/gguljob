@@ -31,4 +31,7 @@ public class ProfileUpdateRequestDto {
     private List<String> skills;
 
     private List<GoalType> goals;
+
+    @Size(max = 2, message = "대표 프로젝트는 최대 2개까지 선택할 수 있습니다.")
+    private List<Long> repProjectIds;
 }

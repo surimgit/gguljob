@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
 
 interface MemberCardProps {
   name: string;
@@ -10,14 +11,6 @@ interface MemberCardProps {
   profileImage: string;
   onClickProfile: () => void;
 }
-
-/* 포지션별 색상 */
-const getPositionColor = (position: string) => {
-  const lower = position.toLowerCase();
-  if (lower.includes("backend") || lower === "be") return "var(--color-success)";
-  if (lower.includes("frontend") || lower === "fe") return "var(--color-blue)";
-  return "var(--color-primary-hover)";
-};
 
 /* 적합도별 색상 + 배경 */
 const getMatchStyle = (rate: number) => {
@@ -35,13 +28,13 @@ const MemberCard = ({
   techStacks,
   onClickProfile,
 }: MemberCardProps) => {
-  const posColor = getPositionColor(position);
+  const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
 
   return (
     <button
       onClick={onClickProfile}
-      className="flex flex-col w-full rounded-2xl p-5 text-left transition-all cursor-pointer shadow-md bg-surface hover:bg-primary-soft"
+      className="flex flex-col w-full rounded-2xl p-5 text-left transition-all duration-200 cursor-pointer shadow-md bg-surface border border-border hover:bg-primary-soft hover:border-primary-hover"
     >
       {/* 1행: 프로필 이미지 + 이름/포지션/숙련도 + 적합도 배지 */}
       <div className="flex items-center gap-3 mb-3">
@@ -60,13 +53,13 @@ const MemberCard = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className="text-sm font-bold px-1.0 py-0.5 rounded"
+              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
               }}
             >
-              {position}
+              {getRoleDisplayName(position)}
             </span>
             <span
               className="text-sm font-bold"

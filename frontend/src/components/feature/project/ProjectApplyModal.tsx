@@ -5,6 +5,8 @@ import BaseModal from '../../common/BaseModal';
 import ProjectConfirmModal from './ProjectConfirmModal';
 import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project';
 import { applyToPosition } from '../../../api/projects';
+import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
+import { getCategoryColorPair } from '../../../constants/domains';
 
 interface ProjectApplyModalProps {
   project: ProjectCardDto;
@@ -12,22 +14,7 @@ interface ProjectApplyModalProps {
   onApplied?: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  웹기술:   { bg: '#E3F2FD', text: '#2196F3' },
-  웹디자인: { bg: '#FCE4EC', text: '#E91E63' },
-  모바일:   { bg: '#FFF3E0', text: '#F57C00' },
-  AIoT:    { bg: '#E0F2F1', text: '#00897B' },
-  인공지능: { bg: '#EDE7F6', text: '#5E35B1' },
-  빅데이터: { bg: '#F3E5F5', text: '#8E24AA' },
-  블록체인: { bg: '#FFFDE7', text: '#F9A825' },
-  자율주행: { bg: '#E0F7FA', text: '#0097A7' },
-  핀테크:   { bg: '#E8F5E9', text: '#2E7D32' },
-  메타버스: { bg: '#F3E5F5', text: '#AB47BC' },
-};
 
-const DEFAULT_CATEGORY_COLOR = { bg: '#F5F5F5', text: '#757575' };
-
-const AVATAR_COLORS = ['#6366f1', '#3b82f6', '#f97316', '#8b5cf6', '#14b8a6', '#ec4899', '#22c55e', '#f59e0b', '#06b6d4', '#a855f7'];
 
 const STATUS_LABEL: Record<string, string> = {
   RECRUITING: '모집중',
@@ -87,14 +74,6 @@ function PositionCard({
   );
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  FE: '프론트엔드',
-  BE: '백엔드',
-  AI: 'AI',
-  PM: 'PM',
-  INFRA: '인프라',
-  DESIGN: '디자인',
-};
 
 const MAX_INTRO_LENGTH = 200;
 
@@ -104,8 +83,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
   const [intro, setIntro] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const catColor = CATEGORY_COLORS[project.domain] ?? DEFAULT_CATEGORY_COLOR;
-  const avatarColor = AVATAR_COLORS[project.projectId % AVATAR_COLORS.length];
+  const catColor = getCategoryColorPair(project.domain);
 
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
@@ -133,13 +111,14 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
       onClose={onClose}
       containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
     >
-      {/* 상단 그라디언트 바 */}
-      <div
-        className="relative h-[48px] rounded-t-[24px] flex items-center justify-end px-[16px]"
-        style={{ background: 'linear-gradient(150.6deg, #F7C948 0%, #F2B705 100%)' }}
-      >
-        <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-          <X size={20} />
+      {/* 상단 바 */}
+      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+        >
+          <X className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
@@ -163,23 +142,31 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
         </div>
 
         {/* 제목 */}
-        <h2 className="font-black text-[#111827] text-[22px] mt-[12px]">{project.title}</h2>
+        <h2 className="font-bold text-[#111827] text-xl mt-[12px]">{project.title}</h2>
 
         {/* 작성자 */}
         <div className="flex items-center gap-[10px] mt-[12px]">
-          <div
-            className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
-            style={{ backgroundColor: avatarColor }}
-          >
-            <span className="text-white text-[12px] font-bold">{project.leaderName?.[0] ?? '?'}</span>
-          </div>
-          <span className="text-[#111827] text-[14px] font-bold">{project.leaderName}</span>
+          {project.leaderProfileImageUrl ? (
+            <img
+              src={project.leaderProfileImageUrl}
+              alt={project.leaderName}
+              className="w-[28px] h-[28px] rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#6366f1' }}
+            >
+              <span className="text-white text-[12px] font-bold">{project.leaderName?.[0] ?? '?'}</span>
+            </div>
+          )}
+          <span className="text-[#111827] text-base font-semibold">{project.leaderName}</span>
         </div>
 
         <hr className="border-[#f0ebe3] my-[24px]" />
 
         {/* 팀원 모집 */}
-        <h3 className="font-black text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
+        <h3 className="font-extrabold text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
 
         <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
           <div className="flex items-center gap-[8px]">
@@ -198,8 +185,8 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           {openPositions.map((pos) => (
             <PositionCard
               key={pos.role}
-              label={ROLE_LABELS[pos.role] ?? pos.role}
-              color="#F97316"
+              label={getRoleDisplayName(pos.role)}
+              color={getRoleColor(pos.role)}
               position={pos}
               selected={selectedRole === pos.role}
               onSelect={() => setSelectedRole(pos.role)}
@@ -209,7 +196,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
         {/* 자기소개 */}
         <div className="mt-[20px]">
-          <label className="block text-[14px] font-black text-[#111827] mb-[8px]">
+          <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
             자기소개
           </label>
           <textarea

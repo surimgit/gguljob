@@ -14,7 +14,7 @@ const TAG_PALETTE = [
 const ProjectCard = ({ project }: { project: ProjectSimple }) => (
   <Link
     to={`/my-projects/${project.projectId}`}
-    className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:shadow-md transition-shadow h-full"
+    className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 h-full"
   >
     {/* 썸네일 */}
     <div className="w-36 h-full min-h-[9rem] flex-shrink-0 bg-[#f3f4f6] rounded-xl flex items-center justify-center overflow-hidden">

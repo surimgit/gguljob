@@ -15,8 +15,8 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
     // 프로젝트 전체 트러블슈팅 개수
     long countByProject_Id(Long projectId);
 
-    // 마이페이지 위젯용
-    List<Troubleshooting> findTop2ByProject_IdOrderByCreatedAtDesc(Long projectId);
+    // 마이페이지 위젯용: 유저 기준 최신 2개 조회
+    List<Troubleshooting> findTop2ByUser_IdOrderByCreatedAtDesc(Long userId);
 
     Optional<Troubleshooting> findByPullRequest_Id(Long prId);
 
@@ -49,4 +49,6 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
     WHERE t.id IN :ids
     """)
     List<Troubleshooting> findAllByIdIn(@Param("ids") List<Long> ids);
+
+    void deleteAllByProjectId(Long projectId);
 }

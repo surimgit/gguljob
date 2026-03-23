@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, toggleBookmark as toggleBookmarkApi, getBookmarkedJobs } from '../../../api/jobs';
+import { getJobs, getBookmarkedJobs } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
+import Pagination from '../../common/Pagination';
+import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MatchType = 'suitable' | 'average' | 'insufficient';
@@ -19,9 +21,11 @@ interface JobListing {
   employmentType: string;
   salary: string;
   deadline: string;
+  url: string;
   match: MatchType;
   techStacks: string[];
   jobCategory: string;
+  topPercentile?: number;
 }
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────────
@@ -72,14 +76,13 @@ const mapJobCategory = (category: string): RoleCode | null => {
 };
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
-const BACKEND_PAGE_SIZE = 10;
-
+const DEFAULT_PAGE_SIZE = 10;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
-const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string }> = {
-  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E' },
-  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705' },
-  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444' },
+const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
+  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E', percent: 100 },
+  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705', percent: 66 },
+  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444', percent: 33 },
 };
 
 const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insufficient: 1 };
@@ -111,9 +114,11 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   employmentType: item.contractType,
   salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
+  url: item.url ?? '',
   match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
+  topPercentile: item.topPercentile,
 });
 
 
@@ -248,9 +253,22 @@ const JobCard = ({
   onToggleBookmark: (id: number) => void;
 }) => {
   const match = MATCH_CONFIG[job.match];
+  const dday = calcDday(job.deadline);
+  const ddayColor = getDdayColor(dday);
+
+  const handleClick = () => {
+    if (job.url) window.open(job.url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
-    <div className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer">
+    <div
+      role="link"
+      tabIndex={0}
+      aria-label={`${job.company} - ${job.title}`}
+      onClick={handleClick}
+      onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
+      className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
+    >
       {/* 로고 */}
       <div
         className="flex-shrink-0 flex items-center justify-center rounded-[15px] font-extrabold text-white"
@@ -266,6 +284,14 @@ const JobCard = ({
           {job.isNew && (
             <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-[4px] bg-primary-soft text-text-brown">
               NEW
+            </span>
+          )}
+          {dday && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full -translate-y-px"
+              style={{ background: `${ddayColor}18`, color: ddayColor }}
+            >
+              {dday}
             </span>
           )}
         </div>
@@ -301,86 +327,15 @@ const JobCard = ({
   );
 };
 
-const PAGE_WINDOW = 5;
-
-const NAV_BTN = "w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors";
-
-const Pagination = ({
-  current,
-  hasNext,
-  onChange,
-}: {
-  current: number;
-  hasNext: boolean;
-  onChange: (page: number) => void;
-}) => {
-  const groupStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
-  const groupEnd = groupStart + PAGE_WINDOW - 1;
-  const pages = Array.from({ length: PAGE_WINDOW }, (_, i) => groupStart + i)
-    .filter(p => p >= 1 && (hasNext || p <= current));
-
-  return (
-    <div className="flex items-center justify-center gap-1 mt-8 pb-12">
-      {/* << 5페이지 뒤로 */}
-      <button
-        onClick={() => onChange(groupStart - PAGE_WINDOW)}
-        disabled={groupStart <= 1}
-        className={NAV_BTN}
-      >
-        <span className="text-[13px] font-bold">&laquo;</span>
-      </button>
-
-      {/* < 이전 */}
-      <button
-        onClick={() => onChange(current - 1)}
-        disabled={current === 1}
-        className={NAV_BTN}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* 페이지 번호 */}
-      {pages.map(page => (
-        <button
-          key={page}
-          onClick={() => onChange(page)}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold transition-colors ${
-            page === current
-              ? 'bg-primary-hover text-text-primary'
-              : 'text-text-secondary hover:bg-gray-100'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      {/* > 다음 */}
-      <button
-        onClick={() => onChange(current + 1)}
-        disabled={!hasNext}
-        className={NAV_BTN}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* >> 5페이지 앞으로 */}
-      <button
-        onClick={() => onChange(groupEnd + 1)}
-        disabled={!hasNext}
-        className={NAV_BTN}
-      >
-        <span className="text-[13px] font-bold">&raquo;</span>
-      </button>
-    </div>
-  );
-};
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-const JobListingSection = () => {
+interface JobListingSectionProps {
+  bookmarkedIds: Set<number>;
+  onToggleBookmark: (id: number) => void;
+}
+
+const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
   const [activeSkill, setActiveSkill] = useState('전체');
@@ -389,33 +344,33 @@ const JobListingSection = () => {
     searchParams.get('filter') === 'bookmarked'
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
   const [jobs, setJobs] = useState<JobListing[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(true);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    getJobs({ page: currentPage })
-      .then(({ data }) => {
-        setJobs(data.map(mapToJobListing));
-        setHasNextPage(data.length >= BACKEND_PAGE_SIZE);
-      })
-      .catch(() => {});
-  }, [currentPage]);
-
-  useEffect(() => {
-    getBookmarkedJobs()
-      .then(({ data }) => setBookmarkedIds(new Set(data.map(j => j.jobId))))
-      .catch(() => {});
-  }, []);
-
-  const toggleBookmark = (id: number) => {
-    toggleBookmarkApi(id).catch(() => {});
-    setBookmarkedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+    if (showBookmarked) {
+      getBookmarkedJobs()
+        .then(({ data }) => {
+          setJobs(data.map(mapToJobListing));
+          setTotalPages(1);
+        })
+        .catch(() => {});
+    } else {
+      getJobs({ page: currentPage, size: DEFAULT_PAGE_SIZE })
+        .then(({ data }) => {
+          if (Array.isArray(data)) {
+            // 백엔드 미배포 시 호환: 옛날 배열 응답
+            // Neo4j 풀 상한 200 / 페이지당 10 = 최대 20페이지
+            setJobs(data.map(mapToJobListing));
+            setTotalPages(data.length >= DEFAULT_PAGE_SIZE ? 20 : currentPage);
+          } else {
+            setJobs((data.content ?? []).map(mapToJobListing));
+            setTotalPages(data.totalPages ?? 1);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [currentPage, showBookmarked]);
 
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
@@ -431,9 +386,7 @@ const JobListingSection = () => {
     );
   })();
 
-  const finalFilteredJobs = showBookmarked
-    ? jobsFilteredByStack.filter(job => bookmarkedIds.has(job.id))
-    : jobsFilteredByStack;
+  const finalFilteredJobs = jobsFilteredByStack;
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
 
@@ -453,23 +406,23 @@ const JobListingSection = () => {
   };
 
   const handlePageChange = (page: number) => {
-    if (page < 1) return;
-    if (page > currentPage && !hasNextPage) return;
+    if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <div className="bg-background max-w-[1400px] mx-auto px-3">
+    <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* 섹션 제목 */}
-      <div className="px-[42px] pt-8 pb-5">
-        <h2 className="font-semibold text-[25px]">
+      <div className="pt-8 pb-5">
+        <h2 className="font-bold text-[30px]">
           <span className="text-text-primary">전체 </span>
           <span className="text-primary-hover">채용 정보</span>
         </h2>
       </div>
 
       {/* 필터 박스 */}
-      <div className="px-[39px] pb-4">
+      <div className="pb-4">
         <div className="bg-[#f7f8fa] border-2 border-[#f2b705] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] px-[25px] pt-[20px] pb-[14px] flex flex-col gap-[12px]">
           <SkillCategoryFilter
             activeCategory={activeCategory}
@@ -518,14 +471,14 @@ const JobListingSection = () => {
       </div>
 
       {/* 공고 카드 목록 */}
-      <div className="px-[39px] flex flex-col gap-4 pb-2">
+      <div className="flex flex-col gap-4 pb-2">
         {sorted.length > 0 ? (
           sorted.map(job => (
             <JobCard
               key={job.id}
               job={job}
               bookmarked={bookmarkedIds.has(job.id)}
-              onToggleBookmark={toggleBookmark}
+              onToggleBookmark={onToggleBookmark}
             />
           ))
         ) : showBookmarked ? (
@@ -544,7 +497,7 @@ const JobListingSection = () => {
       </div>
 
       {/* 페이지네이션 — 항상 표시 */}
-      <Pagination current={currentPage} hasNext={hasNextPage} onChange={handlePageChange} />
+      <Pagination current={currentPage} totalPages={totalPages} onChange={handlePageChange} />
     </div>
   );
 };
