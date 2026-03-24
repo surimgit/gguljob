@@ -108,6 +108,17 @@ export const getProjectEditForm = (projectId: number) =>
 export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
   api.patch<{ data: ProjectUpdateResponse }>(`/v1/projects/${projectId}`, data);
 
+export const uploadProjectImage = (projectId: number, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.patch<{ data: string }>(`/v1/projects/${projectId}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+export const deleteProjectImage = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/image`);
+
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
 
