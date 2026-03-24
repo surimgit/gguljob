@@ -144,6 +144,16 @@ const Navbar = () => {
     }
   };
 
+  // Escape 키로 로그아웃 확인 모달 닫기
+  useEffect(() => {
+    if (!showLogoutConfirm) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowLogoutConfirm(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showLogoutConfirm]);
+
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   const location = useLocation();
