@@ -184,6 +184,9 @@ public class ProjectService {
     @Transactional
     public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request) {
 
+        Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
+            .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
+
         // repoUrl이 다른 프로젝트에 이미 등록되어 있는지 검사
         gitRepositoryRepository.findByRepoUrl(request.repoUrl()).ifPresent(existing -> {
             if (existing.getProject().getId().equals(projectId)) {
@@ -192,20 +195,18 @@ public class ProjectService {
             throw new IllegalArgumentException("이미 다른 프로젝트에 등록된 레포지토리입니다.");
         });
 
-        // 기존 레포 존재 여부에 따라 분기
-        Optional<GitRepository> existingRepo = gitRepositoryRepository.findByProject_Id(projectId);
-
-        if (existingRepo.isPresent()) {
-            // 기존 레포가 있으면 → 연관 데이터 포함 삭제 후 재등록
-            gitRepositoryRepository.delete(existingRepo.get());
-            gitRepositoryRepository.flush();
-            log.info("🗑️ 프로젝트 ID {}의 기존 레포지토리(ID: {}) 삭제 완료", projectId, existingRepo.get().getId());
+        // 기존 레포가 있고 URL이 변경되면 연관 데이터 삭제 (FK 의존 순서)
+        Optional<GitRepository> existingRepoOpt = gitRepositoryRepository.findByProject_Id(projectId);
+        if (existingRepoOpt.isPresent()) {
+            GitRepository existingRepo = existingRepoOpt.get();
+            if (!existingRepo.getRepoUrl().equals(request.repoUrl())) {
+                log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 데이터를 삭제합니다.", existingRepo.getRepoUrl(), request.repoUrl());
+                chatLogRepository.deleteAllByProject_Id(projectId);
+                troubleshootingRepository.deleteAllByProjectId(projectId);
+                prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
+                pullRequestRepository.deleteAllByProjectId(projectId);
+            }
         }
-
-
-
-        Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
-            .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
 
         // README 동기화 (실패해도 등록은 계속 진행)
         try {
@@ -224,17 +225,10 @@ public class ProjectService {
             log.warn("❌ README 가져오기 실패 (등록은 계속 진행): {}", e.getMessage());
         }
 
+        // 기존 엔티티 업데이트 또는 신규 생성
         String webhookSecret = UUID.randomUUID().toString().replace("-", "");
-        GitRepository gitRepository = GitRepository.builder().project(project).build();
-
-        // 레포 URL이 변경된 경우 FK 의존 순서대로 기존 데이터 삭제
-        if (gitRepository.getRepoUrl() != null && !gitRepository.getRepoUrl().equals(request.repoUrl())) {
-            log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 데이터를 삭제합니다.", gitRepository.getRepoUrl(), request.repoUrl());
-            chatLogRepository.deleteAllByProject_Id(projectId);
-            troubleshootingRepository.deleteAllByProjectId(projectId);
-            prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
-            pullRequestRepository.deleteAllByProjectId(projectId);
-        }
+        GitRepository gitRepository = existingRepoOpt
+            .orElseGet(() -> GitRepository.builder().project(project).build());
 
         gitRepository.updateRepoInfo(request.repoUrl(), webhookSecret);
         gitRepositoryRepository.save(gitRepository);
