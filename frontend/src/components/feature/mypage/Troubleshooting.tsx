@@ -68,7 +68,7 @@ const Troubleshooting = () => {
       <div className="flex-1">
         {items.length > 0 ? (
           <div className="flex flex-col gap-3">
-            {items.slice(0, 3).map((item) => (
+            {items.slice(0, 2).map((item) => (
               <TroubleshootingCard key={item.tsId} item={item} />
             ))}
           </div>
