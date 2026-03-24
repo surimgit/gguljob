@@ -42,4 +42,12 @@ public class JobRecommendationController {
         jobRecommendationService.getRegularRecommendations(userId, page, size, sort);
     return ResponseEntity.ok(response);
   }
+
+  @GetMapping("/all")
+  public ResponseEntity<List<RecommendedJobDto>> getAllJobs(
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
+    Long userId = userDetails.getId();
+    List<RecommendedJobDto> response = jobRecommendationService.getAllJobsWithScoring(userId);
+    return ResponseEntity.ok(response);
+  }
 }
