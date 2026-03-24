@@ -187,6 +187,42 @@ export const getRoleColor = (role: string): string =>
 export const getRoleDisplayName = (role: string): string =>
   ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
 
+/* ── 경력 레벨(ExperienceLevel) 관련 상수 ── */
+
+export type ExperienceLevelCode = "BEGINNER" | "JUNIOR" | "MID_LEVEL" | "SENIOR";
+
+/** enum name → 화면 표시 (필터 등에서 사용) */
+export const EXPERIENCE_LEVEL_DISPLAY: Record<ExperienceLevelCode, string> = {
+  BEGINNER:  "입문",
+  JUNIOR:    "초급",
+  MID_LEVEL: "중급",
+  SENIOR:    "고급",
+};
+
+/** 백엔드 description → 프론트 표시명 매핑 (API 응답이 description 문자열로 옴) */
+const EXPERIENCE_DESC_TO_DISPLAY: Record<string, string> = {
+  "초급":        "입문",
+  "중급(주니어)": "초급",
+  "중급(미들)":   "중급",
+  "고급":        "고급",
+};
+
+export const EXPERIENCE_LEVEL_COLORS: Record<string, { color: string; bg: string }> = {
+  "입문": { color: "#3B82F6", bg: "rgba(59,130,246,0.12)" },
+  "초급": { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+  "중급": { color: "#F97316", bg: "rgba(249,115,22,0.12)" },
+  "고급": { color: "#8B5CF6", bg: "rgba(139,92,246,0.12)" },
+};
+
+/** API 응답의 level 문자열을 화면 표시명으로 변환 */
+export const getExperienceLevelDisplay = (level: string): string =>
+  EXPERIENCE_DESC_TO_DISPLAY[level] ?? EXPERIENCE_LEVEL_DISPLAY[level as ExperienceLevelCode] ?? level;
+
+export const getExperienceLevelStyle = (level: string) => {
+  const display = getExperienceLevelDisplay(level);
+  return EXPERIENCE_LEVEL_COLORS[display] ?? { color: "#6B7280", bg: "rgba(107,114,128,0.12)" };
+};
+
 /** 기술 스택 카테고리 메타 (아이콘 제외 — UI에서 매핑) */
 export const SKILL_CATEGORY_META: { key: string; label: string }[] = [
   { key: "FRONTEND", label: "Frontend" },

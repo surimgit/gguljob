@@ -22,7 +22,8 @@ const POSITION_FILTERS = [
 
 const LEVEL_FILTERS = [
   { label: "전체", value: "" },
-  { label: "초급", value: "BEGINNER" },
+  { label: "입문", value: "BEGINNER" },
+  { label: "초급", value: "JUNIOR" },
   { label: "중급", value: "MID_LEVEL" },
   { label: "고급", value: "SENIOR" },
 ];
@@ -165,7 +166,7 @@ const MemberRecommend = () => {
             <img
               src={beeImg}
               alt="팀빌딩"
-              className="absolute right-0 bottom-0 h-45 object-contain hidden md:block"
+              className="absolute right-6 top-3 h-28 xl:h-36 object-contain hidden lg:block pointer-events-none"
             />
           </div>
 
