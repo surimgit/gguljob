@@ -1642,14 +1642,13 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
       .then(({ data }: { data: any }) => {
         const detail = data.data ?? data;
         if (detail.currentMembers) {
-          const isCurrentLeader = detail.leader === true;
           setRealMembers(detail.currentMembers.map((m: any) => ({
             id: m.userId?.toString() ?? String(m.userId),
             name: m.userName ?? "팀원",
             role: getRoleDisplayName(m.role),
             joinDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("ko-KR") : "-",
             contribution: 0,
-            isLeader: m.isLeader ?? (isCurrentLeader && m.userId === currentUserId),
+            isLeader: m.userId === detail.leaderId,
             isMe: m.userId === currentUserId,
           })));
         }
@@ -1866,6 +1865,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             })}
           </div>
         </div>
+        </div>
       </div>
 
       {/* ── 하단 2열: 팀 나가기 버튼 ── */}
@@ -2002,7 +2002,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
           status: current >= r.targetCount ? "closed" : (r.status === "RECRUITING" ? "open" : "closed"),
           current,
           total: r.targetCount,
-          stacks: r.requireSkills,
+          stacks: r.requireSkills ?? [],
         };
       })
     : dashboard ? dashboardToRoles(dashboard) : [];
@@ -2014,7 +2014,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
         role: getRoleDisplayName(m.role),
         joinDate: new Date(m.joinedAt).toLocaleDateString("ko-KR"),
         contribution: 0,
-        isLeader: m.isLeader ?? (detail.leader === true && m.userId === currentUserId),
+        isLeader: m.userId === detail.leaderId,
         isMe: m.userId === currentUserId,
         profileImageUrl: m.profileImageUrl,
       }))
