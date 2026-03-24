@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,6 +62,21 @@ public class PortfolioController {
         PortfolioResponse.GenerateResult result =
             portfolioService.generatePortfolio(userDetails.getId(), request);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "포트폴리오 생성 성공", result));
+    }
+
+    @Operation(summary = "포트폴리오 제목 수정")
+    @PatchMapping("/{portfolioId}/title")
+    public ResponseEntity<Void> updatePortfolioTitle(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long portfolioId,
+        @RequestBody Map<String, String> body
+    ) {
+        String newTitle = body.get("title");
+        if (newTitle == null || newTitle.isBlank()) {
+            throw new IllegalArgumentException("제목은 비어있을 수 없습니다.");
+        }
+        portfolioService.updateTitle(userDetails.getId(), portfolioId, newTitle.trim());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "포트폴리오 삭제")

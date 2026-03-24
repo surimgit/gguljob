@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FilePlus, Briefcase, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, type PortfolioSummary } from '../api/portfolio';
+import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, updatePortfolioTitle, type PortfolioSummary } from '../api/portfolio';
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -28,12 +28,21 @@ const PortfolioList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
+  // 인라인 제목 수정
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     getMyPortfolios()
       .then(({ data }) => setPortfolios(data.data ?? []))
       .catch(() => toast.error('포트폴리오 목록을 불러오지 못했습니다.'))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (editingId !== null) editInputRef.current?.focus();
+  }, [editingId]);
 
   const handleDownload = async (item: PortfolioSummary) => {
     setDownloadingId(item.portfolioId);
@@ -54,6 +63,36 @@ const PortfolioList = () => {
       toast.success('포트폴리오가 삭제되었습니다.');
     } catch {
       toast.error('삭제에 실패했습니다.');
+    }
+  };
+
+  const startEdit = (item: PortfolioSummary) => {
+    setEditingId(item.portfolioId);
+    setEditTitle(item.title);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const submitEdit = async (portfolioId: number) => {
+    const trimmed = editTitle.trim();
+    if (!trimmed) {
+      toast.error('제목을 입력해주세요.');
+      return;
+    }
+    try {
+      await updatePortfolioTitle(portfolioId, trimmed);
+      setPortfolios((prev) =>
+        prev.map((p) => (p.portfolioId === portfolioId ? { ...p, title: trimmed } : p))
+      );
+      toast.success('제목이 수정되었습니다.');
+    } catch {
+      toast.error('제목 수정에 실패했습니다.');
+    } finally {
+      setEditingId(null);
+      setEditTitle('');
     }
   };
 
@@ -109,8 +148,48 @@ const PortfolioList = () => {
                 key={item.portfolioId}
                 className="flex items-center justify-between border-2 border-border rounded-2xl p-5 bg-surface hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-[15px] font-bold text-text-primary">{item.title}</h3>
+                <div className="flex flex-col gap-1 flex-1 min-w-0 mr-4">
+                  {editingId === item.portfolioId ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={editInputRef}
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') submitEdit(item.portfolioId);
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        className="text-[15px] font-bold text-text-primary border border-border rounded-lg px-2 py-1 outline-none flex-1"
+                        style={{ backgroundColor: 'var(--color-background)' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => submitEdit(item.portfolioId)}
+                        className="p-1 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="p-1 rounded-lg hover:bg-gray-100 text-text-tertiary transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[15px] font-bold text-text-primary truncate">{item.title}</h3>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(item)}
+                        className="p-1 rounded-lg hover:bg-gray-100 text-text-tertiary transition-colors flex-shrink-0"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     <span className="text-[12px] text-text-secondary">수정: {formatDate(item.updatedAt)}</span>
                     <span
@@ -125,7 +204,7 @@ const PortfolioList = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => handleDownload(item)}

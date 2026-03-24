@@ -33,6 +33,10 @@ export const downloadPortfolio = (portfolioId: number) =>
     responseType: 'text' as never,
   });
 
+/** PATCH /v1/portfolios/{id}/title — 포트폴리오 제목 수정 */
+export const updatePortfolioTitle = (portfolioId: number, title: string) =>
+  api.patch(`/v1/portfolios/${portfolioId}/title`, { title });
+
 /** DELETE /v1/portfolios/{id} — 포트폴리오 삭제 */
 export const deletePortfolioApi = (portfolioId: number) =>
   api.delete(`/v1/portfolios/${portfolioId}`);

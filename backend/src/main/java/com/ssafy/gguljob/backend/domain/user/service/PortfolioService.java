@@ -123,10 +123,6 @@ public class PortfolioService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 제목
-        long count = portfolioRepository.countByUser(user);
-        String title = "포트폴리오(" + (count + 1) + ")";
-
         List<Troubleshooting> tsList =
             troubleshootingRepository.findAllByIdIn(request.tsIds());
 
@@ -143,6 +139,9 @@ public class PortfolioService {
         // 프로젝트별 그룹핑
         Map<Long, List<Troubleshooting>> groupedByProject = tsList.stream()
             .collect(Collectors.groupingBy(ts -> ts.getProject().getId()));
+
+        // 제목: 프로젝트명 기반 (예: "프로젝트A · 프로젝트B 포트폴리오")
+        String title = buildTitle(groupedByProject);
 
         String userPrompt = buildUserPrompt(title, groupedByProject);
         String markdownContent = aiChatService.callClaudeApiWithSystem(SYSTEM_PROMPT, userPrompt);
@@ -187,6 +186,33 @@ public class PortfolioService {
         portfolioRepository.delete(portfolio);
 
         log.info("🗑️ 포트폴리오 삭제 완료 - userId: {}, portfolioId: {}", userId, portfolioId);
+    }
+
+    @Transactional
+    public void updateTitle(Long userId, Long portfolioId, String newTitle) {
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포트폴리오입니다."));
+
+        if (!portfolio.getUser().getId().equals(userId)) {
+            throw new SecurityException("본인의 포트폴리오만 수정할 수 있습니다.");
+        }
+
+        portfolio.updateTitle(newTitle);
+    }
+
+    // ----------------------------------------------------------------
+    // 제목 빌드 (프로젝트명 기반)
+    // ----------------------------------------------------------------
+    private String buildTitle(Map<Long, List<Troubleshooting>> groupedByProject) {
+        List<String> projectNames = groupedByProject.values().stream()
+            .map(tsList -> tsList.get(0).getProject().getTitle())
+            .distinct()
+            .toList();
+
+        if (projectNames.size() <= 2) {
+            return String.join(" · ", projectNames) + " 포트폴리오";
+        }
+        return projectNames.get(0) + " 외 " + (projectNames.size() - 1) + "개 포트폴리오";
     }
 
     // ----------------------------------------------------------------
