@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CyclicBarrier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -69,13 +67,9 @@ public class PortfolioController {
     public ResponseEntity<Void> updatePortfolioTitle(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long portfolioId,
-        @RequestBody Map<String, String> body
+        @Valid @RequestBody PortfolioRequest.UpdateTitle request
     ) {
-        String newTitle = body.get("title");
-        if (newTitle == null || newTitle.isBlank()) {
-            throw new IllegalArgumentException("제목은 비어있을 수 없습니다.");
-        }
-        portfolioService.updateTitle(userDetails.getId(), portfolioId, newTitle.trim());
+        portfolioService.updateTitle(userDetails.getId(), portfolioId, request.title().trim());
         return ResponseEntity.ok().build();
     }
 

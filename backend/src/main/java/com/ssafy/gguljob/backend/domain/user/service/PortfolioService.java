@@ -10,6 +10,8 @@ import com.ssafy.gguljob.backend.domain.user.entity.Portfolio;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.PortfolioRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -121,19 +123,19 @@ public class PortfolioService {
         PortfolioRequest.Generate request
     ) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 유저입니다."));
 
         List<Troubleshooting> tsList =
             troubleshootingRepository.findAllByIdIn(request.tsIds());
 
         if (tsList.isEmpty()) {
-            throw new IllegalArgumentException("유효한 트러블슈팅 데이터가 없습니다.");
+            throw new ResourceNotFoundException("유효한 트러블슈팅 데이터가 없습니다.");
         }
 
         boolean isOwnerValid = tsList.stream()
             .allMatch(ts -> ts.getUser().getId().equals(userId));
         if (!isOwnerValid) {
-            throw new SecurityException("본인의 트러블슈팅만 포트폴리오로 생성할 수 있습니다.");
+            throw new ForbiddenException("본인의 트러블슈팅만 포트폴리오로 생성할 수 있습니다.");
         }
 
         // 프로젝트별 그룹핑
@@ -173,10 +175,10 @@ public class PortfolioService {
     @Transactional
     public void deletePortfolio(Long userId, Long portfolioId) {
         Portfolio portfolio = portfolioRepository.findById(portfolioId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포트폴리오입니다."));
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 포트폴리오입니다."));
 
         if (!portfolio.getUser().getId().equals(userId)) {
-            throw new SecurityException("본인의 포트폴리오만 삭제할 수 있습니다.");
+            throw new ForbiddenException("본인의 포트폴리오만 삭제할 수 있습니다.");
         }
 
         // S3 파일 삭제
@@ -191,10 +193,10 @@ public class PortfolioService {
     @Transactional
     public void updateTitle(Long userId, Long portfolioId, String newTitle) {
         Portfolio portfolio = portfolioRepository.findById(portfolioId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포트폴리오입니다."));
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 포트폴리오입니다."));
 
         if (!portfolio.getUser().getId().equals(userId)) {
-            throw new SecurityException("본인의 포트폴리오만 수정할 수 있습니다.");
+            throw new ForbiddenException("본인의 포트폴리오만 수정할 수 있습니다.");
         }
 
         portfolio.updateTitle(newTitle);
