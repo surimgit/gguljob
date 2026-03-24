@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.ai.repository.ChatLogRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
@@ -71,6 +72,7 @@ public class ProjectService {
     private final TroubleshootingRepository troubleshootingRepository;
     private final PullRequestRepository pullRequestRepository;
     private final PrReviewRepository prReviewRepository;
+    private final ChatLogRepository chatLogRepository;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -216,9 +218,11 @@ public class ProjectService {
         GitRepository gitRepository = gitRepositoryRepository.findByProject_Id(projectId)
             .orElseGet(() -> GitRepository.builder().project(project).build());
 
-        // 레포 URL이 변경된 경우 기존 PR 리뷰 → PR 순서로 삭제 (FK 제약)
+        // 레포 URL이 변경된 경우 FK 의존 순서대로 기존 데이터 삭제
         if (gitRepository.getRepoUrl() != null && !gitRepository.getRepoUrl().equals(request.repoUrl())) {
-            log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 PR/리뷰 데이터를 삭제합니다.", gitRepository.getRepoUrl(), request.repoUrl());
+            log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 데이터를 삭제합니다.", gitRepository.getRepoUrl(), request.repoUrl());
+            chatLogRepository.deleteAllByProject_Id(projectId);
+            troubleshootingRepository.deleteAllByProjectId(projectId);
             prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
             pullRequestRepository.deleteAllByProjectId(projectId);
         }
@@ -243,7 +247,9 @@ public class ProjectService {
         projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
 
-        // 리뷰 → PR → 레포 순서로 삭제 (FK 제약)
+        // FK 의존 순서대로 삭제: ChatLog → Troubleshooting → PrReview → PullRequest → GitRepository
+        chatLogRepository.deleteAllByProject_Id(projectId);
+        troubleshootingRepository.deleteAllByProjectId(projectId);
         prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
         pullRequestRepository.deleteAllByProjectId(projectId);
         gitRepositoryRepository.deleteAllByProjectId(projectId);
