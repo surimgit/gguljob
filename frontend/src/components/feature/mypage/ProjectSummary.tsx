@@ -13,7 +13,7 @@ const TAG_PALETTE = [
 
 // ── 프로젝트 카드 ──────────────────────────────────────────────────────────────
 const ProjectCard = ({ project }: { project: ProjectSimple }) => {
-  const gradient = THUMBNAIL_GRADIENTS[project.domain] ?? 'linear-gradient(135deg, #F5F5F5, #E0E0E0)';
+  const gradient = THUMBNAIL_GRADIENTS[project.domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
 
   return (
   <Link
