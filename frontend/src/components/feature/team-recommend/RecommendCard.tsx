@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
+import { getRoleDisplayName, getRoleColor, getExperienceLevelDisplay, getExperienceLevelStyle } from "../../../constants/skills";
 
 interface RecommendCardProps {
   name: string;
@@ -30,6 +30,7 @@ const RecommendCard = ({
 }: RecommendCardProps) => {
   const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
+  const lvStyle = getExperienceLevelStyle(level);
 
   return (
     <div
@@ -75,10 +76,10 @@ const RecommendCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-xs font-bold whitespace-nowrap"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
-              {level}
+              {getExperienceLevelDisplay(level)}
             </span>
           </div>
         </div>

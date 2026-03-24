@@ -22,6 +22,9 @@ import com.ssafy.gguljob.backend.domain.job.dto.response.RecommendedJobDto;
 import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
 import com.ssafy.gguljob.backend.domain.job.repository.JobPostingRepository;
 import com.ssafy.gguljob.backend.domain.job.repository.JobRecommendationRepository;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +36,34 @@ public class JobRecommendationService {
 
   private final JobRecommendationRepository jobRecommendationRepository;
   private final JobPostingRepository jobPostingRepository;
+  private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
 
-  @Cacheable(value = "allJobsScoring", key = "#userId")
+  private static final List<String> BASE_LEVELS = List.of("신입", "신입·경력", "경력무관", "경력");
+
+  private List<String> getAllowedLevels(WorkExperienceYear exp) {
+    if (exp == null) return null; // null이면 필터 없음
+    return switch (exp) {
+      case NEWCOMER -> concat(BASE_LEVELS, "경력 1년 이상"); // 신입 + 1년 버퍼
+      case ONE_TO_THREE -> concat(BASE_LEVELS, "경력 1년 이상", "경력 2년 이상", "경력 3년 이상",
+          "경력 4년 이상", "경력 5년 이상"); // 3년 + 2년 버퍼
+      case FOUR_TO_SIX -> concat(BASE_LEVELS, "경력 1년 이상", "경력 2년 이상", "경력 3년 이상",
+          "경력 4년 이상", "경력 5년 이상", "경력 6년 이상", "경력 7년 이상", "경력 8년 이상"); // 6년 + 2년 버퍼
+      case MORE_THAN_SEVEN -> null; // 7년 이상은 전부 허용
+    };
+  }
+
+  private List<String> concat(List<String> base, String... extra) {
+    List<String> result = new java.util.ArrayList<>(base);
+    result.addAll(java.util.Arrays.asList(extra));
+    return result;
+  }
+
+  private WorkExperienceYear getUserWorkExperience(Long userId) {
+    return userRepository.findById(userId).map(User::getWorkExperience).orElse(null);
+  }
+
+  @Cacheable(value = "allJobsScoring", key = "#a0")
   public List<RecommendedJobDto> getAllJobsWithScoring(Long userId) {
     Collection<JobRecommendationResponse> neo4jResults =
         jobRecommendationRepository.getAllJobsWithScoring(userId);
@@ -49,7 +77,10 @@ public class JobRecommendationService {
     List<Long> jobIds =
         resultList.stream().map(JobRecommendationResponse::getJobId).collect(Collectors.toList());
 
-    List<JobPosting> jobPostings = jobPostingRepository.findByIdIn(jobIds);
+    List<String> allowedLevels = getAllowedLevels(getUserWorkExperience(userId));
+    List<JobPosting> jobPostings = (allowedLevels != null)
+        ? jobPostingRepository.findByIdInAndExperienceLevelIn(jobIds, allowedLevels)
+        : jobPostingRepository.findByIdIn(jobIds);
     Map<Long, JobPosting> jobMap =
         jobPostings.stream().collect(Collectors.toMap(JobPosting::getId, Function.identity()));
 
@@ -81,7 +112,10 @@ public class JobRecommendationService {
   }
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
-    return getRecommendations(userId, 3, 0, false);
+    List<String> allowedLevels = getAllowedLevels(getUserWorkExperience(userId));
+    // 필터 후에도 3개가 보장되도록 Neo4j에서 넉넉하게 가져온 뒤 자름
+    List<RecommendedJobDto> candidates = getRecommendations(userId, 30, 0, false, allowedLevels);
+    return candidates.size() <= 3 ? candidates : candidates.subList(0, 3);
   }
 
   public PagedRecommendationResponse getRegularRecommendations(Long userId, int page, int size,
@@ -90,9 +124,10 @@ public class JobRecommendationService {
     if (page < 1) page = 1;
 
     boolean sortByDeadline = "deadline".equalsIgnoreCase(sort);
+    List<String> allowedLevels = getAllowedLevels(getUserWorkExperience(userId));
 
     // 전체 후보를 한번에 조회하여 정확한 totalElements 확보
-    List<RecommendedJobDto> allCandidates = getRecommendations(userId, 200, 0, sortByDeadline);
+    List<RecommendedJobDto> allCandidates = getRecommendations(userId, 200, 0, sortByDeadline, allowedLevels);
 
     long totalElements = allCandidates.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);
@@ -105,7 +140,7 @@ public class JobRecommendationService {
   }
 
   private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,
-      boolean sortByDeadline) {
+      boolean sortByDeadline, List<String> allowedLevels) {
     // deadline 정렬도 적합도 상위 200개 후보 안에서만 수행합니다.
     int queryLimit = limit;
     int querySkip = skip;
@@ -141,8 +176,9 @@ public class JobRecommendationService {
 
       int page = skip / limit;
       Pageable pageable = PageRequest.of(page, limit);
-      List<JobPosting> pagedByDeadline =
-          jobPostingRepository.findByIdInOrderByDeadline(candidateIds, pageable);
+      List<JobPosting> pagedByDeadline = (allowedLevels != null)
+          ? jobPostingRepository.findByIdInAndExperienceLevelInOrderByDeadline(candidateIds, allowedLevels, pageable)
+          : jobPostingRepository.findByIdInOrderByDeadline(candidateIds, pageable);
 
       return pagedByDeadline.stream().map(dbJob -> {
         JobRecommendationResponse score = scoreMap.get(dbJob.getId());
@@ -171,7 +207,9 @@ public class JobRecommendationService {
             .build();
       }).filter(dto -> dto != null).collect(Collectors.toList());
     } else {
-      List<JobPosting> jobPostings = jobPostingRepository.findByIdIn(jobIds);
+      List<JobPosting> jobPostings = (allowedLevels != null)
+          ? jobPostingRepository.findByIdInAndExperienceLevelIn(jobIds, allowedLevels)
+          : jobPostingRepository.findByIdIn(jobIds);
 
       Map<Long, JobPosting> jobMap =
           jobPostings.stream().collect(Collectors.toMap(JobPosting::getId, Function.identity()));

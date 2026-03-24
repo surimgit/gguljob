@@ -23,12 +23,13 @@ import {
   Wrench,
   Briefcase,
   PieChart,
+  Camera,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
-import { getProjectEditForm, updateProject } from "../../../api/projects";
+import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage } from "../../../api/projects";
 import {
   SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
   SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
@@ -191,6 +192,38 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
 
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
 
+  // 프로젝트 이미지
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !projectId) return;
+    setImageUploading(true);
+    try {
+      const { data } = await uploadProjectImage(projectId, file);
+      setImageUrl(data.data);
+      toast.success("프로젝트 이미지가 변경되었습니다.");
+    } catch {
+      toast.error("이미지 업로드에 실패했습니다.");
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!projectId) return;
+    try {
+      await deleteProjectImage(projectId);
+      setImageUrl(null);
+      toast.success("프로젝트 이미지가 삭제되었습니다.");
+    } catch {
+      toast.error("이미지 삭제에 실패했습니다.");
+    }
+  };
+
   // GET /edit → 폼 초기화
   useEffect(() => {
     if (!projectId) return;
@@ -203,6 +236,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         setOriginalTitle(form.title ?? "");
         setDescription(form.description ?? "");
         setDomain(form.domain ?? "");
+        setImageUrl(form.imageUrl ?? null);
         setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
 
         // skillIds → 이름 → 카테고리별 분류
@@ -408,39 +442,93 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           📋 기본 정보
         </div>
 
-        {/* 프로젝트명 */}
-        <div className="mb-4">
-          <label
-            className="text-sm font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
+        {/* 프로젝트 이미지 + 프로젝트명 */}
+        <div className="mb-5">
+          <div
+            className="flex items-center gap-5 rounded-2xl p-4"
+            style={{ background: "var(--color-background)" }}
           >
-            프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
-          </label>
-          <input
-            type="text"
-            maxLength={50}
-            value={name}
-            onChange={(e) => isLeader && setName(e.target.value)}
-            readOnly={!isLeader}
-            placeholder="프로젝트명을 입력하세요"
-            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
-            style={inputStyle(!!name)}
-            onFocus={(e) => {
-              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
-            }}
-            onBlur={(e) => {
-              if (!name)
-                e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          />
-          {isLeader && (
-          <p
-            className="text-xs text-right mt-1"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {name.length}/50
-          </p>
-          )}
+            {/* 프로젝트 이미지 */}
+            <div className="relative group flex-shrink-0">
+              <div
+                className="w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm"
+                style={{
+                  background: imageUrl ? "transparent" : "linear-gradient(135deg, var(--color-primary-soft), var(--color-surface))",
+                  border: "2px solid var(--color-border)",
+                }}
+              >
+                {imageUrl ? (
+                  <img src={imageUrl} alt="프로젝트 이미지" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <Camera className="w-6 h-6" style={{ color: "var(--color-primary)", opacity: 0.5 }} />
+                    <span className="text-[10px] font-medium" style={{ color: "var(--color-text-tertiary)" }}>대표 이미지</span>
+                  </div>
+                )}
+              </div>
+              {isLeader && (
+                <div
+                  className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity cursor-pointer"
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  {imageUploading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-5 h-5 text-white" />
+                      <span className="text-[10px] text-white font-medium">{imageUrl ? "변경" : "업로드"}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              {isLeader && imageUrl && (
+                <button
+                  type="button"
+                  onClick={handleImageDelete}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  style={{ background: "var(--color-error)" }}
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              )}
+            </div>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {/* 프로젝트명 입력 */}
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
+              <label
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
+              </label>
+              <input
+                type="text"
+                maxLength={50}
+                value={name}
+                onChange={(e) => isLeader && setName(e.target.value)}
+                readOnly={!isLeader}
+                placeholder="프로젝트명을 입력하세요"
+                className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
+                style={{
+                  ...inputStyle(!!name),
+                  background: "var(--color-surface)",
+                }}
+                onFocus={(e) => {
+                  if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
+                }}
+                onBlur={(e) => {
+                  if (!name)
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* 프로젝트 설명 (마크다운 에디터) */}

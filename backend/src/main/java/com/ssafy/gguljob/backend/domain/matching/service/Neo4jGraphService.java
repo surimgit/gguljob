@@ -19,7 +19,7 @@ public class Neo4jGraphService {
 
     @Transactional(transactionManager = "neo4jTransactionManager")
     public void saveUserNode(UserNode newUserNode, Long userId) {
-        userNodeRepository.findById(String.valueOf(userId)).ifPresentOrElse(
+        userNodeRepository.findById(userId).ifPresentOrElse(
             existingNode -> {
                 existingNode.updateFrom(newUserNode);
                 userNodeRepository.save(existingNode);

@@ -48,3 +48,13 @@ export interface ChatTroubleResponse {
 
 export const chatTrouble = (data: ChatTroubleRequest) =>
   api.post<ChatTroubleResponse>('/v1/ai/chat/trouble', data);
+
+export interface TroubleshootingWidget {
+  tsId: number;
+  title: string;
+  solution: string;
+  createdAt: string;
+}
+
+export const getMyTroubleshootingWidget = () =>
+  api.get<{ status: number; message: string; data: TroubleshootingWidget[] }>('/v1/user/me/troubleshootings/widget');

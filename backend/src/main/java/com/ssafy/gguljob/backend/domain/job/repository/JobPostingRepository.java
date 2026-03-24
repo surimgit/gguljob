@@ -14,6 +14,12 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
     List<JobPosting> findByIdIn(List<Long> ids);
 
     @Query("""
+            SELECT j FROM JobPosting j
+            WHERE j.id IN :ids AND j.experienceLevel IN :levels
+            """)
+    List<JobPosting> findByIdInAndExperienceLevelIn(@Param("ids") List<Long> ids, @Param("levels") List<String> levels);
+
+    @Query("""
             SELECT j
             FROM JobPosting j
             WHERE j.id IN :ids
@@ -23,4 +29,14 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
               j.id ASC
             """)
     List<JobPosting> findByIdInOrderByDeadline(@Param("ids") List<Long> ids, Pageable pageable);
+
+    @Query("""
+            SELECT j FROM JobPosting j
+            WHERE j.id IN :ids AND j.experienceLevel IN :levels
+            ORDER BY
+              CASE WHEN j.deadline IS NULL THEN 1 ELSE 0 END,
+              j.deadline ASC,
+              j.id ASC
+            """)
+    List<JobPosting> findByIdInAndExperienceLevelInOrderByDeadline(@Param("ids") List<Long> ids, @Param("levels") List<String> levels, Pageable pageable);
 }

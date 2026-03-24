@@ -1,7 +1,8 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Camera } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ProjectSimple } from '../../../types/project';
 import { SectionEmptyState } from '../../common';
+import { THUMBNAIL_GRADIENTS } from '../../../constants/domains';
 
 // ── 태그 색상 (기술스택 순서 기반으로 blue/yellow/gray 번갈아 적용) ──────────────
 const TAG_PALETTE = [
@@ -11,13 +12,19 @@ const TAG_PALETTE = [
 ] as const;
 
 // ── 프로젝트 카드 ──────────────────────────────────────────────────────────────
-const ProjectCard = ({ project }: { project: ProjectSimple }) => (
+const ProjectCard = ({ project }: { project: ProjectSimple }) => {
+  const gradient = THUMBNAIL_GRADIENTS[project.domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
+
+  return (
   <Link
     to={`/my-projects/${project.projectId}`}
     className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 h-full"
   >
     {/* 썸네일 */}
-    <div className="w-36 h-full min-h-[9rem] flex-shrink-0 bg-[#f3f4f6] rounded-xl flex items-center justify-center overflow-hidden">
+    <div
+      className="w-36 h-full min-h-[9rem] flex-shrink-0 rounded-xl flex items-center justify-center overflow-hidden"
+      style={{ background: project.imageUrl ? undefined : gradient }}
+    >
       {project.imageUrl ? (
         <img
           src={project.imageUrl}
@@ -25,7 +32,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => (
           className="w-full h-full object-cover"
         />
       ) : (
-        <span className="text-text-tertiary text-sm">Thumbnail</span>
+        <Camera className="w-8 h-8" style={{ color: 'rgba(255,255,255,0.6)' }} />
       )}
     </div>
 
@@ -51,7 +58,8 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => (
       )}
     </div>
   </Link>
-);
+  );
+};
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 interface ProjectSummaryProps {

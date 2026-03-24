@@ -9,7 +9,7 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserNodeRepository extends Neo4jRepository<UserNode, String> {
+public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
     @Query(
         value = "MATCH (p:Project {id: $projectId}) " +
             // 프로젝트가 요구하는 총 기술 스택 개수 파악
@@ -53,7 +53,7 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, String> {
     )
     Page<MemberMatchResultDto> findRecommendedMembersForProject(
         @Param("projectId") String projectId,
-        @Param("excludedUserIds") List<String> excludedUserIds,
+        @Param("excludedUserIds") List<Long> excludedUserIds,
         @Param("keyword") String keyword,
         @Param("position") String position,
         @Param("experienceLevel") String experienceLevel,

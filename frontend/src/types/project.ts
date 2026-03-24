@@ -17,6 +17,7 @@ export interface ProjectCardDto {
   status: BackendProjectStatus;
   title: string;
   description: string;
+  imageUrl: string | null;
   skills: string[];
   positions: ProjectPositionDto[];
   leaderName: string;
@@ -87,6 +88,7 @@ export interface ProjectEditForm {
   teamName: string;
   description: string;
   domain: string;
+  imageUrl: string | null;
   skillIds: number[];
   members: ProjectEditMember[];
 }
