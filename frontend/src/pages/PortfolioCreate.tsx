@@ -267,25 +267,15 @@ const PortfolioCreate = () => {
               </div>
             )}
 
-            {/* 다시 선택 / 내 포트폴리오 */}
-            <div className="flex flex-col gap-2 mt-auto">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="w-full py-3 rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                다시 선택하기
-              </button>
-              <Link
-                to="/mypage/portfolio"
-                className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-              >
-                <List className="w-4 h-4" />
-                내 포트폴리오 보기
-              </Link>
-            </div>
+            {/* 다시 선택 버튼 */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full py-3 mt-auto rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              다시 선택하기
+            </button>
           </div>
 
           {/* 결과 섹션 (오른쪽 2칸) */}
