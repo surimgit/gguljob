@@ -4,6 +4,11 @@ export interface TroubleshootingListItem {
   tsId: number;
   title: string;
   situation: string;
+  solution: string;
+  code_snippet: string;
+  prId: string;
+  prNum: string;
+  prTitle: string;
   createdAt: string;
 }
 
@@ -23,8 +28,8 @@ export const getTroubleshootings = (projectId: number, page = 0, size = 10) =>
     params: { page, size },
   });
 
-export const generateTroubleshooting = (prId: number) =>
-  api.post('/v1/troubleshooting/generate', { prId });
+export const generateTroubleshooting = (prId: number, projectId: number) =>
+  api.post('/v1/troubleshooting/generate', { prId, projectId }, { timeout: 120000 });
 
 export const updateTroubleshooting = (
   troubleshootingId: number,
