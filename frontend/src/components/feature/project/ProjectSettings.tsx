@@ -990,10 +990,11 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
                   if (!projectId) return;
                   leaveProject(projectId)
                     .then(() => {
+                      toast.success("팀에서 나갔습니다.");
                       setShowLeaveModal(false);
                       navigate("/myprojects");
                     })
-                    .catch(() => toast.error("팀 나가기에 실패했습니다."));
+                    .catch(() => toast.error("팀 나가기에 실패했습니다. 다시 시도해주세요."));
                 }}
                 className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
                 style={{ background: "var(--color-error)" }}
