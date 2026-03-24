@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.user.dto;
 
 import com.ssafy.gguljob.backend.domain.user.type.GoalType;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,7 @@ public class ProfileResponseDto {
     private String description;
     private List<String> roles;
     private String experience;
+    private WorkExperienceYear workExperience;
     private String mbti;
     private String teamTendency;
     private List<SkillDto> skills;

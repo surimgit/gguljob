@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
+import { getRoleDisplayName, getRoleColor, getExperienceLevelDisplay, getExperienceLevelStyle } from "../../../constants/skills";
 
 interface MemberCardProps {
   name: string;
@@ -30,6 +30,7 @@ const MemberCard = ({
 }: MemberCardProps) => {
   const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
+  const lvStyle = getExperienceLevelStyle(level);
 
   return (
     <button
@@ -62,10 +63,10 @@ const MemberCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-sm font-bold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
-              {level}
+              {getExperienceLevelDisplay(level)}
             </span>
           </div>
         </div>

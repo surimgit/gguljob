@@ -4,6 +4,7 @@ import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
 import com.ssafy.gguljob.backend.domain.user.type.GoalType;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,4 +38,6 @@ public class OnboardingRequestDto {
     private TeamTendency teamTendency;
 
     private List<GoalType> goals;
+
+    private WorkExperienceYear workExperience;
 }

@@ -10,6 +10,8 @@ import com.ssafy.gguljob.backend.domain.user.entity.Portfolio;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.PortfolioRepository;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -121,28 +123,27 @@ public class PortfolioService {
         PortfolioRequest.Generate request
     ) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
-
-        // 제목
-        long count = portfolioRepository.countByUser(user);
-        String title = "포트폴리오(" + (count + 1) + ")";
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 유저입니다."));
 
         List<Troubleshooting> tsList =
             troubleshootingRepository.findAllByIdIn(request.tsIds());
 
         if (tsList.isEmpty()) {
-            throw new IllegalArgumentException("유효한 트러블슈팅 데이터가 없습니다.");
+            throw new ResourceNotFoundException("유효한 트러블슈팅 데이터가 없습니다.");
         }
 
         boolean isOwnerValid = tsList.stream()
             .allMatch(ts -> ts.getUser().getId().equals(userId));
         if (!isOwnerValid) {
-            throw new SecurityException("본인의 트러블슈팅만 포트폴리오로 생성할 수 있습니다.");
+            throw new ForbiddenException("본인의 트러블슈팅만 포트폴리오로 생성할 수 있습니다.");
         }
 
         // 프로젝트별 그룹핑
         Map<Long, List<Troubleshooting>> groupedByProject = tsList.stream()
             .collect(Collectors.groupingBy(ts -> ts.getProject().getId()));
+
+        // 제목: 프로젝트명 기반 (예: "프로젝트A · 프로젝트B 포트폴리오")
+        String title = buildTitle(groupedByProject);
 
         String userPrompt = buildUserPrompt(title, groupedByProject);
         String markdownContent = aiChatService.callClaudeApiWithSystem(SYSTEM_PROMPT, userPrompt);
@@ -169,6 +170,51 @@ public class PortfolioService {
             saved.getTitle(),
             saved.getIsPublic()
         );
+    }
+
+    @Transactional
+    public void deletePortfolio(Long userId, Long portfolioId) {
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 포트폴리오입니다."));
+
+        if (!portfolio.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 포트폴리오만 삭제할 수 있습니다.");
+        }
+
+        // S3 파일 삭제
+        String s3Key = s3ImageService.extractS3Key(portfolio.getS3Url());
+        s3ImageService.deleteObject(s3Key);
+
+        portfolioRepository.delete(portfolio);
+
+        log.info("🗑️ 포트폴리오 삭제 완료 - userId: {}, portfolioId: {}", userId, portfolioId);
+    }
+
+    @Transactional
+    public void updateTitle(Long userId, Long portfolioId, String newTitle) {
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 포트폴리오입니다."));
+
+        if (!portfolio.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 포트폴리오만 수정할 수 있습니다.");
+        }
+
+        portfolio.updateTitle(newTitle);
+    }
+
+    // ----------------------------------------------------------------
+    // 제목 빌드 (프로젝트명 기반)
+    // ----------------------------------------------------------------
+    private String buildTitle(Map<Long, List<Troubleshooting>> groupedByProject) {
+        List<String> projectNames = groupedByProject.values().stream()
+            .map(tsList -> tsList.get(0).getProject().getTitle())
+            .distinct()
+            .toList();
+
+        if (projectNames.size() <= 2) {
+            return String.join(" · ", projectNames) + " 포트폴리오";
+        }
+        return projectNames.get(0) + " 외 " + (projectNames.size() - 1) + "개 포트폴리오";
     }
 
     // ----------------------------------------------------------------

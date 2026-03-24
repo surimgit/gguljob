@@ -35,7 +35,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "RETURN count(p)"
     )
     Page<ProjectMatchResultDto> findRecommendedProjectsForUser(
-        @Param("userId") String userId,
+        @Param("userId") Long userId,
         @Param("joinedProjectIds") List<String> joinedProjectIds,
         @Param("keyword") String keyword,
         @Param("domain") String domain,

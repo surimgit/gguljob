@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import {
   FolderOpen,
   User,
@@ -16,6 +16,8 @@ import {
   Copy,
   Check,
   ExternalLink,
+  X,
+  ArrowLeft,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
@@ -34,6 +36,7 @@ import {
   getTeamManagement,
   recommendTopics,
   updateProjectTopic,
+  disconnectGitRepo,
 } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 import { getCategoryColorPair } from "../constants/domains";
@@ -67,6 +70,7 @@ const formatTime = (dateStr: string) => {
 /* ── 메인 페이지 ── */
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTabFromUrl = searchParams.get("tab") || "team";
   const [activeTab, setActiveTab] = useState<string>(activeTabFromUrl);
@@ -208,6 +212,13 @@ const ProjectDashboard = () => {
       >
         <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-4 sm:px-6 lg:px-8">
           {/* ── 상단 탭 네비게이션 ── */}
+          <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
           <div
             className="flex flex-wrap gap-1 rounded-2xl px-2 py-1.5 w-fit"
             style={{
@@ -362,6 +373,7 @@ const ProjectDashboard = () => {
               );
             })}
           </div>
+          </div>
 
           {activeTab === "members" && (
             <TeamMembers
@@ -377,14 +389,14 @@ const ProjectDashboard = () => {
               onSaved={() => id && fetchDashboard(Number(id))}
             />
           )}
-          {activeTab === "personal" && (
+          <div className={activeTab === "personal" ? "" : "hidden"}>
             <PersonalSpace
               projectId={id ? Number(id) : undefined}
               projectTitle={projectInfo.title}
               personalData={personalData}
               subTab={personalSubTab}
             />
-          )}
+          </div>
 
           {activeTab === "team" && (
             <>
@@ -595,6 +607,39 @@ const ProjectDashboard = () => {
                           <Pencil className="w-3 h-3" />
                           수정
                         </button>
+                        {gitRepoInfo?.repoUrl && (
+                          <button
+                            onClick={() => {
+                              if (!id) return;
+                              if (!window.confirm("레포지토리 연동을 해제하시겠습니까?\nPR과 코드 리뷰 데이터가 모두 삭제됩니다.")) return;
+                              disconnectGitRepo(Number(id))
+                                .then(() => {
+                                  toast.success("레포지토리 연동이 해제되었습니다.");
+                                  localStorage.removeItem(`webhook_secret_${id}`);
+                                  setWebhookSecret(null);
+                                  fetchDashboard(Number(id));
+                                })
+                                .catch((err) => {
+                                  toast.error("연동 해제에 실패했습니다.");
+                                  console.error("레포 연동 해제 실패:", err);
+                                });
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid #FECACA",
+                              color: "var(--color-error)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#FEF2F2";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                            연동 해제
+                          </button>
+                        )}
                       </div>
                     </div>
 

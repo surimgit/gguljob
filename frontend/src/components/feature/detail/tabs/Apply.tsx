@@ -117,7 +117,7 @@ const Apply = ({ projectId }: ApplyProps) => {
       )}
 
       {/* 포지션 카드 목록 */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto pr-1">
         {positions.map((pos) => {
           const openSlots = pos.targetCount - pos.currentCount;
           const progress = pos.targetCount > 0 ? pos.currentCount / pos.targetCount : 0;

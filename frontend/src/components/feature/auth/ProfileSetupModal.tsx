@@ -226,20 +226,23 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           <div className="fixed inset-0 bg-black/50 z-[60]" />
           <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 pointer-events-none">
             <div className="bg-white rounded-2xl w-full max-w-[380px] p-6 shadow-2xl pointer-events-auto text-center">
-              <div className="text-4xl mb-3">⚠️</div>
+              <div className="text-4xl mb-3">{mode === 'edit' ? '✏️' : '⚠️'}</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                프로필 설정을 완료해주세요
+                {mode === 'edit' ? '수정을 취소하시겠습니까?' : '프로필 설정을 완료해주세요'}
               </h3>
               <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                프로필 설정을 완료하지 않으면 서비스를 이용할 수 없습니다.<br />
-                지금 나가시면 로그아웃됩니다.
+                {mode === 'edit' ? (
+                  '변경사항이 저장되지 않습니다.'
+                ) : (
+                  <>프로필 설정을 완료하지 않으면 서비스를 이용할 수 없습니다.<br />지금 나가시면 로그아웃됩니다.</>
+                )}
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowExitWarning(false)}
                   className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  계속 설정하기
+                  {mode === 'edit' ? '계속 수정' : '계속 설정하기'}
                 </button>
                 <button
                   onClick={() => {

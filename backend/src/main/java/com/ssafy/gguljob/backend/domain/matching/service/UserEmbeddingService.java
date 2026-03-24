@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,10 @@ public class UserEmbeddingService {
             parts.add("직무: " + roles);
         }
         if (user.getExperience() != null) {
-            parts.add("경험 수준: " + EXPERIENCE_MAP.getOrDefault(user.getExperience().name(), user.getExperience().name()));
+            parts.add("개발 경험: " + EXPERIENCE_MAP.getOrDefault(user.getExperience().name(), user.getExperience().name()));
+        }
+        if (user.getWorkExperience() != null && user.getWorkExperience() != WorkExperienceYear.NEWCOMER) {
+            parts.add("실무 경험: " + user.getWorkExperience().getDescription());
         }
         if (user.getUserSkills() != null && !user.getUserSkills().isEmpty()) {
             String skills = user.getUserSkills().stream()

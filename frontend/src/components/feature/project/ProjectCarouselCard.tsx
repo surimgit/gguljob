@@ -1,23 +1,10 @@
 import type { ProjectCardDto } from '../../../types/project';
-import { CATEGORY_COLORS } from '../../../constants/domains';
+import { CATEGORY_COLORS, THUMBNAIL_GRADIENTS } from '../../../constants/domains';
 
 export interface ProjectCarouselCardProps {
   project: ProjectCardDto;
   onClick?: (project: ProjectCardDto) => void;
 }
-
-const THUMBNAIL_GRADIENTS: Record<string, string> = {
-  웹기술:   'linear-gradient(149deg, #E3F2FD, #BBDEFB)',
-  웹디자인: 'linear-gradient(149deg, #FCE4EC, #F8BBD0)',
-  모바일:   'linear-gradient(149deg, #FFF3E0, #FFE0B2)',
-  AIoT:    'linear-gradient(149deg, #E0F2F1, #B2DFDB)',
-  인공지능: 'linear-gradient(149deg, #E8EAF6, #C5CAE9)',
-  빅데이터: 'linear-gradient(149deg, #EDE7F6, #D1C4E9)',
-  블록체인: 'linear-gradient(149deg, #FFFDE7, #FFF9C4)',
-  자율주행: 'linear-gradient(149deg, #E0F7FA, #B2EBF2)',
-  핀테크:   'linear-gradient(149deg, #E8F5E9, #C8E6C9)',
-  메타버스: 'linear-gradient(149deg, #F3E5F5, #E1BEE7)',
-};
 
 const TECH_BADGE_STYLES: Record<string, { bg: string; border: string; text: string }> = {
   React:         { bg: '#e8f4fd', border: '#bbdefb', text: '#2196f3' },
@@ -34,7 +21,7 @@ const TECH_BADGE_STYLES: Record<string, { bg: string; border: string; text: stri
 const DEFAULT_TECH_STYLE = { bg: '#f5f5f5', border: 'transparent', text: '#8a8073' };
 
 const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => {
-  const { domain, title, description, skills } = project;
+  const { domain, title, description, skills, imageUrl } = project;
 
   const gradient = THUMBNAIL_GRADIENTS[domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
@@ -50,8 +37,11 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
       {/* 상단 썸네일 */}
       <div
         className="absolute top-0 left-0 w-full h-[160px] overflow-hidden"
-        style={{ background: gradient }}
+        style={{ background: imageUrl ? undefined : gradient }}
       >
+        {imageUrl && (
+          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+        )}
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
           <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>

@@ -4,6 +4,11 @@ export interface TroubleshootingListItem {
   tsId: number;
   title: string;
   situation: string;
+  solution: string;
+  code_snippet: string;
+  prId: string;
+  prNum: string;
+  prTitle: string;
   createdAt: string;
 }
 
@@ -23,8 +28,8 @@ export const getTroubleshootings = (projectId: number, page = 0, size = 10) =>
     params: { page, size },
   });
 
-export const generateTroubleshooting = (prId: number) =>
-  api.post('/v1/troubleshooting/generate', { prId });
+export const generateTroubleshooting = (prId: number, projectId: number) =>
+  api.post('/v1/troubleshooting/generate', { prId, projectId }, { timeout: 120000 });
 
 export const updateTroubleshooting = (
   troubleshootingId: number,
@@ -43,3 +48,13 @@ export interface ChatTroubleResponse {
 
 export const chatTrouble = (data: ChatTroubleRequest) =>
   api.post<ChatTroubleResponse>('/v1/ai/chat/trouble', data);
+
+export interface TroubleshootingWidget {
+  tsId: number;
+  title: string;
+  solution: string;
+  createdAt: string;
+}
+
+export const getMyTroubleshootingWidget = () =>
+  api.get<{ status: number; message: string; data: TroubleshootingWidget[] }>('/v1/user/me/troubleshootings/widget');
