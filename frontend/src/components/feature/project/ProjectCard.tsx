@@ -2,19 +2,6 @@ import type { ProjectCardDto, BackendProjectStatus } from '../../../types/projec
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import { CATEGORY_COLORS } from '../../../constants/domains';
 
-const THUMBNAIL_GRADIENTS: Record<string, string> = {
-  웹기술:   'linear-gradient(135deg, #E3F2FD, #BBDEFB)',
-  웹디자인: 'linear-gradient(135deg, #FCE4EC, #F8BBD0)',
-  모바일:   'linear-gradient(135deg, #FFF3E0, #FFE0B2)',
-  AIoT:    'linear-gradient(135deg, #E0F2F1, #B2DFDB)',
-  인공지능: 'linear-gradient(135deg, #E8EAF6, #C5CAE9)',
-  빅데이터: 'linear-gradient(135deg, #EDE7F6, #D1C4E9)',
-  블록체인: 'linear-gradient(135deg, #FFFDE7, #FFF9C4)',
-  자율주행: 'linear-gradient(135deg, #E0F7FA, #B2EBF2)',
-  핀테크:   'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
-  메타버스: 'linear-gradient(135deg, #F3E5F5, #E1BEE7)',
-};
-
 export interface ProjectCardProps {
   project: ProjectCardDto;
   onClick?: (project: ProjectCardDto) => void;
@@ -35,11 +22,10 @@ function getStatusStyle(status: BackendProjectStatus) {
 }
 
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
-  const { domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl, imageUrl } = project;
+  const { domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl } = project;
 
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
   const statusStyle = getStatusStyle(status);
-  const gradient = THUMBNAIL_GRADIENTS[domain] ?? 'linear-gradient(135deg, #F5F5F5, #E0E0E0)';
 
   const activePositions = Object.values(
     positions
@@ -63,23 +49,9 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
 
   return (
     <a
-      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full min-h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 overflow-hidden ${status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
+      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full min-h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 ${status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
       onClick={() => onClick?.(project)}
     >
-      {/* 썸네일 */}
-      <div
-        className="w-full h-[120px] relative flex-shrink-0"
-        style={{ background: imageUrl ? undefined : gradient }}
-      >
-        {imageUrl && (
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
-        )}
-        <div className="absolute top-[8px] right-[8px] bg-[rgba(255,255,255,0.75)] rounded-[8px] px-[8px] py-[2px]">
-          <p className="font-semibold text-xs" style={{ color: categoryColor }}>{domain}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-[14px] px-[20px] py-[18px] flex-1">
       {/* 상단: 상태(좌) + 작성자(우) */}
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-[5px]">
@@ -112,6 +84,14 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
           <p className="font-semibold text-text-secondary text-sm">{leaderName}</p>
         </div>
       </div>
+
+      {/* 카테고리 */}
+      <p
+        className="font-semibold text-base leading-[18px]"
+        style={{ color: categoryColor }}
+      >
+        {domain}
+      </p>
 
       {/* 제목 */}
       <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
@@ -148,7 +128,6 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
           </p>
         ))}
       </div>
-      </div>{/* 콘텐츠 영역 끝 */}
     </a>
   );
 };
