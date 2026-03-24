@@ -182,26 +182,38 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
+    public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request) {
+
+        // repoUrl이 다른 프로젝트에 이미 등록되어 있는지 검사
+        gitRepositoryRepository.findByRepoUrl(request.repoUrl()).ifPresent(existing -> {
+            if (existing.getProject().getId().equals(projectId)) {
+                throw new IllegalArgumentException("이미 동일한 레포지토리가 등록되어 있습니다.");
+            }
+            throw new IllegalArgumentException("이미 다른 프로젝트에 등록된 레포지토리입니다.");
+        });
+
+        // 기존 레포 존재 여부에 따라 분기
+        Optional<GitRepository> existingRepo = gitRepositoryRepository.findByProject_Id(projectId);
+
+        if (existingRepo.isPresent()) {
+            // 기존 레포가 있으면 → 연관 데이터 포함 삭제 후 재등록
+            gitRepositoryRepository.delete(existingRepo.get());
+            gitRepositoryRepository.flush();
+            log.info("🗑️ 프로젝트 ID {}의 기존 레포지토리(ID: {}) 삭제 완료", projectId, existingRepo.get().getId());
+        }
+
+
 
         Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
 
-        // 중복 등록 방지
-        Optional<GitRepository> existingRepoOpt = gitRepositoryRepository.findByProject_Id(projectId);
-        if (existingRepoOpt.isPresent() && existingRepoOpt.get().getRepoUrl().equals(request.repoUrl())) {
-            throw new IllegalArgumentException("이미 동일한 깃허브 레포지토리가 등록되어 있습니다.");
-        }
-
+        // README 동기화 (실패해도 등록은 계속 진행)
         try {
             String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
             if (urlParts.length >= 2) {
                 String owner = urlParts[0];
                 String repo = urlParts[1].replace(".git", "");
-
-                // 리드미 텍스트 긁어오기
                 String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
-
                 if (readme != null && !readme.isBlank()) {
                     project.updateReadme(readme);
                     log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
@@ -212,11 +224,8 @@ public class ProjectService {
             log.warn("❌ README 가져오기 실패 (등록은 계속 진행): {}", e.getMessage());
         }
 
-        // 서버 시크릿 키 생성
         String webhookSecret = UUID.randomUUID().toString().replace("-", "");
-
-        GitRepository gitRepository = gitRepositoryRepository.findByProject_Id(projectId)
-            .orElseGet(() -> GitRepository.builder().project(project).build());
+        GitRepository gitRepository = GitRepository.builder().project(project).build();
 
         // 레포 URL이 변경된 경우 FK 의존 순서대로 기존 데이터 삭제
         if (gitRepository.getRepoUrl() != null && !gitRepository.getRepoUrl().equals(request.repoUrl())) {
@@ -230,13 +239,8 @@ public class ProjectService {
         gitRepository.updateRepoInfo(request.repoUrl(), webhookSecret);
         gitRepositoryRepository.save(gitRepository);
 
-        // 트랜잭션을 물고 있지 않도록 이벤트를 던지고 즉시 응답
         eventPublisher.publishEvent(new InitialPrSyncEvent(
-            gitRepository.getId(),
-            projectId,
-            request.repoUrl(),
-            request.githubToken(),
-            webhookSecret
+            gitRepository.getId(), projectId, request.repoUrl(), request.githubToken(), webhookSecret
         ));
 
         return new ProjectResponse.GitRepoRegistered(webhookSecret);

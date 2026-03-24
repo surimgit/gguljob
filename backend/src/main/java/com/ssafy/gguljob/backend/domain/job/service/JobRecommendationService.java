@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,51 @@ public class JobRecommendationService {
   private final JobRecommendationRepository jobRecommendationRepository;
   private final JobPostingRepository jobPostingRepository;
   private final ObjectMapper objectMapper;
+
+  @Cacheable(value = "allJobsScoring", key = "#userId")
+  public List<RecommendedJobDto> getAllJobsWithScoring(Long userId) {
+    Collection<JobRecommendationResponse> neo4jResults =
+        jobRecommendationRepository.getAllJobsWithScoring(userId);
+
+    List<JobRecommendationResponse> resultList = new java.util.ArrayList<>(neo4jResults);
+
+    if (resultList.isEmpty()) {
+      return List.of();
+    }
+
+    List<Long> jobIds =
+        resultList.stream().map(JobRecommendationResponse::getJobId).collect(Collectors.toList());
+
+    List<JobPosting> jobPostings = jobPostingRepository.findByIdIn(jobIds);
+    Map<Long, JobPosting> jobMap =
+        jobPostings.stream().collect(Collectors.toMap(JobPosting::getId, Function.identity()));
+
+    List<RecommendedJobDto> allResults =
+        resultList.stream().filter(neo -> jobMap.containsKey(neo.getJobId())).map(neo -> {
+          JobPosting dbJob = jobMap.get(neo.getJobId());
+          String DEFAULT_LOGO_URL = "https://cdn.gguljob.com/uploads/1234abcd_default-logo.png";
+          return RecommendedJobDto.builder().jobId(dbJob.getId())
+              .companyName(dbJob.getCompanyName() != null ? dbJob.getCompanyName() : "회사명 미상")
+              .title(dbJob.getTitle())
+              .region(dbJob.getLocation() != null ? dbJob.getLocation() : "위치 미상")
+              .experience(dbJob.getExperienceLevel() != null ? dbJob.getExperienceLevel() : "경력무관")
+              .contractType(dbJob.getContractType() != null ? dbJob.getContractType() : "정규직")
+              .salary(dbJob.getSalary() != null ? dbJob.getSalary() : "회사내규에 따름")
+              .url(dbJob.getHyperlink())
+              .deadline(dbJob.getDeadline() != null ? dbJob.getDeadline().toString() : null)
+              .matchStatus(neo.getMatchStatus()).topPercentile(neo.getTopPercentile())
+              .matchPercentage(neo.getFinalScore()).cutoffHigh(neo.getCutoffHigh())
+              .cutoffMedium(neo.getCutoffMedium()).averageScore(neo.getAverageScore())
+              .logoUrl((dbJob.getLogoUrl() != null && !dbJob.getLogoUrl().isBlank()) ? dbJob.getLogoUrl()
+                  : DEFAULT_LOGO_URL)
+              .techStacks(parseTechStacks(dbJob.getTechStacks()))
+              .jobCategory(dbJob.getJobCategory())
+              .build();
+        }).collect(Collectors.toList());
+
+    allResults.sort((a, b) -> Integer.compare(a.getTopPercentile(), b.getTopPercentile()));
+    return allResults;
+  }
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
     return getRecommendations(userId, 3, 0, false);
