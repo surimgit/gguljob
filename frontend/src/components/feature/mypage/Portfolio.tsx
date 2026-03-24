@@ -88,13 +88,7 @@ const Portfolio = () => {
             <SkeletonCard />
             <SkeletonCard />
           </div>
-        ) : portfolios.length >= 2 ? (
-          <div className="flex gap-4 h-full">
-            {portfolios.slice(0, 2).map((item) => (
-              <PortfolioCard key={item.portfolioId} item={item} />
-            ))}
-          </div>
-        ) : portfolios.length === 1 ? (
+        ) : portfolios.length > 0 ? (
           <div className="flex gap-4 h-full">
             <PortfolioCard item={portfolios[0]} />
             <NewPortfolioButton />
