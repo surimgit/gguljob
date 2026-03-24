@@ -8,6 +8,7 @@ public record PrItem(
     Integer prNumber,
     String title,
     PrStatus status,
+    String diff_url,
     LocalDateTime githubCreatedAt,
     LocalDateTime githubClosedAt
 ) {}
