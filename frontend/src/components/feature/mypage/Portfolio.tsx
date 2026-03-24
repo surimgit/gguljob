@@ -94,7 +94,9 @@ const Portfolio = () => {
             <NewPortfolioButton />
           </div>
         ) : (
-          <SectionEmptyState message="등록된 포트폴리오가 없습니다." />
+          <div className="flex gap-4 h-full">
+            <NewPortfolioButton />
+          </div>
         )}
       </div>
     </div>
