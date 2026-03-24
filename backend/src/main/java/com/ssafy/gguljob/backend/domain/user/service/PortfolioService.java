@@ -171,6 +171,24 @@ public class PortfolioService {
         );
     }
 
+    @Transactional
+    public void deletePortfolio(Long userId, Long portfolioId) {
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 포트폴리오입니다."));
+
+        if (!portfolio.getUser().getId().equals(userId)) {
+            throw new SecurityException("본인의 포트폴리오만 삭제할 수 있습니다.");
+        }
+
+        // S3 파일 삭제
+        String s3Key = s3ImageService.extractS3Key(portfolio.getS3Url());
+        s3ImageService.deleteObject(s3Key);
+
+        portfolioRepository.delete(portfolio);
+
+        log.info("🗑️ 포트폴리오 삭제 완료 - userId: {}, portfolioId: {}", userId, portfolioId);
+    }
+
     // ----------------------------------------------------------------
     // S3 파일 저장
     // ----------------------------------------------------------------

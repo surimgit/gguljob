@@ -33,6 +33,10 @@ export const downloadPortfolio = (portfolioId: number) =>
     responseType: 'text' as never,
   });
 
+/** DELETE /v1/portfolios/{id} — 포트폴리오 삭제 */
+export const deletePortfolioApi = (portfolioId: number) =>
+  api.delete(`/v1/portfolios/${portfolioId}`);
+
 /** 브라우저에서 .md 파일로 저장 */
 export const savePortfolioAsFile = async (portfolioId: number, fileName = '포트폴리오.md') => {
   const { data } = await downloadPortfolio(portfolioId);

@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,6 +61,16 @@ public class PortfolioController {
         PortfolioResponse.GenerateResult result =
             portfolioService.generatePortfolio(userDetails.getId(), request);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "포트폴리오 생성 성공", result));
+    }
+
+    @Operation(summary = "포트폴리오 삭제")
+    @DeleteMapping("/{portfolioId}")
+    public ResponseEntity<Void> deletePortfolio(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long portfolioId
+    ) {
+        portfolioService.deletePortfolio(userDetails.getId(), portfolioId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{portfolioId}/download")

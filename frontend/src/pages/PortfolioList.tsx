@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FilePlus, Briefcase } from 'lucide-react';
+import { ArrowLeft, Download, FilePlus, Briefcase, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getMyPortfolios, savePortfolioAsFile, type PortfolioSummary } from '../api/portfolio';
+import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, type PortfolioSummary } from '../api/portfolio';
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -43,6 +43,17 @@ const PortfolioList = () => {
       toast.error('다운로드에 실패했습니다.');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleDelete = async (item: PortfolioSummary) => {
+    if (!window.confirm(`"${item.title}"을(를) 삭제하시겠습니까?`)) return;
+    try {
+      await deletePortfolioApi(item.portfolioId);
+      setPortfolios((prev) => prev.filter((p) => p.portfolioId !== item.portfolioId));
+      toast.success('포트폴리오가 삭제되었습니다.');
+    } catch {
+      toast.error('삭제에 실패했습니다.');
     }
   };
 
@@ -114,15 +125,24 @@ const PortfolioList = () => {
                     </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDownload(item)}
-                  disabled={downloadingId === item.portfolioId}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary disabled:opacity-50"
-                >
-                  <Download className="w-4 h-4" />
-                  {downloadingId === item.portfolioId ? '다운로드 중...' : '다운로드'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(item)}
+                    disabled={downloadingId === item.portfolioId}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    {downloadingId === item.portfolioId ? '다운로드 중...' : '다운로드'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-red-200 bg-white hover:bg-red-50 transition-colors text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))
           )}
