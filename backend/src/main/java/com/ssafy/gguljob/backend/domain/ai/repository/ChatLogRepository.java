@@ -17,4 +17,5 @@ public interface ChatLogRepository extends JpaRepository<ChatLog, Long> {
         LocalDateTime end
     );
 
+    void deleteAllByProject_Id(Long projectId);
 }

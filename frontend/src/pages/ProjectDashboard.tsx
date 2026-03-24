@@ -16,6 +16,7 @@ import {
   Copy,
   Check,
   ExternalLink,
+  X,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
@@ -34,6 +35,7 @@ import {
   getTeamManagement,
   recommendTopics,
   updateProjectTopic,
+  disconnectGitRepo,
 } from "../api/projects";
 import UserProfileModal from "../components/feature/mypage/UserProfileModal";
 import { getCategoryColorPair } from "../constants/domains";
@@ -595,6 +597,39 @@ const ProjectDashboard = () => {
                           <Pencil className="w-3 h-3" />
                           수정
                         </button>
+                        {gitRepoInfo?.repoUrl && (
+                          <button
+                            onClick={() => {
+                              if (!id) return;
+                              if (!window.confirm("레포지토리 연동을 해제하시겠습니까?\nPR과 코드 리뷰 데이터가 모두 삭제됩니다.")) return;
+                              disconnectGitRepo(Number(id))
+                                .then(() => {
+                                  toast.success("레포지토리 연동이 해제되었습니다.");
+                                  localStorage.removeItem(`webhook_secret_${id}`);
+                                  setWebhookSecret(null);
+                                  fetchDashboard(Number(id));
+                                })
+                                .catch((err) => {
+                                  toast.error("연동 해제에 실패했습니다.");
+                                  console.error("레포 연동 해제 실패:", err);
+                                });
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid #FECACA",
+                              color: "var(--color-error)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#FEF2F2";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                            연동 해제
+                          </button>
+                        )}
                       </div>
                     </div>
 
