@@ -190,19 +190,7 @@ const PortfolioList = () => {
                       </button>
                     </div>
                   )}
-                  <div className="flex items-center gap-3">
-                    <span className="text-[12px] text-text-secondary">수정: {formatDate(item.updatedAt)}</span>
-                    <span
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium border"
-                      style={{
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text-secondary)',
-                        backgroundColor: 'var(--color-background)',
-                      }}
-                    >
-                      {item.isPublic ? '공개' : '비공개'}
-                    </span>
-                  </div>
+                  <span className="text-[12px] text-text-secondary">수정: {formatDate(item.updatedAt)}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button

@@ -27,9 +27,6 @@ const PortfolioCard = ({ item }: { item: PortfolioSummary }) => (
       <h3 className="text-[14px] font-bold text-text-primary">{item.title}</h3>
       <p className="text-[12px] text-text-secondary">수정: {formatDate(item.updatedAt)}</p>
     </div>
-    <span className="self-start mt-4 px-2.5 py-1 rounded-md text-[10px] text-text-secondary border border-border bg-[#f9fafb]">
-      {item.isPublic ? '공개' : '비공개'}
-    </span>
   </button>
 );
 
