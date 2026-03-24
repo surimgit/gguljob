@@ -6,12 +6,13 @@ import {
   Plus,
   Minus,
   UserPlus,
+  UserRound,
   X,
   Check,
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember, leaveProject, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deletePosition } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deletePosition } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
 import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName, DISPLAY_TO_ROLE } from "../../../../constants/skills";
 import type { RoleCode } from "../../../../constants/skills";
@@ -58,6 +59,7 @@ interface TeamManagementProps {
   applications: Application[];
   onDeleteRole: (roleId: string) => void;
   onLeaderDelegated?: () => void;
+  onRefresh?: () => void;
 }
 
 
@@ -704,27 +706,32 @@ const TeamManagement = ({
   projectId,
   onDeleteRole: _onDeleteRole,
   onLeaderDelegated,
+  onRefresh,
 }: TeamManagementProps) => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState(initialRoles);
   const [localMembers, setLocalMembers] = useState(members);
   const [applications, setApplications] = useState(initialApps);
 
+  const initialRolesJson = JSON.stringify(initialRoles);
+  const membersJson = JSON.stringify(members);
+  const initialAppsJson = JSON.stringify(initialApps);
+
   useEffect(() => {
     setRoles(initialRoles);
-  }, [initialRoles]);
+  }, [initialRolesJson]);
   useEffect(() => {
     setLocalMembers(members);
-  }, [members]);
+  }, [membersJson]);
   useEffect(() => {
     setApplications(initialApps);
-  }, [initialApps]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAppsJson]);
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const kickTarget = localMembers.find((m) => m.id === kickMemberId) ?? null;
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [delegateMemberId, setDelegateMemberId] = useState<string | null>(null);
   const delegateTarget = localMembers.find((m) => m.id === delegateMemberId) ?? null;
@@ -732,7 +739,8 @@ const TeamManagement = ({
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
-  const pendingCount = applications.filter((a) => a.status === "pending").length;
+  const roleNames = new Set(roles.map((r) => r.name));
+  const pendingCount = applications.filter((a) => a.status === "pending" && roleNames.has(a.role)).length;
 
   const isCurrentUserLeader = localMembers.some((m) => m.isLeader && m.isMe);
 
@@ -849,6 +857,7 @@ const TeamManagement = ({
       };
       setRoles((prev) => [...prev, newRole]);
       setShowRecruitModal(false);
+      onRefresh?.();
     } catch (err: any) {
       console.error('모집 공고 생성 실패:', err.response?.data ?? err);
     }
@@ -856,461 +865,271 @@ const TeamManagement = ({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
-        {/* ── 좌측: 팀원 모집 현황 ── */}
-        <div
-          className="rounded-2xl p-5 shadow-sm"
-          style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          {/* 헤더 */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
-            <div className="flex items-center gap-3">
-              <h3
-                className="text-lg font-bold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                팀원 모집 현황
-              </h3>
-              <span
-                className="text-sm font-medium"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                {totalCurrent}/{totalAll}명 충원
-              </span>
-            </div>
-            <button
-              onClick={() => setShowRecruitModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
-              style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
-            >
-              <UserPlus className="w-4 h-4" />
-              모집 직무 추가
-            </button>
-          </div>
-
-          {/* 직무 카드 목록 */}
-          <div className="flex flex-col gap-3">
-            {roles.map((role) => {
-              const color = getRoleColor(role.name);
-              const pct = role.total > 0 ? (role.current / role.total) * 100 : 0;
-
-              return (
-                <div
-                  key={role.id}
-                  className="rounded-2xl p-4 overflow-visible"
-                  style={{
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    boxShadow: "4px 4px 4px 0px rgba(0,0,0,0.25)",
-                  }}
-                >
-                  {/* 카드 상단: 직무명 + 상태 드롭다운 + 삭제 */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold" style={{ color }}>
-                      {getRoleDisplayName(role.name)}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <StatusDropdown
-                        roleId={role.id}
-                        currentStatus={role.status}
-                        onSelect={handleUpdateStatus}
-                      />
-                      <button
-                        onClick={() => handleDeleteRole(role.id)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                        style={{ color: "var(--color-text-tertiary)" }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 충원 현황 */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {role.current} / {role.total}명
-                    </span>
-                    <div
-                      className="flex-1 h-[6px] rounded-full overflow-hidden"
-                      style={{ background: "#f3f4f6" }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          background: pct >= 100 ? "var(--color-success)" : color,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 요구 스택 */}
-                  {role.stacks.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {role.stacks.map((stack) => (
-                        <span
-                          key={stack}
-                          className="px-2 py-0.5 rounded-md text-[11px] font-medium"
-                          style={{
-                            background: "var(--color-border)",
-                            color: "var(--color-text-secondary)",
-                          }}
-                        >
-                          {stack}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 구분선 + 모집 인원 조정 */}
-                  <div
-                    className="border-t pt-3 mt-1 flex items-center justify-between"
-                    style={{ borderColor: "var(--color-border)" }}
-                  >
-                    <span
-                      className="text-xs font-semibold"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      모집 인원 조정
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleUpdateCount(role.id, -1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                        style={{ border: "1px solid var(--color-border)" }}
-                      >
-                        <Minus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
-                      </button>
-                      <span
-                        className="text-sm font-bold w-6 text-center"
-                        style={{ color: "var(--color-text-primary)" }}
-                      >
-                        {role.total}
-                      </span>
-                      <button
-                        onClick={() => handleUpdateCount(role.id, 1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                        style={{ border: "1px solid var(--color-border)" }}
-                      >
-                        <Plus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 우측: 현재 팀원 ── */}
-        <div
-          className="rounded-2xl p-5 shadow-sm min-h-[280px]"
-          style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <h3
-            className="text-base font-bold mb-4"
-            style={{ color: "var(--color-text-primary)" }}
+      {/* ── 상단 액션 바 ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowRecruitModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
+            style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
           >
-            현재 팀원
-          </h3>
-
-          <div className="flex flex-col gap-4">
-            {Object.entries(membersByRole).map(([role, roleMembers]) => {
-              const color = getRoleColor(role);
-              return (
-                <div key={role}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold" style={{ color }}>
-                      {getRoleDisplayName(role)} {roleMembers.length}
-                    </span>
-                    <div
-                      className="flex-1 h-px"
-                      style={{ background: "var(--color-border)" }}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    {roleMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        role="button"
-                        tabIndex={0}
-                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
-                        onClick={() => setProfileUserId(Number(member.id))}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
-                      >
-                        {member.profileImageUrl ? (
-                          <img src={member.profileImageUrl} alt={member.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
-                        ) : (
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: getAvatarColor(member.name) }}
-                          >
-                            {member.name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span
-                            className="text-sm font-semibold truncate"
-                            style={{ color: "var(--color-text-primary)" }}
-                          >
-                            {member.name}
-                          </span>
-                          {member.isMe && (
-                            <span
-                              className="text-xs font-medium"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                            >
-                              (나)
-                            </span>
-                          )}
-                          {member.isLeader && (
-                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                          )}
-                        </div>
-                        <span
-                          className="text-xs font-bold flex-shrink-0 w-10 text-right"
-                          style={{ color: "var(--color-text-secondary)" }}
-                        >
-                          {member.contribution}c
-                        </span>
-                        {isCurrentUserLeader && !member.isLeader && (
-                          <>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDelegateMemberId(member.id); }}
-                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; e.currentTarget.style.color = "#F59E0B"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
-                            >
-                              <Crown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setKickMemberId(member.id); }}
-                              className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "var(--color-error)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── 하단 2열: 참가 신청 현황 + 팀원 추가하기 버튼 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-        {/* 좌측: 합류 신청 목록 */}
-        <div
-          className="rounded-2xl p-5 shadow-sm"
-          style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-        <div className="flex items-center justify-between mb-4">
-          <h3
-            className="text-lg font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            합류 신청 목록
-          </h3>
-          {pendingCount > 0 && (
-            <span
-              className="px-2.5 py-1 rounded-full text-xs font-bold"
-              style={{
-                background: "rgba(239,68,68,0.15)",
-                color: "var(--color-error)",
-              }}
-            >
-              {pendingCount}건 대기 중
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {applications.map((app) => {
-            const color = getRoleColor(app.role);
-            const isPending = app.status === "pending";
-            const isAccepted = app.status === "accepted";
-
-            return (
-              <div
-                key={app.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 py-3.5 rounded-xl"
-                style={{
-                  background: "#fafafa",
-                  border: "1px solid var(--color-border)",
-                }}
-              >
-                {app.profileImageUrl ? (
-                  <img src={app.profileImageUrl} alt={app.name} className="w-10 h-10 rounded-full flex-shrink-0 object-cover" />
-                ) : (
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                    style={{ background: getAvatarColor(app.name) }}
-                  >
-                    {app.name.charAt(0)}
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {app.name}
-                    </span>
-                    <span
-                      className="px-2 py-0.5 rounded-md text-[11px] font-bold"
-                      style={{ background: `${color}20`, color }}
-                    >
-                      {getRoleDisplayName(app.role)}
-                    </span>
-                    <span
-                      className="text-xs"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    >
-                      {app.appliedAt}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {app.stacks.map((stack) => (
-                      <span
-                        key={stack}
-                        className="px-2 py-0.5 rounded-md text-[11px] font-medium"
-                        style={{
-                          background: "var(--color-border)",
-                          color: "var(--color-text-secondary)",
-                        }}
-                      >
-                        {stack}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {isPending ? (
-                    <>
-                      <button
-                        onClick={() => setConfirmAcceptId(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
-                        style={{
-                          background: "var(--color-surface)",
-                          border: "1px solid var(--color-border)",
-                          color: "var(--color-text-secondary)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "var(--color-success)";
-                          e.currentTarget.style.color = "#fff";
-                          e.currentTarget.style.borderColor = "var(--color-success)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "var(--color-surface)";
-                          e.currentTarget.style.color = "var(--color-text-secondary)";
-                          e.currentTarget.style.borderColor = "var(--color-border)";
-                        }}
-                      >
-                        ✓ 수락
-                      </button>
-                      <button
-                        onClick={() => setConfirmRejectId(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
-                        style={{
-                          background: "var(--color-surface)",
-                          border: "1px solid var(--color-border)",
-                          color: "var(--color-text-secondary)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "var(--color-error)";
-                          e.currentTarget.style.color = "#fff";
-                          e.currentTarget.style.borderColor = "var(--color-error)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "var(--color-surface)";
-                          e.currentTarget.style.color = "var(--color-text-secondary)";
-                          e.currentTarget.style.borderColor = "var(--color-border)";
-                        }}
-                      >
-                        × 거절
-                      </button>
-                    </>
-                  ) : isAccepted ? (
-                    <>
-                      <button
-                        disabled
-                        className="px-4 py-2 rounded-lg text-xs font-bold text-white"
-                        style={{ background: "var(--color-text-tertiary)", cursor: "not-allowed" }}
-                      >
-                        수락됨
-                      </button>
-                      <button
-                        onClick={() => handleReject(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-bold text-white cursor-pointer"
-                        style={{ background: "var(--color-error)" }}
-                      >
-                        거절
-                      </button>
-                    </>
-                  ) : (
-                    <span
-                      className="px-4 py-2 rounded-lg text-xs font-bold"
-                      style={{ color: "var(--color-error)" }}
-                    >
-                      거절됨
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        </div>
-
-        {/* 우측: 팀원 추가하기 + 팀 나가기 버튼 */}
-        <div className="self-start w-full flex flex-col gap-2">
+            <UserPlus className="w-4 h-4" />
+            모집 직무 추가
+          </button>
           <button
             onClick={() => navigate(`/team-recommend/${projectId}`)}
-            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-            style={{
-              background: "var(--color-primary-hover)",
-              color: "var(--color-text-primary)",
-            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
+            style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
           >
             <Plus className="w-4 h-4" />
             팀원 추가하기
           </button>
-          <button
-            onClick={() => setShowLeaveModal(true)}
-            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-            style={{
-              background: "var(--color-surface-secondary, #e5e7eb)",
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            팀 나가기
-          </button>
         </div>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {totalCurrent}/{totalAll}명 충원
+          </span>
+        </div>
+      </div>
+
+      {/* ── 직무별 카드 그리드 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-[1200px]">
+        {roles.map((role) => {
+          const color = getRoleColor(role.name);
+          const roleMembers = membersByRole[role.name] ?? [];
+          const emptySlots = Math.max(0, role.total - roleMembers.length);
+          const roleApps = applications.filter(
+            (a) => a.role === role.name && a.status === "pending",
+          );
+
+          return (
+            <div
+              key={role.id}
+              className="rounded-2xl p-5 overflow-visible flex flex-col"
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "0px 2px 8px 0px rgba(0,0,0,0.06)",
+              }}
+            >
+              {/* ── 카드 헤더: 역할명 + 인원조정 + 상태 + 삭제 ── */}
+              <div className="flex items-center justify-between mb-4 mt-1">
+                <span className="text-base font-bold" style={{ color }}>
+                  {getRoleDisplayName(role.name)}
+                </span>
+                <div className="flex items-center gap-2">
+                  {/* 인원 조정 */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleUpdateCount(role.id, -1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                      style={{ border: "1px solid var(--color-border)" }}
+                    >
+                      <Minus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
+                    </button>
+                    <span
+                      className="text-sm font-bold w-6 text-center"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      {role.total}
+                    </span>
+                    <button
+                      onClick={() => handleUpdateCount(role.id, 1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                      style={{ border: "1px solid var(--color-border)" }}
+                    >
+                      <Plus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
+                    </button>
+                  </div>
+                  <StatusDropdown
+                    roleId={role.id}
+                    currentStatus={role.status}
+                    onSelect={handleUpdateStatus}
+                  />
+                  <button
+                    onClick={() => handleDeleteRole(role.id)}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── 멤버 슬롯 (세로 사각형 박스) ── */}
+              <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                {roleMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    role="button"
+                    tabIndex={0}
+                    className="group relative flex flex-col items-center justify-center gap-1.5 rounded-xl cursor-pointer hover:border-[var(--color-primary-hover)] transition-all"
+                    style={{
+                      background: "var(--color-background, #f7f8fa)",
+                      border: "1px solid var(--color-border)",
+                      width: "160px",
+                      height: "180px",
+                    }}
+                    onClick={() => setProfileUserId(Number(member.id))}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                  >
+                    {/* 1행: 프로필 사진 */}
+                    {member.profileImageUrl ? (
+                      <img src={member.profileImageUrl} alt={member.name} className="w-24 h-24 rounded-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-24 h-24 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                        style={{ background: getAvatarColor(member.name) }}
+                      >
+                        {member.name.charAt(0)}
+                      </div>
+                    )}
+                    {/* 2행: 이름 + 뱃지 */}
+                    <div className="flex items-center gap-0.5 max-w-full px-1 mt-2">
+                      {member.isLeader && <Crown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#F59E0B" }} />}
+                      <span
+                        className="text-base font-semibold truncate"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {member.name}
+                      </span>
+                      {member.isMe && (
+                        <span className="text-sm font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
+                      )}
+                    </div>
+                    {/* hover 시 관리 버튼 */}
+                    {isCurrentUserLeader && !member.isLeader && (
+                      <div className="hidden group-hover:flex absolute -top-1.5 -right-1.5 gap-0.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDelegateMemberId(member.id); }}
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B" }}
+                        >
+                          <Crown className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setKickMemberId(member.id); }}
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(239,68,68,0.1)", color: "var(--color-error)" }}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {/* 빈 슬롯 (세로 사각형 박스) */}
+                {Array.from({ length: emptySlots }).map((_, i) => (
+                  <div
+                    key={`empty-${i}`}
+                    className="rounded-xl flex flex-col items-center justify-center gap-2"
+                    style={{
+                      background: "var(--color-border, #e5e7eb)",
+                      width: "160px",
+                      height: "180px",
+                    }}
+                  >
+                    <UserRound className="w-10 h-10" style={{ color: "var(--color-text-tertiary)", opacity: 0.5 }} />
+                    <span className="text-xs font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── 요구 스택 ── */}
+              {role.stacks.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {role.stacks.map((stack) => (
+                    <span
+                      key={stack}
+                      className="px-2 py-0.5 rounded-md text-[11px] font-medium"
+                      style={{ background: "var(--color-border)", color: "var(--color-text-secondary)" }}
+                    >
+                      {stack}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* ── 합류 신청 목록 (해당 역할만) ── */}
+              {roleApps.length > 0 && (
+                <div
+                  className="border-t pt-3 mt-auto flex flex-col gap-2"
+                  style={{ borderColor: "var(--color-border)" }}
+                >
+                  <span
+                    className="text-xs font-bold mb-1"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    합류 신청 목록
+                  </span>
+                  {roleApps.map((app) => {
+                    const appColor = getRoleColor(app.role);
+                    return (
+                      <div
+                        key={app.id}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                        style={{ background: "#fafafa", border: "1px solid var(--color-border)" }}
+                      >
+                        {/* 아바타 */}
+                        {app.profileImageUrl ? (
+                          <img src={app.profileImageUrl} alt={app.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        ) : (
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ background: getAvatarColor(app.name) }}
+                          >
+                            {app.name.charAt(0)}
+                          </div>
+                        )}
+                        {/* 이름 + 뱃지 + 날짜 */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+                              {app.name}
+                            </span>
+                            <span
+                              className="px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                              style={{ background: `${appColor}20`, color: appColor }}
+                            >
+                              {getRoleDisplayName(app.role)}
+                            </span>
+                            <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
+                              {app.appliedAt}
+                            </span>
+                          </div>
+                        </div>
+                        {/* 수락/거절 버튼 */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => setConfirmAcceptId(app.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-success)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--color-success)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; e.currentTarget.style.color = "var(--color-text-secondary)"; e.currentTarget.style.borderColor = "var(--color-border)"; }}
+                          >
+                            ✓ 수락
+                          </button>
+                          <button
+                            onClick={() => setConfirmRejectId(app.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-error)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--color-error)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; e.currentTarget.style.color = "var(--color-text-secondary)"; e.currentTarget.style.borderColor = "var(--color-border)"; }}
+                          >
+                            × 거절
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* ── 팀원 모집하기 모달 ── */}
@@ -1506,59 +1325,6 @@ const TeamManagement = ({
         </div>
       )}
 
-      {/* ── 팀 나가기 확인 모달 ── */}
-      {showLeaveModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => setShowLeaveModal(false)}
-        >
-          <div
-            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
-            style={{ background: "var(--color-surface)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-red-100 rounded-2xl p-4 mb-2">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">팀 나가기</h2>
-            <p className="text-sm text-gray-500 text-center leading-relaxed">
-              정말 팀을 나가시겠습니까?
-              <br />
-              되돌릴 수 없습니다.
-            </p>
-            <div className="flex gap-3 w-full mt-2">
-              <button
-                onClick={() => setShowLeaveModal(false)}
-                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  if (!projectId) return;
-                  leaveProject(projectId)
-                    .then(() => {
-                      setShowLeaveModal(false);
-                      navigate('/projects');
-                    })
-                    .catch(() => {
-                      alert('팀 나가기에 실패했습니다. 다시 시도해주세요.');
-                    });
-                }}
-                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
-              >
-                나가기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── 팀장 위임 확인 모달 ── */}
       {delegateMemberId && delegateTarget && (
         <div
@@ -1629,9 +1395,7 @@ const TeamManagement = ({
 
 /* ── 팀원용 뷰 (리더 UI와 유사한 레이아웃) ── */
 const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null; projectId?: number }) => {
-  const navigate = useNavigate();
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [realMembers, setRealMembers] = useState<Member[]>([]);
   const [realRoles, setRealRoles] = useState<Role[]>([]);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
@@ -1650,20 +1414,47 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             contribution: 0,
             isLeader: m.userId === detail.leaderId,
             isMe: m.userId === currentUserId,
+            profileImageUrl: m.profileImageUrl,
           })));
         }
         if (detail.recruitments) {
-          setRealRoles(detail.recruitments.map((r: any) => {
-            const memberCount = (detail.currentMembers ?? []).filter((m: any) => m.role === r.role).length;
-            return {
-              id: r.positionId?.toString() ?? String(r.role),
-              name: getRoleDisplayName(r.role),
-              status: r.status === "RECRUITING" ? "open" : "closed",
-              current: r.currentCount > 0 ? r.currentCount : memberCount,
-              total: r.targetCount,
-              stacks: r.requireSkills ?? [],
-            };
-          }));
+          const roleMap = (detail.recruitments as any[]).reduce((acc: Record<string, Role>, r: any) => {
+              const displayName = getRoleDisplayName(r.role);
+              const memberCount = (detail.currentMembers ?? []).filter((m: any) => m.role === r.role).length;
+              const current = r.currentCount > 0 ? r.currentCount : memberCount;
+              if (acc[displayName]) {
+                acc[displayName].total += r.targetCount;
+                acc[displayName].current = memberCount;
+                acc[displayName].stacks = [...new Set([...acc[displayName].stacks, ...(r.requireSkills ?? [])])];
+                acc[displayName].status = acc[displayName].current >= acc[displayName].total ? "closed" : "open";
+              } else {
+                acc[displayName] = {
+                  id: r.positionId?.toString() ?? String(r.role),
+                  name: displayName,
+                  status: current >= r.targetCount ? "closed" : (r.status === "RECRUITING" ? "open" : "closed"),
+                  current,
+                  total: r.targetCount,
+                  stacks: r.requireSkills ?? [],
+                };
+              }
+              return acc;
+            }, {} as Record<string, Role>);
+          // 모집 직무가 없지만 멤버가 있는 역할도 카드로 추가
+          (detail.currentMembers ?? []).forEach((m: any) => {
+            const displayName = getRoleDisplayName(m.role);
+            if (!roleMap[displayName]) {
+              const count = (detail.currentMembers ?? []).filter((cm: any) => cm.role === m.role).length;
+              roleMap[displayName] = {
+                id: `member-role-${m.role}`,
+                name: displayName,
+                status: "closed",
+                current: count,
+                total: count,
+                stacks: [],
+              };
+            }
+          });
+          setRealRoles(Object.values(roleMap) as Role[]);
         }
       })
       .catch(() => {});
@@ -1681,262 +1472,137 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ── 상단 2열 레이아웃 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
-        {/* ── 좌측: 팀원 모집 현황 (읽기전용) ── */}
-        <div
-          className="rounded-2xl p-5 shadow-sm"
-          style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
-            <div className="flex items-center gap-3">
-              <h3
-                className="text-base font-bold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                팀원 모집 현황
-              </h3>
-              <span
-                className="text-sm font-medium"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                {totalMembers}/{totalTarget}명 충원
-              </span>
-            </div>
-          </div>
+      {/* ── 상단 액션 바 ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {totalMembers}/{totalTarget}명 충원
+          </span>
+        </div>
+      </div>
 
-          <div className="flex flex-col gap-3">
-            {roles.map((role) => {
-              const color = getRoleColor(role.name);
-              const pct = role.total > 0 ? (role.current / role.total) * 100 : 0;
+      {/* ── 직무별 카드 그리드 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-[1200px]">
+        {roles.map((role) => {
+          const color = getRoleColor(role.name);
+          const roleMembers = membersByRole[role.name] ?? [];
+          const emptySlots = Math.max(0, role.total - roleMembers.length);
 
-              return (
-                <div
-                  key={role.id}
-                  className="rounded-2xl p-4 overflow-visible"
+          return (
+            <div
+              key={role.id}
+              className="rounded-2xl p-5 overflow-visible flex flex-col"
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "0px 2px 8px 0px rgba(0,0,0,0.06)",
+              }}
+            >
+              {/* ── 카드 헤더: 역할명 + 인원 + 상태 ── */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-bold" style={{ color }}>
+                    {getRoleDisplayName(role.name)}
+                  </span>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    {role.current}/{role.total}
+                  </span>
+                </div>
+                <span
+                  className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    boxShadow: "4px 4px 4px 0px rgba(0,0,0,0.25)",
+                    background: role.status === "open" ? "rgba(34,197,94,0.1)" : "var(--color-border)",
+                    color: role.status === "open" ? "#22c55e" : "var(--color-text-tertiary)",
                   }}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold" style={{ color }}>
-                      {role.name}
-                    </span>
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        background: role.status === "open" ? "rgba(34,197,94,0.1)" : "var(--color-border)",
-                        color: role.status === "open" ? "#22c55e" : "var(--color-text-tertiary)",
-                      }}
-                    >
-                      {role.status === "open" ? "● 모집 중" : "모집 완료"}
-                    </span>
-                  </div>
+                  {role.status === "open" ? "모집 중" : "모집 완료"}
+                </span>
+              </div>
 
-                  <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {role.current} / {role.total}명
-                    </span>
-                    <div
-                      className="flex-1 h-[6px] rounded-full overflow-hidden"
-                      style={{ background: "#f3f4f6" }}
-                    >
+              {/* ── 멤버 슬롯 (세로 사각형 박스) ── */}
+              <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                {roleMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    role="button"
+                    tabIndex={0}
+                    className="relative flex flex-col items-center justify-center gap-1.5 rounded-xl cursor-pointer hover:border-[var(--color-primary-hover)] transition-all"
+                    style={{
+                      background: "var(--color-background, #f7f8fa)",
+                      border: "1px solid var(--color-border)",
+                      width: "160px",
+                      height: "180px",
+                    }}
+                    onClick={() => setProfileUserId(Number(member.id))}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                  >
+                    {/* 1행: 프로필 사진 */}
+                    {member.profileImageUrl ? (
+                      <img src={member.profileImageUrl} alt={member.name} className="w-24 h-24 rounded-full object-cover" />
+                    ) : (
                       <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          background: pct >= 100 ? "var(--color-success)" : color,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {role.stacks.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {role.stacks.map((stack) => (
-                        <span
-                          key={stack}
-                          className="px-2 py-0.5 rounded-md text-[11px] font-medium"
-                          style={{
-                            background: "var(--color-border)",
-                            color: "var(--color-text-secondary)",
-                          }}
-                        >
-                          {stack}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 우측: 현재 팀원 + 팀 나가기 ── */}
-        <div className="flex flex-col gap-3">
-          <div
-            className="rounded-2xl p-5 shadow-sm min-h-[280px]"
-            style={{
-              background: "var(--color-surface)",
-              border: "1px solid var(--color-border)",
-            }}
-          >
-            <h3
-              className="text-lg font-bold mb-4"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              현재 팀원
-            </h3>
-
-            <div className="flex flex-col gap-4">
-              {Object.entries(membersByRole).map(([role, roleMembers]) => {
-                const color = getRoleColor(role);
-                return (
-                  <div key={role}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-bold" style={{ color }}>
-                        {getRoleDisplayName(role)} {roleMembers.length}
-                      </span>
-                      <div
-                        className="flex-1 h-px"
-                        style={{ background: "var(--color-border)" }}
-                      />
-                    </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    {roleMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
-                        onClick={() => setProfileUserId(Number(member.id))}
+                        className="w-24 h-24 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                        style={{ background: getAvatarColor(member.name) }}
                       >
-                        {member.profileImageUrl ? (
-                          <img src={member.profileImageUrl} alt={member.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
-                        ) : (
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: getAvatarColor(member.name) }}
-                          >
-                            {member.name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span
-                            className="text-sm font-semibold truncate"
-                            style={{ color: "var(--color-text-primary)" }}
-                          >
-                            {member.name}
-                          </span>
-                          {member.isMe && (
-                            <span
-                              className="text-xs font-medium"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                            >
-                              (나)
-                            </span>
-                          )}
-                          {member.isLeader && (
-                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                          )}
-                        </div>
-                        <span
-                          className="text-xs font-bold flex-shrink-0 w-10 text-right"
-                          style={{ color: "var(--color-text-secondary)" }}
-                        >
-                          {member.contribution}c
-                        </span>
+                        {member.name.charAt(0)}
                       </div>
-                    ))}
+                    )}
+                    {/* 2행: 이름 + 뱃지 */}
+                    <div className="flex items-center gap-0.5 max-w-full px-1 mt-2">
+                      {member.isLeader && <Crown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#F59E0B" }} />}
+                      <span
+                        className="text-base font-semibold truncate"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {member.name}
+                      </span>
+                      {member.isMe && (
+                        <span className="text-sm font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
+                      )}
+                    </div>
                   </div>
+                ))}
+                {/* 빈 슬롯 */}
+                {Array.from({ length: emptySlots }).map((_, i) => (
+                  <div
+                    key={`empty-${i}`}
+                    className="rounded-xl flex flex-col items-center justify-center gap-2"
+                    style={{
+                      background: "var(--color-border, #e5e7eb)",
+                      width: "160px",
+                      height: "180px",
+                    }}
+                  >
+                    <UserRound className="w-10 h-10" style={{ color: "var(--color-text-tertiary)", opacity: 0.5 }} />
+                    <span className="text-xs font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── 요구 스택 ── */}
+              {role.stacks.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {role.stacks.map((stack) => (
+                    <span
+                      key={stack}
+                      className="px-2 py-0.5 rounded-md text-[11px] font-medium"
+                      style={{ background: "var(--color-border)", color: "var(--color-text-secondary)" }}
+                    >
+                      {stack}
+                    </span>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-        </div>
-      </div>
-
-      {/* ── 하단 2열: 팀 나가기 버튼 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-        <div />
-        <div className="self-start w-full flex flex-col gap-2">
-          <button
-            onClick={() => setShowLeaveModal(true)}
-            className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-            style={{
-              background: "var(--color-surface-secondary, #e5e7eb)",
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            팀 나가기
-          </button>
-        </div>
-      </div>
-
-      {/* ── 팀 나가기 확인 모달 ── */}
-      {showLeaveModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => setShowLeaveModal(false)}
-        >
-          <div
-            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
-            style={{ background: "var(--color-surface)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-red-100 rounded-2xl p-4 mb-2">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
+              )}
             </div>
-            <h2 className="text-xl font-bold text-gray-900">팀 나가기</h2>
-            <p className="text-sm text-gray-500 text-center leading-relaxed">
-              정말 팀을 나가시겠습니까?
-              <br />
-              되돌릴 수 없습니다.
-            </p>
-            <div className="flex gap-3 w-full mt-2">
-              <button
-                onClick={() => setShowLeaveModal(false)}
-                className="flex-1 py-3 rounded-2xl border border-border text-text-primary font-medium text-base hover:bg-background transition-colors cursor-pointer"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  if (!projectId) return;
-                  leaveProject(projectId)
-                    .then(() => {
-                      setShowLeaveModal(false);
-                      navigate('/projects');
-                    })
-                    .catch(() => {
-                      alert('팀 나가기에 실패했습니다. 다시 시도해주세요.');
-                    });
-                }}
-                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-base hover:bg-red-600 transition-colors cursor-pointer"
-              >
-                나가기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {profileUserId !== null && (
         <UserProfileModal
@@ -1992,19 +1658,51 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
       }, {})
     : {};
 
-  const roles: Role[] = detail
-    ? detail.recruitments.map((r) => {
+  // 같은 역할의 recruitment를 합쳐서 하나의 카드로 만듦
+  const rolesFromRecruitments: Record<string, Role> = detail
+    ? detail.recruitments.reduce<Record<string, Role>>((acc, r) => {
+        const displayName = getRoleDisplayName(r.role);
         const computedCount = memberCountByRole[r.role] ?? 0;
         const current = r.currentCount > 0 ? r.currentCount : computedCount;
-        return {
-          id: r.positionId.toString(),
-          name: getRoleDisplayName(r.role),
-          status: current >= r.targetCount ? "closed" : (r.status === "RECRUITING" ? "open" : "closed"),
-          current,
-          total: r.targetCount,
-          stacks: r.requireSkills ?? [],
+        if (acc[displayName]) {
+          acc[displayName].total += r.targetCount;
+          acc[displayName].current = computedCount;
+          acc[displayName].stacks = [...new Set([...acc[displayName].stacks, ...(r.requireSkills ?? [])])];
+          acc[displayName].status = acc[displayName].current >= acc[displayName].total ? "closed" : "open";
+        } else {
+          acc[displayName] = {
+            id: r.positionId.toString(),
+            name: displayName,
+            status: current >= r.targetCount ? "closed" : (r.status === "RECRUITING" ? "open" : "closed"),
+            current,
+            total: r.targetCount,
+            stacks: r.requireSkills ?? [],
+          };
+        }
+        return acc;
+      }, {})
+    : {};
+
+  // 모집 직무가 없지만 멤버가 있는 역할도 카드로 추가
+  if (detail) {
+    detail.currentMembers.forEach((m: any) => {
+      const displayName = getRoleDisplayName(m.role);
+      if (!rolesFromRecruitments[displayName]) {
+        const count = memberCountByRole[m.role] ?? 0;
+        rolesFromRecruitments[displayName] = {
+          id: `member-role-${m.role}`,
+          name: displayName,
+          status: "closed",
+          current: count,
+          total: count,
+          stacks: [],
         };
-      })
+      }
+    });
+  }
+
+  const roles: Role[] = detail
+    ? Object.values(rolesFromRecruitments)
     : dashboard ? dashboardToRoles(dashboard) : [];
 
   const members: Member[] = detail
@@ -2024,7 +1722,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
     ? detail.pendingRequests.map((r) => ({
         id: r.requestId.toString(),
         name: r.userName,
-        role: r.positionName,
+        role: getRoleDisplayName(r.positionName),
         appliedAt: new Date(r.createdAt).toLocaleDateString("ko-KR"),
         stacks: r.techStacks,
         status: "pending" as const,
@@ -2044,6 +1742,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
         if (projectId && !isNaN(Number(id))) deletePosition(projectId, Number(id)).catch(() => alert('직무 삭제에 실패했습니다.'));
       }}
       onLeaderDelegated={() => { fetchDetail(); onLeaderChanged?.(); }}
+      onRefresh={fetchDetail}
     />
   );
 };
