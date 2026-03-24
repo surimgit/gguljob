@@ -55,6 +55,7 @@ public class UserService {
 
         private final ApplicationEventPublisher eventPublisher;
 
+        @Transactional
         public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
@@ -78,6 +79,7 @@ public class UserService {
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
         }
 
+        @Transactional
         public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
