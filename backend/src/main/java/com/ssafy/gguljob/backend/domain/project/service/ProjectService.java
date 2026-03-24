@@ -4,6 +4,8 @@ import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
 import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
@@ -34,7 +36,7 @@ import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -321,9 +323,26 @@ public class ProjectService {
 
         boolean isLeader = project.getLeader().getId().equals(loginUserId);
 
+        List<ProjectPosition> positions = projectPositionRepository.findAllByProjectId(projectId);
+
+        Map<Long, String> positionMap = positions.stream()
+            .collect(Collectors.toMap(ProjectPosition::getId, p -> p.getRole().name()));
+
         // 팀원 모집 현황 리스트
-        List<RecruitmentStatusDto> recruitments = projectPositionRepository.findAllByProjectId(projectId).stream()
-            .map(RecruitmentStatusDto::from)
+        List<RecruitmentStatusDto> recruitments = positions.stream()
+            .map(position -> {
+                List<String> skillNames = List.of();
+                if (position.getRequireSkills() != null && !position.getRequireSkills().isEmpty()) {
+                    List<Long> skillIds = Arrays.stream(position.getRequireSkills().split(","))
+                        .map(String::trim)
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                    skillNames = skillRepository.findAllById(skillIds).stream()
+                        .map(Skill::getName)
+                        .collect(Collectors.toList());
+                }
+                return RecruitmentStatusDto.of(position, skillNames);
+            })
             .collect(Collectors.toList());
 
         // 현재 팀원 리스트
@@ -333,23 +352,23 @@ public class ProjectService {
 
         // 참가 신청 현황
         List<JoinRequest> pendingRequestsEntities = joinRequestRepository.findPendingRequestsByProjectId(projectId);
-        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream().map(request -> {
-            String positionName = "미지정";
-            if (request.getPositionId() != null) {
-                positionName = projectPositionRepository.findById(request.getPositionId())
-                    .map(pos -> pos.getRole().name())
-                    .orElse("UNKNOWN");
-            }
+        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream()
+            .map(request -> {
+                String positionName = request.getPositionId() != null
+                    ? positionMap.getOrDefault(request.getPositionId(), "UNKNOWN")
+                    : "미지정";
 
-            List<String> techStacks = request.getUser().getUserSkills().stream()
-                .map(userSkill -> userSkill.getSkill().getName())
-                .collect(Collectors.toList());
+                List<String> techStacks = request.getUser().getUserSkills().stream()
+                    .map(userSkill -> userSkill.getSkill().getName())
+                    .collect(Collectors.toList());
 
-            return PendingJoinRequestDto.of(request, positionName, techStacks);
-        }).collect(Collectors.toList());
+                return PendingJoinRequestDto.of(request, positionName, techStacks);
+            })
+            .collect(Collectors.toList());
 
         return TeamManagementResponseDto.builder()
             .isLeader(isLeader)
+            .leaderId(project.getLeader().getId())
             .recruitments(recruitments)
             .currentMembers(currentMembers)
             .pendingRequests(pendingRequests)
