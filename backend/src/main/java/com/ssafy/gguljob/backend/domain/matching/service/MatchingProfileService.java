@@ -44,7 +44,7 @@ public class MatchingProfileService {
         var expNode = user.getExperience() != null ? ExperienceNode.builder().level(user.getExperience().name()).build() : null;
 
         UserNode userNode = UserNode.builder()
-            .id(String.valueOf(user.getId()))
+            .id(user.getId())
             .userName(user.getUserName())
             .skills(skillNodes)
             .roles(roleNodes)

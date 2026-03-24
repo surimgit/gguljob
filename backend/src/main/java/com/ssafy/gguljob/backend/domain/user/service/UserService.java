@@ -61,7 +61,7 @@ public class UserService {
 
                 user.updateOnboarding(requestDto.getDescription(), requestDto.getRoles(),
                                 requestDto.getExperience(), requestDto.getMbti(),
-                                requestDto.getTeamTendency());
+                                requestDto.getTeamTendency(), requestDto.getWorkExperience());
 
                 skillService.saveUserSkills(user, requestDto.getSkills());
 
@@ -170,6 +170,7 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
@@ -275,6 +276,7 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()

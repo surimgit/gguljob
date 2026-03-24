@@ -41,7 +41,8 @@ public class SecurityConfig {
             "/api/v1/auth/refresh",
             "/api/v1/auth/logout",
             "/api/v1/github/webhook",
-            "/api/v1/jobs/recommended/**"
+            "/api/v1/jobs/recommended/**",
+            "/api/v1/admin/neo4j/**"
     };
 
     @Bean

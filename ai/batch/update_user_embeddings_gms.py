@@ -59,6 +59,7 @@ def get_user_profiles():
             u.user_id,
             u.description,
             u.experience,
+            u.work_experience,
             u.team_tendency,
             u.mbti,
             GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', ') AS skills,
@@ -80,13 +81,22 @@ def get_user_profiles():
     return results
 
 
-def build_embedding_text(user_id, description, experience, tendency, mbti, skills, goals, roles, readme):
+WORK_EXPERIENCE_MAP = {
+    'NEWCOMER': None,           # 신입은 임베딩에 굳이 안 넣어도 됨
+    'ONE_TO_THREE': '1~3년',
+    'FOUR_TO_SIX': '4~6년',
+    'MORE_THAN_SEVEN': '7년 이상',
+}
+
+def build_embedding_text(user_id, description, experience, work_experience, tendency, mbti, skills, goals, roles, readme):
     # 프로필 텍스트 (항상 생성)
     profile_parts = []
     if roles:
         profile_parts.append(f"직무: {roles}")
     if experience:
-        profile_parts.append(f"경험 수준: {EXPERIENCE_MAP.get(experience, experience)}")
+        profile_parts.append(f"개발 경험: {EXPERIENCE_MAP.get(experience, experience)}")
+    if work_experience and WORK_EXPERIENCE_MAP.get(work_experience):
+        profile_parts.append(f"실무 경험: {WORK_EXPERIENCE_MAP[work_experience]}")
     if skills:
         profile_parts.append(f"보유 스킬: {skills}")
     if goals:
@@ -151,13 +161,13 @@ if __name__ == "__main__":
     profiles = get_user_profiles()
     print(f"   -> 총 {len(profiles)}명 조회 완료\n")
 
-    readme_count = sum(1 for row in profiles if row[8] and row[8].strip())
+    readme_count = sum(1 for row in profiles if row[9] and row[9].strip())
     print(f"   소스 분류: README+프로필 {readme_count}명 / 프로필 텍스트만 {len(profiles) - readme_count}명\n")
 
     user_embeddings = []
     print("2. GMS를 통해 임베딩 벡터 생성 중...")
-    for idx, (user_id, description, experience, tendency, mbti, skills, goals, roles, readme) in enumerate(profiles, 1):
-        text = build_embedding_text(user_id, description, experience, tendency, mbti, skills, goals, roles, readme)
+    for idx, (user_id, description, experience, work_experience, tendency, mbti, skills, goals, roles, readme) in enumerate(profiles, 1):
+        text = build_embedding_text(user_id, description, experience, work_experience, tendency, mbti, skills, goals, roles, readme)
         if not text:
             print(f"   [건너뜀] User {user_id} - 임베딩 생성 가능한 데이터 없음")
             continue
