@@ -173,10 +173,12 @@ const PortfolioCreate = () => {
     setGenerating(true);
     try {
       const { data: result } = await generatePortfolio({ tsIds: selectedTs });
+      console.log('generatePortfolio result:', result);
       // 생성된 포트폴리오 마크다운 다운로드
       const { data: md } = await downloadPortfolio(result.data.portfolioId);
-      setGeneratedMd(md);
-    } catch {
+      setGeneratedMd(typeof md === 'string' ? md : new TextDecoder().decode(md as unknown as ArrayBuffer));
+    } catch (err) {
+      console.error('포트폴리오 생성 실패:', err);
       toast.error('포트폴리오 생성에 실패했습니다.');
     } finally {
       setGenerating(false);

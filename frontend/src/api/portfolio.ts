@@ -21,7 +21,7 @@ export interface PortfolioSummary {
 
 /** POST /v1/portfolios/generate — AI 포트폴리오 생성 */
 export const generatePortfolio = (data: PortfolioGenerateRequest) =>
-  api.post<{ data: PortfolioGenerateResult }>('/v1/portfolios/generate', data);
+  api.post<{ data: PortfolioGenerateResult }>('/v1/portfolios/generate', data, { timeout: 120000 });
 
 /** GET /v1/portfolios — 내 포트폴리오 목록 */
 export const getMyPortfolios = () =>
