@@ -48,15 +48,27 @@ const NewPortfolioButton = () => {
 };
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 flex-1 min-h-[10rem] animate-pulse">
+    <div className="flex flex-col gap-1">
+      <div className="h-4 bg-gray-200 rounded w-2/3" />
+      <div className="h-3 bg-gray-200 rounded w-1/2" />
+    </div>
+    <div className="h-5 bg-gray-200 rounded w-12 mt-4" />
+  </div>
+);
+
 const Portfolio = () => {
   const [portfolios, setPortfolios] = useState<PortfolioSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getMyPortfolios()
       .then(({ data }) => {
         setPortfolios(data.data ?? []);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -71,19 +83,20 @@ const Portfolio = () => {
 
       {/* 카드 그리드 */}
       <div className="flex-1">
-        {portfolios.length >= 2 ? (
+        {isLoading ? (
           <div className="flex gap-4 h-full">
-            {portfolios.slice(0, 2).map((item) => (
-              <PortfolioCard key={item.portfolioId} item={item} />
-            ))}
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
-        ) : portfolios.length === 1 ? (
+        ) : portfolios.length > 0 ? (
           <div className="flex gap-4 h-full">
             <PortfolioCard item={portfolios[0]} />
             <NewPortfolioButton />
           </div>
         ) : (
-          <SectionEmptyState message="등록된 포트폴리오가 없습니다." />
+          <div className="flex gap-4 h-full">
+            <NewPortfolioButton />
+          </div>
         )}
       </div>
     </div>

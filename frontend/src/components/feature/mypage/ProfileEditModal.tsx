@@ -1,11 +1,37 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Camera, Trash2, Check, Loader2 } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import { BaseModal, TechStackInput } from '../../common';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, ROLE_TO_API } from '../../../constants/skills';
 import toast from 'react-hot-toast';
+
+// ── 크롭 유틸 ─────────────────────────────────────────────────────────────────
+const createCroppedImage = async (imageSrc: string, pixelCrop: Area): Promise<File> => {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => { image.onload = resolve; });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, pixelCrop.width, pixelCrop.height,
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(new File([blob!], 'profile.jpg', { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.9);
+  });
+};
 
 
 const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
@@ -46,6 +72,32 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const [showImageMenu, setShowImageMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageMenuRef = useRef<HTMLDivElement>(null);
+
+  // 크롭 상태
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handleCropConfirm = async () => {
+    if (!cropImageSrc || !croppedAreaPixels) return;
+    const croppedFile = await createCroppedImage(cropImageSrc, croppedAreaPixels);
+    setImageFile(croppedFile);
+    setForm((prev) => ({ ...prev, avatarUrl: URL.createObjectURL(croppedFile) }));
+    setCropImageSrc(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  const handleCropCancel = () => {
+    setCropImageSrc(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
 
   // 모달이 열릴 때마다 최신 데이터로 동기화
   useEffect(() => {
@@ -106,9 +158,9 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
     const url = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, avatarUrl: url }));
+    setCropImageSrc(url);
+    e.target.value = '';
   };
 
   const [isDeletingImage, setIsDeletingImage] = useState(false);
@@ -177,6 +229,75 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           <X className="w-4 h-4 text-gray-600" />
         </button>
       </div>
+
+      {/* 이미지 크롭 오버레이 */}
+      {cropImageSrc && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-[400px] overflow-hidden">
+            {/* 크롭 헤더 */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+              <span className="text-[15px] font-bold text-text-primary">프로필 사진 편집</span>
+              <button
+                type="button"
+                onClick={handleCropCancel}
+                className="w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+
+            {/* 크롭 영역 */}
+            <div className="relative w-full h-[300px] bg-gray-900">
+              <Cropper
+                image={cropImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            {/* 줌 컨트롤 + 버튼 */}
+            <div className="px-6 py-4 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                </svg>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 accent-[#F2B705] cursor-pointer"
+                />
+                <span className="text-[11px] text-gray-400 font-medium w-8 text-right">{zoom.toFixed(1)}x</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCropCancel}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCropConfirm}
+                  className="flex-1 py-2.5 rounded-xl bg-[#F2B705] hover:bg-[#e0a804] text-white text-sm font-bold transition-colors shadow-[0_2px_8px_rgba(242,183,5,0.3)]"
+                >
+                  적용하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
         {/* 기본 정보 영역 */}
