@@ -111,6 +111,9 @@ export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
 
+export const disconnectGitRepo = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/git-repo`);
+
 /* ── 모집 공고 ── */
 
 export const createRecruitment = (projectId: number, body: { role: string; targetCount: number; requireSkills: string[] }) =>

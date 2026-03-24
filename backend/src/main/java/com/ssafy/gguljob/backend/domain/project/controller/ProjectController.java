@@ -129,6 +129,16 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Git 레포지토리 연동 해제", description = "프로젝트에 연결된 Git 레포지토리와 관련 PR/리뷰 데이터를 모두 삭제합니다.")
+    @DeleteMapping("/{projectId}/git-repo")
+    public ResponseEntity<Void> disconnectGitRepository(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        projectService.disconnectGitRepository(userDetails.getId(), projectId);
+        return ResponseEntity.noContent().build();
+    }
+
     // 팀원 관리 (모집 현황, 현재 팀원, 참가 신청 현황)
     @Operation(summary = "팀원 관리 페이지 상세 조회", description = "프로젝트 리더가 팀원 관리 페이지의 모든 정보(모집, 멤버, 신청)를 조회합니다.")
     @GetMapping("/{projectId}/members/detail")

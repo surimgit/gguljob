@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PrReviewRepository extends JpaRepository<PrReview, Long> {
     List<PrReview> findByPullRequest_Id(Long prId);
+
+    void deleteAllByPullRequest_Project_Id(Long projectId);
 }

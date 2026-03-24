@@ -1,7 +1,7 @@
 import api from './index';
 
 // 백엔드 NotificationCategory enum
-export type NotificationCategory = 'TEAM' | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING';
+export type NotificationCategory = 'TEAM' | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING' | 'GITHUB';
 
 export interface NotificationDto {
   notificationId: number;
