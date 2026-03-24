@@ -43,6 +43,7 @@ const Navbar = () => {
   const { isAuthenticated, logout } = useAuthStore();
   const headerRef = useRef<HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -262,7 +263,7 @@ const Navbar = () => {
                   마이페이지
                 </span>
               </Link>
-              <button onClick={handleLogout} className="group relative p-2 rounded-lg text-text-brown hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="로그아웃">
+              <button onClick={() => setShowLogoutConfirm(true)} className="group relative p-2 rounded-lg text-text-brown hover:text-primary-hover hover:bg-primary-soft cursor-pointer transition-all" aria-label="로그아웃">
                 <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
@@ -354,7 +355,7 @@ const Navbar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </Link>
-                <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
+                <button onClick={() => { setShowLogoutConfirm(true); closeMobileMenu(); }} className="text-icon hover:text-text-primary transition-colors" aria-label="로그아웃">
                   <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
@@ -365,6 +366,40 @@ const Navbar = () => {
             )}
           </div>
         </div>
+      )}
+      {/* 로그아웃 확인 모달 */}
+      {showLogoutConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 pointer-events-none">
+            <div className="bg-white rounded-2xl w-full max-w-[380px] p-6 shadow-2xl pointer-events-auto text-center">
+              <div className="text-4xl mb-3">👋</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                로그아웃 하시겠습니까?
+              </h3>
+              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                다시 로그인하면 이전 데이터를 그대로 이용할 수 있습니다.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    handleLogout();
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+                >
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </header>
   );
