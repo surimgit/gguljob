@@ -56,7 +56,7 @@ public class MatchingService {
             .toList();
 
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
-            String.valueOf(userId),
+            userId,
             joinedProjectIds,
             keyword,
             domain,
@@ -88,9 +88,9 @@ public class MatchingService {
             ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
             : PageRequest.of(0, 10);
         // 제외할 유저
-        List<String> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
+        List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
             .stream()
-            .map(String::valueOf)
+            .map(Long::valueOf)
             .toList();
 
         // Neo4j 쿼리

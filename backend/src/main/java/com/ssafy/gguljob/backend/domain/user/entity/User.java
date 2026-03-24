@@ -11,6 +11,7 @@ import com.ssafy.gguljob.backend.domain.user.type.ExperienceLevel;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.domain.user.type.TeamTendency;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
 
 import jakarta.persistence.CascadeType;
@@ -71,6 +72,10 @@ public class User extends BaseTimeEntity {
     @Column(name = "team_tendency", length = 50)
     private TeamTendency teamTendency;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_experience", length = 50)
+    private WorkExperienceYear workExperience;
+
     @Column(name = "profile_image_url", length = 255)
     private String profileImageUrl;
 
@@ -103,7 +108,8 @@ public class User extends BaseTimeEntity {
     }
 
     public void updateOnboarding(String description, List<PositionType> roles,
-            ExperienceLevel experience, String mbti, TeamTendency teamTendency) {
+            ExperienceLevel experience, String mbti, TeamTendency teamTendency,
+            WorkExperienceYear workExperience) {
         this.description = description;
         this.roles.clear();
         if (roles != null) {
@@ -112,6 +118,7 @@ public class User extends BaseTimeEntity {
         this.experience = experience;
         this.mbti = mbti;
         this.teamTendency = teamTendency;
+        this.workExperience = workExperience;
     }
 
     // 프로필 정보 수정용
@@ -124,6 +131,8 @@ public class User extends BaseTimeEntity {
         }
         if (request.getExperience() != null)
             this.experience = request.getExperience();
+        if (request.getWorkExperience() != null)
+            this.workExperience = request.getWorkExperience();
         if (!StringUtils.hasText(request.getMbti())) {
             this.mbti = null;
         } else {

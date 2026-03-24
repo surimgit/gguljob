@@ -55,13 +55,14 @@ public class UserService {
 
         private final ApplicationEventPublisher eventPublisher;
 
+        @Transactional
         public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
                 user.updateOnboarding(requestDto.getDescription(), requestDto.getRoles(),
                                 requestDto.getExperience(), requestDto.getMbti(),
-                                requestDto.getTeamTendency());
+                                requestDto.getTeamTendency(), requestDto.getWorkExperience());
 
                 skillService.saveUserSkills(user, requestDto.getSkills());
 
@@ -78,6 +79,7 @@ public class UserService {
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
         }
 
+        @Transactional
         public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
@@ -170,6 +172,7 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
@@ -275,6 +278,7 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
