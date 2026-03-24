@@ -238,6 +238,19 @@ public class ProjectService {
         return new ProjectResponse.GitRepoRegistered(webhookSecret);
     }
 
+    @Transactional
+    public void disconnectGitRepository(Long userId, Long projectId) {
+        projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
+            .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
+
+        // 리뷰 → PR → 레포 순서로 삭제 (FK 제약)
+        prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
+        pullRequestRepository.deleteAllByProjectId(projectId);
+        gitRepositoryRepository.deleteAllByProjectId(projectId);
+
+        log.info("✅ 프로젝트 ID {} 의 Git 레포지토리 연동이 해제되었습니다.", projectId);
+    }
+
     // 프로젝트 업데이트
     @Transactional
     public ProjectUpdateResponse updateProject(Long projectId, ProjectUpdateRequest request, Long currentUserId) {
