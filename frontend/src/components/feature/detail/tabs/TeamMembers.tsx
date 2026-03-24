@@ -893,7 +893,7 @@ const TeamManagement = ({
           </div>
 
           {/* 직무 카드 목록 */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
             {roles.map((role) => {
               const color = getRoleColor(role.name);
               const pct = role.total > 0 ? (role.current / role.total) * 100 : 0;
@@ -1708,7 +1708,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
             {roles.map((role) => {
               const color = getRoleColor(role.name);
               const pct = role.total > 0 ? (role.current / role.total) * 100 : 0;
