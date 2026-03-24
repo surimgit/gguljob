@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, FilePlus } from 'lucide-react';
-import { SectionEmptyState } from '../../common';
+
 import { getMyPortfolios, type PortfolioSummary } from '../../../api/portfolio';
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
