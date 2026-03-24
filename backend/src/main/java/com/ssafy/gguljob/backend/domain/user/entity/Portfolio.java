@@ -52,4 +52,8 @@ public class Portfolio extends BaseTimeEntity {
         this.s3Url = s3Url;
         this.isPublic = isPublic;
     }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
 }

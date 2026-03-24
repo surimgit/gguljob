@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import {
   FolderOpen,
   User,
@@ -17,6 +17,7 @@ import {
   Check,
   ExternalLink,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import ProjectSettings from "../components/feature/project/ProjectSettings";
 import TeamMembers from "../components/feature/detail/tabs/TeamMembers";
@@ -69,6 +70,7 @@ const formatTime = (dateStr: string) => {
 /* ── 메인 페이지 ── */
 const ProjectDashboard = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTabFromUrl = searchParams.get("tab") || "team";
   const [activeTab, setActiveTab] = useState<string>(activeTabFromUrl);
@@ -210,6 +212,13 @@ const ProjectDashboard = () => {
       >
         <div className="mx-auto py-6 flex flex-col gap-8 max-w-[1400px] px-4 sm:px-6 lg:px-8">
           {/* ── 상단 탭 네비게이션 ── */}
+          <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
           <div
             className="flex flex-wrap gap-1 rounded-2xl px-2 py-1.5 w-fit"
             style={{
@@ -363,6 +372,7 @@ const ProjectDashboard = () => {
                 </button>
               );
             })}
+          </div>
           </div>
 
           {activeTab === "members" && (
