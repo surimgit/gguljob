@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
@@ -69,6 +70,7 @@ public class ProjectService {
     private final UserRepProjectRepository userRepProjectRepository;
     private final TroubleshootingRepository troubleshootingRepository;
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -213,6 +215,13 @@ public class ProjectService {
 
         GitRepository gitRepository = gitRepositoryRepository.findByProject_Id(projectId)
             .orElseGet(() -> GitRepository.builder().project(project).build());
+
+        // 레포 URL이 변경된 경우 기존 PR 리뷰 → PR 순서로 삭제 (FK 제약)
+        if (gitRepository.getRepoUrl() != null && !gitRepository.getRepoUrl().equals(request.repoUrl())) {
+            log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 PR/리뷰 데이터를 삭제합니다.", gitRepository.getRepoUrl(), request.repoUrl());
+            prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
+            pullRequestRepository.deleteAllByProjectId(projectId);
+        }
 
         gitRepository.updateRepoInfo(request.repoUrl(), webhookSecret);
         gitRepositoryRepository.save(gitRepository);
