@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import chatbotImg from '../assets/images/chatbot.png';
 import { getMyProjects } from '../api/projects';
@@ -203,14 +203,23 @@ const PortfolioCreate = () => {
   return (
     <div className="max-w-[1400px] mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col gap-8">
       {/* 헤더 */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-text-tertiary hover:text-text-primary transition-colors"
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
+        </div>
+        <Link
+          to="/mypage/portfolio"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-border bg-surface hover:bg-background transition-colors text-text-secondary"
         >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
+          <List className="w-4 h-4" />
+          내 포트폴리오
+        </Link>
       </div>
 
       {generatedMd ? (
@@ -258,15 +267,25 @@ const PortfolioCreate = () => {
               </div>
             )}
 
-            {/* 다시 선택 버튼 */}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full py-3 mt-auto rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              다시 선택하기
-            </button>
+            {/* 다시 선택 / 내 포트폴리오 */}
+            <div className="flex flex-col gap-2 mt-auto">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="w-full py-3 rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                다시 선택하기
+              </button>
+              <Link
+                to="/mypage/portfolio"
+                className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+              >
+                <List className="w-4 h-4" />
+                내 포트폴리오 보기
+              </Link>
+            </div>
           </div>
 
           {/* 결과 섹션 (오른쪽 2칸) */}
@@ -319,7 +338,7 @@ const PortfolioCreate = () => {
               <p className="text-sm font-medium">참여 중인 프로젝트가 없습니다</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
               {projects.map((project) => (
                 <ProjectCard
                   key={project.projectId}
@@ -358,7 +377,7 @@ const PortfolioCreate = () => {
               <p className="text-sm font-medium">선택한 프로젝트에 트러블슈팅이 없습니다</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
               {filteredTs.map((ts) => (
                 <TsCard
                   key={ts.tsId}
