@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
+import { getJobs, getAllJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
@@ -364,33 +364,55 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [jobs, setJobs] = useState<JobListing[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const allJobsLoadedRef = useRef(false);
+  const allJobsMapRef = useRef<Map<number, JobListing>>(new Map());
+
+  // 전체 공고 데이터 로딩 (최초 1회)
+  useEffect(() => {
+    getAllJobs()
+      .then(({ data }) => {
+        allJobsLoadedRef.current = true;
+        const mapped = data.map(mapToJobListing);
+        const map = new Map(mapped.map(j => [j.id, j]));
+        allJobsMapRef.current = map;
+        if (!showBookmarked) {
+          setJobs(mapped);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (showBookmarked) {
       getBookmarkedJobs()
         .then(({ data }) => {
           const paged = data.data;
-          setJobs((paged?.content ?? []).map(mapBookmarkToJobListing));
-          setTotalPages(paged?.totalPages ?? 1);
+          const bookmarks = (paged?.content ?? []).map((item) => {
+            // allJobs에서 스코어링 데이터 매칭
+            const scored = allJobsMapRef.current.get(item.jobId);
+            if (scored) return scored;
+            return mapBookmarkToJobListing(item);
+          });
+          setJobs(bookmarks);
         })
         .catch(console.error);
+    } else if (allJobsLoadedRef.current) {
+      // 전체 데이터 이미 있으면 바로 사용
+      setJobs(Array.from(allJobsMapRef.current.values()));
     } else {
-      getJobs({ page: currentPage, size: DEFAULT_PAGE_SIZE })
+      // 전체 로딩 전이면 200건 먼저 표시
+      getJobs({ page: 1, size: 200 })
         .then(({ data }) => {
+          if (allJobsLoadedRef.current) return;
           if (Array.isArray(data)) {
-            // 백엔드 미배포 시 호환: 옛날 배열 응답
-            // Neo4j 풀 상한 200 / 페이지당 10 = 최대 20페이지
             setJobs(data.map(mapToJobListing));
-            setTotalPages(data.length >= DEFAULT_PAGE_SIZE ? 20 : currentPage);
           } else {
             setJobs((data.content ?? []).map(mapToJobListing));
-            setTotalPages(data.totalPages ?? 1);
           }
         })
         .catch(console.error);
     }
-  }, [currentPage, showBookmarked]);
+  }, [showBookmarked]);
 
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
@@ -417,6 +439,8 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   }, [jobsFilteredByStack, searchQuery]);
 
   const sorted = sortJobs(finalFilteredJobs, activeSort);
+  const totalPages = Math.ceil(sorted.length / DEFAULT_PAGE_SIZE);
+  const paginatedJobs = sorted.slice((currentPage - 1) * DEFAULT_PAGE_SIZE, currentPage * DEFAULT_PAGE_SIZE);
 
   const handleCategoryChange = (category: RoleCode | null) => {
     setActiveCategory(category);
@@ -456,7 +480,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             placeholder="채용공고를 검색하세요"
             className="flex-1 bg-transparent font-normal text-[13px] text-black placeholder:text-[#9ca3af] outline-none"
           />
@@ -513,8 +537,8 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
 
       {/* 공고 카드 목록 */}
       <div className="flex flex-col gap-4 pb-2">
-        {sorted.length > 0 ? (
-          sorted.map(job => (
+        {paginatedJobs.length > 0 ? (
+          paginatedJobs.map(job => (
             <JobCard
               key={job.id}
               job={job}
