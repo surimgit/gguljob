@@ -739,9 +739,6 @@ const TeamManagement = ({
 
   const totalCurrent = roles.reduce((s, r) => s + r.current, 0);
   const totalAll = roles.reduce((s, r) => s + r.total, 0);
-  const roleNames = new Set(roles.map((r) => r.name));
-  const pendingCount = applications.filter((a) => a.status === "pending" && roleNames.has(a.role)).length;
-
   const isCurrentUserLeader = localMembers.some((m) => m.isLeader && m.isMe);
 
   const membersByRole = localMembers.reduce<Record<string, Member[]>>((acc, m) => {
