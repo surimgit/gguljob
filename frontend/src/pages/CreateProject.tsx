@@ -48,7 +48,7 @@ interface Member {
 interface ProjectFormState {
   name: string;
   description: string;
-  domains: string[];
+  domain: string;
   gitUrl: string;
   techStacks: Record<string, string[]>;
   members: Member[];
@@ -64,7 +64,7 @@ const CreateProject = () => {
   const [form, setForm] = useState<ProjectFormState>({
     name: '',
     description: '',
-    domains: [],
+    domain: '',
     gitUrl: '',
     techStacks: {},
     members: [],
@@ -76,12 +76,10 @@ const CreateProject = () => {
 
   /* ── 핸들러 ── */
 
-  const toggleDomain = (d: string) =>
+  const selectDomain = (d: string) =>
     setForm((prev) => ({
       ...prev,
-      domains: prev.domains.includes(d)
-        ? prev.domains.filter((v) => v !== d)
-        : [...prev.domains, d],
+      domain: prev.domain === d ? '' : d,
     }));
 
   const toggleStack = (category: string, stack: string) =>
@@ -115,7 +113,7 @@ const CreateProject = () => {
     try {
       const projectId = await createProject({
         title: form.name,
-        domain: form.domains[0],
+        domain: form.domain,
         description: form.description,
         leaderRole: form.leaderRole,
       });
@@ -229,12 +227,12 @@ const CreateProject = () => {
             </label>
             <div className="flex flex-wrap gap-2 mt-2">
               {DOMAINS.map((d) => {
-                const selected = form.domains.includes(d);
+                const selected = form.domain === d;
                 return (
                   <button
                     key={d}
                     type="button"
-                    onClick={() => toggleDomain(d)}
+                    onClick={() => selectDomain(d)}
                     className="px-4 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition-colors"
                     style={{
                       borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',

@@ -14,6 +14,14 @@ export interface Notification {
   referenceId: number | null;
 }
 
+/** 초대 알림이면서 아직 수락/거절하지 않은 상태인지 판별 */
+function isPendingInvite(notif: Notification): boolean {
+  return notif.type === 'TEAM'
+    && notif.referenceId !== null
+    && notif.message.includes('초대되었습니다')
+    && !localStorage.getItem(`notif-action-${notif.id}`);
+}
+
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
 const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }> = {
   TEAM: {
@@ -83,10 +91,11 @@ const NotificationItem = ({
   const [loading, setLoading] = useState(false);
 
   const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
+  const isPending = isInvite && !actionDone;
 
   const handleClick = () => {
-    if (!notif.isRead) onMarkRead(notif.id);
-    if (isInvite && !actionDone) setExpanded(prev => !prev);
+    if (!notif.isRead && !isPending) onMarkRead(notif.id);
+    if (isPending) setExpanded(prev => !prev);
   };
 
   const handleAccept = async (e: React.MouseEvent) => {
@@ -98,6 +107,7 @@ const NotificationItem = ({
       localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 수락 실패:', err);
     } finally {
@@ -114,6 +124,7 @@ const NotificationItem = ({
       localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 거절 실패:', err);
     } finally {
@@ -259,11 +270,19 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
     {/* 알림 목록 or 빈 상태 (안 읽은 알림 먼저) */}
     <div className="flex flex-col gap-1.5 p-3 overflow-y-auto max-h-[420px]">
       {notifications.length > 0 ? (
-        [...notifications]
-          .sort((a, b) => Number(a.isRead) - Number(b.isRead))
-          .map(notif => (
-            <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
-          ))
+        (() => {
+          const pendingSet = new Set(notifications.filter(isPendingInvite).map(n => n.id));
+          return [...notifications]
+            .sort((a, b) => {
+              const aPending = pendingSet.has(a.id);
+              const bPending = pendingSet.has(b.id);
+              if (aPending !== bPending) return aPending ? -1 : 1;
+              return Number(a.isRead) - Number(b.isRead);
+            })
+            .map(notif => (
+              <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
+            ));
+        })()
       ) : (
         <EmptyState />
       )}

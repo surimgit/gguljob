@@ -31,29 +31,45 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
 
   return (
     <div
-      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-200 ${project.status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
+      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full min-h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 ${project.status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
       onClick={() => navigate(`/my-projects/${project.projectId}`)}
     >
-      {/* 상단: 카테고리 + 상태 */}
+      {/* 상단: 상태(좌) + 리더(우) */}
       <div className="flex items-center justify-between w-full">
-        <p className="font-semibold text-base leading-[18px]" style={{ color: categoryColor }}>
-          {project.domain || "미정"}
-        </p>
         <div className="flex items-center gap-[5px]">
-          <div className="rounded-[3.5px] size-[7px]" style={{ backgroundColor: statusStyle.dot }} />
-          <p className="font-bold text-sm leading-[18px]" style={{ color: statusStyle.text }}>
+          <div className="rounded-[3.5px] size-[5px]" style={{ backgroundColor: statusStyle.dot }} />
+          <p className="font-semibold text-xs leading-[18px]" style={{ color: statusStyle.text }}>
             {STATUS_LABEL[project.status]}
           </p>
         </div>
+        <div className="flex items-center gap-[8px]">
+          {project.leaderProfileImageUrl ? (
+            <img
+              src={project.leaderProfileImageUrl}
+              alt={project.leaderName}
+              className="rounded-full size-[24px] object-cover"
+            />
+          ) : (
+            <div className="rounded-full size-[24px] flex items-center justify-center bg-[#6366f1]">
+              <p className="font-bold text-white text-[11px]">{project.leaderName?.[0] ?? '?'}</p>
+            </div>
+          )}
+          <p className="font-semibold text-text-secondary text-sm">{project.leaderName}</p>
+        </div>
       </div>
+
+      {/* 카테고리 */}
+      <p className="font-semibold text-base leading-[18px]" style={{ color: categoryColor }}>
+        {project.domain || "미정"}
+      </p>
 
       {/* 제목 */}
       <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
-        {project.title}
+        {project.teamName || project.title}
       </p>
 
       {/* 설명 */}
-      <p className="font-semibold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
+      <p className="font-bold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
         {project.description || project.teamName || "\u00A0"}
       </p>
 
@@ -73,29 +89,13 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
         </div>
       )}
 
-      {/* 하단: 직무 + 프로필 */}
-      <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
-        <div className="flex gap-[12px]">
-          {roles.map(([role, count]) => (
-            <p key={role} className="font-semibold text-xs" style={{ color: getRoleColor(role) }}>
-              {getRoleDisplayName(role)} <span className="font-black">{count}</span>
-            </p>
-          ))}
-        </div>
-        <div className="flex items-center gap-[8px]">
-          {project.leaderProfileImageUrl ? (
-            <img
-              src={project.leaderProfileImageUrl}
-              alt={project.leaderName}
-              className="rounded-full size-[24px] object-cover"
-            />
-          ) : (
-            <div className="rounded-full size-[24px] flex items-center justify-center bg-[#6366f1]">
-              <p className="font-bold text-white text-[11px]">{project.leaderName?.[0] ?? '?'}</p>
-            </div>
-          )}
-          <p className="font-semibold text-text-secondary text-sm">{project.leaderName}</p>
-        </div>
+      {/* 하단: 포지션 슬롯 */}
+      <div className="mt-auto border-t border-[#f0ebe3] flex flex-wrap gap-x-[12px] gap-y-[4px] pt-[11px] w-full">
+        {roles.map(([role, count]) => (
+          <p key={role} className="font-semibold text-xs whitespace-nowrap" style={{ color: getRoleColor(role) }}>
+            {getRoleDisplayName(role)} <span className="font-black">{count}</span>
+          </p>
+        ))}
       </div>
 
       {/* 완료일 */}
@@ -236,7 +236,7 @@ const MyProjects = () => {
               <button
                 type="button"
                 onClick={() => navigate("/projects/new")}
-                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer h-[280px] transition-all duration-200 hover:border-primary-hover hover:bg-primary-soft hover:shadow-lg"
+                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[280px] transition-all duration-300 hover:border-primary-hover hover:bg-primary-soft hover:shadow-lg"
                 style={{ borderColor: "#e5e7eb" }}
               >
                 <span

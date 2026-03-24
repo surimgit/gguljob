@@ -15,6 +15,7 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +68,7 @@ public class ProjectDashboardService {
         // 스킬 조회
         List<String> skillNames = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
         ProjectResponse.ProjectOverviewDto projectInfo = new ProjectResponse.ProjectOverviewDto(
-            project.getTitle(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
+            project.getTitle(), project.getTopic(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
         );
 
         // 팀원 통계
@@ -125,14 +126,14 @@ public class ProjectDashboardService {
 
         // 최근 활동 내역
         List<ProjectResponse.ActivityLogDto> top5Activities = pullRequestRepository
-            .findTop5ByProject_IdOrderByCreatedAtDesc(projectId)
+            .findTop5ByProject_IdOrderByGithubCreatedAtDesc(projectId)
             .stream()
             .map(pr -> new ProjectResponse.ActivityLogDto(
                 pr.getUser().getUserName(),
                 pr.getUser().getProfileImageUrl(),
                 pr.getTitle(),
                 pr.getBranchName(),
-                pr.getCreatedAt(),
+                pr.getGithubCreatedAt(),
                 "PR"
             ))
             .toList();
@@ -176,11 +177,11 @@ public class ProjectDashboardService {
         return new PersonalSpaceResponse.Dashboard(stats, prItems, reviewItems, tsItems);
     }
 
-    public org.springframework.data.domain.Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
+    public Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
         return pullRequestRepository.findPagedMyPrItems(projectId, userId, pageable);
     }
 
-    public org.springframework.data.domain.Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
+    public Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
         return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable)
             .map(ts -> new TroubleshootingItem(
                 ts.getId(),

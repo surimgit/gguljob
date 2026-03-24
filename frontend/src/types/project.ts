@@ -120,6 +120,7 @@ export interface RegisterGitRepoRequest {
 export interface TeamDashboard {
   projectInfo: {
     title: string;
+    topic: string | null;
     teamName: string;
     domain: string;
     description: string;
@@ -170,6 +171,8 @@ export interface PendingJoinRequest {
 }
 
 export interface TeamManagement {
+  leader: boolean;
+  leaderId: number;
   recruitments: RecruitmentStatus[];
   currentMembers: CurrentMember[];
   pendingRequests: PendingJoinRequest[];

@@ -59,6 +59,7 @@ public class ProjectResponse {
 
     public record ProjectOverviewDto(
         String title,
+        String topic,
         String teamName,
         Domain domain,
         String description,
@@ -157,5 +158,9 @@ public class ProjectResponse {
         String role,
         int currentCount,
         int targetCount
+    ) {}
+
+    public record GitRepoRegistered(
+        String webhookSecret
     ) {}
 }

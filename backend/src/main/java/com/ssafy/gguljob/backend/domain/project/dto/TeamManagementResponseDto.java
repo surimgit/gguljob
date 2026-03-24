@@ -8,6 +8,10 @@ import java.util.List;
 @Getter
 @Builder
 public class TeamManagementResponseDto {
+    // 요청자가 프로젝트 리더인지 여부
+    private boolean isLeader;
+    private Long leaderId;
+
     // 1. 팀원 모집 현황 리스트
     private List<RecruitmentStatusDto> recruitments;
 
