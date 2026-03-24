@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, FilePlus } from 'lucide-react';
+import { Briefcase, FilePlus, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
 import { getMyPortfolios, type PortfolioSummary } from '../../../api/portfolio';
 
@@ -74,11 +75,18 @@ const Portfolio = () => {
   return (
     <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
       {/* 섹션 헤더 */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
           <Briefcase className="w-5 h-5 text-text-primary" />
           <span>포트폴리오</span>
         </h2>
+        <Link
+          to="/mypage/portfolio"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
+          aria-label="포트폴리오 전체보기"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Link>
       </div>
 
       {/* 카드 그리드 */}

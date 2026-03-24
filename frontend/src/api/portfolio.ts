@@ -32,3 +32,16 @@ export const downloadPortfolio = (portfolioId: number) =>
   api.get<string>(`/v1/portfolios/${portfolioId}/download`, {
     responseType: 'text' as never,
   });
+
+/** 브라우저에서 .md 파일로 저장 */
+export const savePortfolioAsFile = async (portfolioId: number, fileName = '포트폴리오.md') => {
+  const { data } = await downloadPortfolio(portfolioId);
+  const text = typeof data === 'string' ? data : new TextDecoder().decode(data as unknown as ArrayBuffer);
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+};

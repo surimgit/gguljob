@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
+import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import chatbotImg from '../assets/images/chatbot.png';
 import { getMyProjects } from '../api/projects';
 import { getTroubleshootings } from '../api/troubleshooting';
-import { generatePortfolio, downloadPortfolio } from '../api/portfolio';
+import { generatePortfolio, downloadPortfolio, savePortfolioAsFile } from '../api/portfolio';
 import type { ProjectSimple } from '../types/project';
 import type { TroubleshootingListItem } from '../api/troubleshooting';
 
@@ -115,6 +115,7 @@ const PortfolioCreate = () => {
   // 생성 상태
   const [generating, setGenerating] = useState(false);
   const [generatedMd, setGeneratedMd] = useState<string | null>(null);
+  const [generatedPortfolioId, setGeneratedPortfolioId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -174,8 +175,10 @@ const PortfolioCreate = () => {
     try {
       const { data: result } = await generatePortfolio({ tsIds: selectedTs });
       console.log('generatePortfolio result:', result);
+      const pId = result.data.portfolioId;
+      setGeneratedPortfolioId(pId);
       // 생성된 포트폴리오 마크다운 다운로드
-      const { data: md } = await downloadPortfolio(result.data.portfolioId);
+      const { data: md } = await downloadPortfolio(pId);
       setGeneratedMd(typeof md === 'string' ? md : new TextDecoder().decode(md as unknown as ArrayBuffer));
     } catch (err) {
       console.error('포트폴리오 생성 실패:', err);
@@ -273,14 +276,24 @@ const PortfolioCreate = () => {
                 <span className="text-base font-bold text-[#6366f1]">Result.</span>
                 <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 결과</h2>
               </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                {copied ? '복사됨' : '복사'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => generatedPortfolioId && savePortfolioAsFile(generatedPortfolioId).catch(() => toast.error('다운로드에 실패했습니다.'))}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                >
+                  <Download className="w-4 h-4" />
+                  다운로드
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? '복사됨' : '복사'}
+                </button>
+              </div>
             </div>
             <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh]">
               <pre className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed font-mono">{generatedMd}</pre>
