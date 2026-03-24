@@ -16,6 +16,7 @@ import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
+import PortfolioList from './pages/PortfolioList';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -90,6 +91,7 @@ const AppRoutes = () => {
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
           <Route path="/mypage/troubleshooting" element={<TroubleshootingList />} />
+          <Route path="/mypage/portfolio" element={<PortfolioList />} />
           <Route path="/mypage/portfolio/new" element={<PortfolioCreate />} />
         </Route>
       </Route>

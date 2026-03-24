@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, FilePlus } from 'lucide-react';
-
+import { Briefcase, FilePlus, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getMyPortfolios, type PortfolioSummary } from '../../../api/portfolio';
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
@@ -26,9 +26,6 @@ const PortfolioCard = ({ item }: { item: PortfolioSummary }) => (
       <h3 className="text-[14px] font-bold text-text-primary">{item.title}</h3>
       <p className="text-[12px] text-text-secondary">수정: {formatDate(item.updatedAt)}</p>
     </div>
-    <span className="self-start mt-4 px-2.5 py-1 rounded-md text-[10px] text-text-secondary border border-border bg-[#f9fafb]">
-      {item.isPublic ? '공개' : '비공개'}
-    </span>
   </button>
 );
 
@@ -74,11 +71,18 @@ const Portfolio = () => {
   return (
     <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
       {/* 섹션 헤더 */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
           <Briefcase className="w-5 h-5 text-text-primary" />
           <span>포트폴리오</span>
         </h2>
+        <Link
+          to="/mypage/portfolio"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
+          aria-label="포트폴리오 전체보기"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Link>
       </div>
 
       {/* 카드 그리드 */}
