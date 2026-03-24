@@ -36,15 +36,28 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingWidget }) => (
 );
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="flex items-start gap-3 bg-[rgba(169,144,72,0.09)] rounded-2xl px-4 py-4 animate-pulse">
+    <div className="w-4 h-4 bg-gray-200 rounded-full shrink-0 mt-0.5" />
+    <div className="flex flex-col gap-1 flex-1">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-1/2" />
+    </div>
+    <div className="h-3 bg-gray-200 rounded w-10 shrink-0" />
+  </div>
+);
+
 const Troubleshooting = () => {
   const [items, setItems] = useState<TroubleshootingWidget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getMyTroubleshootingWidget()
       .then(({ data }) => {
         setItems(data.data ?? []);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -66,7 +79,12 @@ const Troubleshooting = () => {
 
       {/* 목록 */}
       <div className="flex-1">
-        {items.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : items.length > 0 ? (
           <div className="flex flex-col gap-3">
             {items.slice(0, 2).map((item) => (
               <TroubleshootingCard key={item.tsId} item={item} />

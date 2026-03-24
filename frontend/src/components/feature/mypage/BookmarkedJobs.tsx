@@ -46,8 +46,17 @@ const BookmarkJobItem = ({ job }: { job: BookmarkedJob }) => {
 };
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="flex flex-col gap-2 border-2 border-border rounded-2xl px-4 py-4 animate-pulse">
+    <div className="h-4 bg-gray-200 rounded w-3/4" />
+    <div className="h-3 bg-gray-200 rounded w-1/2" />
+    <div className="h-4 bg-gray-200 rounded w-16" />
+  </div>
+);
+
 const BookmarkedJobs = () => {
   const [jobs, setJobs] = useState<BookmarkedJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getBookmarkedJobs()
@@ -67,7 +76,8 @@ const BookmarkedJobs = () => {
           url: item.url,
         })));
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -89,7 +99,12 @@ const BookmarkedJobs = () => {
 
       {/* 북마크 목록 */}
       <div className="flex-1">
-        {jobs.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : jobs.length > 0 ? (
           <div className="flex flex-col gap-3">
             {jobs.map((job) => (
               <BookmarkJobItem key={job.id} job={job} />
