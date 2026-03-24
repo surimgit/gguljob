@@ -27,37 +27,71 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
   const statusStyle = getStatusStyle(status);
 
-  const activePositions = positions.filter((p) => p.targetCount > 0);
+  const activePositions = Object.values(
+    positions
+      .filter((p) => p.targetCount > 0)
+      .reduce<Record<string, typeof positions[number]>>((acc, p) => {
+        if (acc[p.role]) {
+          acc[p.role] = {
+            ...acc[p.role],
+            currentCount: acc[p.role].currentCount + p.currentCount,
+            targetCount: acc[p.role].targetCount + p.targetCount,
+          };
+        } else {
+          acc[p.role] = { ...p };
+        }
+        return acc;
+      }, {}),
+  );
 
   const visibleTech = skills.slice(0, 3);
   const extraCount = skills.length - visibleTech.length;
 
   return (
     <a
-      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 ${status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
+      className={`border-2 border-[#e5e7eb] cursor-pointer flex flex-col gap-[14px] px-[26px] py-[26px] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.03)] w-full min-h-[280px] hover:shadow-lg hover:border-primary-hover hover:bg-primary-soft transition-all duration-300 ${status === 'DONE' ? 'bg-[#EDEBE6]' : 'bg-white'}`}
       onClick={() => onClick?.(project)}
     >
-      {/* 상단: 카테고리 + 상태 */}
+      {/* 상단: 상태(좌) + 작성자(우) */}
       <div className="flex items-center justify-between w-full">
-        <p
-          className="font-semibold text-base leading-[18px]"
-          style={{ color: categoryColor }}
-        >
-          {domain}
-        </p>
         <div className="flex items-center gap-[5px]">
           <div
-            className="rounded-[3.5px] size-[7px]"
+            className="rounded-[3.5px] size-[5px]"
             style={{ backgroundColor: statusStyle.dot }}
           />
           <p
-            className="font-bold text-sm leading-[18px]"
+            className="font-semibold text-xs leading-[18px]"
             style={{ color: statusStyle.text }}
           >
             {STATUS_LABEL[status]}
           </p>
         </div>
+        <div className="flex items-center gap-[8px]">
+          {leaderProfileImageUrl ? (
+            <img
+              src={leaderProfileImageUrl}
+              alt={leaderName}
+              className="rounded-full size-[24px] object-cover"
+            />
+          ) : (
+            <div
+              className="rounded-full size-[24px] flex items-center justify-center"
+              style={{ backgroundColor: FALLBACK_AVATAR_COLOR }}
+            >
+              <p className="font-bold text-white text-[11px]">{leaderName?.[0] ?? '?'}</p>
+            </div>
+          )}
+          <p className="font-semibold text-text-secondary text-sm">{leaderName}</p>
+        </div>
       </div>
+
+      {/* 카테고리 */}
+      <p
+        className="font-semibold text-base leading-[18px]"
+        style={{ color: categoryColor }}
+      >
+        {domain}
+      </p>
 
       {/* 제목 */}
       <p className="font-bold text-text-primary text-xl tracking-[-0.3px] w-full">
@@ -86,32 +120,13 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
         )}
       </div>
 
-      {/* 하단: 포지션 슬롯 + 작성자 */}
-      <div className="mt-auto border-t border-[#f0ebe3] flex items-center justify-between pt-[11px] w-full">
-        <div className="flex gap-[12px]">
-          {activePositions.map((pos) => (
-            <p key={pos.positionId} className="font-semibold text-xs" style={{ color: getRoleColor(pos.role) }}>
-              {getRoleDisplayName(pos.role)} <span className="font-black">{pos.currentCount}/{pos.targetCount}</span>
-            </p>
-          ))}
-        </div>
-        <div className="flex items-center gap-[8px]">
-          {leaderProfileImageUrl ? (
-            <img
-              src={leaderProfileImageUrl}
-              alt={leaderName}
-              className="rounded-full size-[24px] object-cover"
-            />
-          ) : (
-            <div
-              className="rounded-full size-[24px] flex items-center justify-center"
-              style={{ backgroundColor: FALLBACK_AVATAR_COLOR }}
-            >
-              <p className="font-bold text-white text-[11px]">{leaderName?.[0] ?? '?'}</p>
-            </div>
-          )}
-          <p className="font-semibold text-text-secondary text-sm">{leaderName}</p>
-        </div>
+      {/* 하단: 포지션 슬롯 */}
+      <div className="mt-auto border-t border-[#f0ebe3] flex flex-wrap gap-x-[12px] gap-y-[4px] pt-[11px] w-full">
+        {activePositions.map((pos) => (
+          <p key={pos.positionId} className="font-semibold text-xs whitespace-nowrap" style={{ color: getRoleColor(pos.role) }}>
+            {getRoleDisplayName(pos.role)} <span className="font-black">{pos.currentCount}/{pos.targetCount}</span>
+          </p>
+        ))}
       </div>
     </a>
   );
