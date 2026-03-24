@@ -37,6 +37,7 @@ interface Member {
   contribution: number;
   isLeader?: boolean;
   isMe?: boolean;
+  profileImageUrl?: string | null;
 }
 
 interface Application {
@@ -46,6 +47,7 @@ interface Application {
   appliedAt: string;
   stacks: string[];
   status: "pending" | "accepted" | "rejected";
+  profileImageUrl?: string | null;
 }
 
 interface TeamManagementProps {
@@ -1047,12 +1049,16 @@ const TeamManagement = ({
                         onClick={() => setProfileUserId(Number(member.id))}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
                       >
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ background: getAvatarColor(member.name) }}
-                        >
-                          {member.name.charAt(0)}
-                        </div>
+                        {member.profileImageUrl ? (
+                          <img src={member.profileImageUrl} alt={member.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        ) : (
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ background: getAvatarColor(member.name) }}
+                          >
+                            {member.name.charAt(0)}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span
                             className="text-sm font-semibold truncate"
@@ -1155,12 +1161,16 @@ const TeamManagement = ({
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                  style={{ background: getAvatarColor(app.name) }}
-                >
-                  {app.name.charAt(0)}
-                </div>
+                {app.profileImageUrl ? (
+                  <img src={app.profileImageUrl} alt={app.name} className="w-10 h-10 rounded-full flex-shrink-0 object-cover" />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                    style={{ background: getAvatarColor(app.name) }}
+                  >
+                    {app.name.charAt(0)}
+                  </div>
+                )}
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -1803,55 +1813,65 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
-                      {roleMembers.map((member) => (
-                        <div
-                          key={member.id}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
-                          className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
-                          onClick={() => setProfileUserId(Number(member.id))}
-                        >
+                  <div className="flex flex-col gap-1.5">
+                    {roleMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileUserId(Number(member.id)); } }}
+                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-primary-soft)] transition-colors"
+                        onClick={() => setProfileUserId(Number(member.id))}
+                      >
+                        {member.profileImageUrl ? (
+                          <img src={member.profileImageUrl} alt={member.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        ) : (
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                             style={{ background: getAvatarColor(member.name) }}
                           >
                             {member.name.charAt(0)}
                           </div>
-                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <span
-                              className="text-sm font-semibold truncate"
-                              style={{ color: "var(--color-text-primary)" }}
-                            >
-                              {member.name}
-                            </span>
-                            {member.isMe && (
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "var(--color-text-tertiary)" }}
-                              >
-                                (나)
-                              </span>
-                            )}
-                            {member.isLeader && (
-                              <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                            )}
-                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span
-                            className="text-xs font-bold flex-shrink-0 w-10 text-right"
-                            style={{ color: "var(--color-text-secondary)" }}
+                            className="text-sm font-semibold truncate"
+                            style={{ color: "var(--color-text-primary)" }}
                           >
-                            {member.contribution}c
+                            {member.name}
                           </span>
+                          {member.isMe && (
+                            <span
+                              className="text-xs font-medium"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              (나)
+                            </span>
+                          )}
+                          {member.isLeader && (
+                            <Crown className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                          )}
                         </div>
-                      ))}
-                    </div>
+                        <span
+                          className="text-xs font-bold flex-shrink-0 w-10 text-right"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
+                          {member.contribution}c
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
+        </div>
+      </div>
+
+      {/* ── 하단 2열: 팀 나가기 버튼 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+        <div />
+        <div className="self-start w-full flex flex-col gap-2">
           <button
             onClick={() => setShowLeaveModal(true)}
             className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
@@ -1996,6 +2016,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
         contribution: 0,
         isLeader: m.isLeader ?? (detail.leader === true && m.userId === currentUserId),
         isMe: m.userId === currentUserId,
+        profileImageUrl: m.profileImageUrl,
       }))
     : dashboard ? dashboardToMembers(dashboard) : [];
 
@@ -2007,6 +2028,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
         appliedAt: new Date(r.createdAt).toLocaleDateString("ko-KR"),
         stacks: r.techStacks,
         status: "pending" as const,
+        profileImageUrl: r.userProfileImageUrl,
       }))
     : [];
 

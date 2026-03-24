@@ -118,14 +118,15 @@ public class ProjectController {
 
     @Operation(summary = "팀프로젝트 상세 페이지 (깃 레포 등록하기)", description = "깃 레포 등록하기")
     @PutMapping("/{projectId}/git-repo")
-    public ResponseEntity<Void> registerGitRepository(
+    public ResponseEntity<ProjectResponse.GitRepoRegistered> registerGitRepository(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long projectId,
         @Valid @RequestBody ProjectRequest.RegisterGitRepo request) {
 
-        projectService.registerGitRepository(userDetails.getId(), projectId, request);
+        ProjectResponse.GitRepoRegistered response =
+            projectService.registerGitRepository(userDetails.getId(), projectId, request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     // 팀원 관리 (모집 현황, 현재 팀원, 참가 신청 현황)
@@ -218,8 +219,8 @@ public class ProjectController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 제목(Title)으로 덮어씁니다.")
-    @PatchMapping("/{projectId}/title")
+    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 주제(topic)로 설정합니다.")
+    @PatchMapping("/{projectId}/topic")
     public ResponseEntity<Void> applyRecommendedTopic(
         @PathVariable Long projectId,
         @AuthenticationPrincipal CustomUserDetails userDetails,

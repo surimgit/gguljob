@@ -67,7 +67,7 @@ public class ProjectDashboardService {
         // 스킬 조회
         List<String> skillNames = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
         ProjectResponse.ProjectOverviewDto projectInfo = new ProjectResponse.ProjectOverviewDto(
-            project.getTitle(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
+            project.getTitle(), project.getTopic(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
         );
 
         // 팀원 통계
@@ -125,14 +125,14 @@ public class ProjectDashboardService {
 
         // 최근 활동 내역
         List<ProjectResponse.ActivityLogDto> top5Activities = pullRequestRepository
-            .findTop5ByProject_IdOrderByCreatedAtDesc(projectId)
+            .findTop5ByProject_IdOrderByGithubCreatedAtDesc(projectId)
             .stream()
             .map(pr -> new ProjectResponse.ActivityLogDto(
                 pr.getUser().getUserName(),
                 pr.getUser().getProfileImageUrl(),
                 pr.getTitle(),
                 pr.getBranchName(),
-                pr.getCreatedAt(),
+                pr.getGithubCreatedAt(),
                 "PR"
             ))
             .toList();

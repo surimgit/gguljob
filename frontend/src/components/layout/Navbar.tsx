@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
 import { logoutApi } from '../../api/user';
 import {
@@ -45,6 +46,7 @@ const Navbar = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadRef = useRef<number>(-1);
   const notifRef = useRef<HTMLDivElement>(null);
 
   // 안 읽은 알림 개수 조회
@@ -52,7 +54,14 @@ const Navbar = () => {
     if (!isAuthenticated) return;
     try {
       const { data } = await getUnreadCount();
-      setUnreadCount(data.data.count);
+      const newCount = data.data.count;
+      // 첫 호출(-1)이 아닌 경우에만 토스트 표시
+      if (prevUnreadRef.current >= 0 && newCount > prevUnreadRef.current) {
+        const diff = newCount - prevUnreadRef.current;
+        toast(`새 알림이 ${diff}건 도착했습니다.`, { icon: '🔔' });
+      }
+      prevUnreadRef.current = newCount;
+      setUnreadCount(newCount);
     } catch (err) {
       console.error('[알림] unread count 조회 실패:', err);
     }

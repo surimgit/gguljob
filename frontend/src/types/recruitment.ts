@@ -1,21 +1,3 @@
-export interface Job {
-  id: number;
-  title: string;
-  company: string;
-  techStacks: string[];
-  location: string;
-  experience: string;
-  deadline: string | null;
-  url: string;
-}
-
-export interface JobQueryParams {
-  page?: number;
-  size?: number;
-  techStack?: string;
-  experience?: string;
-}
-
 // GET /api/v1/jobs, /api/v1/jobs/recommended/top, /api/v1/jobs/bookmarks 응답
 export interface JobItem {
   jobId: number;

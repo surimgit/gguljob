@@ -4,6 +4,8 @@ import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
 import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
@@ -34,6 +36,7 @@ import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -175,7 +178,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
+    public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
 
         Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
@@ -222,6 +225,8 @@ public class ProjectService {
             request.githubToken(),
             webhookSecret
         ));
+
+        return new ProjectResponse.GitRepoRegistered(webhookSecret);
     }
 
     // 프로젝트 업데이트
@@ -309,13 +314,35 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
 
-        if (!project.getLeader().getId().equals(loginUserId)) {
-            throw new IllegalArgumentException("프로젝트 리더만 팀원 관리 페이지를 조회할 수 있습니다.");
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_IdAndStatus(
+            projectId, loginUserId, MemberStatus.ATTEND
+        );
+        if (!isMember) {
+            throw new IllegalArgumentException("프로젝트 멤버만 팀원 정보를 조회할 수 있습니다.");
         }
 
+        boolean isLeader = project.getLeader().getId().equals(loginUserId);
+
+        List<ProjectPosition> positions = projectPositionRepository.findAllByProjectId(projectId);
+
+        Map<Long, String> positionMap = positions.stream()
+            .collect(Collectors.toMap(ProjectPosition::getId, p -> p.getRole().name()));
+
         // 팀원 모집 현황 리스트
-        List<RecruitmentStatusDto> recruitments = projectPositionRepository.findAllByProjectId(projectId).stream()
-            .map(RecruitmentStatusDto::from)
+        List<RecruitmentStatusDto> recruitments = positions.stream()
+            .map(position -> {
+                List<String> skillNames = List.of();
+                if (position.getRequireSkills() != null && !position.getRequireSkills().isEmpty()) {
+                    List<Long> skillIds = Arrays.stream(position.getRequireSkills().split(","))
+                        .map(String::trim)
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                    skillNames = skillRepository.findAllById(skillIds).stream()
+                        .map(Skill::getName)
+                        .collect(Collectors.toList());
+                }
+                return RecruitmentStatusDto.of(position, skillNames);
+            })
             .collect(Collectors.toList());
 
         // 현재 팀원 리스트
@@ -323,24 +350,25 @@ public class ProjectService {
             .map(CurrentMemberDto::from)
             .collect(Collectors.toList());
 
-        //참가 신청 현황
+        // 참가 신청 현황
         List<JoinRequest> pendingRequestsEntities = joinRequestRepository.findPendingRequestsByProjectId(projectId);
-        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream().map(request -> {
-            String positionName = "미지정";
-            if (request.getPositionId() != null) {
-                positionName = projectPositionRepository.findById(request.getPositionId())
-                    .map(pos -> pos.getRole().name())
-                    .orElse("UNKNOWN");
-            }
+        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream()
+            .map(request -> {
+                String positionName = request.getPositionId() != null
+                    ? positionMap.getOrDefault(request.getPositionId(), "UNKNOWN")
+                    : "미지정";
 
-            List<String> techStacks = request.getUser().getUserSkills().stream()
-                .map(userSkill -> userSkill.getSkill().getName())
-                .collect(Collectors.toList());
+                List<String> techStacks = request.getUser().getUserSkills().stream()
+                    .map(userSkill -> userSkill.getSkill().getName())
+                    .collect(Collectors.toList());
 
-            return PendingJoinRequestDto.of(request, positionName, techStacks);
-        }).collect(Collectors.toList());
+                return PendingJoinRequestDto.of(request, positionName, techStacks);
+            })
+            .collect(Collectors.toList());
 
         return TeamManagementResponseDto.builder()
+            .isLeader(isLeader)
+            .leaderId(project.getLeader().getId())
             .recruitments(recruitments)
             .currentMembers(currentMembers)
             .pendingRequests(pendingRequests)
@@ -450,7 +478,7 @@ public class ProjectService {
             throw new IllegalStateException("프로젝트 팀장만 주제를 변경할 수 있습니다.");
         }
 
-        project.updateTitle(selectedTopic);
+        project.updateTopic(selectedTopic);
     }
 
     @Transactional

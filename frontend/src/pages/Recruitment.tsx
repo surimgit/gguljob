@@ -7,7 +7,7 @@ const Recruitment = () => {
 
   useEffect(() => {
     getBookmarkedJobs()
-      .then(({ data }) => setBookmarkedIds(new Set(data.map(j => j.jobId))))
+      .then(({ data }) => setBookmarkedIds(new Set(data.data?.content?.map(j => j.jobId) ?? [])))
       .catch(() => {});
   }, []);
 

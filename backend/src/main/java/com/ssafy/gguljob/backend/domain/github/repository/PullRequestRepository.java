@@ -17,7 +17,7 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
     long countByProject_Id(Long projectId);
 
     // 최근 PR 5개 조회
-    List<PullRequest> findTop5ByProject_IdOrderByCreatedAtDesc(Long projectId);
+    List<PullRequest> findTop5ByProject_IdOrderByGithubCreatedAtDesc(Long projectId);
 
     // MR 가장 많이 올린 사람 조회
     @Query("SELECT pr.user.id as userId, pr.user.userName as userName, pr.user.profileImageUrl as profileImageUrl, COUNT(pr.id) as mrCount " +
