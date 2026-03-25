@@ -48,7 +48,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
             <div className="w-16 h-4 rounded bg-gray-200" />
           </div>
         )) : positions.map(({ code, name }) => {
-          const Icon = ROLE_ICONS[code] ?? Box;
+          const Icon = ROLE_ICONS[code as RoleCode] ?? Box;
           const isSelected = selected === code;
           return (
             <button
