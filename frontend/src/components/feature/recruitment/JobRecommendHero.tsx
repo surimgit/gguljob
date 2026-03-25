@@ -284,7 +284,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
           <span style={{ color: '#F2B705' }}>TOP 3</span>
         </h2>
 
-        <div className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-14" style={{ marginTop: '61px' }}>
+        <div className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20" style={{ marginTop: '10px' }}>
           {top3.map((job, idx) => (
             <div key={job.jobId} className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start">
               <JobCard

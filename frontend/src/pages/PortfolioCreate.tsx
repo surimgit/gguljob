@@ -19,13 +19,14 @@ const CIRCLE_COLORS = ['#E11D48', '#2563EB', '#16A34A', '#E8B931', '#9333EA', '#
 // ── 프로젝트 카드 ─────────────────────────────────────────────────────────────
 const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: ProjectSimple; active: boolean; hasSelectedTs: boolean; onToggle: () => void }) => {
   const isActive = project.status !== 'DONE';
+  const isSelected = active || hasSelectedTs;
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-pressed={hasSelectedTs}
+      aria-pressed={isSelected}
       className={`rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all text-left w-full ${
-        hasSelectedTs
+        isSelected
           ? 'border-2 border-primary-hover bg-primary-soft shadow-md'
           : active
             ? 'border-2 border-primary-hover bg-surface shadow-sm'
@@ -42,7 +43,7 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? 'var(--color-success-dark)' : 'var(--color-text-tertiary)' }} />
             {project.status === 'RECRUITING' ? '모집중' : project.status === 'PROCEEDING' ? '진행중' : '완료'}
           </span>
-          {hasSelectedTs && <CheckCircle2 className="w-5 h-5 text-primary-hover" />}
+          {isSelected && <CheckCircle2 className="w-5 h-5 text-primary-hover" />}
         </div>
       </div>
 
@@ -74,7 +75,7 @@ const TsCard = ({ item, selected, onToggle }: { item: TsItemWithProject; selecte
     type="button"
     onClick={onToggle}
     aria-pressed={selected}
-    className={`flex flex-col border-2 rounded-xl overflow-hidden cursor-pointer transition-all text-left w-full ${
+    className={`flex flex-col border-2 rounded-xl overflow-hidden cursor-pointer transition-all text-left w-full min-h-[125px] ${
       selected
         ? 'border-primary-hover bg-primary-soft shadow-md'
         : 'border-border bg-surface hover:shadow-md'
@@ -149,10 +150,16 @@ const PortfolioCreate = () => {
   }, [tsMap]);
 
   const toggleProject = (projectId: number) => {
-    setActiveProject(projectId);
-    if (!selectedProjects.includes(projectId)) {
-      setSelectedProjects((prev) => [...prev, projectId]);
+    if (activeProject === projectId) {
+      setActiveProject(null);
+      setSelectedProjects([]);
+      setSelectedTs([]);
+      return;
     }
+
+    setActiveProject(projectId);
+    setSelectedProjects([projectId]);
+    setSelectedTs([]);
     fetchTs(projectId);
   };
 
