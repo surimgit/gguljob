@@ -116,14 +116,14 @@ export const disconnectGitRepo = (projectId: number) =>
 export const createRecruitment = (projectId: number, body: { role: string; targetCount: number; requireSkills: string[] }) =>
   api.post(`/v1/projects/${projectId}/recruitments`, body);
 
-export const deleteRecruitment = (projectId: number, positionId: number) =>
-  api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
+export const deleteRecruitment = (projectId: number, recruitmentId: number) =>
+  api.delete(`/v1/projects/${projectId}/recruitments/${recruitmentId}`);
 
-export const updateRecruitmentStatus = (projectId: number, positionId: number, status: string) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
+export const updateRecruitmentStatus = (projectId: number, recruitmentId: number, status: string) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${recruitmentId}/status`, { status });
 
-export const updateRecruitmentTargetCount = (projectId: number, positionId: number, targetCount: number) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
+export const updateRecruitmentTargetCount = (projectId: number, recruitmentId: number, targetCount: number) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${recruitmentId}/target-count`, { targetCount });
 
 /* ── 프로젝트 참여 수락/거절 ── */
 
