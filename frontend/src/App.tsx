@@ -8,7 +8,6 @@ import NotFound from './pages/NotFound';
 import ProjectFind from './pages/ProjectFind';
 import Recruitment from './pages/Recruitment';
 import MyPage from './pages/MyPage';
-import ProjectDetail from './pages/ProjectDetail';
 import OAuthCallback from './pages/OAuthCallback';
 import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
@@ -80,7 +79,6 @@ const AppRoutes = () => {
       <Route element={<Layout />}>
         {/* 공개 라우트 */}
 <Route path="/projects" element={<ProjectFind />} />
-        <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
 
