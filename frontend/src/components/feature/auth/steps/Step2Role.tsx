@@ -67,7 +67,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
               </span>
             </button>
           );
-        }))}
+        })}
       </div>
     </div>
   );
