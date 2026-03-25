@@ -200,12 +200,33 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
   const [imageUploading, setImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const compressImage = (file: File, maxWidth = 800, quality = 0.85): Promise<File> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob!], file.name, { type: "image/jpeg" })),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !projectId) return;
     setImageUploading(true);
     try {
-      const { data } = await uploadProjectImage(projectId, file);
+      const compressed = await compressImage(file);
+      const { data } = await uploadProjectImage(projectId, compressed);
       setImageUrl(data.data);
       toast.success("프로젝트 이미지가 변경되었습니다.");
     } catch {

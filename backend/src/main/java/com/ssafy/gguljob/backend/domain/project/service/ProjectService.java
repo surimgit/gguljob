@@ -49,8 +49,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -73,6 +75,7 @@ public class ProjectService {
     private final PullRequestRepository pullRequestRepository;
     private final PrReviewRepository prReviewRepository;
     private final ChatLogRepository chatLogRepository;
+    private final S3ImageService s3ImageService;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -529,5 +532,28 @@ public class ProjectService {
         projectRepository.delete(project);
 
         log.info("프로젝트 삭제 완료 - projectId: {}, userId: {}", projectId, userId);
+    }
+
+    @Transactional
+    public String uploadProjectImage(Long projectId, Long userId, MultipartFile file) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 이미지 수정은 팀장만 가능합니다.");
+        }
+
+        // 기존 이미지가 있으면 S3에서 삭제
+        if (project.getImageUrl() != null) {
+            String oldS3Key = s3ImageService.extractS3Key(project.getImageUrl());
+            s3ImageService.deleteObject(oldS3Key);
+        }
+
+        // S3 업로드 → CDN URL 생성 → 엔티티 업데이트
+        String s3Key = s3ImageService.uploadImage(file);
+        String fullImageUrl = s3ImageService.getImageUrl(s3Key);
+        project.updateImageUrl(fullImageUrl);
+
+        return fullImageUrl;
     }
 }

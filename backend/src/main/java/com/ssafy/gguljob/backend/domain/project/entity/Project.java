@@ -124,4 +124,8 @@ public class Project extends BaseTimeEntity {
     public void updateTopic(String newTopic) {
         this.topic = newTopic;
     }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }
