@@ -1,7 +1,11 @@
 import api from './index';
 
 // 백엔드 NotificationCategory enum
-export type NotificationCategory = 'TEAM' | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING' | 'GITHUB';
+export type NotificationCategory =
+  | 'TEAM_INVITE' | 'TEAM_APPLY' | 'TEAM_ACCEPTED' | 'TEAM_REJECTED'
+  | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING' | 'GITHUB';
+
+export type ActionStatus = 'NONE' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
 export interface NotificationDto {
   notificationId: number;
@@ -10,6 +14,7 @@ export interface NotificationDto {
   referenceId: number | null;
   referenceUrl: string | null;
   isRead: boolean;
+  actionStatus: ActionStatus;
   createdAt: string;
 }
 

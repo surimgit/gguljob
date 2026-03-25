@@ -31,7 +31,7 @@ public class NotificationEventListener {
             case "JOIN_APPLY"  -> NotificationCategory.TEAM_APPLY;
             case "JOIN_ACCEPT" -> NotificationCategory.TEAM_ACCEPTED;
             case "JOIN_REJECT" -> NotificationCategory.TEAM_REJECTED;
-            default            -> NotificationCategory.TEAM;
+            default            -> NotificationCategory.TEAM_INVITE;
         };
 
         ActionStatus actionStatus = (category == NotificationCategory.TEAM_INVITE
