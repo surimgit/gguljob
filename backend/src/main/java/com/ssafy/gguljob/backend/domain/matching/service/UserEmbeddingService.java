@@ -36,11 +36,6 @@ public class UserEmbeddingService {
         "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings";
     private static final String EMBEDDING_MODEL = "text-embedding-3-small";
 
-    private static final Map<String, String> EXPERIENCE_MAP = Map.of(
-        "BEGINNER", "신입",
-        "JUNIOR", "주니어",
-        "SENIOR", "시니어"
-    );
     private static final Map<String, String> GOAL_MAP = Map.of(
         "SIDE_PROJECT", "사이드 프로젝트",
         "STARTUP", "창업",
@@ -84,9 +79,6 @@ public class UserEmbeddingService {
         if (user.getRoles() != null && !user.getRoles().isEmpty()) {
             String roles = user.getRoles().stream().map(Enum::name).collect(Collectors.joining(", "));
             parts.add("직무: " + roles);
-        }
-        if (user.getExperience() != null) {
-            parts.add("개발 경험: " + EXPERIENCE_MAP.getOrDefault(user.getExperience().name(), user.getExperience().name()));
         }
         if (user.getWorkExperience() != null && user.getWorkExperience() != WorkExperienceYear.NEWCOMER) {
             parts.add("실무 경험: " + user.getWorkExperience().getDescription());
