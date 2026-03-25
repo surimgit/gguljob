@@ -20,6 +20,11 @@ public class SkillService {
     private final SkillRepository skillRepository;
     private final UserSkillRepository userSkillRepository;
 
+    @Transactional(readOnly = true)
+    public List<Skill> getAllSkills() {
+        return skillRepository.findAll();
+    }
+
     public void saveUserSkills(User user, List<String> skillNames) {
         userSkillRepository.deleteAllByUser(user);
 

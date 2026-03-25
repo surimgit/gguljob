@@ -12,6 +12,7 @@ interface TeamInviteModalProps {
   onClose: () => void;
   memberName: string;
   userId: number;
+  fixedProjectId?: number;
 }
 
 const JOB_OPTIONS = ROLE_LIST.map(code => ({
@@ -21,20 +22,20 @@ const JOB_OPTIONS = ROLE_LIST.map(code => ({
 
 const MAX_MESSAGE_LENGTH = 200;
 
-const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModalProps) => {
-  const [selectedProject, setSelectedProject] = useState('');
+const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId }: TeamInviteModalProps) => {
+  const [selectedProject, setSelectedProject] = useState(fixedProjectId ? String(fixedProjectId) : '');
   const [selectedJob, setSelectedJob] = useState('');
   const [message, setMessage] = useState('');
   const [projects, setProjects] = useState<ProjectSimple[]>([]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !fixedProjectId) {
       getMyProjects().then(({ data }) => setProjects(data)).catch(() => {});
     }
-  }, [isOpen]);
+  }, [isOpen, fixedProjectId]);
 
   const handleSubmit = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject || !selectedJob) return;
     try {
       await inviteUser(Number(selectedProject), userId, {
         role: selectedJob,
@@ -43,8 +44,9 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
       toast.success(`${memberName}님에게 초대를 보냈습니다.`);
       onClose();
     } catch (err: unknown) {
-      if (isAxiosError(err) && err.response?.status === 409) {
-        toast.error('이미 초대된 사용자입니다.');
+      if (isAxiosError(err) && (err.response?.status === 409 || err.response?.status === 400)) {
+        const msg = err.response?.data?.message;
+        toast.error(msg || '이미 초대했거나 지원한 사용자입니다.');
       } else {
         toast.error('초대에 실패했습니다. 다시 시도해주세요.');
       }
@@ -52,7 +54,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
   };
 
   const handleClose = () => {
-    setSelectedProject('');
+    setSelectedProject(fixedProjectId ? String(fixedProjectId) : '');
     setSelectedJob('');
     setMessage('');
     onClose();
@@ -83,24 +85,26 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId }: TeamInviteModa
         <p className="text-sm text-text-secondary mb-4">초대할 프로젝트와 직무를 선택하세요</p>
 
         {/* 프로젝트 선택 */}
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-text-primary mb-2">
-            프로젝트 선택 <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="w-full appearance-none rounded-xl border-2 border-border bg-white px-4 py-2.5 pr-10 text-sm text-text-primary focus:border-primary focus:outline-none transition-colors"
-            >
-              <option value="">프로젝트를 선택하세요</option>
-              {projects.map((p) => (
-                <option key={p.projectId} value={p.projectId}>{p.title}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
+        {!fixedProjectId && (
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-text-primary mb-2">
+              프로젝트 선택 <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="w-full appearance-none rounded-xl border-2 border-border bg-white px-4 py-2.5 pr-10 text-sm text-text-primary focus:border-primary focus:outline-none transition-colors"
+              >
+                <option value="">프로젝트를 선택하세요</option>
+                {projects.map((p) => (
+                  <option key={p.projectId} value={p.projectId}>{p.title}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 직무 선택 */}
         <div className="mb-4">

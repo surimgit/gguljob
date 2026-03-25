@@ -221,8 +221,10 @@ export interface PersonalSpaceData {
   }[];
   myReviews: {
     reviewId: number;
+    reviewerName: string;
+    prTitle: string;
+    prNumber: number;
     contentSnippet: string;
-    createdAt: string;
   }[];
   myTroubleshootings: {
     tsId: number;

@@ -1,5 +1,5 @@
 package com.ssafy.gguljob.backend.domain.skill.type;
 
 public enum SkillCategory {
-    BACKEND, FRONTEND, AI, DEVOPS, DESIGN, PM, DATABASE, MOBILE, DATA, TOOLS
+    BACKEND, FRONTEND, AI, DEVOPS, DESIGN, PM, MOBILE, DATA, DATABASE
 }

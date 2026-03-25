@@ -25,6 +25,7 @@ import {
   Briefcase,
   PieChart,
   Camera,
+  Trash2,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import toast from "react-hot-toast";
@@ -199,13 +200,36 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [showImageMenu, setShowImageMenu] = useState(false);
+  const imageMenuRef = useRef<HTMLDivElement>(null);
+
+  const compressImage = (file: File, maxWidth = 800, quality = 0.85): Promise<File> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob!], file.name, { type: "image/jpeg" })),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !projectId) return;
     setImageUploading(true);
     try {
-      const { data } = await uploadProjectImage(projectId, file);
+      const compressed = await compressImage(file);
+      const { data } = await uploadProjectImage(projectId, compressed);
       setImageUrl(data.data);
       toast.success("프로젝트 이미지가 변경되었습니다.");
     } catch {
@@ -226,6 +250,18 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
       toast.error("이미지 삭제에 실패했습니다.");
     }
   };
+
+  // 이미지 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showImageMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (imageMenuRef.current && !imageMenuRef.current.contains(e.target as Node)) {
+        setShowImageMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showImageMenu]);
 
   // GET /edit → 폼 초기화
   useEffect(() => {
@@ -452,12 +488,15 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
             style={{ background: "var(--color-background)" }}
           >
             {/* 프로젝트 이미지 */}
-            <div className="relative group flex-shrink-0">
-              <div
-                className="w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm"
+            <div className="flex flex-col items-center flex-shrink-0 relative" ref={imageMenuRef}>
+              <button
+                type="button"
+                onClick={() => isLeader && setShowImageMenu((prev) => !prev)}
+                className="relative w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group"
                 style={{
                   background: imageUrl ? "transparent" : "linear-gradient(135deg, var(--color-primary-soft), var(--color-surface))",
                   border: "2px solid var(--color-border)",
+                  cursor: isLeader ? "pointer" : "default",
                 }}
               >
                 {imageUrl ? (
@@ -468,31 +507,37 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
                     <span className="text-[10px] font-medium" style={{ color: "var(--color-text-tertiary)" }}>대표 이미지</span>
                   </div>
                 )}
-              </div>
-              {isLeader && (
-                <div
-                  className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity cursor-pointer"
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  {imageUploading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="w-5 h-5 text-white" />
-                      <span className="text-[10px] text-white font-medium">{imageUrl ? "변경" : "업로드"}</span>
-                    </>
+                {isLeader && (
+                  <div className="absolute inset-0 rounded-2xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {imageUploading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </div>
+                )}
+              </button>
+              {showImageMenu && (
+                <div className="absolute left-[96px] top-2 bg-white border border-border rounded-xl shadow-lg py-1 z-10 w-28">
+                  <button
+                    type="button"
+                    onClick={() => { imageInputRef.current?.click(); setShowImageMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-primary-soft transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    {imageUrl ? "사진 변경" : "사진 추가"}
+                  </button>
+                  {imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      사진 삭제
+                    </button>
                   )}
                 </div>
-              )}
-              {isLeader && imageUrl && (
-                <button
-                  type="button"
-                  onClick={handleImageDelete}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                  style={{ background: "var(--color-error)" }}
-                >
-                  <X className="w-3 h-3 text-white" />
-                </button>
               )}
             </div>
             <input

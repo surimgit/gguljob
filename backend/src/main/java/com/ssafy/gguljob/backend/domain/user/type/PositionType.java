@@ -1,21 +1,13 @@
 package com.ssafy.gguljob.backend.domain.user.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import lombok.Getter;
 
 @Getter
 public enum PositionType {
-    BE("Backend"),
-    FE("Frontend"),
-    AI("AI"),
-    PM("PM"),
-    INFRA("Infra"),
-    DEVOPS("DevOps"),
-    DESIGN("Design"),
-    DB("Database"),
-    MOBILE("Mobile"),
-    DATA("Data"),
-    TOOLS("Tools");
+    BE("Backend"), FE("Frontend"), AI("AI"), PM("PM"), INFRA("Infra"), DEVOPS("DevOps"), DESIGN(
+            "Design"), DB("Database"), MOBILE("Mobile"), DATA("Data");
 
     private final String description;
 
@@ -61,7 +53,7 @@ public enum PositionType {
             case "DATA":
                 return DATA;
             case "TOOLS":
-                return TOOLS;
+                return PM; // 하위호환: TOOLS 직무 → PM으로 매핑
             case "DESIGN":
                 return DESIGN;
             case "PM":

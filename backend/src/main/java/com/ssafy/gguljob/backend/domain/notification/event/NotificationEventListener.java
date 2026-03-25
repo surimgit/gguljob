@@ -30,7 +30,7 @@ public class NotificationEventListener {
                 .category(NotificationCategory.TEAM)
                 .content(event.getMessage())
                 .referenceId(event.getRequestId())
-                .referenceUrl("/projects/" + event.getProjectId())
+                .referenceUrl("/my-projects/" + event.getProjectId())
                 .build();
 
             notificationRepository.save(notification);

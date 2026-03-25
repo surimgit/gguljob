@@ -49,7 +49,6 @@ public class AdminNeo4jController {
         long totalMysqlUsers = userRepository.count();
         long onboardedMysqlUsers = userRepository.findAllOnboardedUserIds().size();
 
-        // Skill 노드 타입 분석: id만 있는 것 vs name만 있는 것 vs 둘 다 있는 것
         long skillWithId = neo4jClient.query("MATCH (s:Skill) WHERE s.id IS NOT NULL RETURN count(s) AS cnt")
             .fetchAs(Long.class).mappedBy((t, r) -> r.get("cnt").asLong()).one().orElse(0L);
         long skillWithName = neo4jClient.query("MATCH (s:Skill) WHERE s.name IS NOT NULL RETURN count(s) AS cnt")
@@ -57,7 +56,6 @@ public class AdminNeo4jController {
         long skillTotal = neo4jClient.query("MATCH (s:Skill) RETURN count(s) AS cnt")
             .fetchAs(Long.class).mappedBy((t, r) -> r.get("cnt").asLong()).one().orElse(0L);
 
-        // 실제 팀매칭 스킬 연결 여부 확인 (User-Skill-Project 삼각 경로)
         long teamSkillMatchable = neo4jClient.query(
             "MATCH (u:User)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(p:Project) RETURN count(DISTINCT s) AS cnt")
             .fetchAs(Long.class).mappedBy((t, r) -> r.get("cnt").asLong()).one().orElse(0L);

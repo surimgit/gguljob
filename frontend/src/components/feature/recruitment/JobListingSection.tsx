@@ -46,7 +46,7 @@ const parseTechStacks = (raw: string[] | undefined): string[] => {
 const formatSalary = (salary: string): string => {
   if (!salary) return '회사내규';
   if (/만원|원|억/.test(salary)) return salary;
-  if (/\d/.test(salary)) return `${salary}만원`;
+  if (/^\d+([-~]\d+)?$/.test(salary.trim())) return `${salary}만원`;
   return salary;
 };
 
@@ -202,11 +202,11 @@ const SkillCategoryFilter = ({
   return (
     <div className="flex flex-col gap-[8px]">
       {/* 카테고리 탭 */}
-      <div className="flex items-start min-h-[32px] relative w-full">
-        <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] w-[56px] shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-start min-h-[32px] relative w-full gap-1 sm:gap-0">
+        <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] sm:w-[56px] shrink-0">
           기술스택
         </span>
-        <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+        <div className="flex items-center sm:ml-[12px] flex-wrap gap-y-[4px]">
           <FilterButton
             text="전체"
             selected={activeCategory === null && activeSkill === '전체'}
@@ -285,48 +285,49 @@ const JobCard = ({
       aria-label={`${job.company} - ${job.title}`}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
-      className="flex items-center gap-5 bg-white border-2 border-border rounded-[19px] px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
+      className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 bg-white border-2 border-border rounded-[19px] px-4 sm:px-5 py-4 shadow-[2px_2px_2px_0px_rgba(229,231,235,0.5)] hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 cursor-pointer"
     >
-      {/* 로고 */}
-      <div
-        className="flex-shrink-0 flex items-center justify-center rounded-[15px] font-extrabold text-white"
-        style={{ width: '57px', height: '57px', background: job.logoColor, fontSize: '23px' }}
-      >
-        {job.logoText}
-      </div>
-
-      {/* 공고 내용 */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <span className="text-[13px] font-bold text-text-secondary">{job.company}</span>
-          {job.isNew && (
-            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-[4px] bg-primary-soft text-text-brown">
-              NEW
-            </span>
-          )}
-          {dday && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full -translate-y-px"
-              style={{ background: `${ddayColor}18`, color: ddayColor }}
-            >
-              {dday}
-            </span>
-          )}
+      {/* 로고 + 공고 내용 */}
+      <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
+        <div
+          className="flex-shrink-0 flex items-center justify-center rounded-[15px] font-extrabold text-white"
+          style={{ width: '57px', height: '57px', background: job.logoColor, fontSize: '23px' }}
+        >
+          {job.logoText}
         </div>
-        <p className="text-[17px] font-extrabold text-text-primary mb-1 truncate">{job.title}</p>
-        <div className="flex items-center gap-1.5 text-[12px] font-medium text-text-secondary flex-wrap">
-          <span>{job.location}</span>
-          <span>·</span>
-          <span>{job.experience}</span>
-          <span>·</span>
-          <span>{job.employmentType}</span>
-          <span>·</span>
-          <span className="font-bold text-primary-hover">{job.salary}</span>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-[13px] font-bold text-text-secondary">{job.company}</span>
+            {job.isNew && (
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-[4px] bg-primary-soft text-text-brown">
+                NEW
+              </span>
+            )}
+            {dday && (
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full -translate-y-px"
+                style={{ background: `${ddayColor}18`, color: ddayColor }}
+              >
+                {dday}
+              </span>
+            )}
+          </div>
+          <p className="text-[15px] sm:text-[17px] font-extrabold text-text-primary mb-1 truncate">{job.title}</p>
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-medium text-text-secondary flex-wrap">
+            <span>{job.location}</span>
+            <span>·</span>
+            <span>{job.experience}</span>
+            <span>·</span>
+            <span>{job.employmentType}</span>
+            <span>·</span>
+            <span className="font-bold text-primary-hover">{job.salary}</span>
+          </div>
         </div>
       </div>
 
       {/* 매칭 뱃지 + 북마크 */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0 self-end sm:self-center">
         <span
           className="text-[12px] font-bold px-3 py-1 rounded-full"
           style={{ background: match.bg, color: match.color }}
@@ -467,7 +468,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     <div ref={sectionRef} className="bg-background max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* 섹션 제목 */}
       <div className="pt-8 pb-5">
-        <h2 className="font-bold text-[30px]">
+        <h2 className="font-bold text-[22px] sm:text-[26px] lg:text-[30px]">
           <span className="text-text-primary">전체 </span>
           <span className="text-primary-hover">채용 정보</span>
         </h2>
