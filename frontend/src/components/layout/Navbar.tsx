@@ -254,7 +254,7 @@ const Navbar = () => {
                             프로젝트 찾기
                         </Link>
                         <Link
-                            to="/portfolio"
+                            to="/mypage/portfolio"
                             onClick={() => window.scrollTo(0, 0)}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
@@ -424,7 +424,7 @@ const Navbar = () => {
                             프로젝트 찾기
                         </Link>
                         <Link
-                            to="/portfolio"
+                            to="/mypage/portfolio"
                             onClick={() => {
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
