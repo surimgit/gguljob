@@ -28,7 +28,7 @@ public class MatchingProfileService {
             .orElseThrow(() -> new IllegalArgumentException("동기화할 유저를 찾을 수 없습니다."));
 
         var skillNodes = user.getUserSkills().stream()
-            .map(us -> SkillNode.builder().id(String.valueOf(us.getSkill().getId())).name(us.getSkill().getName()).build())
+            .map(us -> SkillNode.builder().id(us.getSkill().getId()).name(us.getSkill().getName()).build())
             .collect(Collectors.toSet());
 
         var roleNodes = user.getRoles().stream()
