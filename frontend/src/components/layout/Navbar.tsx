@@ -28,14 +28,15 @@ const toNotification = (dto: NotificationDto): Notification => {
     else if (diffMin < 1440) time = `${Math.floor(diffMin / 60)}시간 전`;
     else time = `${Math.floor(diffMin / 1440)}일 전`;
 
-    return {
-        id: dto.notificationId,
-        type: dto.category,
-        message: dto.content,
-        time,
-        isRead: dto.isRead,
-        referenceId: dto.referenceId,
-    };
+  return {
+    id: dto.notificationId,
+    type: dto.category,
+    message: dto.content,
+    time,
+    isRead: dto.isRead,
+    referenceId: dto.referenceId,
+    referenceUrl: dto.referenceUrl?.replace(/^\/projects\/(\d+)/, '/my-projects/$1') ?? null,
+  };
 };
 
 const Navbar = () => {

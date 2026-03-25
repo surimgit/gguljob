@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { NotificationCategory } from '../../../api/notification';
 import { acceptRequest, rejectRequest } from '../../../api/projects';
 
@@ -12,6 +13,7 @@ export interface Notification {
   time: string;
   isRead: boolean;
   referenceId: number | null;
+  referenceUrl: string | null;
 }
 
 /** 초대 알림이면서 아직 수락/거절하지 않은 상태인지 판별 */
@@ -86,11 +88,14 @@ const NotificationItem = ({
   notif,
   onDelete,
   onMarkRead,
+  onClose,
 }: {
   notif: Notification;
   onDelete: (id: number) => void;
   onMarkRead: (id: number) => void;
+  onClose: () => void;
 }) => {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(() => {
     const saved = localStorage.getItem(`notif-action-${notif.id}`);
@@ -103,7 +108,19 @@ const NotificationItem = ({
 
   const handleClick = () => {
     if (!notif.isRead && !isPending) onMarkRead(notif.id);
-    if (isPending) setExpanded(prev => !prev);
+    if (isPending) {
+      setExpanded(prev => !prev);
+      return;
+    }
+    // referenceUrl이 있으면 해당 페이지로 이동
+    if (notif.referenceUrl) {
+      onClose();
+      if (notif.referenceUrl.startsWith('http')) {
+        window.open(notif.referenceUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(notif.referenceUrl);
+      }
+    }
   };
 
   const handleAccept = async (e: React.MouseEvent) => {
@@ -145,7 +162,7 @@ const NotificationItem = ({
       onClick={handleClick}
       className={`group flex flex-col rounded-xl px-5 pt-4 pb-4 transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${
         notif.isRead
-          ? 'bg-[#f9fafb] shadow-none cursor-default'
+          ? `bg-[#f9fafb] shadow-none ${notif.referenceUrl ? 'cursor-pointer' : 'cursor-default'}`
           : 'bg-surface shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] cursor-pointer'
       }`}
     >
@@ -289,7 +306,7 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
               return b.id - a.id;
             })
             .map(notif => (
-              <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
+              <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} onClose={onClose} />
             ));
         })()
       ) : (
