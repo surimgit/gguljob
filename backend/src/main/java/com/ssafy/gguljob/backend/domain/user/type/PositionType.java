@@ -14,8 +14,7 @@ public enum PositionType {
     DESIGN("Design"),
     DB("Database"),
     MOBILE("Mobile"),
-    DATA("Data"),
-    TOOLS("Tools");
+    DATA("Data");
 
     private final String description;
 
@@ -61,7 +60,7 @@ public enum PositionType {
             case "DATA":
                 return DATA;
             case "TOOLS":
-                return TOOLS;
+                return PM; // 하위호환: TOOLS 직무 → PM으로 매핑
             case "DESIGN":
                 return DESIGN;
             case "PM":
