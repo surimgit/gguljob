@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 public record MemberCardDto(
     Long userId,
     String userName,
+    String profileImageUrl,
     String position,
     String experienceLevel,
     String bio,
@@ -29,6 +30,7 @@ public record MemberCardDto(
         return new MemberCardDto(
             user.getId(),
             user.getUserName(),
+            user.getProfileImageUrl(),
             pos,
             level,
             user.getDescription(),

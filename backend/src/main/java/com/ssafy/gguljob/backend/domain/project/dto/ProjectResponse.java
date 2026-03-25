@@ -63,7 +63,8 @@ public class ProjectResponse {
         String teamName,
         Domain domain,
         String description,
-        List<String> skills
+        List<String> skills,
+        ProjectStatus status
     ) {}
 
     public record TeamStatsDto(

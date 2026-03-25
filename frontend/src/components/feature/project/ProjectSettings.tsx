@@ -163,7 +163,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [name, setName] = useState("");
-  const [originalTitle, setOriginalTitle] = useState("");
   const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -272,7 +271,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
         setStatus(mappedStatus);
         setName(form.teamName ?? form.title ?? "");
-        setOriginalTitle(form.title ?? "");
         setDescription(form.description ?? "");
         setDomain(form.domain ?? "");
         setImageUrl(form.imageUrl ?? null);
@@ -299,7 +297,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         // 폴백: dashboard 데이터 사용
         if (info) {
           setName(info.teamName ?? info.title ?? "");
-          setOriginalTitle(info.title ?? "");
           setDescription(info.description ?? "");
           setDomain(info.domain ?? "");
           if (info.skills?.length) {
@@ -322,6 +319,16 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
     const current = JSON.stringify({ status, name, description, domain, techStacks });
     return current !== initialSnapshot;
   }, [status, name, description, domain, techStacks, initialSnapshot]);
+
+  // 미저장 변경사항 있을 때 페이지 이탈 경고
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
 
   const selectDomain = (d: string) =>
     setDomain((prev) => (prev === d ? "" : d));
@@ -358,7 +365,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
     try {
       await updateProject(projectId, {
         status: STATUS_TO_BACKEND[status],
-        title: originalTitle,
+        title: name,
         teamName: name,
         description,
         domain,

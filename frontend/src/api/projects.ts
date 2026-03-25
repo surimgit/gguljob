@@ -202,6 +202,7 @@ export const updateProjectTopic = (projectId: number, selectedTopic: string) =>
 export interface RecommendedMember {
   userId: number;
   userName: string;
+  profileImageUrl: string | null;
   position: string;
   experienceLevel: string;
   bio: string;
