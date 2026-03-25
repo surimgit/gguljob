@@ -49,7 +49,6 @@ interface ProjectFormState {
   name: string;
   description: string;
   domain: string;
-  gitUrl: string;
   techStacks: Record<string, string[]>;
   members: Member[];
   leaderRole: string;
@@ -65,7 +64,6 @@ const CreateProject = () => {
     name: '',
     description: '',
     domain: '',
-    gitUrl: '',
     techStacks: {},
     members: [],
     leaderRole: '',
@@ -247,32 +245,6 @@ const CreateProject = () => {
             </div>
           </div>
 
-          {/* Git 저장소 URL */}
-          <div>
-            <label className="text-sm font-semibold mb-1.5 block" style={{ color: 'var(--color-text-primary)' }}>
-              Git 저장소 URL
-            </label>
-            <input
-              type="url"
-              value={form.gitUrl}
-              onChange={(e) => setForm((prev) => ({ ...prev, gitUrl: e.target.value }))}
-              placeholder="https://github.com/your-org/your-repo"
-              className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-colors"
-              style={{
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text-primary)',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-              onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-            />
-            <div
-              className="flex items-center gap-2 mt-2 px-4 py-2.5 rounded-xl text-xs"
-              style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary-hover)' }}
-            >
-              <Info className="w-3.5 h-3.5 flex-shrink-0" />
-              연동 시 커밋·기록 기반 트러블슈팅 자동 매핑이 활성화돼요
-            </div>
-          </div>
         </section>
 
         {/* ─── 섹션 2: 기술 스택 ─── */}
