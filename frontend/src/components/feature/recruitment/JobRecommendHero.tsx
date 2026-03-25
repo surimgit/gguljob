@@ -12,7 +12,7 @@ import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 const formatSalary = (salary: string): string => {
   if (!salary) return '회사내규';
   if (/만원|원|억/.test(salary)) return salary;
-  if (/^\d+([-~]\d+)?$/.test(salary.trim())) return `${salary}만원`;
+  if (/^[\d,]+([-~][\d,]+)?$/.test(salary.trim())) return `${salary}만원`;
   return salary;
 };
 
