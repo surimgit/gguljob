@@ -533,6 +533,8 @@ public class ProjectService {
 
         projectRepository.delete(project);
 
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+
         log.info("프로젝트 삭제 완료 - projectId: {}, userId: {}", projectId, userId);
     }
 
