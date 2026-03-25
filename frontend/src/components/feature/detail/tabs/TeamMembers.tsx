@@ -58,7 +58,6 @@ interface TeamManagementProps {
   roles: Role[];
   members: Member[];
   applications: Application[];
-  onDeleteRole: (roleId: string) => void;
   onLeaderDelegated?: () => void;
   onRefresh?: () => void;
 }
@@ -705,7 +704,6 @@ const TeamManagement = ({
   members,
   applications: initialApps,
   projectId,
-  onDeleteRole: _onDeleteRole,
   onLeaderDelegated,
   onRefresh,
 }: TeamManagementProps) => {
@@ -784,19 +782,34 @@ const TeamManagement = ({
     }
   };
 
-  const handleDeleteRole = (roleId: string) => {
+  const handleDeleteRole = async (roleId: string) => {
     const role = roles.find((r) => r.id === roleId);
-    if (role) {
-      const roleMembers = membersByRole[role.name] ?? [];
-      if (roleMembers.length > 0) {
-        alert(`${getRoleDisplayName(role.name)} 직무에 팀원이 있어 삭제할 수 없습니다.`);
-        return;
-      }
+    if (!role) return;
+
+    const roleMembers = membersByRole[role.name] ?? [];
+    if (roleMembers.length > 0) {
+      alert(`${getRoleDisplayName(role.name)} 직무에 팀원이 있어 삭제할 수 없습니다.`);
+      return;
     }
-    setRoles((prev) => prev.filter((r) => r.id !== roleId));
-    if (projectId && !isNaN(Number(roleId))) {
-      deleteRecruitment(projectId, Number(roleId))
-        .catch(() => alert('직무 삭제에 실패했습니다.'));
+
+    // 같은 displayName을 가진 모든 recruitment ID 수집
+    const allIdsForRole = roles
+      .filter((r) => r.name === role.name)
+      .map((r) => r.id)
+      .filter((id) => !isNaN(Number(id)));
+
+    if (projectId && allIdsForRole.length > 0) {
+      try {
+        await Promise.all(
+          allIdsForRole.map((id) => deleteRecruitment(projectId, Number(id))),
+        );
+        setRoles((prev) => prev.filter((r) => r.name !== role.name));
+      } catch {
+        alert('직무 삭제에 실패했습니다.');
+      }
+    } else {
+      // member-role 등 백엔드에 없는 역할은 로컬만 제거
+      setRoles((prev) => prev.filter((r) => r.id !== roleId));
     }
   };
 
@@ -820,10 +833,15 @@ const TeamManagement = ({
           prev.map((r) => {
             if (r.name !== app.role) return r;
             const newCurrent = r.current + 1;
+            const newTotal = Math.max(r.total, newCurrent);
+            if (projectId && !isNaN(Number(r.id)) && newTotal !== r.total) {
+              updateRecruitmentTargetCount(projectId, Number(r.id), newTotal).catch(() => {});
+            }
             return {
               ...r,
               current: newCurrent,
-              status: newCurrent >= r.total ? "closed" : r.status,
+              total: newTotal,
+              status: newCurrent >= newTotal ? "closed" : r.status,
             };
           }),
         );
@@ -1009,7 +1027,7 @@ const TeamManagement = ({
                     </div>
                     {/* hover 시 관리 버튼 */}
                     {isCurrentUserLeader && !member.isLeader && (
-                      <div className="hidden group-hover:flex absolute -top-1.5 -right-1.5 gap-0.5">
+                      <div className="hidden group-hover:flex absolute top-2 right-2 gap-0.5">
                         <button
                           onClick={(e) => { e.stopPropagation(); setDelegateMemberId(member.id); }}
                           className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -1321,7 +1339,12 @@ const TeamManagement = ({
                             prev.map((r) => {
                               if (r.name !== kickedMember.role) return r;
                               const newCurrent = Math.max(0, r.current - 1);
-                              return { ...r, current: newCurrent, status: newCurrent < r.total ? "open" : r.status };
+                              const newTotal = Math.max(newCurrent, r.total - 1);
+                              // 백엔드에도 인원 수 반영
+                              if (!isNaN(Number(r.id))) {
+                                updateRecruitmentTargetCount(projectId, Number(r.id), newTotal).catch(() => {});
+                              }
+                              return { ...r, current: newCurrent, total: newTotal, status: newCurrent < newTotal ? "open" : r.status };
                             }),
                           );
                         }
@@ -1823,9 +1846,6 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
       roles={roles}
       members={members}
       applications={applications}
-      onDeleteRole={(id) => {
-        if (projectId && !isNaN(Number(id))) deleteRecruitment(projectId, Number(id)).catch(() => alert('직무 삭제에 실패했습니다.'));
-      }}
       onLeaderDelegated={() => { fetchDetail(); onLeaderChanged?.(); }}
       onRefresh={fetchDetail}
     />

@@ -70,7 +70,7 @@ public class ProjectDashboardService {
         // 스킬 조회
         List<String> skillNames = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
         ProjectResponse.ProjectOverviewDto projectInfo = new ProjectResponse.ProjectOverviewDto(
-            project.getTitle(), project.getTopic(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
+            project.getTitle(), project.getTopic(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames, project.getStatus()
         );
 
         // 팀원 통계

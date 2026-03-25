@@ -127,6 +127,7 @@ export interface TeamDashboard {
     domain: string;
     description: string;
     skills: string[];
+    status: string;
   };
   teamStats: {
     totalMembers: number;

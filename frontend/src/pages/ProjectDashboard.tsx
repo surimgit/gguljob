@@ -107,7 +107,7 @@ const ProjectDashboard = () => {
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
-  const { dashboard, gitLog, dashboardLoading, fetchDashboard } =
+  const { dashboard, gitLog, dashboardLoading, fetchDashboard, fetchMyProjects } =
     useProjectStore();
   const [personalData, setPersonalData] = useState<PersonalSpaceData | null>(
     null,
@@ -189,6 +189,7 @@ const ProjectDashboard = () => {
     domain: "",
     description: "",
     skills: [],
+    status: "IN_PROGRESS",
   };
   const teamStats = dashboard?.teamStats ?? {
     totalMembers: 0,
@@ -383,13 +384,13 @@ const ProjectDashboard = () => {
               onLeaderChanged={() => setLeaderCheckKey((k) => k + 1)}
             />
           )}
-          {activeTab === "settings" && (
+          <div className={activeTab === "settings" ? "" : "hidden"}>
             <ProjectSettings
               dashboard={dashboard}
               projectId={id ? Number(id) : undefined}
-              onSaved={() => id && fetchDashboard(Number(id))}
+              onSaved={() => { if (id) { fetchDashboard(Number(id)); fetchMyProjects(); } }}
             />
-          )}
+          </div>
           <div className={activeTab === "personal" ? "" : "hidden"}>
             <PersonalSpace
               projectId={id ? Number(id) : undefined}
@@ -414,36 +415,52 @@ const ProjectDashboard = () => {
                 <div className="flex items-stretch justify-between gap-8">
                   {/* 좌측 프로젝트 정보 */}
                   <div className="flex-1 flex flex-col">
+                    {/* 1행: title + domain + 상태 */}
                     <div className="flex items-center gap-3 mb-1">
                       <h1
                         className="text-3xl font-bold"
                         style={{ color: "var(--color-text-brown)" }}
                       >
-                        {projectInfo.teamName || projectInfo.title}
+                        {projectInfo.title}
                       </h1>
                       <span
                         className="px-2.5 py-0.5 rounded-full text-sm font-semibold flex-shrink-0"
                         style={{
-                          background: getCategoryColorPair(projectInfo.domain)
-                            .bg,
+                          background: getCategoryColorPair(projectInfo.domain).bg,
                           color: getCategoryColorPair(projectInfo.domain).text,
                         }}
                       >
                         {projectInfo.domain || "미정"}
                       </span>
-                      <span
-                        className="flex items-center gap-1 text-sm font-semibold flex-shrink-0"
-                        style={{ color: "var(--color-success)" }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: "var(--color-success)" }}
-                        />
-                        진행중
-                      </span>
+                      {(() => {
+                        const statusMap: Record<string, { label: string; color: string }> = {
+                          RECRUITING: { label: "모집 중", color: "var(--color-blue, #2196F3)" },
+                          PROCEEDING: { label: "진행중", color: "var(--color-success)" },
+                          DONE: { label: "완료", color: "var(--color-text-tertiary)" },
+                        };
+                        const s = statusMap[projectInfo.status] ?? statusMap.PROCEEDING;
+                        return (
+                          <span
+                            className="flex items-center gap-1 text-sm font-semibold flex-shrink-0"
+                            style={{ color: s.color }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ background: s.color }}
+                            />
+                            {s.label}
+                          </span>
+                        );
+                      })()}
                     </div>
+                    {/* 2행: teamName */}
+                    {projectInfo.teamName && (
+                      <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                        {projectInfo.teamName}
+                      </p>
+                    )}
                     <p
-                      className="text-base leading-relaxed mb-5 max-w-lg mt-3"
+                      className="text-base leading-relaxed mb-5 max-w-lg mt-5"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       {projectInfo.description}
