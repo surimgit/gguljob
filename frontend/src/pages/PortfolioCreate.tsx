@@ -74,25 +74,25 @@ const TsCard = ({ item, selected, onToggle }: { item: TsItemWithProject; selecte
     type="button"
     onClick={onToggle}
     aria-pressed={selected}
-    className={`flex flex-col border-2 rounded-2xl overflow-hidden cursor-pointer transition-all text-left w-full ${
+    className={`flex flex-col border-2 rounded-xl overflow-hidden cursor-pointer transition-all text-left w-full ${
       selected
         ? 'border-primary-hover bg-primary-soft shadow-md'
         : 'border-border bg-surface hover:shadow-md'
     }`}
   >
-    <div className="flex items-center gap-3 px-4 py-4 w-full">
+    <div className="flex items-center gap-3 px-4 py-3 w-full">
       <span
-        className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
+        className="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: CIRCLE_COLORS[(item.tsId - 1) % CIRCLE_COLORS.length] }}
       >
         {item.tsId}
       </span>
-      <h4 className="text-sm font-bold text-text-primary leading-snug flex-1">{item.title}</h4>
+      <h4 className="text-sm font-bold text-text-primary leading-snug flex-1 truncate">{item.title}</h4>
       {selected && <CheckCircle2 className="w-5 h-5 text-primary-hover flex-shrink-0" />}
     </div>
-    <div className="flex flex-col gap-1 px-4 pb-4 border-t border-border pt-3 w-full" style={{ background: '#FAF9F6' }}>
-      <p className="text-xs font-bold text-text-primary">문제 상황</p>
-      <p className="text-xs text-text-secondary leading-relaxed">{item.situation}</p>
+    <div className="flex flex-col gap-0.5 px-4 pb-3 border-t border-border pt-2 w-full" style={{ background: '#FAF9F6' }}>
+      <p className="text-[11px] font-bold text-text-primary">문제 상황</p>
+      <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{item.situation}</p>
     </div>
   </button>
 );
