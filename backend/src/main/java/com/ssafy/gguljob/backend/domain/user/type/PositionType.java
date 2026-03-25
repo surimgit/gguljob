@@ -12,6 +12,7 @@ public enum PositionType {
     INFRA("Infra"),
     DEVOPS("DevOps"),
     DESIGN("Design"),
+    DB("Database"),
     MOBILE("Mobile"),
     DATA("Data");
 
@@ -50,7 +51,7 @@ public enum PositionType {
                 return DEVOPS;
             case "DATABASE":
             case "DB":
-                return BE; // 하위호환: DB 직무 → BE로 매핑
+                return DB;
             case "MOBILE":
             case "APP":
             case "IOS":
