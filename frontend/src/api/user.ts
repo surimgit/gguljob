@@ -93,3 +93,14 @@ export interface UserProfileDto {
 
 export const getUserProfile = (userId: number) =>
   api.get<{ data: UserProfileDto }>(`/v1/user/${userId}`);
+
+/** GET /v1/user/positions → 직무 전체 목록 조회 */
+export interface PositionDto {
+  code: string;
+  name: string;
+}
+
+export const getPositions = async (): Promise<PositionDto[]> => {
+  const res = await api.get('/v1/user/positions');
+  return res.data.data;
+};
