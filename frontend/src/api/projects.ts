@@ -83,17 +83,8 @@ export const getTeamManagement = (projectId: number) =>
 
 /* ── 포지션(모집 직무) 관리 ── */
 
-export const addPosition = (projectId: number, data: { role: string; targetCount: number; requireSkills?: string[] }) =>
-  api.post(`/v1/projects/${projectId}/recruitments`, data);
-
 export const deletePosition = (projectId: number, positionId: number) =>
   api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
-
-export const updatePositionTargetCount = (projectId: number, positionId: number, targetCount: number) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
-
-export const updatePositionStatus = (projectId: number, positionId: number, status: string) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
 
 /* ── 합류 요청 ── */
 
