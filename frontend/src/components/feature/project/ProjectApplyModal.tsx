@@ -88,6 +88,12 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
 
+  const handleConfirmDismiss = () => {
+    setShowConfirm(false);
+    onApplied?.();
+    onClose();
+  };
+
   const handleApply = async () => {
     if (!selectedRole) return;
     const position = project.positions.find((p) => p.role === selectedRole);
@@ -231,16 +237,8 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           title="지원 완료"
           subtitle="프로젝트에 지원이 완료되었습니다."
           confirmText="확인"
-          onConfirm={() => {
-            setShowConfirm(false);
-            onApplied?.();
-            onClose();
-          }}
-          onClose={() => {
-            setShowConfirm(false);
-            onApplied?.();
-            onClose();
-          }}
+          onConfirm={handleConfirmDismiss}
+          onClose={handleConfirmDismiss}
         />
       )}
     </BaseModal>
