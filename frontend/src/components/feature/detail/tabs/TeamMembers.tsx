@@ -1402,8 +1402,7 @@ const GitHubContributorSuggestion = ({ projectId }: { projectId: number }) => {
   useEffect(() => {
     getGitHubContributors(projectId)
       .then(({ data }) => {
-        const list = (data as any)?.data ?? data;
-        setContributors(Array.isArray(list) ? list : []);
+        setContributors(data.data ?? []);
       })
       .catch(() => setContributors([]))
       .finally(() => setLoading(false));

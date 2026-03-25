@@ -20,7 +20,6 @@ import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -213,17 +212,7 @@ public class ProjectDashboardService {
 
     /** GitHub PR 기여자 중 프로젝트 팀원이 아닌 유저 목록 */
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getNonMemberContributors(Long projectId) {
-        return pullRequestRepository.findNonMemberContributors(projectId)
-            .stream()
-            .map(row -> {
-                Map<String, Object> m = new java.util.HashMap<>();
-                m.put("userId", row[0]);
-                m.put("userName", row[1]);
-                m.put("profileImageUrl", row[2]);
-                m.put("prCount", row[3]);
-                return m;
-            })
-            .toList();
+    public List<PullRequestRepository.NonMemberContributorProjection> getNonMemberContributors(Long projectId) {
+        return pullRequestRepository.findNonMemberContributors(projectId);
     }
 }
