@@ -389,14 +389,14 @@ const ProjectDashboard = () => {
               onSaved={() => id && fetchDashboard(Number(id))}
             />
           )}
-          {activeTab === "personal" && (
+          <div className={activeTab === "personal" ? "" : "hidden"}>
             <PersonalSpace
               projectId={id ? Number(id) : undefined}
               projectTitle={projectInfo.title}
               personalData={personalData}
               subTab={personalSubTab}
             />
-          )}
+          </div>
 
           {activeTab === "team" && (
             <>

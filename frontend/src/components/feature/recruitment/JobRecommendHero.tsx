@@ -100,10 +100,8 @@ const JobCard = ({
       aria-label={`${company} - ${role}`}
       onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
       onKeyDown={e => { if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
-      className="relative flex-shrink-0 flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200"
+      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-0 lg:min-h-[250px]"
       style={{
-        width: '400px',
-        minHeight: '250px',
         boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
         background: tint,
         padding: '20px 20px 20px 20px',
@@ -226,24 +224,24 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
             background: 'linear-gradient(to bottom, rgba(255,242,198,0.36), rgba(247,201,72,0.36))',
           }}
         >
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-20 pb-14 pl-[6%]">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-12 sm:pt-20 pb-10 sm:pb-14 lg:pl-[6%]">
             {/* 메인 타이틀 */}
             <p
-              className="font-bold"
-              style={{ fontSize: '40px', color: '#111827', lineHeight: '1.35' }}
+              className="font-bold text-[24px] sm:text-[32px] lg:text-[40px]"
+              style={{ color: '#111827', lineHeight: '1.35' }}
             >
               {userName}님의 기술 스택과<br />
               가장 잘 맞는 채용 공고를 추천해드려요!
             </p>
 
             {/* 부제목 */}
-            <p className="mt-6" style={{ fontSize: '22px', color: '#4A5565' }}>
+            <p className="mt-4 sm:mt-6 text-[15px] sm:text-[18px] lg:text-[22px]" style={{ color: '#4A5565' }}>
               포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
             </p>
 
             {/* 기술스택 태그 */}
             {userSkills.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap mt-5 max-w-[50%]">
+              <div className="flex items-center gap-2 flex-wrap mt-5 max-w-full lg:max-w-[50%]">
                 {userSkills.slice(0, 8).map(stack => (
                   <span
                     key={stack}
@@ -276,32 +274,33 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
 
       {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: '35px', paddingBottom: '40px' }}>
-        <h2 className="font-bold" style={{ fontSize: '30px' }}>
+        <h2 className="font-bold text-[22px] sm:text-[26px] lg:text-[30px]">
           <span style={{ color: '#111827' }}>맞춤 공고 </span>
           <span style={{ color: '#F2B705' }}>TOP 3</span>
         </h2>
 
-        <div className="flex gap-[45px]" style={{ marginTop: '75px' }}>
+        <div className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-14" style={{ marginTop: '61px' }}>
           {top3.map((job, idx) => (
-            <JobCard
-              key={job.jobId}
-              jobId={job.jobId}
-              tint={RANK_TINTS[idx]}
-              rank={idx + 1}
-              badges={['NEW']}
-              company={job.companyName}
-              logoText={job.companyName.charAt(0)}
-              logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
-              role={job.title}
-              location={job.region}
-              experience={job.experience}
-              employmentType={job.contractType}
-              salary={job.salary}
-              url={job.url}
-              deadline={job.deadline}
-              bookmarked={bookmarkedIds.has(job.jobId)}
-              onToggleBookmark={onToggleBookmark}
-            />
+            <div key={job.jobId} className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start">
+              <JobCard
+                jobId={job.jobId}
+                tint={RANK_TINTS[idx]}
+                rank={idx + 1}
+                badges={['NEW']}
+                company={job.companyName}
+                logoText={job.companyName.charAt(0)}
+                logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
+                role={job.title}
+                location={job.region}
+                experience={job.experience}
+                employmentType={job.contractType}
+                salary={job.salary}
+                url={job.url}
+                deadline={job.deadline}
+                bookmarked={bookmarkedIds.has(job.jobId)}
+                onToggleBookmark={onToggleBookmark}
+              />
+            </div>
           ))}
         </div>
       </div>

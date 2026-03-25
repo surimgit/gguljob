@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart2,
   Info,
@@ -29,7 +30,7 @@ import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
-import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage } from "../../../api/projects";
+import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject } from "../../../api/projects";
 import {
   SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
   SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
@@ -151,11 +152,13 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 
 /* ── 컴포넌트 ── */
 const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps) => {
+  const navigate = useNavigate();
   const info = dashboard?.projectInfo;
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLeader, setIsLeader] = useState(true);
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [name, setName] = useState("");
@@ -197,12 +200,33 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
   const [imageUploading, setImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const compressImage = (file: File, maxWidth = 800, quality = 0.85): Promise<File> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob!], file.name, { type: "image/jpeg" })),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !projectId) return;
     setImageUploading(true);
     try {
-      const { data } = await uploadProjectImage(projectId, file);
+      const compressed = await compressImage(file);
+      const { data } = await uploadProjectImage(projectId, compressed);
       setImageUrl(data.data);
       toast.success("프로젝트 이미지가 변경되었습니다.");
     } catch {
@@ -923,8 +947,87 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
       </div>
       )}
 
+      {/* ── 팀 나가기 ── */}
+      <div
+        className="rounded-2xl px-5 py-4 flex items-center justify-between"
+        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
+      >
+        <div>
+          <p
+            className="text-sm font-bold"
+            style={{ color: "var(--color-error)" }}
+          >
+            팀 나가기
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
+            팀에서 나가면 다시 합류하려면 신청이 필요합니다
+          </p>
+        </div>
+        <button
+          onClick={() => setShowLeaveModal(true)}
+          className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer"
+          style={{ background: "var(--color-error)" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "#DC2626")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "var(--color-error)")
+          }
+        >
+          나가기
+        </button>
+      </div>
+
       </div>{/* 우측 컬럼 끝 */}
       </div>{/* 그리드 끝 */}
+
+      {/* ── 팀 나가기 확인 모달 ── */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowLeaveModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-4xl">🚪</span>
+            <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>팀에서 나가시겠습니까?</p>
+            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+              나가면 다시 합류하려면 신청이 필요합니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
+                style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (!projectId) return;
+                  leaveProject(projectId)
+                    .then(() => {
+                      toast.success("팀에서 나갔습니다.");
+                      setShowLeaveModal(false);
+                      navigate("/myprojects");
+                    })
+                    .catch(() => toast.error("팀 나가기에 실패했습니다. 다시 시도해주세요."));
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "var(--color-error)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#DC2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
