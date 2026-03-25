@@ -103,8 +103,11 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
     try {
       await applyToPosition(project.projectId, position.positionId, intro || undefined);
       setShowConfirm(true);
-    } catch {
-      toast.error('지원에 실패했습니다. 다시 시도해주세요.');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        '지원에 실패했습니다. 다시 시도해주세요.';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
