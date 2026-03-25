@@ -572,7 +572,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 <Pagination
                   current={tsPage + 1}
                   totalPages={tsTotalPages}
-                  onChange={(page) => setTsPage(page - 1)}
+                  onChange={(page) => { setTsPage(page - 1); window.scrollTo(0, 0); }}
                   className="mt-6"
                 />
               </>
@@ -607,7 +607,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 <Pagination
                   current={mrPage + 1}
                   totalPages={mrTotalPages}
-                  onChange={(page) => setMrPage(page - 1)}
+                  onChange={(page) => { setMrPage(page - 1); window.scrollTo(0, 0); }}
                   className="mt-6"
                 />
               </>
