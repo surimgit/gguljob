@@ -79,13 +79,13 @@ export const useProjectFilters = () => {
       const CATEGORY_LABELS: Record<string, string> = {
         FRONTEND: 'Frontend',
         BACKEND: 'Backend',
+        DATABASE: 'Database',
         MOBILE: 'Mobile',
         DEVOPS: 'DevOps',
-        DATABASE: 'Database',
         DATA: 'Data',
         AI: 'AI',
         PM: 'PM',
-        TOOLS: 'Tools',
+        DESIGN: 'Design',
       };
       const rawSkillGroups: SkillGroup[] = (raw?.skillCategories ?? []).map((cat: any) => ({
         category: cat.category,

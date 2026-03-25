@@ -46,7 +46,7 @@ const parseTechStacks = (raw: string[] | undefined): string[] => {
 const formatSalary = (salary: string): string => {
   if (!salary) return '회사내규';
   if (/만원|원|억/.test(salary)) return salary;
-  if (/^\d+([-~]\d+)?$/.test(salary.trim())) return `${salary}만원`;
+  if (/^[\d,]+([-~][\d,]+)?$/.test(salary.trim())) return `${salary}만원`;
   return salary;
 };
 
@@ -58,7 +58,7 @@ const JOB_CATEGORY_MAP: Record<string, RoleCode> = {
   '앱개발자': 'MOBILE',
   '시스템엔지니어': 'DEVOPS',
   '네트워크엔지니어': 'DEVOPS',
-  'DBA': 'DATABASE',
+  'DBA': 'BACKEND',
   '데이터엔지니어': 'DATA',
   '데이터사이언티스트': 'DATA',
   '보안엔지니어': 'DEVOPS',

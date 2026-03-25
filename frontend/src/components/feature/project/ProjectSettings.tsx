@@ -5,7 +5,6 @@ import {
   Info,
   Monitor,
   Server,
-  Database,
   Cloud,
   Bot,
   Smartphone,
@@ -21,9 +20,10 @@ import {
   Link,
   Eye,
   Pencil,
-  Wrench,
+  Pen,
   Briefcase,
   PieChart,
+  Database,
   Camera,
   Trash2,
 } from "lucide-react";
@@ -122,8 +122,8 @@ const DOMAINS = [
 ];
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
-  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+  FRONTEND: Monitor, BACKEND: Server, DATABASE: Database, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
 };
 
 const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({

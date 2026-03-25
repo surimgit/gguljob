@@ -1,21 +1,20 @@
 import { type FC, useEffect, useState } from 'react';
 import {
-  Monitor, Server, Shield, BarChart3, Brain, HardDrive,
-  Smartphone, Briefcase, Pen, Box, type LucideIcon,
+  Monitor, Server, Shield, BarChart3, Brain,
+  Database, Smartphone, Briefcase, Pen, Box, type LucideIcon,
 } from 'lucide-react';
 import { getPositions, type PositionDto } from '../../../../api/user';
 
-const ROLE_ICONS: Record<string, LucideIcon> = {
-  FE:     Monitor,
-  BE:     Server,
-  INFRA:  Shield,
-  DEVOPS: Shield,
-  DATA:   BarChart3,
-  AI:     Brain,
-  DB:     HardDrive,
-  MOBILE: Smartphone,
-  PM:     Briefcase,
-  DESIGN: Pen,
+const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
+  FRONTEND: Monitor,
+  BACKEND:  Server,
+  DEVOPS:   Shield,
+  DATA:     BarChart3,
+  AI:       Brain,
+  DATABASE: Database,
+  MOBILE:   Smartphone,
+  PM:       Briefcase,
+  DESIGN:   Pen,
 };
 
 interface Props {
