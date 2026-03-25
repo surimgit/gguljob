@@ -121,7 +121,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   }, [showImageMenu]);
 
   const eligibleProjects = availableProjects.filter(
-    (p) => p.status === 'PROCEEDING' || p.status === 'DONE'
+    (p) => p.status === 'RECRUITING' || p.status === 'PROCEEDING' || p.status === 'DONE'
   );
 
   const isSelected = (projectId: number) =>
@@ -198,6 +198,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
         description: form.bio,
         roles: [form.role],
         skills: form.techStacks,
+        repProjectIds: form.projects.map((p) => Number(p.id)),
       };
       await updateProfileApi(payload);
 

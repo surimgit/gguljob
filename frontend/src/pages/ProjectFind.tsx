@@ -17,7 +17,6 @@ const ProjectFind = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProject, setSelectedProject] = useState<ProjectCardDto | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
 
   // 디바운스된 검색어
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -50,17 +49,6 @@ const ProjectFind = () => {
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
 
-  // 히어로 패럴렉스
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!heroRef.current) return;
-      const scrollY = window.scrollY;
-      const scale = Math.max(1, 1.08 - (scrollY / 400) * 0.08);
-      heroRef.current.style.transform = `translateX(-50%) scale(${scale})`;
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
@@ -75,7 +63,6 @@ const ProjectFind = () => {
 
       {/* Hero 섹션 */}
       <section
-        ref={heroRef}
         data-navbar-hero
         className="pt-[20px] pb-[48px] text-center overflow-hidden bg-primary-soft/[0.36]"
         style={{
@@ -83,9 +70,7 @@ const ProjectFind = () => {
           height: '380px',
           position: 'relative',
           left: '50%',
-          transform: 'translateX(-50%) scale(1.08)',
-          transformOrigin: 'center top',
-          willChange: 'transform',
+          transform: 'translateX(-50%)',
         }}
       >
         <div className="relative inline-flex items-end justify-center gap-1 mb-[20px]">

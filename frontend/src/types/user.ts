@@ -26,6 +26,15 @@ export interface UserSkill {
   iconUrl: string;
 }
 
+export interface RepProject {
+  projectId: number;
+  title: string;
+  description: string;
+  role: string;
+  period: string;
+  skills: string[];
+}
+
 export interface User {
   id: number;
   name: string;
@@ -39,6 +48,7 @@ export interface User {
   skills: UserSkill[];
   techStacks: string[];
   goals: string[];
+  repProjects: RepProject[];
   /** @deprecated position 사용 권장 */
   role: PositionType | null;
 }
