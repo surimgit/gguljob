@@ -8,6 +8,14 @@ import { useAuthStore } from '../../../stores/authStore';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
+/** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
+const formatSalary = (salary: string): string => {
+  if (!salary) return '회사내규';
+  if (/만원|원|억/.test(salary)) return salary;
+  if (/^\d+([-~]\d+)?$/.test(salary.trim())) return `${salary}만원`;
+  return salary;
+};
+
 const RANK_TINTS = [
   'rgba(255,239,156,0.21)',
   'rgba(217,234,239,0.42)',
@@ -187,7 +195,7 @@ const JobCard = ({
       <div className="flex items-center gap-1.5 mt-auto">
         <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
         <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-        <span className="text-sm font-bold text-primary-hover">{salary}</span>
+        <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
       </div>
     </div>
   );
