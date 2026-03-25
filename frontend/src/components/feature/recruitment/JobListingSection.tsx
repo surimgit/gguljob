@@ -58,7 +58,7 @@ const JOB_CATEGORY_MAP: Record<string, RoleCode> = {
   '앱개발자': 'MOBILE',
   '시스템엔지니어': 'DEVOPS',
   '네트워크엔지니어': 'DEVOPS',
-  'DBA': 'DATABASE',
+  'DBA': 'BACKEND',
   '데이터엔지니어': 'DATA',
   '데이터사이언티스트': 'DATA',
   '보안엔지니어': 'DEVOPS',

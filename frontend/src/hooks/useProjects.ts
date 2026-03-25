@@ -81,11 +81,10 @@ export const useProjectFilters = () => {
         BACKEND: 'Backend',
         MOBILE: 'Mobile',
         DEVOPS: 'DevOps',
-        DATABASE: 'Database',
         DATA: 'Data',
         AI: 'AI',
         PM: 'PM',
-        TOOLS: 'Tools',
+        DESIGN: 'Design',
       };
       const rawSkillGroups: SkillGroup[] = (raw?.skillCategories ?? []).map((cat: any) => ({
         category: cat.category,

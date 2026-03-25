@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import {
-  Monitor, Server, Shield, BarChart3, Brain, HardDrive,
-  Smartphone, Wrench, Briefcase, Pen, type LucideIcon,
+  Monitor, Server, Shield, BarChart3, Brain,
+  Smartphone, Briefcase, Pen, type LucideIcon,
 } from 'lucide-react';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, type RoleCode } from '../../../../constants/skills';
 
@@ -11,9 +11,7 @@ const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
   DEVOPS:   Shield,
   DATA:     BarChart3,
   AI:       Brain,
-  DATABASE: HardDrive,
   MOBILE:   Smartphone,
-  TOOLS:    Wrench,
   PM:       Briefcase,
   DESIGN:   Pen,
 };

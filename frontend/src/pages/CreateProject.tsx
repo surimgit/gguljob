@@ -6,14 +6,13 @@ import {
   ChevronUp,
   Monitor,
   Server,
-  Database,
   Cloud,
   Bot,
   Smartphone,
   X,
-  Wrench,
   Briefcase,
   PieChart,
+  Pen,
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
 import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY, SKILL_CATEGORY_META } from '../constants/skills';
@@ -27,7 +26,7 @@ const DOMAINS = [
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
-  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+  AI: Bot, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
 };
 
 const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
