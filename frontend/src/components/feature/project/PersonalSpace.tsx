@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sparkles, MessageSquare, Send, AlertTriangle, Lightbulb, Code2, GitMerge, Pencil } from 'lucide-react';
 import cardTroubleShooting from '../../../assets/images/card_trouble_shooting.png';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -286,6 +286,23 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
     }
   }, [projectId]);
 
+  // personalData.myReviews를 PR 번호 기준으로 그룹핑
+  const reviewsByPrNumber = useMemo(() => {
+    const map = new Map<number, CodeReview[]>();
+    const colors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+    personalData?.myReviews?.forEach((r, idx) => {
+      const list = map.get(r.prNumber) ?? [];
+      list.push({
+        author: r.reviewerName,
+        role: 'Reviewer',
+        comment: r.contentSnippet ?? '',
+        avatarColor: colors[idx % colors.length],
+      });
+      map.set(r.prNumber, list);
+    });
+    return map;
+  }, [personalData?.myReviews]);
+
   const fetchPullRequests = useCallback(async (page: number) => {
     if (!projectId) return;
     setMrLoading(true);
@@ -300,7 +317,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         branch: `#${pr.prNumber}`,
         commits: 0,
         time: new Date(pr.githubCreatedAt).toLocaleDateString(),
-        reviews: [],
+        reviews: reviewsByPrNumber.get(pr.prNumber) ?? [],
       })));
       setMrTotalPages(data.totalPages);
       setMrTotalElements(data.totalElements);
@@ -309,7 +326,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
     } finally {
       setMrLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, reviewsByPrNumber]);
 
   const fetchAllPullRequests = useCallback(async () => {
     if (!projectId) return;
@@ -327,13 +344,13 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         branch: `#${pr.prNumber}`,
         commits: 0,
         time: new Date(pr.githubCreatedAt).toLocaleDateString(),
-        reviews: [],
+        reviews: reviewsByPrNumber.get(pr.prNumber) ?? [],
       })));
       setGeneratedPrIds(new Set(tsData.data.content.map((ts: TroubleshootingListItem) => Number(ts.prId))));
     } catch (err) {
       console.error('전체 PR 목록 조회 실패:', err);
     }
-  }, [projectId]);
+  }, [projectId, reviewsByPrNumber]);
 
   useEffect(() => {
     if (projectId && subTab === 'troubleshooting') {
