@@ -195,28 +195,36 @@ public class JobRecommendationRepository {
 
               // cutoff 변수들 계산
               WITH j, graphScore, vectorScore, finalScore,
+                   round(coalesce(j.cutoff_top, 45.0) * 10.0) / 10.0 AS cTop,
                    round(coalesce(j.cutoff_high, 35.0) * 10.0) / 10.0 AS cHigh,
                    round(coalesce(j.cutoff_medium, 20.0) * 10.0) / 10.0 AS cMedium,
+                   round(coalesce(j.cutoff_low, 10.0) * 10.0) / 10.0 AS cLow,
                    coalesce(j.average_score, 25.0) AS averageScore
 
               // topPercentile 및 matchStatus 계산
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore,
+              WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore,
                    CASE
-                     WHEN finalScore >= cHigh THEN '적합'
+                     WHEN finalScore >= cTop    THEN '최적합'
+                     WHEN finalScore >= cHigh   THEN '적합'
                      WHEN finalScore >= cMedium THEN '보통'
+                     WHEN finalScore >= cLow    THEN '미흡'
                      ELSE '부족'
                    END AS matchStatus,
                    CASE
+                     WHEN finalScore >= cTop THEN
+                       toInteger(round(20.0 * (CASE WHEN cTop >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cTop) END)))
                      WHEN finalScore >= cHigh THEN
-                       toInteger(round(30.0 * (CASE WHEN cHigh >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cHigh) END)))
+                       toInteger(round(20.0 + 20.0 * (CASE WHEN (cTop - cHigh) <= 0 THEN 0 ELSE (cTop - finalScore)/(cTop - cHigh) END)))
                      WHEN finalScore >= cMedium THEN
-                       toInteger(round(30.0 + 30.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                       toInteger(round(40.0 + 20.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                     WHEN finalScore >= cLow THEN
+                       toInteger(round(60.0 + 20.0 * (CASE WHEN (cMedium - cLow) <= 0 THEN 0 ELSE (cMedium - finalScore)/(cMedium - cLow) END)))
                      ELSE
-                       toInteger(round(60.0 + 40.0 * (CASE WHEN cMedium <= 0 THEN 0 ELSE (cMedium - finalScore)/cMedium END)))
+                       toInteger(round(80.0 + 20.0 * (CASE WHEN cLow <= 0 THEN 0 ELSE (cLow - finalScore)/cLow END)))
                    END AS rawTopPercentile
 
               // topPercentile 범위 1~99 보정 처리
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, matchStatus,
+              WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore, matchStatus,
                    CASE
                      WHEN rawTopPercentile < 1 THEN 1
                      WHEN rawTopPercentile > 99 THEN 99
@@ -227,7 +235,7 @@ public class JobRecommendationRepository {
               ORDER BY topPercentile ASC
               LIMIT 200
               RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
-                cHigh AS cutoffHigh, cMedium AS cutoffMedium,
+                cTop AS cutoffTop, cHigh AS cutoffHigh, cMedium AS cutoffMedium, cLow AS cutoffLow,
                 averageScore, topPercentile, matchStatus
               SKIP $skip LIMIT $limit
               """;
@@ -279,28 +287,36 @@ public class JobRecommendationRepository {
 
               // cutoff 변수들 계산
               WITH j, graphScore, vectorScore, finalScore,
+                   round(coalesce(j.cutoff_top, 45.0) * 10.0) / 10.0 AS cTop,
                    round(coalesce(j.cutoff_high, 35.0) * 10.0) / 10.0 AS cHigh,
                    round(coalesce(j.cutoff_medium, 20.0) * 10.0) / 10.0 AS cMedium,
+                   round(coalesce(j.cutoff_low, 10.0) * 10.0) / 10.0 AS cLow,
                    coalesce(j.average_score, 25.0) AS averageScore
 
               // topPercentile 및 matchStatus 계산
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore,
+              WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore,
                    CASE
-                     WHEN finalScore >= cHigh THEN '적합'
+                     WHEN finalScore >= cTop    THEN '최적합'
+                     WHEN finalScore >= cHigh   THEN '적합'
                      WHEN finalScore >= cMedium THEN '보통'
+                     WHEN finalScore >= cLow    THEN '미흡'
                      ELSE '부족'
                    END AS matchStatus,
                    CASE
+                     WHEN finalScore >= cTop THEN
+                       toInteger(round(20.0 * (CASE WHEN cTop >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cTop) END)))
                      WHEN finalScore >= cHigh THEN
-                       toInteger(round(30.0 * (CASE WHEN cHigh >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cHigh) END)))
+                       toInteger(round(20.0 + 20.0 * (CASE WHEN (cTop - cHigh) <= 0 THEN 0 ELSE (cTop - finalScore)/(cTop - cHigh) END)))
                      WHEN finalScore >= cMedium THEN
-                       toInteger(round(30.0 + 30.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                       toInteger(round(40.0 + 20.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                     WHEN finalScore >= cLow THEN
+                       toInteger(round(60.0 + 20.0 * (CASE WHEN (cMedium - cLow) <= 0 THEN 0 ELSE (cMedium - finalScore)/(cMedium - cLow) END)))
                      ELSE
-                       toInteger(round(60.0 + 40.0 * (CASE WHEN cMedium <= 0 THEN 0 ELSE (cMedium - finalScore)/cMedium END)))
+                       toInteger(round(80.0 + 20.0 * (CASE WHEN cLow <= 0 THEN 0 ELSE (cLow - finalScore)/cLow END)))
                    END AS rawTopPercentile
 
               // topPercentile 범위 1~99 보정 처리
-              WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, matchStatus,
+              WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore, matchStatus,
                    CASE
                      WHEN rawTopPercentile < 1 THEN 1
                      WHEN rawTopPercentile > 99 THEN 99
@@ -311,7 +327,7 @@ public class JobRecommendationRepository {
               ORDER BY topPercentile ASC
               LIMIT 200
               RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
-                cHigh AS cutoffHigh, cMedium AS cutoffMedium,
+                cTop AS cutoffTop, cHigh AS cutoffHigh, cMedium AS cutoffMedium, cLow AS cutoffLow,
                 averageScore, topPercentile, matchStatus
               SKIP $skip LIMIT $limit
               """;
