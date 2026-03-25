@@ -162,6 +162,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
+  const [originalTitle, setOriginalTitle] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
@@ -270,6 +271,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
       .then(({ data: form }) => {
         const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
         setStatus(mappedStatus);
+        setOriginalTitle(form.title ?? "");
         setName(form.teamName ?? form.title ?? "");
         setDescription(form.description ?? "");
         setDomain(form.domain ?? "");
@@ -365,7 +367,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
     try {
       await updateProject(projectId, {
         status: STATUS_TO_BACKEND[status],
-        title: name,
+        title: originalTitle,
         teamName: name,
         description,
         domain,
