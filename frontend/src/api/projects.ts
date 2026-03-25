@@ -81,11 +81,6 @@ export const getGitLog = (projectId: number) =>
 export const getTeamManagement = (projectId: number) =>
   api.get<{ data: TeamManagement }>(`/v1/projects/${projectId}/members/detail`);
 
-/* ── 포지션(모집 직무) 관리 ── */
-
-export const deletePosition = (projectId: number, positionId: number) =>
-  api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
-
 /* ── 합류 요청 ── */
 
 export const applyToPosition = (projectId: number, positionId: number, appealContent?: string) =>
@@ -120,6 +115,9 @@ export const disconnectGitRepo = (projectId: number) =>
 
 export const createRecruitment = (projectId: number, body: { role: string; targetCount: number; requireSkills: string[] }) =>
   api.post(`/v1/projects/${projectId}/recruitments`, body);
+
+export const deleteRecruitment = (projectId: number, positionId: number) =>
+  api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
 
 export const updateRecruitmentStatus = (projectId: number, positionId: number, status: string) =>
   api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
