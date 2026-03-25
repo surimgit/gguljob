@@ -77,8 +77,10 @@ def update_job_cutoffs(tx, updates):
     query = """
     UNWIND $updates AS update
     MATCH (j:Job {id: update.job_id})
-    SET j.cutoff_high = update.high_cutoff,
+    SET j.cutoff_top    = update.top_cutoff,
+        j.cutoff_high   = update.high_cutoff,
         j.cutoff_medium = update.medium_cutoff,
+        j.cutoff_low    = update.low_cutoff,
         j.average_score = update.avg_score
     """
     tx.run(query, updates=updates)
@@ -107,32 +109,40 @@ def main():
         print(f" -> Collected score data for {len(job_scores_map)} distinct jobs.")                                                                             
         print("3. Calculating Job-specific thresholds using Item Bias Normalization...")
         all_scores = [score for scores in job_scores_map.values() for score in scores]                                                                                  
-        global_avg = np.mean(all_scores) if all_scores else 50.0
-        global_high = np.percentile(all_scores, 70) if all_scores else 70.0     
-        global_medium = np.percentile(all_scores, 40) if all_scores else 40.0   
+        global_avg    = np.mean(all_scores)           if all_scores else 25.0
+        global_top    = np.percentile(all_scores, 80) if all_scores else 45.0  # 상위 20%
+        global_high   = np.percentile(all_scores, 60) if all_scores else 35.0  # 상위 40%
+        global_medium = np.percentile(all_scores, 40) if all_scores else 20.0  # 상위 60%
+        global_low    = np.percentile(all_scores, 20) if all_scores else 10.0  # 상위 80%
 
         updates = []
         for job_id, scores in job_scores_map.items():
             if len(scores) < 5:
-                avg_score = global_avg
-                high_cutoff = global_high
+                avg_score     = global_avg
+                top_cutoff    = global_top
+                high_cutoff   = global_high
                 medium_cutoff = global_medium
+                low_cutoff    = global_low
             else:
-                avg_score = np.mean(scores)
-                high_cutoff = np.percentile(scores, 70)
+                avg_score     = np.mean(scores)
+                top_cutoff    = np.percentile(scores, 80)
+                high_cutoff   = np.percentile(scores, 60)
                 medium_cutoff = np.percentile(scores, 40)
+                low_cutoff    = np.percentile(scores, 20)
 
             updates.append({
-                "job_id": job_id,
-                "high_cutoff": float(high_cutoff),
+                "job_id":        job_id,
+                "top_cutoff":    float(top_cutoff),
+                "high_cutoff":   float(high_cutoff),
                 "medium_cutoff": float(medium_cutoff),
-                "avg_score": float(avg_score)
+                "low_cutoff":    float(low_cutoff),
+                "avg_score":     float(avg_score)
             })
 
         session.execute_write(update_job_cutoffs, updates)
         update_count = len(updates)
 
-        print(f" -> Successfully updated cutoffs for {update_count} jobs. (Avg: {global_avg:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f})")                                           
+        print(f" -> Successfully updated cutoffs for {update_count} jobs. (Avg: {global_avg:.2f}, Top: {global_top:.2f}, High: {global_high:.2f}, Med: {global_medium:.2f}, Low: {global_low:.2f})")                                           
     driver.close()
     print("Batch Processing Completed!")
 

@@ -28,7 +28,7 @@ public class MatchingProjectService {
             .orElseThrow(() -> new IllegalArgumentException("동기화할 프로젝트를 찾을 수 없습니다."));
 
         var skillNodes = project.getProjectSkills().stream()
-            .map(ps -> SkillNode.builder().id(String.valueOf(ps.getSkill().getId())).name(ps.getSkill().getName()).build())
+            .map(ps -> SkillNode.builder().id(ps.getSkill().getId()).name(ps.getSkill().getName()).build())
             .collect(Collectors.toSet());
 
         var roleNodes = projectPositionRepository.findAllByProjectId(projectId).stream()

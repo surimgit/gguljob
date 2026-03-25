@@ -12,11 +12,12 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deleteRecruitment } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deleteRecruitment, getGitHubContributors } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
 import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName, DISPLAY_TO_ROLE } from "../../../../constants/skills";
 import type { RoleCode } from "../../../../constants/skills";
 import UserProfileModal from "../../mypage/UserProfileModal";
+import TeamInviteModal from "../../team-recommend/TeamInviteModal";
 
 /* ── 타입 ── */
 type RoleStatus = "open" | "paused" | "closed";
@@ -1379,6 +1380,9 @@ const TeamManagement = ({
         </div>
       )}
 
+      {/* ── GitHub 기여자 초대 제안 ── */}
+      {projectId && <GitHubContributorSuggestion projectId={projectId} />}
+
       {profileUserId !== null && (
         <UserProfileModal
           isOpen={true}
@@ -1387,6 +1391,71 @@ const TeamManagement = ({
         />
       )}
     </div>
+  );
+};
+
+/* ── GitHub 기여자 초대 제안 컴포넌트 ── */
+const GitHubContributorSuggestion = ({ projectId }: { projectId: number }) => {
+  const [contributors, setContributors] = useState<{ userId: number; userName: string; profileImageUrl: string | null; prCount: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteTarget, setInviteTarget] = useState<{ userId: number; userName: string } | null>(null);
+
+  useEffect(() => {
+    getGitHubContributors(projectId)
+      .then(({ data }) => {
+        setContributors(data.data ?? []);
+      })
+      .catch(() => setContributors([]))
+      .finally(() => setLoading(false));
+  }, [projectId]);
+
+  if (loading || contributors.length === 0) return null;
+
+  return (
+    <>
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+        <div className="px-6 py-4 border-b border-border flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24292f" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+          </svg>
+          <span className="text-base font-bold text-text-primary">GitHub 기여자 초대 제안</span>
+          <span className="text-xs text-text-tertiary ml-1">PR을 올렸지만 아직 팀원이 아닌 유저</span>
+        </div>
+        <div className="px-6 py-4 flex flex-col gap-3">
+          {contributors.map((c) => (
+            <div key={c.userId} className="flex items-center gap-3 py-2">
+              {c.profileImageUrl ? (
+                <img src={c.profileImageUrl} alt={c.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-500">
+                  {c.userName.charAt(0)}
+                </div>
+              )}
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-sm font-semibold text-text-primary truncate">{c.userName}</span>
+                <span className="text-xs text-text-tertiary">PR {c.prCount}건</span>
+              </div>
+              <button
+                onClick={() => setInviteTarget({ userId: c.userId, userName: c.userName })}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                style={{ background: "var(--color-primary-soft)", color: "var(--color-primary-hover)" }}
+              >
+                초대하기
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+      {inviteTarget && (
+        <TeamInviteModal
+          isOpen={true}
+          onClose={() => setInviteTarget(null)}
+          memberName={inviteTarget.userName}
+          userId={inviteTarget.userId}
+          fixedProjectId={projectId}
+        />
+      )}
+    </>
   );
 };
 

@@ -15,7 +15,7 @@ const MBTI_GROUP: Record<string, string> = {
 };
 
 const LEGENDS = [
-  { color: '#EF4444', label: '분석가', desc: 'INT*' },
+  { color: '#EF4444', label: '분석가', desc: 'INT* / ENT*' },
   { color: '#60A5FA', label: '외교관', desc: 'INF* / ENF*' },
   { color: '#34D399', label: '관리자', desc: 'IS** / ES*J' },
   { color: '#FBBF24', label: '탐험가', desc: 'ES*P / IS*P' },
@@ -62,7 +62,7 @@ const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       {/* 범례 */}
-      <div className="flex flex-wrap gap-2.5 px-4 py-3 bg-gray-50 rounded-xl border border-border">
+      <div className="flex justify-between px-4 py-3 bg-gray-50 rounded-xl border border-border">
         {LEGENDS.map(({ color, label, desc }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />

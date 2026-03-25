@@ -16,13 +16,6 @@ import EmptyState from './EmptyState';
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
 
-interface CodeReview {
-  author: string;
-  role: string;
-  comment: string;
-  avatarColor: string;
-}
-
 interface MrItem {
   id: number;
   prNumber: number;
@@ -32,7 +25,7 @@ interface MrItem {
   branch: string;
   commits: number;
   time: string;
-  reviews: CodeReview[];
+  diffUrl: string | null;
 }
 
 interface TroubleshootingItem {
@@ -78,7 +71,13 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
       {/* 우측: 제목 + 뱃지 + 설명 + 메타 */}
       <div className="flex flex-col gap-2 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-lg font-bold text-text-primary leading-snug ml-3 mt-1">{mr.title}</p>
+          {mr.diffUrl ? (
+            <a href={mr.diffUrl} target="_blank" rel="noopener noreferrer" className="text-lg font-bold text-text-primary leading-snug ml-3 mt-1 hover:text-primary hover:underline transition-colors">
+              {mr.title}
+            </a>
+          ) : (
+            <p className="text-lg font-bold text-text-primary leading-snug ml-3 mt-1">{mr.title}</p>
+          )}
           <StatusBadge status={mr.status} />
         </div>
         <p className="text-base font-semibold text-text-secondary leading-relaxed mt-3 ml-3">{mr.description}</p>
@@ -95,33 +94,6 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
       </div>
     </div>
 
-    {/* 코드 리뷰 */}
-    {mr.reviews.length > 0 && (
-      <div className="flex flex-col gap-0 border-t border-border">
-        <div className="flex items-center gap-1.5 px-5 py-3 bg-background my-3">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <p className="text-base font-bold text-text-primary">코드 리뷰 ({mr.reviews.length}건)</p>
-        </div>
-        <div className="flex flex-col gap-0">
-          {mr.reviews.map((r, i) => (
-            <div key={i} className={`flex items-start gap-3 px-5 py-3 my-2 ${i < mr.reviews.length - 1 ? 'border-b border-border' : ''}`}>
-              <div
-                className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold mt-0.5"
-                style={{ backgroundColor: r.avatarColor }}
-              >
-                {r.author[0]}
-              </div>
-              <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <span className="text-base font-bold text-text-primary">{r.author} · {r.role}</span>
-                <p className="text-base font-medium text-text-secondary leading-relaxed">{r.comment}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
   </div>
   );
 };
@@ -300,7 +272,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         branch: `#${pr.prNumber}`,
         commits: 0,
         time: new Date(pr.githubCreatedAt).toLocaleDateString(),
-        reviews: [],
+        diffUrl: pr.diff_url ?? null,
       })));
       setMrTotalPages(data.totalPages);
       setMrTotalElements(data.totalElements);
@@ -327,7 +299,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         branch: `#${pr.prNumber}`,
         commits: 0,
         time: new Date(pr.githubCreatedAt).toLocaleDateString(),
-        reviews: [],
+        diffUrl: pr.diff_url ?? null,
       })));
       setGeneratedPrIds(new Set(tsData.data.content.map((ts: TroubleshootingListItem) => Number(ts.prId))));
     } catch (err) {
@@ -374,7 +346,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   };
 
   const mrCount = projectId ? mrTotalElements : (personalData?.stats.prCount ?? 0);
-  const codeReviews = personalData?.stats.reviewCount ?? 0;
   const stats = { mrCount, autoGenCount: projectId ? tsTotalElements : (personalData?.stats.troubleshootingCount ?? 0) };
 
   return (
@@ -400,8 +371,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
       )}
 
       {/* 프로필 */}
-      <div className="flex items-center justify-between gap-5 mt-4">
-        {/* 프로필 */}
+      <div className="flex items-center justify-between gap-5 mt-4 min-h-[104px]">
         <div className="flex items-center gap-3">
           {userProfileImage ? (
             <img src={userProfileImage} alt={userName} className="w-20 h-20 rounded-full flex-shrink-0 shadow-sm object-cover" />
@@ -612,25 +582,21 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         </div>
       )}
 
-      {/* ── PR 리뷰 탭 ── */}
+      {/* ── 내 PR 탭 ── */}
       {subTab === 'mr-review' && (
         <div className="flex flex-col gap-6">
           <div className="rounded-2xl px-8 py-8 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary-soft)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
-                    <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
-                  </svg>
-                </div>
-                <span className="text-xl font-bold tracking-tight text-text-primary">내 PR / 코드 리뷰</span>
+            <div className="flex items-center gap-2 mb-6 mt-3">
+              <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
+                <GitMerge className="w-4 h-4 text-[#6366f1]" />
               </div>
-              <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건 · 받은 리뷰 {codeReviews}건</span>
+              <span className="text-xl font-bold tracking-tight text-text-primary">내 PR</span>
+              <span className="ml-auto text-base text-text-secondary font-semibold">총 {stats.mrCount}건</span>
             </div>
             {mrLoading ? (
               <div className="flex items-center justify-center py-12 text-text-tertiary">불러오는 중...</div>
             ) : mrList.length === 0 ? (
-              <EmptyState message="아직 등록된 PR 리뷰가 없습니다." />
+              <EmptyState message="아직 등록된 PR이 없습니다." />
             ) : (
               <>
                 <div className="flex flex-col gap-10">

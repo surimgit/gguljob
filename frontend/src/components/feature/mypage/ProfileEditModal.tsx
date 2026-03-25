@@ -354,12 +354,12 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           <div className="flex flex-col gap-3 flex-1">
             <div className="flex gap-3">
               <div className="flex flex-col gap-1 flex-1">
-                <label className="text-xs font-medium text-text-secondary">이름</label>
+                <label className="text-xs font-medium text-text-secondary">이름 (GitHub 연동)</label>
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  readOnly
+                  className="px-3 py-2 rounded-xl border border-border text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
               </div>
               <div className="flex flex-col gap-1">
