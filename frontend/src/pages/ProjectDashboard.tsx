@@ -81,8 +81,9 @@ const ProjectDashboard = () => {
     setActiveTab(activeTabFromUrl);
   }
 
+  const subtabFromUrl = searchParams.get("subtab") as PersonalSubTab | null;
   const [personalSubTab, setPersonalSubTab] =
-    useState<PersonalSubTab>("troubleshooting");
+    useState<PersonalSubTab>(subtabFromUrl === "mr-review" ? "mr-review" : "troubleshooting");
   const [personalDropdownOpen, setPersonalDropdownOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
@@ -286,7 +287,7 @@ const ProjectDashboard = () => {
                               key={item.key}
                               onClick={() => {
                                 setActiveTab("personal");
-                                setSearchParams({ tab: "personal" });
+                                setSearchParams({ tab: "personal", subtab: item.key });
                                 setPersonalSubTab(item.key);
                                 setPersonalDropdownOpen(false);
                                 window.scrollTo(0, 0);

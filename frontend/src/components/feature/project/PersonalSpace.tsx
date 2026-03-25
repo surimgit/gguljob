@@ -371,8 +371,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
       )}
 
       {/* 프로필 */}
-      <div className="flex items-center justify-between gap-5 mt-4">
-        {/* 프로필 */}
+      <div className="flex items-center justify-between gap-5 mt-4 min-h-[104px]">
         <div className="flex items-center gap-3">
           {userProfileImage ? (
             <img src={userProfileImage} alt={userName} className="w-20 h-20 rounded-full flex-shrink-0 shadow-sm object-cover" />
@@ -583,20 +582,16 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         </div>
       )}
 
-      {/* ── PR 리뷰 탭 ── */}
+      {/* ── 내 PR 탭 ── */}
       {subTab === 'mr-review' && (
         <div className="flex flex-col gap-6">
           <div className="rounded-2xl px-8 py-8 border border-border bg-surface" style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary-soft)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
-                    <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
-                  </svg>
-                </div>
-                <span className="text-xl font-bold tracking-tight text-text-primary">내 PR</span>
+            <div className="flex items-center gap-2 mb-6 mt-3">
+              <div className="w-7 h-7 rounded-full bg-[#eef2ff] flex items-center justify-center flex-shrink-0">
+                <GitMerge className="w-4 h-4 text-[#6366f1]" />
               </div>
-              <span className="text-base tracking-wider text-text-secondary text-extrabold">총 {stats.mrCount}건</span>
+              <span className="text-xl font-bold tracking-tight text-text-primary">내 PR</span>
+              <span className="ml-auto text-base text-text-secondary font-semibold">총 {stats.mrCount}건</span>
             </div>
             {mrLoading ? (
               <div className="flex items-center justify-center py-12 text-text-tertiary">불러오는 중...</div>
