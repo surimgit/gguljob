@@ -7,7 +7,7 @@ import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
 import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayout";
 import beeImg from "../assets/images/memberfind.png";
-import { getRecommendedMembers, getRecommendedMembersTop } from "../api/projects";
+import { getRecommendedMembers, getRecommendedMembersTop, getProjectMembers } from "../api/projects";
 import type { RecommendedMember } from "../api/projects";
 import { ROLE_DISPLAY_NAMES, ROLE_TO_API, SKILL_NAMES, type RoleCode } from "../constants/skills";
 
@@ -45,7 +45,7 @@ const toCardData = (m: RecommendedMember) => ({
   matchRate: m.matchScore,
   introduction: m.bio,
   techStacks: sortBySkillOrder(m.skills),
-  profileImage: "",
+  profileImage: m.profileImageUrl ?? "",
 });
 
 const MemberRecommend = () => {
@@ -61,8 +61,22 @@ const MemberRecommend = () => {
 
   const [topMembers, setTopMembers] = useState<RecommendedMember[]>([]);
   const [members, setMembers] = useState<RecommendedMember[]>([]);
+  const [teamMemberIds, setTeamMemberIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /* 현재 팀원 userId 목록 조회 */
+  useEffect(() => {
+    if (!projectId) return;
+    getProjectMembers(Number(projectId))
+      .then(({ data }: { data: any }) => {
+        const list = data.data ?? data;
+        if (Array.isArray(list)) {
+          setTeamMemberIds(new Set(list.map((m: { userId: number }) => m.userId)));
+        }
+      })
+      .catch(() => {});
+  }, [projectId]);
 
   /* Top 3 추천 */
   useEffect(() => {
@@ -113,8 +127,8 @@ const MemberRecommend = () => {
     });
   };
 
-  const topCards = topMembers.map(toCardData);
-  const paged = members.map(toCardData);
+  const topCards = topMembers.filter(m => !teamMemberIds.has(m.userId)).map(toCardData);
+  const paged = members.filter(m => !teamMemberIds.has(m.userId)).map(toCardData);
 
   return (
     <div

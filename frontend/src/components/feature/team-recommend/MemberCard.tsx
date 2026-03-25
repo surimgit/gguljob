@@ -26,6 +26,7 @@ const MemberCard = ({
   matchRate,
   introduction,
   techStacks,
+  profileImage,
   onClickProfile,
 }: MemberCardProps) => {
   const posColor = getRoleColor(position);
@@ -39,12 +40,20 @@ const MemberCard = ({
     >
       {/* 1행: 프로필 이미지 + 이름/포지션/숙련도 + 적합도 배지 */}
       <div className="flex items-center gap-3 mb-3">
-        <div
-          className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
-          style={{ background: "var(--color-primary-hover)" }}
-        >
-          {name.charAt(0)}
-        </div>
+        {profileImage ? (
+          <img
+            src={profileImage}
+            alt={name}
+            className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
+            style={{ background: "var(--color-primary-hover)" }}
+          >
+            {name.charAt(0)}
+          </div>
+        )}
         <div className="flex flex-col flex-1">
           <span
             className="text-lg font-bold"

@@ -785,6 +785,14 @@ const TeamManagement = ({
   };
 
   const handleDeleteRole = (roleId: string) => {
+    const role = roles.find((r) => r.id === roleId);
+    if (role) {
+      const roleMembers = membersByRole[role.name] ?? [];
+      if (roleMembers.length > 0) {
+        alert(`${getRoleDisplayName(role.name)} 직무에 팀원이 있어 삭제할 수 없습니다.`);
+        return;
+      }
+    }
     setRoles((prev) => prev.filter((r) => r.id !== roleId));
     if (projectId && !isNaN(Number(roleId))) {
       deleteRecruitment(projectId, Number(roleId))
@@ -805,6 +813,7 @@ const TeamManagement = ({
             role: app.role,
             joinDate: new Date().toISOString().slice(0, 10),
             contribution: 0,
+            profileImageUrl: app.profileImageUrl,
           },
         ]);
         setRoles((prev) =>
@@ -1303,9 +1312,19 @@ const TeamManagement = ({
                   const numericMemberId = Number(kickMemberId);
                   const targetId = kickMemberId;
                   if (projectId && targetId && !isNaN(numericMemberId)) {
+                    const kickedMember = localMembers.find((m) => Number(m.id) === numericMemberId);
                     removeMember(projectId, numericMemberId)
                       .then(() => {
                         setLocalMembers((prev) => prev.filter((m) => Number(m.id) !== numericMemberId));
+                        if (kickedMember) {
+                          setRoles((prev) =>
+                            prev.map((r) => {
+                              if (r.name !== kickedMember.role) return r;
+                              const newCurrent = Math.max(0, r.current - 1);
+                              return { ...r, current: newCurrent, status: newCurrent < r.total ? "open" : r.status };
+                            }),
+                          );
+                        }
                       })
                       .catch((err) => {
                         console.error('팀원 내보내기 실패:', err);
