@@ -59,6 +59,31 @@ const MyPage = () => {
   // auth store의 유저 정보로 프로필 초기화
   useEffect(() => {
     if (!user) return;
+    const BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
+    const repProjects = (user.repProjects ?? []).map((p, i) => ({
+      id: String(p.projectId),
+      name: p.title,
+      description: p.description ?? '',
+      emoji: '🚀',
+      bgColor: BG_OPTIONS[i % BG_OPTIONS.length] as 'amber' | 'green' | 'sky' | 'purple',
+      myRole: p.role ?? '',
+      period: p.period ?? '',
+      techStacks: p.skills ?? [],
+    }));
+    // localStorage에서 저장된 대표 프로젝트 복원 (백엔드 미지원 시 폴백)
+    const savedProjects: Project[] = (() => {
+      try {
+        const raw = localStorage.getItem(`repProjects_${user.id}`);
+        return raw ? JSON.parse(raw) : [];
+      } catch { return []; }
+    })();
+
+    const projects = repProjects.length > 0
+      ? repProjects
+      : savedProjects.length > 0
+        ? savedProjects
+        : [];
+
     setProfile((prev) => ({
       ...prev,
       name: user.name,
@@ -66,6 +91,7 @@ const MyPage = () => {
       bio: user.description ?? '',
       avatarUrl: user.profileImage ?? undefined,
       techStacks: user.techStacks ?? [],
+      projects,
     }));
   }, [user]);
 
@@ -94,6 +120,10 @@ const MyPage = () => {
   const handleSave = (data: ProfileData) => {
     // API 호출은 ProfileEditModal에서 이미 완료, 여기서는 최신 데이터 반영
     setProfile((prev) => ({ ...prev, projects: data.projects }));
+    // localStorage에 대표 프로젝트 백업
+    if (user?.id) {
+      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch {}
+    }
     getMe().then((u) => setUser(u)).catch(() => {});
   };
 

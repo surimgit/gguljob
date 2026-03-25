@@ -163,6 +163,55 @@ public class UserService {
 
                 List<GoalType> goalList = user.getGoals().stream().map(UserGoal::getGoal).toList();
 
+                List<UserRepProject> repProjectEntities = userRepProjectRepository
+                                .findByUserIdWithProject(userId).stream().limit(2).toList();
+
+                List<ProfileResponseDto.RepProjectDto> repProjectDtoList = Collections.emptyList();
+
+                if (!repProjectEntities.isEmpty()) {
+                        List<Long> projectIds = repProjectEntities.stream()
+                                        .map(rep -> rep.getProject().getId()).toList();
+
+                        Map<Long, String> roleMap = projectMemberRepository
+                                        .findByUserIdAndProjectIdIn(userId, projectIds)
+                                        .stream()
+                                        .collect(Collectors.toMap(pm -> pm.getProject().getId(),
+                                                        pm -> pm.getRole().name()));
+
+                        Map<Long, List<String>> skillMap = projectSkillRepository
+                                        .findByProjectIdIn(projectIds).stream()
+                                        .collect(Collectors.groupingBy(
+                                                        ps -> ps.getProject().getId(),
+                                                        Collectors.mapping(
+                                                                        ps -> ps.getSkill()
+                                                                                        .getName(),
+                                                                        Collectors.toList())));
+
+                        java.time.format.DateTimeFormatter formatter =
+                                        java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+
+                        repProjectDtoList = repProjectEntities.stream().map(rep -> {
+                                Project project = rep.getProject();
+                                Long pId = project.getId();
+
+                                String startStr = project.getCreatedAt() != null
+                                                ? project.getCreatedAt().format(formatter)
+                                                : "미상";
+                                String endStr = project.getFinishedAt() != null
+                                                ? project.getFinishedAt().format(formatter)
+                                                : "진행중";
+                                String period = startStr + " ~ " + endStr;
+
+                                return ProfileResponseDto.RepProjectDto.builder().projectId(pId)
+                                                .title(project.getTitle())
+                                                .description(project.getDescription())
+                                                .role(roleMap.getOrDefault(pId, "참여자"))
+                                                .period(period).skills(skillMap.getOrDefault(pId,
+                                                                Collections.emptyList()))
+                                                .build();
+                        }).toList();
+                }
+
                 return ProfileResponseDto.builder().userId(user.getId()).email(user.getEmail())
                                 .userName(user.getUserName()).imageUrl(user.getProfileImageUrl())
                                 .description(user.getDescription())
@@ -177,7 +226,8 @@ public class UserService {
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
                                                 : null)
-                                .skills(skillDtoList).goals(goalList).build();
+                                .skills(skillDtoList).goals(goalList)
+                                .repProjects(repProjectDtoList).build();
         }
 
         @Transactional
