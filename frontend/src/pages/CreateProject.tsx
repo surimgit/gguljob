@@ -8,6 +8,7 @@ import {
   Server,
   Cloud,
   Bot,
+  Database,
   Smartphone,
   X,
   Briefcase,
@@ -26,7 +27,7 @@ const DOMAINS = [
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
-  AI: Bot, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
+  AI: Bot, DATABASE: Database, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
 };
 
 const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({

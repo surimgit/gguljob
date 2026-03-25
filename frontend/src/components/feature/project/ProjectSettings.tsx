@@ -23,6 +23,7 @@ import {
   Pen,
   Briefcase,
   PieChart,
+  Database,
   Camera,
   Trash2,
 } from "lucide-react";
@@ -121,7 +122,7 @@ const DOMAINS = [
 ];
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
+  FRONTEND: Monitor, BACKEND: Server, DATABASE: Database, DEVOPS: Cloud, DATA: PieChart,
   AI: Bot, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
 };
 

@@ -25,16 +25,11 @@ export const SKILLS: Skill[] = [
   { id: 4, name: "Spring Boot", category: "BACKEND" },
   { id: 5, name: "Python", category: "BACKEND" },
   { id: 20, name: "Node.js", category: "BACKEND" },
-  { id: 6, name: "MySQL", category: "BACKEND" },
   { id: 63, name: "Django", category: "BACKEND" },
   { id: 64, name: "Flask", category: "BACKEND" },
   { id: 45, name: "FastAPI", category: "BACKEND" },
   { id: 43, name: "JPA", category: "BACKEND" },
   { id: 44, name: "MyBatis", category: "BACKEND" },
-  { id: 22, name: "PostgreSQL", category: "BACKEND" },
-  { id: 23, name: "MariaDB", category: "BACKEND" },
-  { id: 24, name: "MongoDB", category: "BACKEND" },
-  { id: 21, name: "Oracle DB", category: "BACKEND" },
   { id: 27, name: "Nest.js", category: "BACKEND" },
   { id: 28, name: "Kafka", category: "BACKEND" },
   { id: 26, name: ".NET", category: "BACKEND" },
@@ -43,12 +38,19 @@ export const SKILLS: Skill[] = [
   { id: 14, name: "C#", category: "BACKEND" },
   { id: 15, name: "C++", category: "BACKEND" },
   { id: 42, name: "JSP", category: "BACKEND" },
-  { id: 41, name: "MSSQL", category: "BACKEND" },
   { id: 53, name: "MFC/WPF", category: "BACKEND" },
   { id: 55, name: "전자정부프레임워크", category: "BACKEND" },
   { id: 59, name: "MSA", category: "BACKEND" },
-  { id: 54, name: "RDBMS/DBMS", category: "BACKEND" },
-  { id: 60, name: "Tibero", category: "BACKEND" },
+
+  // DATABASE
+  { id: 6, name: "MySQL", category: "DATABASE" },
+  { id: 22, name: "PostgreSQL", category: "DATABASE" },
+  { id: 23, name: "MariaDB", category: "DATABASE" },
+  { id: 24, name: "MongoDB", category: "DATABASE" },
+  { id: 21, name: "Oracle DB", category: "DATABASE" },
+  { id: 41, name: "MSSQL", category: "DATABASE" },
+  { id: 54, name: "RDBMS/DBMS", category: "DATABASE" },
+  { id: 60, name: "Tibero", category: "DATABASE" },
 
   // DEVOPS
   { id: 8, name: "Docker", category: "DEVOPS" },
@@ -118,12 +120,12 @@ export const SKILL_ID_TO_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.na
 
 export type RoleCode =
   | "FRONTEND" | "BACKEND" | "DEVOPS" | "DATA"
-  | "AI" | "MOBILE" | "PM" | "DESIGN";
+  | "AI" | "DATABASE" | "MOBILE" | "PM" | "DESIGN";
 
 /** 전체 직무 목록 */
 export const ROLE_LIST: RoleCode[] = [
   "FRONTEND", "BACKEND", "DEVOPS", "DATA",
-  "AI", "MOBILE", "PM", "DESIGN",
+  "AI", "DATABASE", "MOBILE", "PM", "DESIGN",
 ];
 
 /** 직무별 색상 */
@@ -133,6 +135,7 @@ export const ROLE_COLORS: Record<string, string> = {
   DEVOPS:   "#7C3AED",
   DATA:     "#14B8A6",
   AI:       "#EC4899",
+  DATABASE: "#0EA5E9",
   MOBILE:   "#F97316",
   PM:       "#F59E0B",
   DESIGN:   "#8B5CF6",
@@ -145,6 +148,7 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
   DEVOPS:   "DevOps",
   DATA:     "Data",
   AI:       "AI",
+  DATABASE: "Database",
   MOBILE:   "Mobile",
   PM:       "PM",
   DESIGN:   "Design",
@@ -157,6 +161,7 @@ export const ROLE_TO_API: Record<RoleCode, string> = {
   DEVOPS:   "INFRA",
   DATA:     "DATA",
   AI:       "AI",
+  DATABASE: "DB",
   MOBILE:   "MOBILE",
   PM:       "PM",
   DESIGN:   "DESIGN",
@@ -167,9 +172,8 @@ export const API_TO_ROLE: Record<string, RoleCode> = {
   ...Object.fromEntries(
     Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
   ),
-  /* 하위호환: 기존 DATABASE/TOOLS/DB 값이 내려올 경우 대체 매핑 */
-  DATABASE: "BACKEND",
-  DB: "BACKEND",
+  /* 하위호환: 기존 TOOLS/DB 값이 내려올 경우 대체 매핑 */
+  DB: "DATABASE",
   TOOLS: "PM",
 };
 
@@ -224,6 +228,7 @@ export const getExperienceLevelStyle = (level: string) => {
 export const SKILL_CATEGORY_META: { key: string; label: string }[] = [
   { key: "FRONTEND", label: "Frontend" },
   { key: "BACKEND",  label: "Backend" },
+  { key: "DATABASE", label: "Database" },
   { key: "DEVOPS",   label: "DevOps" },
   { key: "DATA",     label: "Data" },
   { key: "AI",       label: "AI" },

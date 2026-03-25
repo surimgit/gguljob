@@ -79,6 +79,7 @@ export const useProjectFilters = () => {
       const CATEGORY_LABELS: Record<string, string> = {
         FRONTEND: 'Frontend',
         BACKEND: 'Backend',
+        DATABASE: 'Database',
         MOBILE: 'Mobile',
         DEVOPS: 'DevOps',
         DATA: 'Data',
