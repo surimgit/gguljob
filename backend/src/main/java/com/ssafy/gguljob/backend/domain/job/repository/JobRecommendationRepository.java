@@ -27,9 +27,11 @@ public class JobRecommendationRepository {
    *   - vectorScoreNorm * 0.5 : 시맨틱 유사도 보너스 (임베딩 없으면 0으로 처리 → 스킬만으로 최대 50점)
    *   → 임베딩(포트폴리오/프로필)이 있을 때만 가산점 부여, 없다고 감점하지 않는 구조
    *
-   * fallback cutoff (Job에 cutoff_high/medium이 미설정된 경우):
-   *   - cutoff_high   = 35.0  : 배치 실측 P70 근사값 (새 공식 기준)
-   *   - cutoff_medium = 20.0  : 배치 실측 P40 근사값
+   * fallback cutoff (Job에 cutoff 미설정된 경우):
+   *   - cutoff_top    = 45.0  : 상위 20% 근사값 (최적합)
+   *   - cutoff_high   = 35.0  : 상위 40% 근사값 (적합)
+   *   - cutoff_medium = 20.0  : 상위 60% 근사값 (보통)
+   *   - cutoff_low    = 10.0  : 상위 80% 근사값 (미흡)
    *   - average_score = 25.0  : 배치 실측 평균 근사값
    */
 
@@ -78,26 +80,34 @@ public class JobRecommendationRepository {
             WITH j, graphScore, vectorScore, round(rawFinalScore * 10.0) / 10.0 AS finalScore
 
             WITH j, graphScore, vectorScore, finalScore,
+                 round(coalesce(j.cutoff_top, 45.0) * 10.0) / 10.0 AS cTop,
                  round(coalesce(j.cutoff_high, 35.0) * 10.0) / 10.0 AS cHigh,
                  round(coalesce(j.cutoff_medium, 20.0) * 10.0) / 10.0 AS cMedium,
+                 round(coalesce(j.cutoff_low, 10.0) * 10.0) / 10.0 AS cLow,
                  coalesce(j.average_score, 25.0) AS averageScore
 
-            WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore,
+            WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore,
                  CASE
-                   WHEN finalScore >= cHigh THEN '적합'
+                   WHEN finalScore >= cTop    THEN '최적합'
+                   WHEN finalScore >= cHigh   THEN '적합'
                    WHEN finalScore >= cMedium THEN '보통'
+                   WHEN finalScore >= cLow    THEN '미흡'
                    ELSE '부족'
                  END AS matchStatus,
                  CASE
+                   WHEN finalScore >= cTop THEN
+                     toInteger(round(20.0 * (CASE WHEN cTop >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cTop) END)))
                    WHEN finalScore >= cHigh THEN
-                     toInteger(round(30.0 * (CASE WHEN cHigh >= 100.0 THEN 0 ELSE (100.0 - finalScore)/(100.0 - cHigh) END)))
+                     toInteger(round(20.0 + 20.0 * (CASE WHEN (cTop - cHigh) <= 0 THEN 0 ELSE (cTop - finalScore)/(cTop - cHigh) END)))
                    WHEN finalScore >= cMedium THEN
-                     toInteger(round(30.0 + 30.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                     toInteger(round(40.0 + 20.0 * (CASE WHEN (cHigh - cMedium) <= 0 THEN 0 ELSE (cHigh - finalScore)/(cHigh - cMedium) END)))
+                   WHEN finalScore >= cLow THEN
+                     toInteger(round(60.0 + 20.0 * (CASE WHEN (cMedium - cLow) <= 0 THEN 0 ELSE (cMedium - finalScore)/(cMedium - cLow) END)))
                    ELSE
-                     toInteger(round(60.0 + 40.0 * (CASE WHEN cMedium <= 0 THEN 0 ELSE (cMedium - finalScore)/cMedium END)))
+                     toInteger(round(80.0 + 20.0 * (CASE WHEN cLow <= 0 THEN 0 ELSE (cLow - finalScore)/cLow END)))
                  END AS rawTopPercentile
 
-            WITH j, graphScore, vectorScore, finalScore, cHigh, cMedium, averageScore, matchStatus,
+            WITH j, graphScore, vectorScore, finalScore, cTop, cHigh, cMedium, cLow, averageScore, matchStatus,
                  CASE
                    WHEN rawTopPercentile < 1 THEN 1
                    WHEN rawTopPercentile > 99 THEN 99
@@ -107,7 +117,7 @@ public class JobRecommendationRepository {
 
             ORDER BY topPercentile ASC
             RETURN j.id AS jobId, j.title AS title, graphScore, vectorScore, finalScore,
-              cHigh AS cutoffHigh, cMedium AS cutoffMedium,
+              cTop AS cutoffTop, cHigh AS cutoffHigh, cMedium AS cutoffMedium, cLow AS cutoffLow,
               averageScore, topPercentile, matchStatus
             """;
 
@@ -119,8 +129,10 @@ public class JobRecommendationRepository {
             .graphScore(record.get("graphScore").asDouble())
             .vectorScore(record.get("vectorScore").asDouble())
             .finalScore(record.get("finalScore").asDouble())
+            .cutoffTop(record.get("cutoffTop").asDouble())
             .cutoffHigh(record.get("cutoffHigh").asDouble())
             .cutoffMedium(record.get("cutoffMedium").asDouble())
+            .cutoffLow(record.get("cutoffLow").asDouble())
             .averageScore(record.get("averageScore").asDouble())
             .topPercentile(record.get("topPercentile").asInt())
             .matchStatus(record.get("matchStatus").asString()).build())
@@ -312,8 +324,10 @@ public class JobRecommendationRepository {
             .graphScore(record.get("graphScore").asDouble())
             .vectorScore(record.get("vectorScore").asDouble())
             .finalScore(record.get("finalScore").asDouble())
+            .cutoffTop(record.get("cutoffTop").asDouble())
             .cutoffHigh(record.get("cutoffHigh").asDouble())
             .cutoffMedium(record.get("cutoffMedium").asDouble())
+            .cutoffLow(record.get("cutoffLow").asDouble())
             .averageScore(record.get("averageScore").asDouble())
             .topPercentile(record.get("topPercentile").asInt())
             .matchStatus(record.get("matchStatus").asString()).build())
