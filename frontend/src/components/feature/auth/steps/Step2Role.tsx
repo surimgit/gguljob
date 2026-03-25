@@ -1,7 +1,7 @@
 import { type FC, useEffect, useState } from 'react';
 import {
   Monitor, Server, Shield, BarChart3, Brain,
-  Database, Smartphone, Briefcase, Pen, type LucideIcon,
+  Database, Smartphone, Briefcase, Pen, Box, type LucideIcon,
 } from 'lucide-react';
 import { getPositions, type PositionDto } from '../../../../api/user';
 
