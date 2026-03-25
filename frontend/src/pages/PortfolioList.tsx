@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, updatePortfolioTitle, type PortfolioSummary } from '../api/portfolio';
+import portfolioImg from '../assets/images/portfolio.png';
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -103,35 +104,84 @@ const PortfolioList = () => {
       style={{ backgroundColor: 'var(--color-background)' }}
       className="min-h-screen"
     >
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="text-text-tertiary hover:text-text-primary transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
+      {/* 히어로 배너 */}
+      <div className="relative w-[calc(100%+32px)] sm:w-[calc(100%+48px)] lg:w-[calc(100%+64px)] -mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
+        <section
+          data-navbar-hero
+          className="overflow-hidden bg-primary-soft/[0.36]"
+          style={{ height: '380px' }}
+        >
+          <div className="max-w-[1400px] mx-auto pr-4 sm:pr-6 lg:pr-8 flex flex-col justify-center pt-13 pb-14 pl-[8%]">
             <h1
-              className="text-2xl font-bold"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="font-bold"
+              style={{ fontSize: '40px', color: '#111827', lineHeight: '1.35' }}
             >
               내 포트폴리오
             </h1>
-            {!isLoading && portfolios.length > 0 && (
-              <span className="text-sm font-medium text-text-tertiary">{portfolios.length}개</span>
-            )}
+            <p
+              className="mt-4 mb-2"
+              style={{ fontSize: '22px', color: '#4A5565' }}
+            >
+              AI가 생성한 포트폴리오를 관리하세요
+            </p>
+
+            {/* 새 포트폴리오 버튼 + 최신 포트폴리오 카드 */}
+            <div className="flex gap-4 mt-4 items-stretch">
+              {/* 새 포트폴리오 만들기 버튼 */}
+              <button
+                type="button"
+                onClick={() => navigate('/mypage/portfolio/new')}
+                className="rounded-[16px] border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 cursor-pointer w-[220px] h-[170px] flex-shrink-0 transition-all duration-300 hover:border-[#6366f1] hover:shadow-md text-text-tertiary hover:text-[#6366f1]"
+              >
+                <FilePlus className="w-8 h-8" />
+                <span className="text-sm font-bold">
+                  새 포트폴리오 만들기
+                </span>
+              </button>
+
+              {/* 최신 포트폴리오 카드 */}
+              {!isLoading && portfolios.length > 0 && portfolios.slice(0, 2).map((latest) => (
+                <div
+                  key={latest.portfolioId}
+                  className="bg-surface border-2 border-border rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[220px] h-[170px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)] p-4 flex flex-col"
+                  onClick={() => {
+                    if (latest.s3Url) window.open(latest.s3Url, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <div className="-ml-1 self-start rounded-[8px] px-[8px] py-[2px] bg-[rgba(99,102,241,0.12)]">
+                    <p className="text-sm font-semibold leading-[15px]" style={{ color: '#6366f1' }}>
+                      최근 포트폴리오
+                    </p>
+                  </div>
+                  <div className="mt-4 flex-1 flex flex-col">
+                    <p className="font-semibold text-text-primary text-base leading-[20px] break-words line-clamp-2">
+                      {latest.title}
+                    </p>
+                    <p className="text-[12px] text-text-tertiary mt-auto pt-3">
+                      수정: {formatDate(latest.updatedAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <button
-            onClick={() => navigate('/mypage/portfolio/new')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-          >
-            <FilePlus className="w-4 h-4" />
-            새 포트폴리오
-          </button>
-        </div>
+        </section>
+
+        <img
+          src={portfolioImg}
+          alt="포트폴리오"
+          className="absolute right-[7%] top-[4%] hidden xl:block"
+          style={{ width: '430px', height: 'auto', zIndex: 10 }}
+        />
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 mt-6">
+        <p
+          className="text-base mb-4"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
+          총 {portfolios.length}개 포트폴리오
+        </p>
 
         {/* 카드 그리드 */}
         {isLoading ? (
@@ -222,15 +272,6 @@ const PortfolioList = () => {
                 </div>
               </div>
             ))}
-
-            {/* 새 포트폴리오 카드 */}
-            <button
-              onClick={() => navigate('/mypage/portfolio/new')}
-              className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-2xl p-8 hover:border-[#6366f1] hover:shadow-md transition-all cursor-pointer text-text-tertiary hover:text-[#6366f1] min-h-[200px]"
-            >
-              <FilePlus className="w-8 h-8" />
-              <span className="text-sm font-bold">새 포트폴리오 만들기</span>
-            </button>
           </div>
         )}
       </div>

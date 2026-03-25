@@ -164,7 +164,7 @@ const MyProjects = () => {
               내 프로젝트
             </h1>
             <p
-              className="mt-6"
+              className="mt-4 mb-2"
               style={{ fontSize: '22px', color: '#4A5565' }}
             >
               참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
@@ -191,37 +191,46 @@ const MyProjects = () => {
               </button>
 
               {(() => {
-                const latest = [...myProjects].filter((p) => p.status !== 'DONE').at(-1);
-                if (!latest) return null;
-                const gradient = THUMBNAIL_GRADIENTS[latest.domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
-                const categoryColor = CATEGORY_COLORS[latest.domain] ?? '#6b7280';
-                return (
-                  <div
-                    className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[220px] h-[170px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
-                    onClick={() => navigate(`/my-projects/${latest.projectId}`)}
-                  >
-                    {/* 상단 썸네일 */}
+                const latestProjects = [...myProjects]
+                  .filter((p) => p.status !== 'DONE')
+                  .sort((a, b) => b.projectId - a.projectId)
+                  .slice(0, 2);
+
+                if (latestProjects.length === 0) return null;
+
+                return latestProjects.map((latest) => {
+                  const gradient = THUMBNAIL_GRADIENTS[latest.domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
+                  const categoryColor = CATEGORY_COLORS[latest.domain] ?? '#6b7280';
+
+                  return (
                     <div
-                      className="absolute top-0 left-0 w-full h-[100px] overflow-hidden"
-                      style={{ background: latest.imageUrl ? undefined : gradient }}
+                      key={latest.projectId}
+                      className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[220px] h-[170px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
+                      onClick={() => navigate(`/my-projects/${latest.projectId}`)}
                     >
-                      {latest.imageUrl && (
-                        <img src={latest.imageUrl} alt={latest.title} className="w-full h-full object-cover" />
-                      )}
-                      <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
-                        <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
-                          최근 프로젝트
+                      {/* 상단 썸네일 */}
+                      <div
+                        className="absolute top-0 left-0 w-full h-[100px] overflow-hidden"
+                        style={{ background: latest.imageUrl ? undefined : gradient }}
+                      >
+                        {latest.imageUrl && (
+                          <img src={latest.imageUrl} alt={latest.title} className="w-full h-full object-cover" />
+                        )}
+                        <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
+                          <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
+                            최근 프로젝트
+                          </p>
+                        </div>
+                      </div>
+                      {/* 하단 정보 */}
+                      <div className="absolute top-[100px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[15px] pb-[8px]">
+                        <p className="font-semibold text-text-primary text-base leading-[20px] break-words">
+                          {latest.title}
                         </p>
                       </div>
                     </div>
-                    {/* 하단 정보 */}
-                    <div className="absolute top-[100px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[15px] pb-[8px]">
-                      <p className="font-semibold text-text-primary text-base leading-[20px] break-words">
-                        {latest.title}
-                      </p>
-                    </div>
-                  </div>
-                );
+                  );
+                });
               })()}
             </div>
 
