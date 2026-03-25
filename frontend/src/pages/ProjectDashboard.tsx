@@ -279,7 +279,7 @@ const ProjectDashboard = () => {
                             },
                             {
                               key: "mr-review" as PersonalSubTab,
-                              label: "PR 리뷰",
+                              label: "내 PR",
                             },
                           ].map((item) => (
                             <button

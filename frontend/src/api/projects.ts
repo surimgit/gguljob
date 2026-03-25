@@ -161,6 +161,7 @@ export interface PullRequestListItem {
   prNumber: number;
   title: string;
   status: string;
+  diff_url: string | null;
   githubCreatedAt: string;
   githubClosedAt: string | null;
 }
