@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public enum PositionType {
     BE("Backend"), FE("Frontend"), AI("AI"), PM("PM"), INFRA("Infra"), DEVOPS("DevOps"), DESIGN(
-            "Design"), DB("Database"), MOBILE("Mobile"), DATA("Data"), TOOLS("Tools");
+            "Design"), DB("Database"), MOBILE("Mobile"), DATA("Data");
 
     private final String description;
 
