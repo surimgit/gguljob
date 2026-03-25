@@ -31,12 +31,12 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
 
   return (
     <div
-      className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[300px] h-[300px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
+      className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[250px] h-[200px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
       onClick={() => onClick?.(project)}
     >
       {/* 상단 썸네일 */}
       <div
-        className="absolute top-0 left-0 w-full h-[160px] overflow-hidden"
+        className="absolute top-0 left-0 w-full h-[100px] overflow-hidden"
         style={{ background: imageUrl ? undefined : gradient }}
       >
         {imageUrl && (
@@ -51,39 +51,17 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
       </div>
 
       {/* 하단 정보 영역 */}
-      <div className="absolute top-[160px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[22px] pb-[14px]">
+      <div className="absolute top-[100px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[15px] pb-[8px]">
 
         {/* 제목 */}
-        <p className="font-bold text-text-primary text-lg leading-[20px] truncate">
+        <p className="font-semibold text-text-primary text-base leading-[20px] truncate">
           {title}
         </p>
 
         {/* 설명 */}
-        <p className="mt-[10px] font-bold text-text-secondary text-sm leading-[17.5px] line-clamp-2 flex-1">
+        <p className="mt-[10px] font-medium text-text-secondary text-xs leading-[17.5px] line-clamp-2 flex-1">
           {description}
         </p>
-
-        {/* 기술스택 뱃지 */}
-        <div className="mt-[12px] flex items-center gap-[4px]">
-          {visibleTech.map((tech) => {
-            const style = TECH_BADGE_STYLES[tech] ?? DEFAULT_TECH_STYLE;
-            return (
-              <span
-                key={tech}
-                className="h-[21px] rounded-[12px] px-[9px] py-[3px] font-bold text-[10px] leading-[15px] border mt-2"
-                style={{ backgroundColor: style.bg, borderColor: style.border, color: style.text }}
-              >
-                {tech}
-              </span>
-            );
-          })}
-          {extraCount > 0 && (
-            <span className="h-[21px] bg-[#f5f5f5] rounded-[12px] px-[6px] py-[2px] font-bold text-[#8a8073] text-[10px] leading-[15px] mt-2">
-              +{extraCount}
-            </span>
-          )}
-        </div>
-
       </div>
     </div>
   );

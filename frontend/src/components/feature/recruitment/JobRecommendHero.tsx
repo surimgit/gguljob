@@ -226,11 +226,8 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
         {/* 배너 배경 */}
         <div
           data-navbar-hero
-          className="overflow-hidden"
-          style={{
-            minHeight: '380px',
-            background: 'linear-gradient(to bottom, rgba(255,242,198,0.36), rgba(247,201,72,0.36))',
-          }}
+          className="overflow-hidden bg-primary-soft/[0.36]"
+          style={{ minHeight: '380px' }}
         >
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 lg:pl-[6%]">
             {/* 메인 타이틀 */}
@@ -275,7 +272,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
         <img
           src={jobMatchingImg}
           alt="잡매칭"
-          className="absolute right-[8%] top-[16%] hidden xl:block"
+          className="absolute right-[6%] top-[16%] hidden xl:block"
           style={{ width: '450px', height: 'auto', zIndex: 10 }}
         />
       </div>

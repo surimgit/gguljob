@@ -32,6 +32,14 @@ export const getMe = async (): Promise<User> => {
     skills: d.skills ?? [],
     techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
     goals: (d.goals ?? []) as string[],
+    repProjects: (d.repProjects ?? []).map((p: { projectId: number; title: string; description: string; role: string; period: string; skills: string[] }) => ({
+      projectId: p.projectId,
+      title: p.title,
+      description: p.description ?? '',
+      role: p.role ?? '',
+      period: p.period ?? '',
+      skills: p.skills ?? [],
+    })),
     role: firstRole ?? null,
   };
 };
@@ -44,6 +52,7 @@ export interface ProfileUpdateRequest {
   experience?: string;
   skills?: string[];
   goals?: string[];
+  repProjectIds?: number[];
 }
 
 export const updateProfileApi = (data: ProfileUpdateRequest) =>
@@ -93,3 +102,14 @@ export interface UserProfileDto {
 
 export const getUserProfile = (userId: number) =>
   api.get<{ data: UserProfileDto }>(`/v1/user/${userId}`);
+
+/** GET /v1/user/positions → 직무 전체 목록 조회 */
+export interface PositionDto {
+  code: string;
+  name: string;
+}
+
+export const getPositions = async (): Promise<PositionDto[]> => {
+  const res = await api.get('/v1/user/positions');
+  return res.data.data;
+};

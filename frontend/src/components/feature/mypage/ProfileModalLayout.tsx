@@ -227,27 +227,25 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
                 <div key={project.id} className={`rounded-2xl overflow-hidden flex-1 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
                   <div className="p-4 pb-3">
                     <span className="text-2xl mb-2 block">{project.emoji}</span>
-                    <div className="flex items-center gap-2">
-                      <p className="text-base font-bold text-text-primary">{project.name}</p>
-                      {STATUS_BADGE[project.period] && (
+                    {STATUS_BADGE[project.period] && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mb-1"
+                        style={{
+                          background: STATUS_BADGE[project.period].bg,
+                          color: STATUS_BADGE[project.period].text,
+                        }}
+                      >
                         <span
-                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{
-                            background: STATUS_BADGE[project.period].bg,
-                            color: STATUS_BADGE[project.period].text,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: STATUS_BADGE[project.period].dot }}
-                          />
-                          {STATUS_BADGE[project.period].label}
-                        </span>
-                      )}
-                    </div>
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ background: STATUS_BADGE[project.period].dot }}
+                        />
+                        {STATUS_BADGE[project.period].label}
+                      </span>
+                    )}
+                    <p className="text-base font-bold text-text-primary">{project.name}</p>
                     <p className="text-xs text-text-secondary mt-2">{project.description}</p>
                   </div>
-                  <div className="px-4 py-3">
+                  <div className="px-4 pt-0 pb-3">
                     <div className="flex flex-wrap gap-1.5">
                       {project.techStacks.map((stack, i) => (
                         <span

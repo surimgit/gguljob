@@ -3,9 +3,10 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../stores/projectStore";
 import { getRoleDisplayName, getRoleColor } from "../constants/skills";
-import { CATEGORY_COLORS } from "../constants/domains";
+import { CATEGORY_COLORS, THUMBNAIL_GRADIENTS } from "../constants/domains";
 import { Pagination } from "../components/common";
 import type { ProjectSimple, BackendProjectStatus } from "../types/project";
+import myProjectImg from "../assets/images/myproject.png";
 
 /* ── 컴포넌트 ── */
 
@@ -135,9 +136,8 @@ const MyProjects = () => {
   // 최신순 정렬 (projectId 높은 순)
   const sortedProjects = [...currentProjects].sort((a, b) => b.projectId - a.projectId);
 
-  // 페이지네이션: active 탭은 "만들기" 버튼이 1슬롯 차지 → 프로젝트 8개씩
   const GRID_SIZE = 9;
-  const projectsPerPage = tab === "active" ? GRID_SIZE - 1 : GRID_SIZE;
+  const projectsPerPage = GRID_SIZE;
   const totalPages = Math.max(1, Math.ceil(sortedProjects.length / projectsPerPage));
   const pageProjects = sortedProjects.slice(
     (currentPage - 1) * projectsPerPage,
@@ -149,23 +149,98 @@ const MyProjects = () => {
       style={{ backgroundColor: "var(--color-background)" }}
       className="min-h-screen"
     >
+      {/* 히어로 배너 + 이미지 래퍼 */}
+      <div className="relative w-[calc(100%+32px)] sm:w-[calc(100%+48px)] lg:w-[calc(100%+64px)] -mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
+        <section
+          data-navbar-hero
+          className="overflow-hidden bg-primary-soft/[0.36]"
+          style={{ height: '380px' }}
+        >
+          <div className="max-w-[1400px] mx-auto pr-4 sm:pr-6 lg:pr-8 flex flex-col justify-center pt-13 pb-14 pl-[8%]">
+            <h1
+              className="font-bold"
+              style={{ fontSize: '40px', color: '#111827', lineHeight: '1.35' }}
+            >
+              내 프로젝트
+            </h1>
+            <p
+              className="mt-6"
+              style={{ fontSize: '22px', color: '#4A5565' }}
+            >
+              참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
+            </p>
+
+            {/* 새 프로젝트 만들기 버튼 + 최신 진행 중 프로젝트 카드 */}
+            <div className="flex gap-4 mt-4 items-stretch">
+              {/* 새 프로젝트 만들기 버튼 */}
+              <button
+                type="button"
+                onClick={() => navigate("/projects/new")}
+                className="rounded-[16px] border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer w-[220px] h-[170px] flex-shrink-0 transition-all duration-300 hover:border-primary-hover hover:bg-white/60 hover:shadow-lg"
+                style={{ borderColor: "rgba(0,0,0,0.15)" }}
+              >
+                <span
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(0,0,0,0.08)" }}
+                >
+                  <Plus className="w-5 h-5" style={{ color: "var(--color-text-tertiary)" }} />
+                </span>
+                <span className="text-base font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+                  새 프로젝트 만들기
+                </span>
+              </button>
+
+              {(() => {
+                const latest = [...myProjects].filter((p) => p.status !== 'DONE').at(-1);
+                if (!latest) return null;
+                const gradient = THUMBNAIL_GRADIENTS[latest.domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
+                const categoryColor = CATEGORY_COLORS[latest.domain] ?? '#6b7280';
+                return (
+                  <div
+                    className="bg-white border border-[#f0ebe3] overflow-hidden relative rounded-[16px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] w-[220px] h-[170px] flex-shrink-0 cursor-pointer text-left transition-all duration-300 hover:scale-[1.06] hover:shadow-[0px_12px_32px_0px_rgba(0,0,0,0.14)]"
+                    onClick={() => navigate(`/my-projects/${latest.projectId}`)}
+                  >
+                    {/* 상단 썸네일 */}
+                    <div
+                      className="absolute top-0 left-0 w-full h-[100px] overflow-hidden"
+                      style={{ background: latest.imageUrl ? undefined : gradient }}
+                    >
+                      {latest.imageUrl && (
+                        <img src={latest.imageUrl} alt={latest.title} className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
+                        <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
+                          최근 프로젝트
+                        </p>
+                      </div>
+                    </div>
+                    {/* 하단 정보 */}
+                    <div className="absolute top-[100px] left-0 w-full bottom-0 flex flex-col px-[16px] pt-[15px] pb-[8px]">
+                      <p className="font-semibold text-text-primary text-base leading-[20px] break-words">
+                        {latest.title}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+        </div>
+        </section>
+
+        {/* 이미지 — 배너 오른쪽에 걸침 */}
+        <img
+          src={myProjectImg}
+          alt="내 프로젝트"
+          className="absolute right-[8%] top-[4%] hidden xl:block"
+          style={{ width: '450px', height: 'auto', zIndex: 10 }}
+        />
+      </div>
+
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* 헤더 */}
-        <h1
-          className="text-2xl sm:text-3xl font-bold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          내 프로젝트
-        </h1>
-        <p
-          className="text-sm sm:text-lg mt-3"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
-        </p>
 
         {/* 탭 */}
-        <div className="flex gap-2 mt-6 mb-4">
+        <div className="flex gap-2 mb-4">
           {([
             { key: "active" as TabStatus, label: "진행중", count: activeCount },
             { key: "done" as TabStatus, label: "완료", count: doneCount },
@@ -212,7 +287,7 @@ const MyProjects = () => {
 
         {/* 카운트 */}
         <p
-          className="text-base mb-4 mt-8"
+          className="text-base mb-4"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           총 {currentProjects.length}개 프로젝트
@@ -231,38 +306,6 @@ const MyProjects = () => {
         {/* 카드 그리드 */}
         {!myProjectsLoading && (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {/* 새 프로젝트 만들기 — 항상 첫 번째 칸 (진행중 탭) */}
-            {tab === "active" && (
-              <button
-                type="button"
-                onClick={() => navigate("/projects/new")}
-                className="rounded-[18px] border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[280px] transition-all duration-300 hover:border-primary-hover hover:bg-primary-soft hover:shadow-lg"
-                style={{ borderColor: "#e5e7eb" }}
-              >
-                <span
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: "var(--color-border)" }}
-                >
-                  <Plus
-                    className="w-6 h-6"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  />
-                </span>
-                <span
-                  className="text-xl font-semibold mt-2"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  새 프로젝트 만들기
-                </span>
-                <span
-                  className="text-base"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  팀원을 모집하고 프로젝트를 시작하세요
-                </span>
-              </button>
-            )}
-
             {pageProjects.map((project) => (
               <ProjectCard key={project.projectId} project={project} />
             ))}
