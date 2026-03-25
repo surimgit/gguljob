@@ -1,7 +1,6 @@
 package com.ssafy.gguljob.backend.domain.notification.type;
 
 public enum NotificationCategory {
-    TEAM,
     TEAM_INVITE,
     TEAM_APPLY,
     TEAM_ACCEPTED,

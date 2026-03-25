@@ -34,6 +34,7 @@ const toNotification = (dto: NotificationDto): Notification => {
     message: dto.content,
     time,
     isRead: dto.isRead,
+    actionStatus: dto.actionStatus ?? 'NONE',
     referenceId: dto.referenceId,
     referenceUrl: dto.referenceUrl?.replace(/^\/projects\/(\d+)/, '/my-projects/$1') ?? null,
   };
