@@ -6,28 +6,11 @@ export interface ProjectCarouselCardProps {
   onClick?: (project: ProjectCardDto) => void;
 }
 
-const TECH_BADGE_STYLES: Record<string, { bg: string; border: string; text: string }> = {
-  React:         { bg: '#e8f4fd', border: '#bbdefb', text: '#2196f3' },
-  TypeScript:    { bg: '#e8eaf6', border: '#c5cae9', text: '#3f51b5' },
-  'Vue.js':      { bg: '#e8f5e9', border: '#a5d6a7', text: '#2e7d32' },
-  'Next.js':     { bg: '#fafafa', border: '#e0e0e0', text: '#212121' },
-  'Spring Boot': { bg: '#e8f5e9', border: '#a5d6a7', text: '#388e3c' },
-  'Node.js':     { bg: '#f1f8e9', border: '#c5e1a5', text: '#558b2f' },
-  Python:        { bg: '#fffde7', border: '#fff176', text: '#f57f17' },
-  FastAPI:       { bg: '#e0f2f1', border: '#80cbc4', text: '#00695c' },
-  Django:        { bg: '#e8f5e9', border: '#a5d6a7', text: '#1b5e20' },
-};
-
-const DEFAULT_TECH_STYLE = { bg: '#f5f5f5', border: 'transparent', text: '#8a8073' };
-
 const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => {
-  const { domain, title, description, skills, imageUrl } = project;
+  const { domain, title, description, imageUrl } = project;
 
   const gradient = THUMBNAIL_GRADIENTS[domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
-
-  const visibleTech = skills.slice(0, 2);
-  const extraCount = skills.length - visibleTech.length;
 
   return (
     <div
