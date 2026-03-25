@@ -25,11 +25,13 @@ interface Props {
 
 const Step2Role: FC<Props> = ({ selected, onChange }) => {
   const [positions, setPositions] = useState<PositionDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getPositions()
       .then(setPositions)
-      .catch(() => {});
+      .catch((e) => console.error('Failed to fetch positions:', e))
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -40,7 +42,12 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {positions.map(({ code, name }) => {
+        {isLoading ? Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center justify-center py-6 px-3 rounded-2xl border-2 border-border bg-white animate-pulse">
+            <div className="w-7 h-7 rounded-full bg-gray-200 mb-2.5" />
+            <div className="w-16 h-4 rounded bg-gray-200" />
+          </div>
+        )) : positions.map(({ code, name }) => {
           const Icon = ROLE_ICONS[code] ?? Box;
           const isSelected = selected === code;
           return (
@@ -60,7 +67,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
               </span>
             </button>
           );
-        })}
+        }))}
       </div>
     </div>
   );
