@@ -4,6 +4,7 @@ import {
   Database, Smartphone, Briefcase, Pen, Box, type LucideIcon,
 } from 'lucide-react';
 import { getPositions, type PositionDto } from '../../../../api/user';
+import type { RoleCode } from '../../../../constants/skills';
 
 const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
   FRONTEND: Monitor,
