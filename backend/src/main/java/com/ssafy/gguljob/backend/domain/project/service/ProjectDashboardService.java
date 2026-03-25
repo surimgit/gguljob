@@ -1,7 +1,9 @@
 package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
+import com.ssafy.gguljob.backend.domain.github.entity.PrReview;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
@@ -37,6 +39,7 @@ public class ProjectDashboardService {
     private final ProjectSkillRepository projectSkillRepository;
     private final TroubleshootingRepository troubleshootingRepository;
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
     private final GitRepositoryRepository gitRepositoryRepository;
 
     private void validateAccess(Project project, Long userId){
@@ -147,7 +150,7 @@ public class ProjectDashboardService {
         // 상단 통계 조회
         long prCount = pullRequestRepository.countByProject_IdAndUser_Id(projectId, userId);
         long tsCount = troubleshootingRepository.countByProject_IdAndUser_Id(projectId, userId);
-        long reviewCount = 0;
+        long reviewCount = prReviewRepository.countByPullRequest_User_IdAndPullRequest_Project_Id(userId, projectId);
 
         PersonalSpaceResponse.Stats stats = new PersonalSpaceResponse.Stats(prCount, reviewCount, tsCount);
 
@@ -172,7 +175,19 @@ public class ProjectDashboardService {
             ))
             .toList();
 
-        List<PersonalSpaceResponse.ReviewItem> reviewItems = Collections.emptyList();
+        List<PersonalSpaceResponse.ReviewItem> reviewItems = prReviewRepository
+            .findByPullRequest_User_IdAndPullRequest_Project_IdOrderByIdDesc(userId, projectId, top5)
+            .stream()
+            .map(r -> new PersonalSpaceResponse.ReviewItem(
+                r.getId(),
+                r.getUser().getUserName(),
+                r.getPullRequest().getTitle(),
+                r.getPullRequest().getPrNumber(),
+                r.getComment() != null && r.getComment().length() > 100
+                    ? r.getComment().substring(0, 100) + "..."
+                    : r.getComment()
+            ))
+            .toList();
 
         return new PersonalSpaceResponse.Dashboard(stats, prItems, reviewItems, tsItems);
     }
@@ -194,5 +209,21 @@ public class ProjectDashboardService {
                 ts.getPullRequest().getTitle(),                     // prTitle
                 ts.getCreatedAt()
             ));
+    }
+
+    /** GitHub PR 기여자 중 프로젝트 팀원이 아닌 유저 목록 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getNonMemberContributors(Long projectId) {
+        return pullRequestRepository.findNonMemberContributors(projectId)
+            .stream()
+            .map(row -> {
+                Map<String, Object> m = new java.util.HashMap<>();
+                m.put("userId", row[0]);
+                m.put("userName", row[1]);
+                m.put("profileImageUrl", row[2]);
+                m.put("prCount", row[3]);
+                return m;
+            })
+            .toList();
     }
 }

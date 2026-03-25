@@ -300,4 +300,13 @@ public class ProjectController {
         projectService.deleteProject(projectId, userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트가 삭제되었습니다.", null));
     }
+
+    @Operation(summary = "GitHub 기여자 중 비멤버 조회", description = "프로젝트 GitHub repo에 PR을 올렸지만 팀원이 아닌 유저 목록을 조회합니다.")
+    @GetMapping("/{projectId}/github-contributors")
+    public ResponseEntity<ApiResponseDto<List<java.util.Map<String, Object>>>> getNonMemberContributors(
+        @PathVariable Long projectId) {
+
+        List<java.util.Map<String, Object>> contributors = dashboardService.getNonMemberContributors(projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "비멤버 기여자 조회 성공", contributors));
+    }
 }
