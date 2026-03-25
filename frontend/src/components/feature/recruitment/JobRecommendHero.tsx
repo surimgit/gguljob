@@ -100,9 +100,8 @@ const JobCard = ({
       aria-label={`${company} - ${role}`}
       onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
       onKeyDown={e => { if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
-      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200"
+      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-0 lg:min-h-[250px]"
       style={{
-        minHeight: '250px',
         boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
         background: tint,
         padding: '20px 20px 20px 20px',
