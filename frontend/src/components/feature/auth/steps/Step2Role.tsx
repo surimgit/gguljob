@@ -1,21 +1,21 @@
-import { type FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import {
   Monitor, Server, Shield, BarChart3, Brain, HardDrive,
-  Smartphone, Wrench, Briefcase, Pen, type LucideIcon,
+  Smartphone, Briefcase, Pen, Box, type LucideIcon,
 } from 'lucide-react';
-import { ROLE_LIST, ROLE_DISPLAY_NAMES, type RoleCode } from '../../../../constants/skills';
+import { getPositions, type PositionDto } from '../../../../api/user';
 
-const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
-  FRONTEND: Monitor,
-  BACKEND:  Server,
-  DEVOPS:   Shield,
-  DATA:     BarChart3,
-  AI:       Brain,
-  DATABASE: HardDrive,
-  MOBILE:   Smartphone,
-  TOOLS:    Wrench,
-  PM:       Briefcase,
-  DESIGN:   Pen,
+const ROLE_ICONS: Record<string, LucideIcon> = {
+  FE:     Monitor,
+  BE:     Server,
+  INFRA:  Shield,
+  DEVOPS: Shield,
+  DATA:   BarChart3,
+  AI:     Brain,
+  DB:     HardDrive,
+  MOBILE: Smartphone,
+  PM:     Briefcase,
+  DESIGN: Pen,
 };
 
 interface Props {
@@ -24,6 +24,14 @@ interface Props {
 }
 
 const Step2Role: FC<Props> = ({ selected, onChange }) => {
+  const [positions, setPositions] = useState<PositionDto[]>([]);
+
+  useEffect(() => {
+    getPositions()
+      .then(setPositions)
+      .catch(() => {});
+  }, []);
+
   return (
     <div>
       <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
@@ -32,9 +40,8 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {ROLE_LIST.map((code) => {
-          const Icon = ROLE_ICONS[code];
-          const label = ROLE_DISPLAY_NAMES[code];
+        {positions.map(({ code, name }) => {
+          const Icon = ROLE_ICONS[code] ?? Box;
           const isSelected = selected === code;
           return (
             <button
@@ -49,7 +56,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
                 strokeWidth={1.5}
               />
               <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
-                {label}
+                {name}
               </span>
             </button>
           );

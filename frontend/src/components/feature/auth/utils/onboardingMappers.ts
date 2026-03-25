@@ -1,15 +1,5 @@
 import type { PositionType } from '../../../../types/user';
 import type { OnboardingRequest } from '../../../../api/user';
-import { ROLE_TO_API, type RoleCode } from '../../../../constants/skills';
-
-/** skills.ts RoleCode → 백엔드 PositionType */
-const toApiRole = (code: string): PositionType | undefined =>
-  ROLE_TO_API[code as RoleCode] as PositionType | undefined;
-
-/** 백엔드 PositionType → skills.ts RoleCode (역매핑) */
-const API_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
-  Object.entries(ROLE_TO_API).map(([k, v]) => [v, k as RoleCode])
-) as Record<string, RoleCode>;
 
 export const EXPERIENCE_MAP: Record<string, OnboardingRequest['experience']> = {
   beginner: 'BEGINNER',
@@ -37,7 +27,7 @@ const REVERSE_GOAL_MAP: Record<string, string> = Object.fromEntries(
 
 export interface OnboardingFormData {
   goals: string[];
-  position: string;      // RoleCode (FRONTEND, BACKEND, …)
+  position: string;      // PositionType code (FE, BE, AI, …)
   experience: string;
   skills: string[];       // 기술스택 이름 배열
   mbti: string;
@@ -53,7 +43,7 @@ export const userToFormData = (user: {
   goals?: string[];
 }): OnboardingFormData => ({
   goals: (user.goals ?? []).map((g) => REVERSE_GOAL_MAP[g] ?? g).filter(Boolean),
-  position: user.position ? (API_TO_ROLE[user.position] ?? '') : '',
+  position: user.position ?? '',
   experience: user.experience ? (REVERSE_EXPERIENCE_MAP[user.experience] ?? '') : '',
   skills: user.techStacks ?? [],
   mbti: user.mbti ?? '',
@@ -63,7 +53,7 @@ export const userToFormData = (user: {
 export const buildOnboardingPayload = (
   formData: OnboardingFormData
 ): OnboardingRequest | null => {
-  const mappedRole = toApiRole(formData.position);
+  const mappedRole = formData.position as PositionType | undefined;
   const mappedExp = EXPERIENCE_MAP[formData.experience];
   if (!mappedRole || !mappedExp) return null;
 
