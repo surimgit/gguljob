@@ -556,4 +556,20 @@ public class ProjectService {
 
         return fullImageUrl;
     }
+
+    @Transactional
+    public void deleteProjectImage(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 이미지 삭제는 팀장만 가능합니다.");
+        }
+
+        if (project.getImageUrl() != null) {
+            String s3Key = s3ImageService.extractS3Key(project.getImageUrl());
+            s3ImageService.deleteObject(s3Key);
+            project.updateImageUrl(null);
+        }
+    }
 }
