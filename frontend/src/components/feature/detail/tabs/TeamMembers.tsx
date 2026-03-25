@@ -12,7 +12,7 @@ import {
   Crown,
 } from "lucide-react";
 import type { TeamDashboard, TeamManagement as TeamManagementData } from "../../../../types/project";
-import { acceptRequest, rejectRequest, getTeamManagement, removeMember, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deletePosition } from "../../../../api/projects";
+import { acceptRequest, rejectRequest, getTeamManagement, removeMember, delegateLeader, createRecruitment, updateRecruitmentStatus, updateRecruitmentTargetCount, deleteRecruitment } from "../../../../api/projects";
 import { useAuthStore } from "../../../../stores/authStore";
 import { ROLE_STACKS, ROLE_LIST, getRoleColor, getRoleDisplayName, DISPLAY_TO_ROLE } from "../../../../constants/skills";
 import type { RoleCode } from "../../../../constants/skills";
@@ -786,7 +786,7 @@ const TeamManagement = ({
   const handleDeleteRole = (roleId: string) => {
     setRoles((prev) => prev.filter((r) => r.id !== roleId));
     if (projectId && !isNaN(Number(roleId))) {
-      deletePosition(projectId, Number(roleId))
+      deleteRecruitment(projectId, Number(roleId))
         .catch(() => alert('직무 삭제에 실패했습니다.'));
     }
   };
@@ -1736,7 +1736,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
       members={members}
       applications={applications}
       onDeleteRole={(id) => {
-        if (projectId && !isNaN(Number(id))) deletePosition(projectId, Number(id)).catch(() => alert('직무 삭제에 실패했습니다.'));
+        if (projectId && !isNaN(Number(id))) deleteRecruitment(projectId, Number(id)).catch(() => alert('직무 삭제에 실패했습니다.'));
       }}
       onLeaderDelegated={() => { fetchDetail(); onLeaderChanged?.(); }}
       onRefresh={fetchDetail}
