@@ -94,6 +94,13 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
     onClose();
   };
 
+  const handleClose = () => {
+    setSelectedRole(null);
+    setIntro('');
+    setShowConfirm(false);
+    onClose();
+  };
+
   const handleApply = async () => {
     if (!selectedRole) return;
     const position = project.positions.find((p) => p.role === selectedRole);
@@ -116,14 +123,14 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
   return (
     <BaseModal
       isOpen
-      onClose={onClose}
+      onClose={handleClose}
       containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
     >
       {/* 상단 바 */}
-      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
+      <div className="h-11 shrink-0 bg-primary w-full relative flex items-center justify-end px-5">
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
         >
           <X className="w-4 h-4 text-gray-600" />
