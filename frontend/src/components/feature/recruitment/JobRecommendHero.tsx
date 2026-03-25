@@ -108,7 +108,7 @@ const JobCard = ({
       aria-label={`${company} - ${role}`}
       onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
       onKeyDown={e => { if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
-      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[250px]"
+      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[230px] sm:min-h-[250px]"
       style={{
         boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
         background: tint,
@@ -232,10 +232,10 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
             background: 'linear-gradient(to bottom, rgba(255,242,198,0.36), rgba(247,201,72,0.36))',
           }}
         >
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-12 sm:pt-20 pb-10 sm:pb-14 lg:pl-[6%]">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-20 pb-14 lg:pl-[6%]">
             {/* 메인 타이틀 */}
             <p
-              className="font-bold text-[24px] sm:text-[32px] lg:text-[40px]"
+              className="font-bold text-[32px] lg:text-[40px]"
               style={{ color: '#111827', lineHeight: '1.35' }}
             >
               {userName}님의 기술 스택과<br />
@@ -243,7 +243,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
             </p>
 
             {/* 부제목 */}
-            <p className="mt-4 sm:mt-6 text-[15px] sm:text-[18px] lg:text-[22px]" style={{ color: '#4A5565' }}>
+            <p className="mt-6 text-[18px] lg:text-[22px]" style={{ color: '#4A5565' }}>
               포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
             </p>
 
