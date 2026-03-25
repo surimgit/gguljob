@@ -173,7 +173,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
         {/* 팀원 모집 */}
         <h3 className="font-extrabold text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
 
-        {totalOpen === 0 ? (
+        {project.status === 'DONE' || totalOpen === 0 ? (
           <div className="flex flex-col items-center justify-center py-[40px] text-center">
             <p className="text-[#9ca3af] font-bold text-[15px]">현재 모든 포지션의 모집이 마감되었습니다.</p>
           </div>
