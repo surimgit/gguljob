@@ -374,7 +374,7 @@ const Navbar = () => {
 
                 {/* 모바일 햄버거 버튼 */}
                 <button
-                    className="lg:hidden flex items-center justify-center w-10 h-10 text-icon hover:text-text-primary transition-colors"
+                    className="lg:hidden ml-auto flex items-center justify-center w-10 h-10 text-icon hover:text-text-primary transition-colors"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
                 >
@@ -518,7 +518,9 @@ const Navbar = () => {
                                 </button>
                             </div>
                         ) : (
-                            <GitHubLoginButton />
+                            <div className="flex justify-end">
+                                <GitHubLoginButton />
+                            </div>
                         )}
                     </div>
                 </div>

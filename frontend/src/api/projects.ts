@@ -221,3 +221,15 @@ export const getRecommendedMembersTop = (projectId: number) =>
 
 export const getRecommendedMembers = (projectId: number, params?: RecommendedMembersParams) =>
   api.get(`/v1/projects/${projectId}/recommended-members`, { params: { ...params, page: params?.page ?? 0, size: params?.size ?? 6 }, timeout: 60000 });
+
+/* ── GitHub 기여자 중 비멤버 ── */
+
+export interface GitHubContributor {
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
+  prCount: number;
+}
+
+export const getGitHubContributors = (projectId: number) =>
+  api.get<{ data: GitHubContributor[] }>(`/v1/projects/${projectId}/github-contributors`);

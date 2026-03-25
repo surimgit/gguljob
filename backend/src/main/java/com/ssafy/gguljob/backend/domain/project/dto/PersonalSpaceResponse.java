@@ -19,7 +19,9 @@ public class PersonalSpaceResponse {
 
     public record ReviewItem(
         Long reviewId,
-        String contentSnippet,
-        LocalDateTime createdAt
+        String reviewerName,
+        String prTitle,
+        Integer prNumber,
+        String contentSnippet
     ) {}
 }

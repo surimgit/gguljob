@@ -12,6 +12,7 @@ import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdat
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
 import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
+import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectDashboardService;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
@@ -300,4 +301,14 @@ public class ProjectController {
         projectService.deleteProject(projectId, userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트가 삭제되었습니다.", null));
     }
+
+    @Operation(summary = "GitHub 기여자 중 비멤버 조회", description = "프로젝트 GitHub repo에 PR을 올렸지만 팀원이 아닌 유저 목록을 조회합니다.")
+    @GetMapping("/{projectId}/github-contributors")
+    public ResponseEntity<ApiResponseDto<List<PullRequestRepository.NonMemberContributorProjection>>> getNonMemberContributors(
+        @PathVariable Long projectId) {
+
+        var contributors = dashboardService.getNonMemberContributors(projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "비멤버 기여자 조회 성공", contributors));
+    }
 }
+

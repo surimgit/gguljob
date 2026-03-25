@@ -62,4 +62,22 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
     );
 
     void deleteAllByProjectId(Long projectId);
+
+    /** 프로젝트의 PR 기여자 중 팀원이 아닌 유저 조회 */
+    @Query("SELECT pr.user.id AS userId, pr.user.userName AS userName, pr.user.profileImageUrl AS profileImageUrl, COUNT(pr.id) AS prCount " +
+        "FROM PullRequest pr " +
+        "WHERE pr.project.id = :projectId " +
+        "AND pr.user.id NOT IN (" +
+        "  SELECT pm.user.id FROM ProjectMember pm " +
+        "  WHERE pm.project.id = :projectId AND pm.status = 'ATTEND'" +
+        ") " +
+        "GROUP BY pr.user.id, pr.user.userName, pr.user.profileImageUrl")
+    List<NonMemberContributorProjection> findNonMemberContributors(@Param("projectId") Long projectId);
+
+    interface NonMemberContributorProjection {
+        Long getUserId();
+        String getUserName();
+        String getProfileImageUrl();
+        Long getPrCount();
+    }
 }
