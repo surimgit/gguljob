@@ -543,17 +543,54 @@ public class ProjectService {
             throw new ForbiddenException("프로젝트 이미지 수정은 팀장만 가능합니다.");
         }
 
-        // 기존 이미지가 있으면 S3에서 삭제
+        // 기존 이미지 S3 키 보관 (트랜잭션 커밋 후 삭제 위해)
+        String oldS3Key = null;
         if (project.getImageUrl() != null) {
-            String oldS3Key = s3ImageService.extractS3Key(project.getImageUrl());
-            s3ImageService.deleteObject(oldS3Key);
+            oldS3Key = s3ImageService.extractS3Key(project.getImageUrl());
         }
 
-        // S3 업로드 → CDN URL 생성 → 엔티티 업데이트
+        // S3 업로드 → CDN URL 생성 → DB 업데이트 (먼저 커밋)
         String s3Key = s3ImageService.uploadImage(file);
         String fullImageUrl = s3ImageService.getImageUrl(s3Key);
         project.updateImageUrl(fullImageUrl);
+        projectRepository.flush();
+
+        // DB 커밋 성공 후 기존 이미지 S3 삭제 (실패해도 고아 파일만 남음)
+        if (oldS3Key != null) {
+            try {
+                s3ImageService.deleteObject(oldS3Key);
+                log.info("프로젝트 ID {} 기존 이미지 S3 삭제 완료: {}", projectId, oldS3Key);
+            } catch (Exception e) {
+                log.warn("프로젝트 ID {} 기존 이미지 S3 삭제 실패 (고아 파일): {}", projectId, oldS3Key, e);
+            }
+        }
 
         return fullImageUrl;
+    }
+
+    @Transactional
+    public void deleteProjectImage(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 이미지 삭제는 팀장만 가능합니다.");
+        }
+
+        if (project.getImageUrl() != null) {
+            String s3Key = s3ImageService.extractS3Key(project.getImageUrl());
+
+            // DB 먼저 null 처리 (트랜잭션 보장)
+            project.updateImageUrl(null);
+            projectRepository.flush();
+
+            // DB 커밋 성공 후 S3 삭제 (실패해도 고아 파일만 남음)
+            try {
+                s3ImageService.deleteObject(s3Key);
+                log.info("프로젝트 ID {} 이미지 S3 삭제 완료: {}", projectId, s3Key);
+            } catch (Exception e) {
+                log.warn("프로젝트 ID {} 이미지 S3 삭제 실패 (고아 파일): {}", projectId, s3Key, e);
+            }
+        }
     }
 }

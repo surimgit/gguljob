@@ -281,6 +281,16 @@ public class ProjectController {
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트 이미지 업로드 성공", imageUrl));
     }
 
+    @Operation(summary = "프로젝트 대표 이미지 삭제", description = "프로젝트 썸네일 이미지를 삭제합니다. 팀장만 가능합니다.")
+    @DeleteMapping("/{projectId}/image")
+    public ResponseEntity<ApiResponseDto<Void>> deleteProjectImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        projectService.deleteProjectImage(projectId, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트 이미지가 삭제되었습니다.", null));
+    }
+
     @Operation(summary = "프로젝트 삭제", description = "프로젝트를 삭제합니다. 팀장만 가능합니다.")
     @DeleteMapping("/{projectId}")
     public ResponseEntity<ApiResponseDto<Void>> deleteProject(
