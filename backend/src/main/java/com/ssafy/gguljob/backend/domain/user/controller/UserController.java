@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingService;
 import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
+import com.ssafy.gguljob.backend.domain.user.dto.PositionResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.UserResponse;
@@ -47,6 +48,14 @@ public class UserController {
     private final ProjectService projectService;
     private final TroubleshootingService troubleshootingService;
     private final MatchingService matchingService;
+
+    @Operation(summary = "직무 전체 목록 조회")
+    @GetMapping("/positions")
+    public ResponseEntity<ApiResponseDto<List<PositionResponse.PositionDto>>> getAllPositions() {
+        return ResponseEntity.ok(
+            new ApiResponseDto<>(200, "직무 목록 조회 성공", PositionResponse.allPositions())
+        );
+    }
 
     @Operation(summary = "초기 프로필 설정 (온보딩)", description = "최초 로그인 시 필수 추가 정보를 입력받아 저장합니다.")
     @PostMapping("/onboarding")
