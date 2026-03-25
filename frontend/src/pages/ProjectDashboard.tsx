@@ -587,28 +587,30 @@ const ProjectDashboard = () => {
                           />
                           {gitRepoInfo?.repoUrl ? "연동됨" : "미연동"}
                         </span>
-                        <button
-                          onClick={() => {
-                            setEditingRepo(true);
-                            setRepoInput(gitRepoInfo?.repoUrl ?? "");
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-                          style={{
-                            border: "1px solid var(--color-border)",
-                            color: "var(--color-text-secondary)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background =
-                              "var(--color-background)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "";
-                          }}
-                        >
-                          <Pencil className="w-3 h-3" />
-                          수정
-                        </button>
-                        {gitRepoInfo?.repoUrl && (
+                        {isLeader && (
+                          <button
+                            onClick={() => {
+                              setEditingRepo(true);
+                              setRepoInput(gitRepoInfo?.repoUrl ?? "");
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid var(--color-border)",
+                              color: "var(--color-text-secondary)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                "var(--color-background)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                            }}
+                          >
+                            <Pencil className="w-3 h-3" />
+                            수정
+                          </button>
+                        )}
+                        {isLeader && gitRepoInfo?.repoUrl && (
                           <button
                             onClick={() => {
                               if (!id) return;
@@ -833,42 +835,44 @@ const ProjectDashboard = () => {
                       >
                         🚀 프로젝트 주제
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setShowAiRecommend((prev) => !prev);
-                            if (!showAiRecommend && topics.length === 0) {
-                              handleRecommend(false);
-                            }
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white"
-                          style={{ background: "#6366f1" }}
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          생성
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingTopic(true);
-                            setTopicInput(projectInfo.topic ?? "");
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-                          style={{
-                            border: "1px solid var(--color-border)",
-                            color: "var(--color-text-secondary)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background =
-                              "var(--color-background)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "";
-                          }}
-                        >
-                          <Pencil className="w-3 h-3" />
-                          수정
-                        </button>
-                      </div>
+                      {isLeader && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setShowAiRecommend((prev) => !prev);
+                              if (!showAiRecommend && topics.length === 0) {
+                                handleRecommend(false);
+                              }
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white"
+                            style={{ background: "#6366f1" }}
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            생성
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingTopic(true);
+                              setTopicInput(projectInfo.topic ?? "");
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{
+                              border: "1px solid var(--color-border)",
+                              color: "var(--color-text-secondary)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                "var(--color-background)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "";
+                            }}
+                          >
+                            <Pencil className="w-3 h-3" />
+                            수정
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* 현재 주제 표시 / 수정 모드 */}
