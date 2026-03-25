@@ -179,7 +179,8 @@ public class ProjectService {
             project.getDescription(),
             project.getDomain(),
             skillIds,
-            members
+            members,
+            project.getImageUrl()
         );
 
     }
@@ -433,6 +434,7 @@ public class ProjectService {
                 skillMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
                 positionMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
                 p.getLeader().getUserName(), p.getLeader().getProfileImageUrl(),
+                p.getImageUrl(),
                 0L // 점수는 MatchingService에서 나중에 채움
             )
         ));
