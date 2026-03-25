@@ -147,68 +147,83 @@ const MyProjects = () => {
   return (
     <div
       style={{ backgroundColor: "var(--color-background)" }}
-      className="min-h-screen"
+      className="min-h-screen -mt-8"
     >
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* 헤더 */}
-        <h1
-          className="text-2xl sm:text-3xl font-bold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          내 프로젝트
-        </h1>
-        <p
-          className="text-sm sm:text-lg mt-3"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
-        </p>
+      {/* 히어로 배너 */}
+      <section
+        data-navbar-hero
+        className="overflow-hidden bg-primary-soft/[0.36]"
+        style={{
+          width: '100vw',
+          minHeight: '380px',
+          position: 'relative',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
+      >
+        <div className="max-w-[1400px] mx-auto pr-4 sm:pr-6 lg:pr-8 flex flex-col justify-center pt-13 pb-14 pl-[8%]">
+          <h1
+            className="font-bold"
+            style={{ fontSize: '40px', color: '#111827', lineHeight: '1.35' }}
+          >
+            내 프로젝트
+          </h1>
+          <p
+            className="mt-6"
+            style={{ fontSize: '22px', color: '#4A5565' }}
+          >
+            참여 중인 프로젝트와 완료한 프로젝트를 관리하세요
+          </p>
 
-        {/* 탭 */}
-        <div className="flex gap-2 mt-6 mb-4">
-          {([
-            { key: "active" as TabStatus, label: "진행중", count: activeCount },
-            { key: "done" as TabStatus, label: "완료", count: doneCount },
-          ]).map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => { setTab(t.key); setCurrentPage(1); }}
-              className="flex items-center gap-2 px-5 py-2 rounded-full text-base font-bold transition-colors"
-              style={{
-                backgroundColor:
-                  tab === t.key
-                    ? "var(--color-primary)"
-                    : "var(--color-surface)",
-                color:
-                  tab === t.key
-                    ? "var(--color-text-primary)"
-                    : "var(--color-text-secondary)",
-                border:
-                  tab === t.key
-                    ? "none"
-                    : "1px solid var(--color-border)",
-              }}
-            >
-              {t.label}
-              <span
-                className="text-sm px-2 py-0.5 rounded-full font-semibold"
+          {/* 탭 */}
+          <div className="flex gap-2 mt-8">
+            {([
+              { key: "active" as TabStatus, label: "진행중", count: activeCount },
+              { key: "done" as TabStatus, label: "완료", count: doneCount },
+            ]).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => { setTab(t.key); setCurrentPage(1); }}
+                className="flex items-center gap-2 px-5 py-2 rounded-full text-base font-bold transition-colors"
                 style={{
                   backgroundColor:
                     tab === t.key
-                      ? "rgba(0,0,0,0.15)"
-                      : "var(--color-border)",
+                      ? "var(--color-primary)"
+                      : "var(--color-surface)",
                   color:
                     tab === t.key
                       ? "var(--color-text-primary)"
-                      : "var(--color-text-tertiary)",
+                      : "var(--color-text-secondary)",
+                  border:
+                    tab === t.key
+                      ? "none"
+                      : "1px solid var(--color-border)",
                 }}
               >
-                {t.count}
-              </span>
-            </button>
-          ))}
+                {t.label}
+                <span
+                  className="text-sm px-2 py-0.5 rounded-full font-semibold"
+                  style={{
+                    backgroundColor:
+                      tab === t.key
+                        ? "rgba(0,0,0,0.15)"
+                        : "var(--color-border)",
+                    color:
+                      tab === t.key
+                        ? "var(--color-text-primary)"
+                        : "var(--color-text-tertiary)",
+                  }}
+                >
+                  {t.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+      </section>
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
         {/* 카운트 */}
         <p

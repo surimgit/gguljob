@@ -166,7 +166,7 @@ const MemberRecommend = () => {
             <img
               src={beeImg}
               alt="팀빌딩"
-              className="absolute right-6 top-3 h-28 xl:h-36 object-contain hidden lg:block pointer-events-none"
+              className="absolute right-0 bottom-0 h-50 xl:h-50 object-contain hidden xl:block pointer-events-none"
             />
           </div>
 
