@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { NotificationCategory } from '../../../api/notification';
+import type { NotificationCategory, ActionStatus } from '../../../api/notification';
 import { acceptRequest, rejectRequest } from '../../../api/projects';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -12,21 +12,13 @@ export interface Notification {
   message: string;
   time: string;
   isRead: boolean;
+  actionStatus: ActionStatus;
   referenceId: number | null;
   referenceUrl: string | null;
 }
 
-/** 초대 알림이면서 아직 수락/거절하지 않은 상태인지 판별 */
-function isPendingInvite(notif: Notification): boolean {
-  return notif.type === 'TEAM'
-    && notif.referenceId !== null
-    && notif.message.includes('초대되었습니다')
-    && !localStorage.getItem(`notif-action-${notif.id}`);
-}
-
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
-const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }> = {
-  TEAM: {
+const TEAM_ICON = {
     wrapperClass: 'bg-[#e8e8f5]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -35,7 +27,13 @@ const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.React
         <polyline points="17 11 19 13 23 9" />
       </svg>
     ),
-  },
+};
+
+const ICON_CONFIG: Partial<Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }>> = {
+  TEAM_INVITE: TEAM_ICON,
+  TEAM_APPLY: TEAM_ICON,
+  TEAM_ACCEPTED: TEAM_ICON,
+  TEAM_REJECTED: TEAM_ICON,
   MEMBER: {
     wrapperClass: 'bg-[#f0e8f5]',
     iconEl: (
@@ -108,14 +106,16 @@ const NotificationItem = ({
 }) => {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
-  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(() => {
-    const saved = localStorage.getItem(`notif-action-${notif.id}`);
-    return saved as 'accepted' | 'rejected' | null;
-  });
+  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(
+    notif.actionStatus === 'ACCEPTED' ? 'accepted'
+      : notif.actionStatus === 'REJECTED' ? 'rejected'
+      : null
+  );
   const [loading, setLoading] = useState(false);
 
-  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
-  const isPending = isInvite && !actionDone;
+  const isInvite = (notif.type === 'TEAM_INVITE' || notif.type === 'TEAM_APPLY')
+    && notif.referenceId !== null;
+  const isPending = isInvite && notif.actionStatus === 'PENDING' && !actionDone;
 
   const handleClick = () => {
     if (!notif.isRead && !isPending) onMarkRead(notif.id);
@@ -140,7 +140,6 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await acceptRequest(notif.referenceId);
-      localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
       if (!notif.isRead) onMarkRead(notif.id);
@@ -157,7 +156,6 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await rejectRequest(notif.referenceId);
-      localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
       if (!notif.isRead) onMarkRead(notif.id);
@@ -198,7 +196,7 @@ const NotificationItem = ({
             <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); localStorage.removeItem(`notif-action-${notif.id}`); onDelete(notif.id); }}
+            onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
             aria-label="알림 삭제"
             className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
               notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
@@ -261,7 +259,6 @@ interface NotificationPanelProps {
 
 const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => {
   const handleClearAll = () => {
-    notifications.forEach(n => localStorage.removeItem(`notif-action-${n.id}`));
     onClearAll();
   };
 
@@ -303,23 +300,12 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
       </div>
     </div>
 
-    {/* 알림 목록 or 빈 상태 (안 읽은 알림 먼저) */}
+    {/* 알림 목록 or 빈 상태 (백엔드 정렬: PENDING 최우선 → 안 읽은 것 → 최신순) */}
     <div className="flex flex-col gap-1.5 p-3 overflow-y-auto max-h-[420px]">
       {notifications.length > 0 ? (
-        (() => {
-          const pendingSet = new Set(notifications.filter(isPendingInvite).map(n => n.id));
-          return [...notifications]
-            .sort((a, b) => {
-              const aPending = pendingSet.has(a.id);
-              const bPending = pendingSet.has(b.id);
-              if (aPending !== bPending) return aPending ? -1 : 1;
-              if (a.isRead !== b.isRead) return Number(a.isRead) - Number(b.isRead);
-              return b.id - a.id;
-            })
-            .map(notif => (
-              <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} onClose={onClose} />
-            ));
-        })()
+        notifications.map(notif => (
+          <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} onClose={onClose} />
+        ))
       ) : (
         <EmptyState />
       )}
