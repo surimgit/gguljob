@@ -173,63 +173,71 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
         {/* 팀원 모집 */}
         <h3 className="font-extrabold text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
 
-        <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
-          <div className="flex items-center gap-[8px]">
-            <span className="text-[18px]">📢</span>
-            <span className="text-[14px] font-bold text-[#111827]">
-              총 <span className="font-black text-primary-hover">{totalOpen}명</span> 모집중
-            </span>
+        {totalOpen === 0 ? (
+          <div className="flex flex-col items-center justify-center py-[40px] text-center">
+            <p className="text-[#9ca3af] font-bold text-[15px]">현재 모든 포지션의 모집이 마감되었습니다.</p>
           </div>
-          <span className="text-[13px] text-[#9ca3af] font-bold">
-            {selectedRole ? '직무가 선택되었습니다' : '직무를 선택하세요'}
-          </span>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
+              <div className="flex items-center gap-[8px]">
+                <span className="text-[18px]">📢</span>
+                <span className="text-[14px] font-bold text-[#111827]">
+                  총 <span className="font-black text-primary-hover">{totalOpen}명</span> 모집중
+                </span>
+              </div>
+              <span className="text-[13px] text-[#9ca3af] font-bold">
+                {selectedRole ? '직무가 선택되었습니다' : '직무를 선택하세요'}
+              </span>
+            </div>
 
-        {/* 포지션 카드 */}
-        <div className="flex flex-col gap-[16px]">
-          {openPositions.map((pos) => (
-            <PositionCard
-              key={pos.role}
-              label={getRoleDisplayName(pos.role)}
-              color={getRoleColor(pos.role)}
-              position={pos}
-              selected={selectedRole === pos.role}
-              onSelect={() => setSelectedRole(pos.role)}
-            />
-          ))}
-        </div>
+            {/* 포지션 카드 */}
+            <div className="flex flex-col gap-[16px]">
+              {openPositions.map((pos) => (
+                <PositionCard
+                  key={pos.role}
+                  label={getRoleDisplayName(pos.role)}
+                  color={getRoleColor(pos.role)}
+                  position={pos}
+                  selected={selectedRole === pos.role}
+                  onSelect={() => setSelectedRole(pos.role)}
+                />
+              ))}
+            </div>
 
-        {/* 자기소개 */}
-        <div className="mt-[20px]">
-          <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
-            자기소개
-          </label>
-          <textarea
-            value={intro}
-            onChange={(e) => {
-              if (e.target.value.length <= MAX_INTRO_LENGTH) setIntro(e.target.value);
-            }}
-            placeholder="본인을 간략하게 소개해 주세요"
-            rows={3}
-            className="w-full rounded-[12px] border-2 border-[#e5e7eb] bg-white px-[16px] py-[12px] text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-primary focus:outline-none resize-none transition-colors"
-          />
-          <p className="text-[12px] text-[#9ca3af] text-right mt-[4px]">
-            {intro.length}/{MAX_INTRO_LENGTH}
-          </p>
-        </div>
+            {/* 자기소개 */}
+            <div className="mt-[20px]">
+              <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
+                자기소개
+              </label>
+              <textarea
+                value={intro}
+                onChange={(e) => {
+                  if (e.target.value.length <= MAX_INTRO_LENGTH) setIntro(e.target.value);
+                }}
+                placeholder="본인을 간략하게 소개해 주세요"
+                rows={3}
+                className="w-full rounded-[12px] border-2 border-[#e5e7eb] bg-white px-[16px] py-[12px] text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-primary focus:outline-none resize-none transition-colors"
+              />
+              <p className="text-[12px] text-[#9ca3af] text-right mt-[4px]">
+                {intro.length}/{MAX_INTRO_LENGTH}
+              </p>
+            </div>
 
-        {/* 지원 버튼 */}
-        <button
-          disabled={!selectedRole || submitting}
-          onClick={handleApply}
-          className={`w-full mt-[24px] py-[16px] rounded-[14px] font-black text-[15px] transition-all ${
-            selectedRole && !submitting
-              ? 'bg-primary text-[#111827] hover:bg-primary-hover shadow-[0px_4px_12px_0px_rgba(247,201,72,0.4)]'
-              : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
-          }`}
-        >
-          {submitting ? '지원 중...' : selectedRole ? '지원하기' : '직무를 선택해 주세요'}
-        </button>
+            {/* 지원 버튼 */}
+            <button
+              disabled={!selectedRole || submitting}
+              onClick={handleApply}
+              className={`w-full mt-[24px] py-[16px] rounded-[14px] font-black text-[15px] transition-all ${
+                selectedRole && !submitting
+                  ? 'bg-primary text-[#111827] hover:bg-primary-hover shadow-[0px_4px_12px_0px_rgba(247,201,72,0.4)]'
+                  : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+              }`}
+            >
+              {submitting ? '지원 중...' : selectedRole ? '지원하기' : '직무를 선택해 주세요'}
+            </button>
+          </>
+        )}
       </div>
 
       {showConfirm && (
