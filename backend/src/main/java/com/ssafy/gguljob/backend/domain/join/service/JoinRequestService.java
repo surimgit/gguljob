@@ -15,6 +15,8 @@ import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
+import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class JoinRequestService {
 
     private final ProjectPositionRepository projectPositionRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     // 유저 -> 프로젝트 지원
@@ -143,6 +146,8 @@ public class JoinRequestService {
             ? "축하합니다! 프로젝트 합류가 수락되었습니다."
             : joinRequest.getUser().getUserName() + "님이 초대를 수락했습니다.";
 
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.ACCEPTED);
+
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_ACCEPT"
         ));
@@ -176,6 +181,8 @@ public class JoinRequestService {
         String message = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? "프로젝트 합류가 거절되었습니다."
             : joinRequest.getUser().getUserName() + "님이 초대를 거절했습니다.";
+
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.REJECTED);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
