@@ -96,7 +96,6 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
     setSubmitting(true);
     try {
       await applyToPosition(project.projectId, position.positionId, intro || undefined);
-      onApplied?.();
       setShowConfirm(true);
     } catch {
       toast.error('지원에 실패했습니다. 다시 시도해주세요.');
@@ -234,10 +233,12 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           confirmText="확인"
           onConfirm={() => {
             setShowConfirm(false);
+            onApplied?.();
             onClose();
           }}
           onClose={() => {
             setShowConfirm(false);
+            onApplied?.();
             onClose();
           }}
         />
