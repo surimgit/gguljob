@@ -241,6 +241,7 @@ export const SKILL_CATEGORY_META: { key: string; label: string }[] = [
 export const ROLE_STACKS: Record<RoleCode, string[]> = {
   FRONTEND: SKILLS_BY_CATEGORY["FRONTEND"] ?? [],
   BACKEND:  SKILLS_BY_CATEGORY["BACKEND"] ?? [],
+  DATABASE: SKILLS_BY_CATEGORY["DATABASE"] ?? [],
   DEVOPS:   SKILLS_BY_CATEGORY["DEVOPS"] ?? [],
   DATA:     SKILLS_BY_CATEGORY["DATA"] ?? [],
   AI:       SKILLS_BY_CATEGORY["AI"] ?? [],

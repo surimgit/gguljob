@@ -288,7 +288,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
 
   if (!isOpen) return null;
 
-  const allSuggestions = selectedRole ? ROLE_STACKS[selectedRole] : [];
+  const allSuggestions = selectedRole ? (ROLE_STACKS[selectedRole] ?? []) : [];
   const quickTags = allSuggestions.filter((s) => !stacks.includes(s));
   const filtered = allSuggestions.filter(
     (s) => !stacks.includes(s) && s.toLowerCase().includes(stackInput.toLowerCase()),
