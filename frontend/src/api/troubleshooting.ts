@@ -58,3 +58,26 @@ export interface TroubleshootingWidget {
 
 export const getMyTroubleshootingWidget = () =>
   api.get<{ status: number; message: string; data: TroubleshootingWidget[] }>('/v1/user/me/troubleshootings/widget');
+
+/** 마이페이지 트러블슈팅 목록 조회 (페이지네이션) */
+export interface MyTroubleshootingItem {
+  tsId: number;
+  title: string;
+  description: string;
+  solution: string | null;
+  codeSnippet: string | null;
+  projectId: number;
+  projectName: string;
+  createdAt: string;
+}
+
+export interface MyTroubleshootingPage {
+  content: MyTroubleshootingItem[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export const getMyTroubleshootings = (page = 0, size = 5) =>
+  api.get<MyTroubleshootingPage>('/v1/troubleshooting/my', { params: { page, size } });
