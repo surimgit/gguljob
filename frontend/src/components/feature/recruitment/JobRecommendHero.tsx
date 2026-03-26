@@ -26,6 +26,16 @@ const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 
 type Badge = 'NEW' | 'HOT';
 
+type MatchStatus = '최적합' | '적합' | '보통' | '미흡' | '부족';
+
+const MATCH_CONFIG: Record<MatchStatus, { label: string; color: string; dots: number }> = {
+  최적합: { label: '최적합', color: '#16A34A', dots: 5 },
+  적합:   { label: '적합',   color: '#22C55E', dots: 4 },
+  보통:   { label: '보통',   color: '#F2B705', dots: 3 },
+  미흡:   { label: '미흡',   color: '#F97316', dots: 2 },
+  부족:   { label: '부족',   color: '#EF4444', dots: 1 },
+};
+
 interface JobCardProps {
   jobId: number;
   tint: string;
@@ -41,6 +51,7 @@ interface JobCardProps {
   salary: string;
   url: string;
   deadline: string;
+  matchStatus: MatchStatus;
   bookmarked: boolean;
   onToggleBookmark: (id: number) => void;
 }
@@ -95,11 +106,13 @@ const JobCard = ({
   salary,
   url,
   deadline,
+  matchStatus,
   bookmarked,
   onToggleBookmark,
 }: JobCardProps) => {
   const dday = calcDday(deadline);
   const ddayColor = getDdayColor(dday);
+  const match = MATCH_CONFIG[matchStatus];
 
   return (
     <div
@@ -191,11 +204,27 @@ const JobCard = ({
         <span className="text-sm" style={{ color: '#6B7280' }}>{experience}</span>
       </div>
 
-      {/* 고용형태 · 연봉 */}
-      <div className="flex items-center gap-1.5 mt-auto">
-        <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
-        <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-        <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+      {/* 고용형태 · 연봉 + 적합도 */}
+      <div className="flex items-end justify-between mt-auto">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
+          <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
+          <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                className="w-2 h-2 rounded-full"
+                style={{ background: i <= match.dots ? match.color : '#E5E7EB' }}
+              />
+            ))}
+          </div>
+          <span className="text-[10px] font-bold" style={{ color: match.color }}>
+            {match.label}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -302,6 +331,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
                 salary={job.salary}
                 url={job.url}
                 deadline={job.deadline}
+                matchStatus={job.matchStatus}
                 bookmarked={bookmarkedIds.has(job.jobId)}
                 onToggleBookmark={onToggleBookmark}
               />
