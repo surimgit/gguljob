@@ -7,6 +7,7 @@ import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project'
 import { applyToPosition } from '../../../api/projects';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import { getCategoryColorPair } from '../../../constants/domains';
+import { STATUS_LABEL, getStatusStyle, getEffectiveStatus } from './ProjectCard';
 
 interface ProjectApplyModalProps {
   project: ProjectCardDto;
@@ -15,12 +16,6 @@ interface ProjectApplyModalProps {
 }
 
 
-
-const STATUS_LABEL: Record<string, string> = {
-  RECRUITING: '모집중',
-  PROCEEDING: '진행중',
-  DONE: '마감',
-};
 
 function PositionCard({
   label, color, position, selected, onSelect,
@@ -87,6 +82,8 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
+  const effectiveStatus = getEffectiveStatus(project.status, project.positions);
+  const statusStyle = getStatusStyle(effectiveStatus);
 
   const handleConfirmDismiss = () => {
     setShowConfirm(false);
@@ -149,9 +146,15 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
             {project.domain}
           </span>
           <div className="flex items-center gap-[5px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#22c55e]" />
-            <span className="text-[#22c55e] font-bold text-[13px]">
-              {STATUS_LABEL[project.status] ?? project.status}
+            <div
+              className="w-[8px] h-[8px] rounded-full"
+              style={{ backgroundColor: statusStyle.dot }}
+            />
+            <span
+              className="font-bold text-[13px]"
+              style={{ color: statusStyle.text }}
+            >
+              {STATUS_LABEL[effectiveStatus]}
             </span>
           </div>
         </div>
