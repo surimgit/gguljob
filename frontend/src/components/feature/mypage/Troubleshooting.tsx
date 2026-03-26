@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Wrench, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
-import { getMyTroubleshootingWidget, type TroubleshootingWidget } from '../../../api/troubleshooting';
+import { getMyTroubleshootings, type MyTroubleshootingItem } from '../../../api/troubleshooting';
 
 // ── 시간 포맷 ────────────────────────────────────────────────────────────────
 const formatTimeAgo = (dateStr: string): string => {
@@ -20,7 +20,7 @@ const formatTimeAgo = (dateStr: string): string => {
 };
 
 // ── 아이템 카드 ────────────────────────────────────────────────────────────────
-const TroubleshootingCard = ({ item }: { item: TroubleshootingWidget }) => {
+const TroubleshootingCard = ({ item }: { item: MyTroubleshootingItem }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -39,7 +39,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingWidget }) => {
         <h4 className="text-[14px] font-bold text-text-primary leading-snug">
           {item.title}
         </h4>
-        <p className="text-[12px] text-text-secondary line-clamp-1">{item.solution}</p>
+        <p className="text-[12px] text-text-secondary line-clamp-1">{item.solution ?? item.description}</p>
       </div>
       <span className="flex-shrink-0 text-[10px] text-text-tertiary">{formatTimeAgo(item.createdAt)}</span>
     </div>
@@ -59,13 +59,13 @@ const SkeletonCard = () => (
 );
 
 const Troubleshooting = () => {
-  const [items, setItems] = useState<TroubleshootingWidget[]>([]);
+  const [items, setItems] = useState<MyTroubleshootingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getMyTroubleshootingWidget()
+    getMyTroubleshootings(0, 20)
       .then(({ data }) => {
-        setItems(data.data ?? []);
+        setItems(data.data?.content ?? []);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
@@ -89,15 +89,15 @@ const Troubleshooting = () => {
       </div>
 
       {/* 목록 */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className="flex flex-col gap-3">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : items.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {items.slice(0, 2).map((item) => (
+          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1">
+            {items.map((item) => (
               <TroubleshootingCard key={item.tsId} item={item} />
             ))}
           </div>

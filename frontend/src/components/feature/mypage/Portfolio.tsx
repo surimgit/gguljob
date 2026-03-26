@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Briefcase, FilePlus, ChevronRight } from 'lucide-react';
+import { Briefcase, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SectionEmptyState } from '../../common';
 import { getMyPortfolios, type PortfolioSummary } from '../../../api/portfolio';
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ const PortfolioCard = ({ item }: { item: PortfolioSummary }) => (
     onClick={() => {
       if (item.s3Url) window.open(item.s3Url, '_blank', 'noopener,noreferrer');
     }}
-    className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer flex-1 min-h-[10rem] text-left"
+    className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer flex-1 min-h-[12rem] text-left"
   >
     <div className="flex flex-col gap-1">
       <h3 className="text-[14px] font-bold text-text-primary">{item.title}</h3>
@@ -29,24 +29,9 @@ const PortfolioCard = ({ item }: { item: PortfolioSummary }) => (
   </button>
 );
 
-// ── 새 포트폴리오 버튼 ─────────────────────────────────────────────────────────
-const NewPortfolioButton = () => {
-  const navigate = useNavigate();
-  return (
-    <button
-      type="button"
-      onClick={() => navigate('/mypage/portfolio/new')}
-      className="flex flex-col items-center justify-center gap-3 border-2 border-border rounded-2xl p-5 hover:shadow-md hover:border-primary transition-all cursor-pointer flex-1 min-h-[10rem] text-text-tertiary hover:text-primary"
-    >
-      <FilePlus className="w-6 h-6" />
-      <span className="text-[12px] font-bold">새 포트폴리오</span>
-    </button>
-  );
-};
-
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
-  <div className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 flex-1 min-h-[10rem] animate-pulse">
+  <div className="flex flex-col justify-between border-2 border-border rounded-2xl p-5 flex-1 min-h-[12rem] animate-pulse">
     <div className="flex flex-col gap-1">
       <div className="h-4 bg-gray-200 rounded w-2/3" />
       <div className="h-3 bg-gray-200 rounded w-1/2" />
@@ -86,21 +71,22 @@ const Portfolio = () => {
       </div>
 
       {/* 카드 그리드 */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0 flex flex-col">
         {isLoading ? (
           <div className="flex gap-4 h-full">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : portfolios.length > 0 ? (
-          <div className="flex gap-4 h-full">
-            <PortfolioCard item={portfolios[0]} />
-            <NewPortfolioButton />
+          <div className="flex flex-col flex-1 overflow-x-auto justify-between">
+            <div className="flex gap-4 mb-3">
+              {portfolios.map((item) => (
+                <PortfolioCard key={item.portfolioId} item={item} />
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="flex gap-4 h-full">
-            <NewPortfolioButton />
-          </div>
+          <SectionEmptyState message="등록된 포트폴리오가 없습니다." />
         )}
       </div>
     </div>
