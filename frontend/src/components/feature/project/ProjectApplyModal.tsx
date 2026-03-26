@@ -149,9 +149,15 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
             {project.domain}
           </span>
           <div className="flex items-center gap-[5px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#22c55e]" />
-            <span className="text-[#22c55e] font-bold text-[13px]">
-              {STATUS_LABEL[project.status] ?? project.status}
+            <div
+              className="w-[8px] h-[8px] rounded-full"
+              style={{ backgroundColor: project.status === 'RECRUITING' && totalOpen === 0 ? '#9ca3af' : '#22c55e' }}
+            />
+            <span
+              className="font-bold text-[13px]"
+              style={{ color: project.status === 'RECRUITING' && totalOpen === 0 ? '#9ca3af' : '#22c55e' }}
+            >
+              {project.status === 'RECRUITING' && totalOpen === 0 ? '모집 마감' : (STATUS_LABEL[project.status] ?? project.status)}
             </span>
           </div>
         </div>

@@ -25,7 +25,10 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const { domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl } = project;
 
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
-  const statusStyle = getStatusStyle(status);
+
+  const hasOpenPositions = positions.some((p) => p.currentCount < p.targetCount);
+  const effectiveStatus = status === 'RECRUITING' && !hasOpenPositions ? 'DONE' : status;
+  const statusStyle = getStatusStyle(effectiveStatus);
 
   const activePositions = Object.values(
     positions
@@ -63,7 +66,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
             className="font-semibold text-xs leading-[18px]"
             style={{ color: statusStyle.text }}
           >
-            {STATUS_LABEL[status]}
+            {status === 'RECRUITING' && !hasOpenPositions ? '모집 마감' : STATUS_LABEL[status]}
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
