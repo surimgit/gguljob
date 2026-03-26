@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Wrench, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
 import { getMyTroubleshootingWidget, type TroubleshootingWidget } from '../../../api/troubleshooting';
 
@@ -20,20 +20,31 @@ const formatTimeAgo = (dateStr: string): string => {
 };
 
 // ── 아이템 카드 ────────────────────────────────────────────────────────────────
-const TroubleshootingCard = ({ item }: { item: TroubleshootingWidget }) => (
-  <div className="flex items-start gap-3 bg-[rgba(169,144,72,0.09)] rounded-2xl px-4 py-4">
-    <div className="flex-shrink-0 mt-0.5">
-      <CheckCircle2 className="w-4 h-4 text-[#a99048]" />
+const TroubleshootingCard = ({ item }: { item: TroubleshootingWidget }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/my-projects/${item.projectId}?tab=personal&subtab=troubleshooting`);
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className="flex items-start gap-3 bg-[rgba(169,144,72,0.09)] rounded-2xl px-4 py-4 cursor-pointer hover:bg-[rgba(169,144,72,0.15)] transition-colors"
+    >
+      <div className="flex-shrink-0 mt-0.5">
+        <CheckCircle2 className="w-4 h-4 text-[#a99048]" />
+      </div>
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <h4 className="text-[14px] font-bold text-text-primary leading-snug">
+          {item.title}
+        </h4>
+        <p className="text-[12px] text-text-secondary line-clamp-1">{item.solution}</p>
+      </div>
+      <span className="flex-shrink-0 text-[10px] text-text-tertiary">{formatTimeAgo(item.createdAt)}</span>
     </div>
-    <div className="flex flex-col gap-1 flex-1 min-w-0">
-      <h4 className="text-[14px] font-bold text-text-primary leading-snug">
-        {item.title}
-      </h4>
-      <p className="text-[12px] text-text-secondary line-clamp-1">{item.solution}</p>
-    </div>
-    <span className="flex-shrink-0 text-[10px] text-text-tertiary">{formatTimeAgo(item.createdAt)}</span>
-  </div>
-);
+  );
+};
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const SkeletonCard = () => (

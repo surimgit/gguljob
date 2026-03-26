@@ -59,7 +59,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
   };
 
   const handleGoToProject = () => {
-    navigate(`/my-projects/${item.projectId}`, { state: { tab: 'troubleshooting' } });
+    navigate(`/my-projects/${item.projectId}?tab=personal&subtab=troubleshooting`);
   };
 
   return (
