@@ -113,3 +113,19 @@ export const getPositions = async (): Promise<PositionDto[]> => {
   const res = await api.get('/v1/user/positions');
   return res.data.data;
 };
+
+/** 내 지원/초대 내역 */
+export interface MyApplicationDto {
+  requestId: number;
+  projectId: number;
+  projectTitle: string;
+  positionName: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  requestType: 'APPLY' | 'INVITE';
+  createdAt: string;
+}
+
+export const getMyApplications = async (): Promise<MyApplicationDto[]> => {
+  const res = await api.get('/v1/user/me/applications');
+  return res.data.data;
+};

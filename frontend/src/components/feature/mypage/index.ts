@@ -4,6 +4,7 @@ export { default as ProjectSummary } from './ProjectSummary';
 export { default as BookmarkedJobs } from './BookmarkedJobs';
 export { default as Troubleshooting } from './Troubleshooting';
 export { default as Portfolio } from './Portfolio';
+export { default as MyApplications } from './MyApplications';
 export { default as ProfileModalLayout } from './ProfileModalLayout';
 export { default as MyProfileModal } from './MyProfileModal';
 export { default as ProfileEditModal } from './ProfileEditModal';

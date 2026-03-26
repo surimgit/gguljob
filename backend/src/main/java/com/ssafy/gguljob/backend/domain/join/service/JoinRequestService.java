@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.join.service;
 
+import com.ssafy.gguljob.backend.domain.join.dto.MyApplicationDto;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
@@ -35,6 +36,26 @@ public class JoinRequestService {
     private final ProjectMemberRepository projectMemberRepository;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+
+    // 내 지원/초대 내역 조회
+    @Transactional(readOnly = true)
+    public List<MyApplicationDto> getMyApplications(Long userId) {
+        List<JoinRequest> requests = joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return requests.stream()
+            .map(request -> {
+                String positionName = null;
+                if (request.getPositionId() != null) {
+                    positionName = projectPositionRepository.findById(request.getPositionId())
+                        .map(pp -> pp.getRole().name())
+                        .orElse(null);
+                } else if (request.getRole() != null) {
+                    positionName = request.getRole().name();
+                }
+                return MyApplicationDto.of(request, positionName);
+            })
+            .collect(Collectors.toList());
+    }
 
     // 유저 -> 프로젝트 지원
     @Transactional
