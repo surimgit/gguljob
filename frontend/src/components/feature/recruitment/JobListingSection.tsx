@@ -77,7 +77,7 @@ const mapJobCategory = (category: string): RoleCode | null => {
 };
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 20;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
 const MATCH_CONFIG: Record<MatchType, { label: string; color: string; dots: number }> = {
@@ -371,6 +371,7 @@ interface JobListingSectionProps {
 
 const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -431,6 +432,15 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     }
   }, [showBookmarked]);
 
+  // 페이지 변경 시 섹션 상단으로 스크롤 (초기 마운트 제외)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [currentPage]);
+
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
     if (!activeCategory) return jobs;
@@ -477,7 +487,6 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
