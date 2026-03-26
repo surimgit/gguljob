@@ -18,8 +18,10 @@ import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -46,12 +48,12 @@ public class JoinRequestService {
         // N+1 방지: positionId 일괄 조회 후 Map으로 캐싱
         List<Long> positionIds = requests.stream()
             .map(JoinRequest::getPositionId)
-            .filter(java.util.Objects::nonNull)
+            .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
 
         Map<Long, ProjectPosition> positionMap = positionIds.isEmpty()
-            ? java.util.Collections.emptyMap()
+            ? Collections.emptyMap()
             : projectPositionRepository.findAllById(positionIds).stream()
                 .collect(Collectors.toMap(ProjectPosition::getId, pp -> pp));
 
