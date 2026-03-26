@@ -104,13 +104,18 @@ const FlowSection = () => {
 
     const handleWheel = (e: WheelEvent) => {
       if (!isHoveringRef.current) return;
-      const idx = currentIndexRef.current;
 
       // 쿨다운 중에는 항상 스크롤 차단
       if (isScrollingRef.current) {
         e.preventDefault();
         return;
       }
+
+      // 캐러셀이 화면에 완전히 보이지 않으면 일반 스크롤
+      const rect = carousel.getBoundingClientRect();
+      if (rect.top < 0 || rect.bottom > window.innerHeight) return;
+
+      const idx = currentIndexRef.current;
 
       if (e.deltaY > 0 && idx < maxIndex) {
         e.preventDefault();
