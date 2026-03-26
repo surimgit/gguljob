@@ -32,6 +32,7 @@ public class ProjectMemberService {
     private final ProjectPositionRepository projectPositionRepository;
     private final SkillRepository skillRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProjectDeletionService projectDeletionService;
 
     @Transactional
     public ProjectMemberResponse.ProjectLeaveResponse leaveProject(Long projectId, Long userId) {
@@ -42,32 +43,48 @@ public class ProjectMemberService {
         ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("해당 프로젝트의 멤버가 아닙니다."));
 
-        if (member.getStatus() == MemberStatus.LEAVE || member.getStatus() == MemberStatus.REVOKE) {
+        if (isInactiveMember(member)) {
             throw new BadRequestException("이미 탈퇴했거나 내보내진 상태입니다.");
         }
 
-        // 멤버 상태 -> LEAVE
         member.leaveProject();
-        Long newLeaderId = null;
+        Long newLeaderId = delegateLeaderIfNeeded(projectId, userId, project);
 
-        if (project.getLeader().getId().equals(userId)) {
-            projectMemberRepository.findFirstByProjectIdAndStatusAndUserIdNotOrderByCreatedAtAsc(projectId,
-                    MemberStatus.ATTEND, userId)
-                .ifPresentOrElse(
-                    nextLeader -> {
-                        project.changeLeader(nextLeader.getUser());
-                    },
-                    () -> {
-                        // 남은 팀원이 없는 경우 DONE
-                        project.markAsDone();
-                    }
-                );
-            newLeaderId = project.getLeader().getId().equals(userId) ? null : project.getLeader().getId();
+        if (hasNoAttendMembers(projectId)) {
+            projectDeletionService.deleteProjectWithRelations(project, userId);
+            return new ProjectMemberResponse.ProjectLeaveResponse(
+                projectId,
+                userId,
+                null,
+                "팀을 성공적으로 나갔습니다. 남은 팀원이 없어 프로젝트가 삭제되었습니다."
+            );
         }
 
         String message = (newLeaderId != null) ? "팀을 성공적으로 나갔으며, 리더 권한이 위임되었습니다." : "팀을 성공적으로 나갔습니다.";
 
         return new ProjectMemberResponse.ProjectLeaveResponse(projectId, userId, newLeaderId, message);
+    }
+
+    private boolean isInactiveMember(ProjectMember member) {
+        return member.getStatus() == MemberStatus.LEAVE || member.getStatus() == MemberStatus.REVOKE;
+    }
+
+    private Long delegateLeaderIfNeeded(Long projectId, Long userId, Project project) {
+        if (!project.getLeader().getId().equals(userId)) {
+            return null;
+        }
+
+        projectMemberRepository.findFirstByProjectIdAndStatusAndUserIdNotOrderByCreatedAtAsc(
+            projectId,
+            MemberStatus.ATTEND,
+            userId
+        ).ifPresent(nextLeader -> project.changeLeader(nextLeader.getUser()));
+
+        return project.getLeader().getId().equals(userId) ? null : project.getLeader().getId();
+    }
+
+    private boolean hasNoAttendMembers(Long projectId) {
+        return projectMemberRepository.countByProjectIdAndStatus(projectId, MemberStatus.ATTEND) == 0L;
     }
 
     @Transactional
