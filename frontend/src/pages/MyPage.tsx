@@ -125,7 +125,7 @@ const MyPage = () => {
     if (user?.id) {
       try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch {}
     }
-    getMe().then((u) => setUser(u)).catch(() => {});
+    getMe().then((u) => setUser(u)).catch((err) => console.error('Failed to fetch user data:', err));
   };
 
   const handleOnboardingComplete = async (formData: OnboardingFormData) => {
