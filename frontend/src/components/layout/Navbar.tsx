@@ -418,7 +418,7 @@ const Navbar = () => {
 
             {/* 모바일 메뉴 드롭다운 */}
             {mobileMenuOpen && (
-                <div className="lg:hidden bg-background border-t border-primary/20 shadow-lg">
+                <div className="lg:hidden border-t border-primary/20 shadow-lg" style={{ backgroundColor: 'inherit' }}>
                     <div className="px-4 py-3 space-y-1">
                         <Link
                             to="/my-projects"
