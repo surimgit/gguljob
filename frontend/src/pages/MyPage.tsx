@@ -123,9 +123,9 @@ const MyPage = () => {
     setProfile((prev) => ({ ...prev, projects: data.projects }));
     // localStorage에 대표 프로젝트 백업
     if (user?.id) {
-      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch {}
+      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch (e) { console.error('MyPage: Failed to save projects to localStorage:', e); }
     }
-    getMe().then((u) => setUser(u)).catch((err) => console.error('Failed to fetch user data:', err));
+    getMe().then((u) => setUser(u)).catch((err) => console.error('MyPage: Failed to fetch user data:', err));
   };
 
   const handleOnboardingComplete = async (formData: OnboardingFormData) => {
