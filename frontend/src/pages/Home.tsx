@@ -7,7 +7,7 @@ import KeyFeaturesSection from '../components/home/KeyFeaturesSection';
 const Home = () => (
   <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FFFAEB' }}>
     <Navbar />
-    <main className="flex-1">
+    <main className="flex-1 relative z-0">
       <HeroSection />
       <FlowSection />
       <KeyFeaturesSection />

@@ -175,34 +175,33 @@ const Navbar = () => {
         let lastHeroEl: Element | null = null;
         let heroColor: string | null = null;
 
-        // rgba 반투명 색상을 불투명으로 변환 (흰색 배경 기준 블렌딩)
-        const toOpaque = (color: string): string => {
-            const m = color.match(/rgba\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)/);
-            if (!m) return color;
-            const a = parseFloat(m[4]);
-            if (a >= 1) return color;
-            const blend = (fg: number) => Math.round(fg * a + 255 * (1 - a));
-            return `rgb(${blend(parseFloat(m[1]))}, ${blend(parseFloat(m[2]))}, ${blend(parseFloat(m[3]))})`;
+        // 어떤 CSS 색상이든 bg-background 위에 합성한 불투명 RGB로 변환
+        const toOpaqueRgb = (color: string): string => {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = 1;
+            const ctx = cv.getContext('2d')!;
+            ctx.fillStyle = '#F7F8FA'; // bg-background
+            ctx.fillRect(0, 0, 1, 1);
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+            return `rgb(${r}, ${g}, ${b})`;
         };
 
         // data-navbar-hero 요소의 배경색 추출
         const extractColor = (el: Element): string | null => {
             const cs = getComputedStyle(el);
             const bg = cs.backgroundColor;
-            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return toOpaque(bg);
-            const bgImg = cs.backgroundImage;
-            if (bgImg && bgImg !== 'none') {
-                const m = bgImg.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
-                if (m) return toOpaque(m[0]);
-            }
+            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return toOpaqueRgb(bg);
             return null;
         };
 
-        const findHeroes = () => {
+        const findHeroes = (): boolean => {
             const heroes = document.querySelectorAll('[data-navbar-hero]');
-            if (heroes.length === 0) return;
+            if (heroes.length === 0) return false;
             heroColor = extractColor(heroes[0]);
             lastHeroEl = heroes[heroes.length - 1];
+            return true;
         };
 
         const sync = () => {
@@ -222,15 +221,22 @@ const Navbar = () => {
             rafId = requestAnimationFrame(sync);
         };
 
-        const timerId = setTimeout(() => {
+        // hero 요소가 렌더링될 때까지 재시도
+        let retryCount = 0;
+        const tryInit = () => {
             requestAnimationFrame(() => {
-                findHeroes();
-                sync();
+                if (findHeroes()) {
+                    sync();
+                } else if (retryCount < 10) {
+                    retryCount++;
+                    setTimeout(tryInit, 100);
+                }
             });
-        }, 50);
+        };
+        tryInit();
+
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => {
-            clearTimeout(timerId);
             cancelAnimationFrame(rafId);
             window.removeEventListener('scroll', onScroll);
         };
