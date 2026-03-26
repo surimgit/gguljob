@@ -13,6 +13,7 @@ public class TroubleshootingResponse {
         private Long tsId;
         private String title;
         private String solution;
+        private Long projectId;
         private LocalDateTime createdAt;
 
         public static Widget from(Troubleshooting ts) {
@@ -20,6 +21,7 @@ public class TroubleshootingResponse {
                 .tsId(ts.getId())
                 .title(ts.getTitle())
                 .solution(ts.getSolution())
+                .projectId(ts.getProject().getId())
                 .createdAt(ts.getCreatedAt())
                 .build();
         }

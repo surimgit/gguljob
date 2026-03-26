@@ -53,6 +53,7 @@ export interface TroubleshootingWidget {
   tsId: number;
   title: string;
   solution: string;
+  projectId: number;
   createdAt: string;
 }
 
