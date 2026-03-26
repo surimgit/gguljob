@@ -106,15 +106,15 @@ const MyApplications = () => {
       </div>
 
       {/* 목록 */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className="flex flex-col gap-3">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : items.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {items.slice(0, 2).map((item) => (
+          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1">
+            {items.map((item) => (
               <ApplicationItem key={item.requestId} item={item} />
             ))}
           </div>

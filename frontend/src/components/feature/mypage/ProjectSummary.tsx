@@ -67,10 +67,7 @@ interface ProjectSummaryProps {
 }
 
 const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
-  // DONE이 아닌 프로젝트(모집중/진행중) 중 가장 최신 1개
-  const latestProject = [...projects]
-    .filter((p) => p.status !== 'DONE')
-    .at(-1) ?? null;
+  const activeProjects = [...projects].filter((p) => p.status !== 'DONE');
 
   return (
     <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
@@ -89,9 +86,17 @@ const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
         </Link>
       </div>
 
-      {/* 최신 진행 중 프로젝트 or 빈 상태 — 남은 공간 채움 */}
-      <div className="flex-1">
-        {latestProject ? <ProjectCard project={latestProject} /> : <SectionEmptyState message="등록된 프로젝트가 없어요." />}
+      {/* 프로젝트 목록 */}
+      <div className="flex-1 min-h-0">
+        {activeProjects.length > 0 ? (
+          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1">
+            {activeProjects.map((project) => (
+              <ProjectCard key={project.projectId} project={project} />
+            ))}
+          </div>
+        ) : (
+          <SectionEmptyState message="등록된 프로젝트가 없어요." />
+        )}
       </div>
     </div>
   );

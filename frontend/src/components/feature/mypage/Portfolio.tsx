@@ -86,15 +86,17 @@ const Portfolio = () => {
       </div>
 
       {/* 카드 그리드 */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className="flex gap-4 h-full">
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : portfolios.length > 0 ? (
-          <div className="flex gap-4 h-full">
-            <PortfolioCard item={portfolios[0]} />
+          <div className="flex gap-4 max-h-[280px] overflow-x-auto scrollbar-hide">
+            {portfolios.map((item) => (
+              <PortfolioCard key={item.portfolioId} item={item} />
+            ))}
             <NewPortfolioButton />
           </div>
         ) : (
