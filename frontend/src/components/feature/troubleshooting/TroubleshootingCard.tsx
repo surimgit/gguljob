@@ -135,7 +135,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
           {/* 프로젝트에서 보기 링크 */}
           <button
             onClick={handleGoToProject}
-            className="self-start flex items-center gap-1.5 text-sm font-semibold text-text-tertiary hover:text-primary transition-colors"
+            className="self-end flex items-center gap-1.5 text-sm font-semibold text-text-tertiary hover:text-primary transition-colors"
           >
             프로젝트에서 보기
             <ExternalLink className="w-3.5 h-3.5" />

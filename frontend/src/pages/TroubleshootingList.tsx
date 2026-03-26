@@ -45,7 +45,7 @@ const TroubleshootingList = () => {
           description: item.description ?? '',
           solution: item.solution ?? null,
           codeSnippet: item.codeSnippet ?? null,
-          date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', '') : '',
+          date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\.\s*/g, '.').replace(/\.$/, '') : '',
           projectId: item.projectId,
           projectName: item.projectName ?? '',
         }));
