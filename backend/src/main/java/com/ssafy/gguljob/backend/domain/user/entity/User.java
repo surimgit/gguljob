@@ -76,6 +76,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "work_experience", length = 50)
     private WorkExperienceYear workExperience;
 
+    @Column(name = "github_nickname", length = 50, unique = true)
+    private String githubNickname;
+
     @Column(name = "profile_image_url", length = 255)
     private String profileImageUrl;
 
@@ -93,15 +96,17 @@ public class User extends BaseTimeEntity {
     private List<UserGoal> goals = new ArrayList<>();
 
     @Builder
-    public User(String userName, String email, String profileImageUrl, RoleType authority) {
+    public User(String userName, String email, String githubNickname, String profileImageUrl, RoleType authority) {
         this.userName = userName;
         this.email = email;
+        this.githubNickname = githubNickname;
         this.profileImageUrl = profileImageUrl;
         this.authority = authority;
     }
 
-    public void updateGithubProfile(String userName, String imageUrl) {
+    public void updateGithubProfile(String userName, String githubNickname, String imageUrl) {
         this.userName = userName;
+        this.githubNickname = githubNickname;
         if (this.profileImageUrl == null || this.profileImageUrl.contains("avatars.githubusercontent.com")) {
             this.profileImageUrl = imageUrl;
         }

@@ -72,17 +72,17 @@ public class GithubSyncService {
         List<Map<String, Object>> comments =
             fetchAllIssueComments(owner, repo, token, prNumber);
 
-        Set<String> targetEmails = comments.stream()
-            .map(c -> extractGithubEmail(c, "user"))
+        Set<String> targetNicknames = comments.stream()
+            .map(c -> extractLogin(c, "user"))
             .collect(Collectors.toSet());
 
-        Map<String, User> userMapByEmail = userRepository.findByEmailIn(targetEmails)
-            .stream().collect(Collectors.toMap(User::getEmail, u -> u));
+        Map<String, User> userMapByNickname = userRepository.findByGithubNicknameIn(targetNicknames)
+            .stream().collect(Collectors.toMap(User::getGithubNickname, u -> u));
 
         List<PrReview> reviewEntities = new ArrayList<>();
 
         for (Map<String, Object> comment : comments) {
-            User commenter = userMapByEmail.get(extractGithubEmail(comment, "user"));
+            User commenter = userMapByNickname.get(extractLogin(comment, "user"));
             if (commenter == null) {
                 log.warn("DB에 없는 댓글 작성자. Skip (login: {})", extractLogin(comment, "user"));
                 continue;
@@ -124,14 +124,6 @@ public class GithubSyncService {
         return all;
     }
 
-    /** Map 내 중첩된 user.login 값을 {login}@github.com 형태로 반환 */
-    @SuppressWarnings("unchecked")
-    private String extractGithubEmail(Map<String, Object> map, String userKey) {
-        Map<String, Object> userMap = (Map<String, Object>) map.get(userKey);
-        String login = userMap != null ? (String) userMap.get("login") : "";
-        return login + "@github.com";
-    }
-
     @SuppressWarnings("unchecked")
     private String extractLogin(Map<String, Object> map, String userKey) {
         Map<String, Object> userMap = (Map<String, Object>) map.get(userKey);
@@ -171,16 +163,16 @@ public class GithubSyncService {
             .map(PullRequest::getPrNumber)
             .collect(Collectors.toSet());
 
-        // 이메일 <-> MR 유저 매칭을 위한 Map 만들기
-        Set<String> targetEmails = prList.stream()
-            .map(pr -> extractGithubEmail(pr, "user"))
+        // 닉네임 <-> MR 유저 매칭을 위한 Map 만들기
+        Set<String> targetNicknames = prList.stream()
+            .map(pr -> extractLogin(pr, "user"))
             .collect(Collectors.toSet());
 
-        List<User> users = userRepository.findByEmailIn(targetEmails);
+        List<User> users = userRepository.findByGithubNicknameIn(targetNicknames);
 
-        // Key: 이메일, Value: 유저 객체
-        Map<String, User> userMapByEmail = users.stream()
-            .collect(Collectors.toMap(User::getEmail, user -> user));
+        // Key: 깃허브 닉네임, Value: 유저 객체
+        Map<String, User> userMapByNickname = users.stream()
+            .collect(Collectors.toMap(User::getGithubNickname, user -> user));
 
         List<PullRequest> pullRequestEntities = new ArrayList<>();
 
@@ -194,12 +186,10 @@ public class GithubSyncService {
                 continue;
             }
 
-            // 작성자 이메일 매칭
-            Map<String, Object> userMap = (Map<String, Object>) pr.get("user");
-            String githubUsername = userMap != null ? (String) userMap.get("login") : "";
-            String targetEmail = githubUsername + "@github.com";
+            // 작성자 닉네임 매칭
+            String githubUsername = extractLogin(pr, "user");
 
-            User author = userMapByEmail.get(targetEmail);
+            User author = userMapByNickname.get(githubUsername);
 
             if (author == null) {
                 log.warn("DB에 없는 유저의 PR입니다. Skip (github username: {})", githubUsername);

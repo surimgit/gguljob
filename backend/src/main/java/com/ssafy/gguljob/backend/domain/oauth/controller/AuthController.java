@@ -67,7 +67,7 @@ public class AuthController {
         @GetMapping("/github")
         public void redirectToGithub(HttpServletResponse response) throws IOException {
                 String githubLoginUrl = "https://github.com/login/oauth/authorize?client_id="
-                                + githubClientId;
+                                + githubClientId + "&scope=user:email";
                 response.sendRedirect(githubLoginUrl);
         }
 

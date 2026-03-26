@@ -162,8 +162,7 @@ public class GithubWebhookService {
 
         // 작성자 매칭
         String githubUsername = prNode.path("user").path("login").asText();
-        String targetEmail = githubUsername + "@github.com";
-        User author = userRepository.findByEmail(targetEmail).orElse(null);
+        User author = userRepository.findByGithubNickname(githubUsername).orElse(null);
         if (author == null) {
             log.warn("DB에 없는 유저의 PR 이벤트입니다. 무시합니다. (username: {})", githubUsername);
             return;
@@ -318,8 +317,7 @@ public class GithubWebhookService {
      * 미가입자의 이벤트는 warn 로그 후 null 반환
      */
     private User resolveUser(String githubLogin) {
-        String targetEmail = githubLogin + "@github.com";
-        User user = userRepository.findByEmail(targetEmail).orElse(null);
+        User user = userRepository.findByGithubNickname(githubLogin).orElse(null);
         if (user == null) {
             log.warn("DB에 없는 유저의 이벤트입니다. 무시합니다. (username: {})", githubLogin);
         }
