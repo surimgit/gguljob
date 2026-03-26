@@ -65,8 +65,7 @@ const Troubleshooting = () => {
   useEffect(() => {
     getMyTroubleshootings(0, 20)
       .then(({ data }) => {
-        const res = data as unknown as { data: { content: MyTroubleshootingItem[] } };
-        setItems(res.data?.content ?? []);
+        setItems(data.content ?? []);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
