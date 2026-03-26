@@ -7,6 +7,20 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  paramsSerializer: (params) => {
+    const parts: string[] = [];
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
+        }
+      } else {
+        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      }
+    }
+    return parts.join('&');
+  },
 });
 
 // 토큰 갱신 중 대기 중인 요청 큐

@@ -16,6 +16,7 @@ public class ProjectNode {
     @Id
     private String id;
     private String title;
+    private String domain;
     private String status;
 
     // 프로젝트 -> (REQUIRES_SKILL) -> 요구 스킬
@@ -30,6 +31,7 @@ public class ProjectNode {
 
     public void updateFrom(ProjectNode newData) {
         this.title = newData.getTitle();
+        this.domain = newData.getDomain();
         this.skills = newData.getSkills();
         this.roles = newData.getRoles();
         this.status = newData.getStatus();

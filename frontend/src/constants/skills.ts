@@ -158,7 +158,7 @@ export const ROLE_DISPLAY_NAMES: Record<RoleCode, string> = {
 export const ROLE_TO_API: Record<RoleCode, string> = {
   FRONTEND: "FE",
   BACKEND:  "BE",
-  DEVOPS:   "INFRA",
+  DEVOPS:   "DEVOPS",
   DATA:     "DATA",
   AI:       "AI",
   DATABASE: "DB",
@@ -172,6 +172,7 @@ export const API_TO_ROLE: Record<string, RoleCode> = {
   ...Object.fromEntries(
     Object.entries(ROLE_TO_API).map(([code, api]) => [api, code as RoleCode]),
   ),
+  INFRA: "DEVOPS",
   /* 하위호환: 기존 TOOLS/DB 값이 내려올 경우 대체 매핑 */
   DB: "DATABASE",
   TOOLS: "PM",

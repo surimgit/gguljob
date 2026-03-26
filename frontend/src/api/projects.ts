@@ -52,6 +52,8 @@ export interface ProjectFilters {
   /** label → API value 매핑 (도메인: "웹기술" → "WEB_TECH", 포지션: "FE 모집중" → "FRONTEND") */
   domainValueMap: Record<string, string>;
   roleValueMap: Record<string, string>;
+  /** 스킬 이름 → 스킬 ID 매핑 ("React" → 1) */
+  skillNameToIdMap: Record<string, number>;
 }
 
 export const getProjectFilters = () =>

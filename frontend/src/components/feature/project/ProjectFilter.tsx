@@ -6,10 +6,10 @@ import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILL_NAMES } from '../../../constants/s
 export interface ProjectFilterProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  techFilter: string;
+  techFilter: string[];
   domainFilter: string;
   positionFilter: string;
-  onTechChange: (value: string) => void;
+  onTechChange: (value: string[]) => void;
   onDomainChange: (value: string) => void;
   onPositionChange: (value: string) => void;
   skillGroups?: SkillGroup[];
@@ -73,13 +73,21 @@ function SkillFilterRow({
   onChange,
 }: {
   groups: SkillGroup[];
-  selected: string;
-  onChange: (value: string) => void;
+  selected: string[];
+  onChange: (value: string[]) => void;
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const activeGroup = groups.find((g) => g.category === activeCategory);
   const skills = activeGroup?.skills ?? [];
+
+  const toggleSkill = (skill: string) => {
+    if (selected.includes(skill)) {
+      onChange(selected.filter((s) => s !== skill));
+    } else {
+      onChange([...selected, skill]);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-[8px]">
@@ -91,8 +99,8 @@ function SkillFilterRow({
         <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
           <FilterButton
             text="전체"
-            selected={selected === '전체' && activeCategory === null}
-            onClick={() => { setActiveCategory(null); onChange('전체'); }}
+            selected={selected.length === 0 && activeCategory === null}
+            onClick={() => { setActiveCategory(null); onChange([]); }}
           />
           {groups.map((group) => (
             <FilterButton
@@ -118,8 +126,8 @@ function SkillFilterRow({
                 <FilterButton
                   key={skill}
                   text={skill}
-                  selected={selected === skill}
-                  onClick={() => onChange(skill)}
+                  selected={selected.includes(skill)}
+                  onClick={() => toggleSkill(skill)}
                 />
               ))}
             </div>
@@ -163,24 +171,6 @@ export default function ProjectFilter({
 
       {/* 필터 박스 */}
       <div className="bg-[#f7f8fa] border-2 border-[#f2b705] rounded-[18px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] px-[25px] pt-[20px] pb-[14px] flex flex-col gap-[12px]">
-
-        {skillGroups && skillGroups.length > 0 ? (
-          <SkillFilterRow
-            groups={skillGroups}
-            selected={techFilter}
-            onChange={onTechChange}
-          />
-        ) : (
-          <FilterRow
-            label="기술스택"
-            options={['전체', ...SKILL_NAMES]}
-            selected={techFilter}
-            onChange={onTechChange}
-          />
-        )}
-
-        <div className="bg-[#f2b705] h-px w-full" />
-
         <FilterRow
           label="도메인"
           options={domains}
@@ -196,6 +186,23 @@ export default function ProjectFilter({
           selected={positionFilter}
           onChange={onPositionChange}
         />
+
+        <div className="bg-[#f2b705] h-px w-full" />
+
+        {skillGroups && skillGroups.length > 0 ? (
+          <SkillFilterRow
+            groups={skillGroups}
+            selected={techFilter}
+            onChange={onTechChange}
+          />
+        ) : (
+          <FilterRow
+            label="기술스택"
+            options={['전체', ...SKILL_NAMES]}
+            selected={techFilter.length === 0 ? '전체' : techFilter[0]}
+            onChange={(v) => onTechChange(v === '전체' ? [] : [v])}
+          />
+        )}
 
       </div>
     </div>

@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.type.ProjectStatus;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class ProjectSyncEventListener {
 
         List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
         List<String> roles = projectPositionRepository.findAllByProjectId(project.getId())
-            .stream().map(p -> p.getRole().name()).toList();
+            .stream().map(p -> MatchingFilterNormalizer.toNeo4jRoleName(p.getRole())).toList();
 
         projectNodeRepository.syncProjectToNeo4j(
             String.valueOf(project.getId()),

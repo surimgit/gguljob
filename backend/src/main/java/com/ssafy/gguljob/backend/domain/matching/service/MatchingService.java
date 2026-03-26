@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.matching.dto.MemberMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepository;
 import com.ssafy.gguljob.backend.domain.matching.repository.UserNodeRepository;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
@@ -43,6 +44,9 @@ public class MatchingService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+        List<String> normalizedDomains = MatchingFilterNormalizer.normalizeDomainCandidates(domain);
+        List<String> normalizedRoles = MatchingFilterNormalizer.normalizeRoleCandidates(role);
+
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             throw new OnboardingRequiredException();
         }
@@ -59,8 +63,8 @@ public class MatchingService {
             userId,
             joinedProjectIds,
             keyword,
-            domain,
-            role,
+            normalizedDomains,
+            normalizedRoles,
             skillIds,
             unsortedPageable
         );
