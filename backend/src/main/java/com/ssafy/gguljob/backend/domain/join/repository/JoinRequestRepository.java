@@ -19,5 +19,12 @@ public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> 
         "ORDER BY j.createdAt DESC")
     List<JoinRequest> findPendingRequestsByProjectId(@Param("projectId") Long projectId);
 
+    // 특정 유저의 지원/초대 내역을 최신순으로 조회
+    @Query("SELECT j FROM JoinRequest j " +
+        "JOIN FETCH j.project p " +
+        "WHERE j.user.id = :userId " +
+        "ORDER BY j.createdAt DESC")
+    List<JoinRequest> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
+
     void deleteAllByProjectId(Long projectId);
 }

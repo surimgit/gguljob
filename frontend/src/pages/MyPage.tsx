@@ -6,6 +6,7 @@ import {
   BookmarkedJobs,
   Troubleshooting,
   Portfolio,
+  MyApplications,
   MyProfileModal,
   ProfileEditModal,
 } from '../components/feature/mypage';
@@ -179,6 +180,9 @@ const MyPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           <Troubleshooting />
           <Portfolio />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <MyApplications />
         </div>
 
       <MyProfileModal
