@@ -31,6 +31,8 @@ public class TroubleshootingResponse {
         private Long tsId;
         private String title;
         private String description;
+        private String solution;
+        private String codeSnippet;
         private Long projectId;
         private String projectName;
         private LocalDateTime createdAt;
@@ -40,6 +42,8 @@ public class TroubleshootingResponse {
                 .tsId(ts.getId())
                 .title(ts.getTitle())
                 .description(ts.getSituation())
+                .solution(ts.getSolution())
+                .codeSnippet(ts.getCodeSnippet())
                 .projectId(ts.getProject().getId())
                 .projectName(ts.getProject().getTitle())
                 .createdAt(ts.getCreatedAt())
