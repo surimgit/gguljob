@@ -158,6 +158,14 @@ const Navbar = () => {
 
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
+    /** 비로그인 시 라우팅 차단 → 메인 페이지로 이동 */
+    const guardLink = (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault();
+            navigate('/');
+        }
+    };
+
     const location = useLocation();
 
     // data-navbar-hero 속성을 가진 섹션의 배경색을 따라가고, 벗어나면 흰색
@@ -243,28 +251,28 @@ const Navbar = () => {
                     <div className="flex items-center justify-center gap-12 xl:gap-16 pointer-events-auto -ml-13">
                         <Link
                             to="/my-projects"
-                            onClick={() => window.scrollTo(0, 0)}
+                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             내 프로젝트
                         </Link>
                         <Link
                             to="/projects"
-                            onClick={() => window.scrollTo(0, 0)}
+                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             프로젝트 찾기
                         </Link>
                         <Link
                             to="/mypage/portfolio"
-                            onClick={() => window.scrollTo(0, 0)}
+                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             포트폴리오
                         </Link>
                         <Link
                             to="/recruitment"
-                            onClick={() => window.scrollTo(0, 0)}
+                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             채용
@@ -407,7 +415,8 @@ const Navbar = () => {
                     <div className="px-4 py-3 space-y-1">
                         <Link
                             to="/my-projects"
-                            onClick={() => {
+                            onClick={(e) => {
+                                guardLink(e);
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
@@ -417,7 +426,8 @@ const Navbar = () => {
                         </Link>
                         <Link
                             to="/projects"
-                            onClick={() => {
+                            onClick={(e) => {
+                                guardLink(e);
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
@@ -427,7 +437,8 @@ const Navbar = () => {
                         </Link>
                         <Link
                             to="/recruitment"
-                            onClick={() => {
+                            onClick={(e) => {
+                                guardLink(e);
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
