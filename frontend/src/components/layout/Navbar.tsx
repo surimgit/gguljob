@@ -162,6 +162,7 @@ const Navbar = () => {
     const guardLink = (e: React.MouseEvent) => {
         if (!isAuthenticated) {
             e.preventDefault();
+            toast('로그인이 필요한 서비스입니다.', { icon: '🔒' });
             navigate('/');
         }
     };
