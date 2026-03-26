@@ -81,15 +81,11 @@ public final class MatchingFilterNormalizer {
 
         if ("FE".equalsIgnoreCase(role) || "FE 모집중".equalsIgnoreCase(role)) {
             candidates.add("FRONTEND");
-            if (!"FE 모집중".equalsIgnoreCase(role)) {
-                candidates.add("FE 모집중");
-            }
+            candidates.add("FE 모집중");
         }
         if ("BE".equalsIgnoreCase(role) || "BE 모집중".equalsIgnoreCase(role)) {
             candidates.add("BACKEND");
-            if (!"BE 모집중".equalsIgnoreCase(role)) {
-                candidates.add("BE 모집중");
-            }
+            candidates.add("BE 모집중");
         }
     }
 
