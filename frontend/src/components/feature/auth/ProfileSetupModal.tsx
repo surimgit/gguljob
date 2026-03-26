@@ -42,13 +42,13 @@ const isStepValid = (step: number, formData: FormData): boolean => {
     case 3:
       return formData.experience !== "";
     case 4:
-      return formData.skills.length > 0;
-    case 5:
-      return formData.mbti !== "";
-    case 6:
-      return true;
-    case 7:
       return formData.workExperience !== "";
+    case 5:
+      return formData.skills.length > 0;
+    case 6:
+      return formData.mbti !== "";
+    case 7:
+      return true;
     default:
       return false;
   }
@@ -174,27 +174,27 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               />
             )}
             {step === 4 && (
+              <Step7WorkExperience
+                selected={formData.workExperience}
+                onChange={(v) => update("workExperience", v)}
+              />
+            )}
+            {step === 5 && (
               <Step4Languages
                 selected={formData.skills}
                 onChange={(v) => update("skills", v)}
               />
             )}
-            {step === 5 && (
+            {step === 6 && (
               <Step5MBTI
                 selected={formData.mbti}
                 onChange={(v) => update("mbti", v)}
               />
             )}
-            {step === 6 && (
+            {step === 7 && (
               <Step6Leadership
                 value={formData.leaderScore}
                 onChange={(v) => update("leaderScore", v)}
-              />
-            )}
-            {step === 7 && (
-              <Step7WorkExperience
-                selected={formData.workExperience}
-                onChange={(v) => update("workExperience", v)}
               />
             )}
           </div>
