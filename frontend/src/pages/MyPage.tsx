@@ -12,7 +12,7 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
-import { buildOnboardingPayload, userToFormData } from '../components/feature/auth/utils/onboardingMappers';
+import { buildOnboardingPayload, userToFormData, type OnboardingFormData } from '../components/feature/auth/utils/onboardingMappers';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { getMe, withdrawApi, updateProfileApi } from '../api/user';
@@ -123,19 +123,12 @@ const MyPage = () => {
     setProfile((prev) => ({ ...prev, projects: data.projects }));
     // localStorage에 대표 프로젝트 백업
     if (user?.id) {
-      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch {}
+      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch (e) { console.error('MyPage: Failed to save projects to localStorage:', e); }
     }
-    getMe().then((u) => setUser(u)).catch(() => {});
+    getMe().then((u) => setUser(u)).catch((err) => console.error('MyPage: Failed to fetch user data:', err));
   };
 
-  const handleOnboardingComplete = async (formData: {
-    goals: string[];
-    position: string;
-    experience: string;
-    skills: string[];
-    mbti: string;
-    leaderScore: number;
-  }) => {
+  const handleOnboardingComplete = async (formData: OnboardingFormData) => {
     try {
       const payload = buildOnboardingPayload(formData);
       if (!payload) {
