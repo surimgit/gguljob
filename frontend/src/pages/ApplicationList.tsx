@@ -40,7 +40,7 @@ const ApplicationCard = ({ item }: { item: MyApplicationDto }) => {
 
   return (
     <div
-      onClick={() => navigate(`/projects`)}
+      onClick={() => navigate(`/my-projects/${item.projectId}`)}
       className="flex items-center justify-between gap-4 bg-surface border-2 border-border rounded-2xl px-6 py-5 hover:shadow-md hover:border-primary-hover transition-all cursor-pointer"
     >
       <div className="flex flex-col gap-1.5 min-w-0 flex-1">

@@ -19,6 +19,7 @@ import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,13 +43,24 @@ public class JoinRequestService {
     public List<MyApplicationDto> getMyApplications(Long userId) {
         List<JoinRequest> requests = joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
+        // N+1 방지: positionId 일괄 조회 후 Map으로 캐싱
+        List<Long> positionIds = requests.stream()
+            .map(JoinRequest::getPositionId)
+            .filter(java.util.Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, ProjectPosition> positionMap = positionIds.isEmpty()
+            ? java.util.Collections.emptyMap()
+            : projectPositionRepository.findAllById(positionIds).stream()
+                .collect(Collectors.toMap(ProjectPosition::getId, pp -> pp));
+
         return requests.stream()
             .map(request -> {
                 String positionName = null;
                 if (request.getPositionId() != null) {
-                    positionName = projectPositionRepository.findById(request.getPositionId())
-                        .map(pp -> pp.getRole().name())
-                        .orElse(null);
+                    ProjectPosition pp = positionMap.get(request.getPositionId());
+                    if (pp != null) positionName = pp.getRole().name();
                 } else if (request.getRole() != null) {
                     positionName = request.getRole().name();
                 }
