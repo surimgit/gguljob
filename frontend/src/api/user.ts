@@ -9,6 +9,7 @@ export interface OnboardingRequest {
   mbti: string;
   teamTendency: 'LEADER' | 'FOLLOWER';
   goals: string[];
+  workExperience?: 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN';
 }
 
 export const onboardApi = (data: OnboardingRequest) =>
@@ -32,6 +33,7 @@ export const getMe = async (): Promise<User> => {
     skills: d.skills ?? [],
     techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
     goals: (d.goals ?? []) as string[],
+    workExperience: d.workExperience ?? null,
     repProjects: (d.repProjects ?? []).map((p: { projectId: number; title: string; description: string; role: string; period: string; skills: string[] }) => ({
       projectId: p.projectId,
       title: p.title,

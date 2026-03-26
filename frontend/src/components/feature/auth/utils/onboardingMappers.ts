@@ -32,6 +32,7 @@ export interface OnboardingFormData {
   skills: string[];       // 기술스택 이름 배열
   mbti: string;
   leaderScore: number;
+  workExperience: string;
 }
 
 export const userToFormData = (user: {
@@ -41,6 +42,7 @@ export const userToFormData = (user: {
   mbti?: string | null;
   teamTendency?: string | null;
   goals?: string[];
+  workExperience?: string | null;
 }): OnboardingFormData => ({
   goals: (user.goals ?? []).map((g) => REVERSE_GOAL_MAP[g] ?? g).filter(Boolean),
   position: user.position ?? '',
@@ -48,6 +50,7 @@ export const userToFormData = (user: {
   skills: user.techStacks ?? [],
   mbti: user.mbti ?? '',
   leaderScore: user.teamTendency === 'LEADER' ? 70 : 30,
+  workExperience: user.workExperience ?? '',
 });
 
 export const buildOnboardingPayload = (
@@ -72,5 +75,6 @@ export const buildOnboardingPayload = (
     mbti: formData.mbti,
     teamTendency: formData.leaderScore > 50 ? 'LEADER' : 'FOLLOWER',
     goals: goalTypes,
+    workExperience: (formData.workExperience as OnboardingRequest['workExperience']) || undefined,
   };
 };

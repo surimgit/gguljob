@@ -49,6 +49,7 @@ export interface User {
   techStacks: string[];
   goals: string[];
   repProjects: RepProject[];
+  workExperience: string | null;
   /** @deprecated position 사용 권장 */
   role: PositionType | null;
 }
