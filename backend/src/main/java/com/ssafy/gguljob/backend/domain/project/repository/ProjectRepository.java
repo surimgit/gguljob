@@ -22,6 +22,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findTop50ByStatusOrderByCreatedAtDesc(ProjectStatus status);
 
+    List<Project> findAllByStatus(ProjectStatus status);
+
     List<Project> findTop50ByStatusAndIdNotInOrderByCreatedAtDesc(ProjectStatus status, List<Long> joinedProjectIds);
 
     @Query("SELECT p FROM Project p JOIN FETCH p.leader WHERE p.id IN :projectIds")

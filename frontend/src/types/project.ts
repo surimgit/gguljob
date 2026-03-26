@@ -30,8 +30,8 @@ export interface ProjectListParams {
   size?: number;
   keyword?: string;
   domain?: string;
-  skill?: string;
-  position?: string;
+  skillIds?: number[];
+  role?: string;
   sort?: string;
   excludeTop?: boolean;
 }

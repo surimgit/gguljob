@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.matching.controller;
 
 import com.ssafy.gguljob.backend.domain.matching.service.Neo4jUserSyncBatchService;
+import com.ssafy.gguljob.backend.domain.matching.service.Neo4jProjectSyncBatchService;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminNeo4jController {
 
     private final Neo4jUserSyncBatchService neo4jUserSyncBatchService;
+    private final Neo4jProjectSyncBatchService neo4jProjectSyncBatchService;
     private final Neo4jClient neo4jClient;
     private final UserRepository userRepository;
 
@@ -27,6 +29,13 @@ public class AdminNeo4jController {
         log.info("관리자 요청: 전체 유저 Neo4j 재동기화 시작");
         neo4jUserSyncBatchService.syncAllUsersToNeo4j();
         return ResponseEntity.ok("전체 유저 Neo4j 재동기화 완료");
+    }
+
+    @PostMapping("/sync-projects")
+    public ResponseEntity<String> syncAllRecruitingProjects() {
+        log.info("관리자 요청: 모집 중 프로젝트 Neo4j 재동기화 시작");
+        int syncedCount = neo4jProjectSyncBatchService.syncRecruitingProjectsToNeo4j();
+        return ResponseEntity.ok("모집 중 프로젝트 Neo4j 재동기화 완료: " + syncedCount + "건");
     }
 
     @GetMapping("/stats")

@@ -16,8 +16,8 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "MATCH (p:Project) WHERE p.status = 'RECRUITING' " +
             "AND NOT p.id IN $joinedProjectIds " +
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
-            "AND ($domain IS NULL OR p.domain = $domain) " +
-            "AND ($role IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name = $role }) " +
+            "AND ($domains IS NULL OR p.domain IN $domains) " +
+            "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
             "AND ($skillIds IS NULL OR size($skillIds) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.id IN $skillIds }) " +
             "OPTIONAL MATCH (u)-[:WANTS_ROLE]->(r:Role)<-[:REQUIRES_ROLE]-(p) " +
             "WITH u, p, collect(DISTINCT r.name)[0] AS matchedRole " +
@@ -29,8 +29,8 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
 
         countQuery = "MATCH (p:Project) WHERE p.status = 'RECRUITING' AND NOT p.id IN $joinedProjectIds " +
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
-            "AND ($domain IS NULL OR p.domain = $domain) " +
-            "AND ($role IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name = $role }) " +
+            "AND ($domains IS NULL OR p.domain IN $domains) " +
+            "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
             "AND ($skillIds IS NULL OR size($skillIds) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.id IN $skillIds }) " +
             "RETURN count(p)"
     )
@@ -38,8 +38,8 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
         @Param("userId") Long userId,
         @Param("joinedProjectIds") List<String> joinedProjectIds,
         @Param("keyword") String keyword,
-        @Param("domain") String domain,
-        @Param("role") String role,
+        @Param("domains") List<String> domains,
+        @Param("roles") List<String> roles,
         @Param("skillIds") List<Long> skillIds,
         Pageable pageable
     );

@@ -123,7 +123,17 @@ export const useProjectFilters = () => {
         roleValueMap[r.label ?? r.value] = r.value;
       }
 
-      return { domains, skillGroups, roles, domainValueMap, roleValueMap };
+      // 스킬 이름 → 스킬 ID 매핑
+      const skillNameToIdMap: Record<string, number> = {};
+      for (const cat of (raw?.skillCategories ?? [])) {
+        for (const s of (cat?.skills ?? [])) {
+          if (s?.name && s?.skillId) {
+            skillNameToIdMap[s.name] = s.skillId;
+          }
+        }
+      }
+
+      return { domains, skillGroups, roles, domainValueMap, roleValueMap, skillNameToIdMap };
     },
     staleTime: 10 * 60 * 1000,
   });

@@ -11,7 +11,7 @@ const ITEMS_PER_PAGE = 9;
 
 const ProjectFind = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [techFilter, setTechFilter] = useState('전체');
+  const [techFilter, setTechFilter] = useState<string[]>([]);
   const [domainFilter, setDomainFilter] = useState('전체');
   const [positionFilter, setPositionFilter] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,13 +33,16 @@ const ProjectFind = () => {
   const { data: filters } = useProjectFilters();
 
   // API 쿼리 파라미터 구성 (label → backend value 변환)
+  const skillIds = techFilter.length > 0 && filters?.skillNameToIdMap
+    ? techFilter.map((name) => filters.skillNameToIdMap[name]).filter(Boolean)
+    : undefined;
   const params = {
     page: currentPage - 1,
     size: ITEMS_PER_PAGE,
     ...(debouncedSearch && { keyword: debouncedSearch }),
     ...(domainFilter !== '전체' && { domain: filters?.domainValueMap?.[domainFilter] ?? domainFilter }),
-    ...(techFilter !== '전체' && { skill: techFilter }),
-    ...(positionFilter !== '전체' && { position: filters?.roleValueMap?.[positionFilter] ?? positionFilter }),
+    ...(skillIds && skillIds.length > 0 && { skillIds }),
+    ...(positionFilter !== '전체' && { role: filters?.roleValueMap?.[positionFilter] ?? positionFilter }),
   };
 
   const { data: pageData, isLoading, isError } = useProjects(params);

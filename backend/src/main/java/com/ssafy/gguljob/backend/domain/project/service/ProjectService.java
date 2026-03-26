@@ -37,6 +37,7 @@ import com.ssafy.gguljob.backend.domain.skill.entity.ProjectSkill;
 import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.util.Arrays;
 import java.util.List;
@@ -479,9 +480,12 @@ public class ProjectService {
             .map(domain -> new ProjectFilterResponseDto.FilterOptionDto(domain.name(), domain.getDescription()))
             .toList();
 
-        // 직무
-        List<ProjectFilterResponseDto.FilterOptionDto> roles = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.project.type.Role.values())
-            .map(role -> new ProjectFilterResponseDto.FilterOptionDto(role.name(), role.getDescription()))
+        // 직무 (PositionType 9개 기준)
+        List<ProjectFilterResponseDto.FilterOptionDto> roles = java.util.Arrays.stream(PositionType.values())
+            .map(positionType -> new ProjectFilterResponseDto.FilterOptionDto(
+                positionType.name(),
+                toProjectFilterRoleLabel(positionType)
+            ))
             .toList();
 
         List<ProjectFilterResponseDto.SkillCategoryDto> skillCategories = skillRepository.findAll().stream()
@@ -497,6 +501,17 @@ public class ProjectService {
             .toList();
 
         return new ProjectFilterResponseDto(domains, roles, skillCategories);
+    }
+
+    private String toProjectFilterRoleLabel(PositionType positionType) {
+        if (positionType == null) {
+            return "";
+        }
+        return switch (positionType) {
+            case FE -> "FE 모집중";
+            case BE -> "BE 모집중";
+            default -> positionType.getDescription() + " 모집중";
+        };
     }
 
     @Transactional
