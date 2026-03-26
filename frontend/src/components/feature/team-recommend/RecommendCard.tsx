@@ -26,6 +26,7 @@ const RecommendCard = ({
   matchRate,
   introduction,
   techStacks,
+  profileImage,
   onClickProfile,
 }: RecommendCardProps) => {
   const posColor = getRoleColor(position);
@@ -52,12 +53,20 @@ const RecommendCard = ({
 
       {/* 프로필 아바타/이름/포지션 */}
       <div className="flex items-center gap-3 mt-3 mb-5 pr-24">
-        <div
-          className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
-          style={{ background: "var(--color-primary-hover)" }}
-        >
-          {name.charAt(0)}
-        </div>
+        {profileImage ? (
+          <img
+            src={profileImage}
+            alt={name}
+            className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
+            style={{ background: "var(--color-primary-hover)" }}
+          >
+            {name.charAt(0)}
+          </div>
+        )}
         <div className="flex flex-col flex-1 min-w-0">
           <span
             className="text-lg font-bold truncate"
