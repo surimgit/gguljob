@@ -1,6 +1,5 @@
 package com.ssafy.gguljob.backend.domain.troubleshooting.dto;
 
-import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
 import com.ssafy.gguljob.backend.domain.troubleshooting.entity.Troubleshooting;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -21,6 +20,28 @@ public class TroubleshootingResponse {
                 .tsId(ts.getId())
                 .title(ts.getTitle())
                 .solution(ts.getSolution())
+                .createdAt(ts.getCreatedAt())
+                .build();
+        }
+    }
+
+    @Getter
+    @Builder
+    public static class ListItem {
+        private Long tsId;
+        private String title;
+        private String description;
+        private Long projectId;
+        private String projectName;
+        private LocalDateTime createdAt;
+
+        public static ListItem from(Troubleshooting ts) {
+            return ListItem.builder()
+                .tsId(ts.getId())
+                .title(ts.getTitle())
+                .description(ts.getSituation())
+                .projectId(ts.getProject().getId())
+                .projectName(ts.getProject().getTitle())
                 .createdAt(ts.getCreatedAt())
                 .build();
         }

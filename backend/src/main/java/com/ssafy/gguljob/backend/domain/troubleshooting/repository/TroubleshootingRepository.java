@@ -50,5 +50,13 @@ public interface TroubleshootingRepository extends JpaRepository<Troubleshooting
     """)
     List<Troubleshooting> findAllByIdIn(@Param("ids") List<Long> ids);
 
+    // 마이페이지 트러블슈팅 목록: 유저의 전체 트러블슈팅 (프로젝트 정보 포함, 페이지네이션)
+    @Query(value = "SELECT t FROM Troubleshooting t JOIN FETCH t.project p " +
+        "WHERE t.user.id = :userId",
+        countQuery = "SELECT count(t) FROM Troubleshooting t WHERE t.user.id = :userId")
+    org.springframework.data.domain.Page<Troubleshooting> findAllByUserIdWithProject(
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        org.springframework.data.domain.Pageable pageable);
+
     void deleteAllByProjectId(Long projectId);
 }
