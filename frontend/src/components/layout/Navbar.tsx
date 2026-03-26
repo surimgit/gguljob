@@ -418,7 +418,7 @@ const Navbar = () => {
 
             {/* 모바일 메뉴 드롭다운 */}
             {mobileMenuOpen && (
-                <div className="lg:hidden bg-white border-t border-primary/20 shadow-lg">
+                <div className="lg:hidden bg-background border-t border-primary/20 shadow-lg">
                     <div className="px-4 py-3 space-y-1">
                         <Link
                             to="/my-projects"
@@ -441,6 +441,17 @@ const Navbar = () => {
                             className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
                         >
                             프로젝트 찾기
+                        </Link>
+                        <Link
+                            to="/mypage/portfolio"
+                            onClick={(e) => {
+                                guardLink(e);
+                                closeMobileMenu();
+                                window.scrollTo(0, 0);
+                            }}
+                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+                        >
+                            포트폴리오
                         </Link>
                         <Link
                             to="/recruitment"
