@@ -29,7 +29,7 @@ public class TroubleshootingController {
 
     private final TroubleshootingService troubleshootingService;
 
-    @Operation(summary = "내 트러블슈팅 목록 조회", description = "로그인한 유저의 전체 트러블슈팅 목록을 최신 수정순으로 조회 (페이지네이션)")
+    @Operation(summary = "내 트러블슈팅 목록 조회", description = "로그인한 유저의 전체 트러블슈팅 목록을 최신 생성순으로 조회 (페이지네이션)")
     @GetMapping("/my")
     public ResponseEntity<Page<TroubleshootingResponse.ListItem>> getMyTroubleshootings(
         @AuthenticationPrincipal CustomUserDetails userDetails,
