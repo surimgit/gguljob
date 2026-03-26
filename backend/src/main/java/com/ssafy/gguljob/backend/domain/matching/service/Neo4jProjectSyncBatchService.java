@@ -26,25 +26,34 @@ public class Neo4jProjectSyncBatchService {
     @Transactional(transactionManager = "neo4jTransactionManager")
     public int syncRecruitingProjectsToNeo4j() {
         List<Project> recruitingProjects = projectRepository.findAllByStatus(ProjectStatus.RECRUITING);
+        int successCount = 0;
+        int failCount = 0;
 
         for (Project project : recruitingProjects) {
-            List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
-            List<String> roles = projectPositionRepository.findAllByProjectId(project.getId())
-                .stream()
-                .map(position -> MatchingFilterNormalizer.toNeo4jRoleName(position.getRole()))
-                .toList();
+            try {
+                List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
+                List<String> roles = projectPositionRepository.findAllByProjectId(project.getId())
+                    .stream()
+                    .map(position -> MatchingFilterNormalizer.toNeo4jRoleName(position.getRole()))
+                    .toList();
 
-            projectNodeRepository.syncProjectToNeo4j(
-                String.valueOf(project.getId()),
-                project.getTitle(),
-                project.getDomain() != null ? project.getDomain().name() : "미정",
-                project.getStatus().name(),
-                roles,
-                skills
-            );
+                projectNodeRepository.syncProjectToNeo4j(
+                    String.valueOf(project.getId()),
+                    project.getTitle(),
+                    project.getDomain() != null ? project.getDomain().name() : "미정",
+                    project.getStatus().name(),
+                    roles,
+                    skills
+                );
+                successCount++;
+            } catch (Exception e) {
+                failCount++;
+                log.error("Neo4j 프로젝트 동기화 실패: projectId={}", project.getId(), e);
+            }
         }
 
-        log.info("Neo4j 프로젝트 재동기화 완료: {}건", recruitingProjects.size());
-        return recruitingProjects.size();
+        log.info("Neo4j 프로젝트 재동기화 완료: 대상={}건, 성공={}건, 실패={}건",
+            recruitingProjects.size(), successCount, failCount);
+        return successCount;
     }
 }

@@ -50,49 +50,58 @@ public final class MatchingFilterNormalizer {
 
         String trimmed = role.trim();
         Set<String> candidates = new LinkedHashSet<>();
-        candidates.add(trimmed);
+        addRoleInputAliases(trimmed, candidates);
 
-        if (trimmed.endsWith(" 모집중")) {
-            candidates.add(trimmed.substring(0, trimmed.length() - 4));
-        }
-
-        String positionRaw = trimmed.endsWith(" 모집중") ? trimmed.substring(0, trimmed.length() - 4) : trimmed;
+        String positionRaw = toPositionRaw(trimmed);
         try {
             PositionType positionType = PositionType.from(positionRaw);
-            candidates.add(positionType.name());
-            candidates.add(positionType.getDescription());
-            candidates.add(positionType.getDescription() + " 모집중");
-            candidates.add(toNeo4jRoleName(positionType));
-
-            if (positionType == PositionType.MOBILE) {
-                candidates.add("ANDROID");
-                candidates.add("IOS");
-                candidates.add("Android 모집중");
-                candidates.add("iOS 모집중");
-            }
-            if (positionType == PositionType.DEVOPS) {
-                candidates.add("INFRA");
-                candidates.add("Infra");
-                candidates.add("Infra 모집중");
-            }
+            addPositionTypeAliases(positionType, candidates);
         } catch (IllegalArgumentException ignored) {
         }
 
-        if ("FE".equalsIgnoreCase(trimmed) || "FE 모집중".equalsIgnoreCase(trimmed)) {
+        return List.copyOf(candidates);
+    }
+
+    private static String toPositionRaw(String role) {
+        if (role.endsWith(" 모집중")) {
+            return role.substring(0, role.length() - 4);
+        }
+        return role;
+    }
+
+    private static void addRoleInputAliases(String role, Set<String> candidates) {
+        candidates.add(role);
+
+        if (role.endsWith(" 모집중")) {
+            candidates.add(toPositionRaw(role));
+        }
+
+        if ("FE".equalsIgnoreCase(role) || "FE 모집중".equalsIgnoreCase(role)) {
             candidates.add("FRONTEND");
             candidates.add("FE 모집중");
         }
-        if ("BE".equalsIgnoreCase(trimmed) || "BE 모집중".equalsIgnoreCase(trimmed)) {
+        if ("BE".equalsIgnoreCase(role) || "BE 모집중".equalsIgnoreCase(role)) {
             candidates.add("BACKEND");
             candidates.add("BE 모집중");
         }
-        if ("디자인 모집중".equals(trimmed)) {
-            candidates.add("DESIGN");
-        }
-        if ("기획 모집중".equals(trimmed)) {
-            candidates.add("PM");
-        }
+    }
 
-        return List.copyOf(candidates);
+    private static void addPositionTypeAliases(PositionType positionType, Set<String> candidates) {
+        candidates.add(positionType.name());
+        candidates.add(positionType.getDescription());
+        candidates.add(positionType.getDescription() + " 모집중");
+        candidates.add(toNeo4jRoleName(positionType));
+
+        if (positionType == PositionType.MOBILE) {
+            candidates.add("ANDROID");
+            candidates.add("IOS");
+            candidates.add("Android 모집중");
+            candidates.add("iOS 모집중");
+        }
+        if (positionType == PositionType.DEVOPS) {
+            candidates.add("INFRA");
+            candidates.add("Infra");
+            candidates.add("Infra 모집중");
+        }
     }
 }
