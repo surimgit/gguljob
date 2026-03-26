@@ -87,6 +87,7 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
+  const isClosed = project.status === 'RECRUITING' && totalOpen === 0;
 
   const handleConfirmDismiss = () => {
     setShowConfirm(false);
@@ -151,13 +152,13 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           <div className="flex items-center gap-[5px]">
             <div
               className="w-[8px] h-[8px] rounded-full"
-              style={{ backgroundColor: project.status === 'RECRUITING' && totalOpen === 0 ? '#9ca3af' : '#22c55e' }}
+              style={{ backgroundColor: isClosed ? '#9ca3af' : '#22c55e' }}
             />
             <span
               className="font-bold text-[13px]"
-              style={{ color: project.status === 'RECRUITING' && totalOpen === 0 ? '#9ca3af' : '#22c55e' }}
+              style={{ color: isClosed ? '#9ca3af' : '#22c55e' }}
             >
-              {project.status === 'RECRUITING' && totalOpen === 0 ? '모집 마감' : (STATUS_LABEL[project.status] ?? project.status)}
+              {isClosed ? '모집 마감' : (STATUS_LABEL[project.status] ?? project.status)}
             </span>
           </div>
         </div>

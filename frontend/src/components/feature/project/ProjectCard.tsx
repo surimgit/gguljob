@@ -9,10 +9,11 @@ export interface ProjectCardProps {
 
 const FALLBACK_AVATAR_COLOR = '#6366f1';
 
-const STATUS_LABEL: Record<BackendProjectStatus, string> = {
+const STATUS_LABEL: Record<string, string> = {
   RECRUITING: '모집중',
   PROCEEDING: '진행중',
   DONE: '마감',
+  CLOSED: '모집 마감',
 };
 
 function getStatusStyle(status: BackendProjectStatus) {
@@ -27,8 +28,8 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
 
   const hasOpenPositions = positions.some((p) => p.currentCount < p.targetCount);
-  const effectiveStatus = status === 'RECRUITING' && !hasOpenPositions ? 'DONE' : status;
-  const statusStyle = getStatusStyle(effectiveStatus);
+  const effectiveStatus = status === 'RECRUITING' && !hasOpenPositions ? 'CLOSED' : status;
+  const statusStyle = getStatusStyle(effectiveStatus === 'CLOSED' ? 'DONE' : effectiveStatus);
 
   const activePositions = Object.values(
     positions
@@ -66,7 +67,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
             className="font-semibold text-xs leading-[18px]"
             style={{ color: statusStyle.text }}
           >
-            {status === 'RECRUITING' && !hasOpenPositions ? '모집 마감' : STATUS_LABEL[status]}
+            {STATUS_LABEL[effectiveStatus]}
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
