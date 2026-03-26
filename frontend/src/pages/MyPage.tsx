@@ -135,6 +135,7 @@ const MyPage = () => {
     skills: string[];
     mbti: string;
     leaderScore: number;
+    workExperience: string;
   }) => {
     try {
       const payload = buildOnboardingPayload(formData);
