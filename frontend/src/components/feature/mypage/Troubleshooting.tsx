@@ -24,7 +24,7 @@ const TroubleshootingCard = ({ item }: { item: MyTroubleshootingItem }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/my-projects/${item.projectId}?tab=personal&subtab=troubleshooting`);
+    navigate('/mypage/troubleshooting');
   };
 
   return (
