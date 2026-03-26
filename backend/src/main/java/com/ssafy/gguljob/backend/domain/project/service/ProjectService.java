@@ -77,6 +77,7 @@ public class ProjectService {
     private final PrReviewRepository prReviewRepository;
     private final ChatLogRepository chatLogRepository;
     private final S3ImageService s3ImageService;
+    private final ProjectDeletionService projectDeletionService;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -535,22 +536,7 @@ public class ProjectService {
         if (!project.getLeader().getId().equals(userId)) {
             throw new ForbiddenException("프로젝트 삭제는 팀장만 가능합니다.");
         }
-
-        // FK 연관 데이터 삭제 (순서 중요)
-        userRepProjectRepository.deleteAllByProjectId(projectId);
-        joinRequestRepository.deleteAllByProjectId(projectId);
-        troubleshootingRepository.deleteAllByProjectId(projectId);
-        pullRequestRepository.deleteAllByProjectId(projectId);
-        gitRepositoryRepository.deleteAllByProjectId(projectId);
-        projectPositionRepository.deleteAllByProjectId(projectId);
-        projectMemberRepository.deleteAllByProjectId(projectId);
-        projectSkillRepository.deleteAllByProjectId(projectId);
-
-        projectRepository.delete(project);
-
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
-
-        log.info("프로젝트 삭제 완료 - projectId: {}, userId: {}", projectId, userId);
+        projectDeletionService.deleteProjectWithRelations(project, userId);
     }
 
     @Transactional
