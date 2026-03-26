@@ -7,6 +7,7 @@ import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.RoleType;
 import com.ssafy.gguljob.backend.global.auth.JwtProperties;
 import com.ssafy.gguljob.backend.global.auth.JwtTokenProvider;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -47,15 +49,15 @@ public class GithubOAuthService {
 
         String email = userInfo.getEmail();
 
-        // 이메일이 비공개일 경우 가짜 이메일 생성
-        if(email == null) {
-            email = userInfo.getLogin() + "@github.com";
+        // 이메일이 비공개일 경우 /user/emails API로 실제 이메일 조회
+        if (email == null) {
+            email = getGithubPrimaryEmail(githubAccessToken);
         }
 
         String finalEmail = email;
+        String githubNickname = userInfo.getLogin();
 
-
-        String nameToSave = userInfo.getName() != null ? userInfo.getName() : userInfo.getLogin();
+        String nameToSave = userInfo.getName() != null ? userInfo.getName() : githubNickname;
         if (nameToSave.length() > 20) {
             nameToSave = nameToSave.substring(0, 20);
         }
@@ -65,20 +67,32 @@ public class GithubOAuthService {
         boolean isNewUser = false; // 뉴비 판독기 초기화
         User user;
 
-        java.util.Optional<User> existingUserOpt = userRepository.findByEmail(finalEmail);
+        // 1순위: 깃허브 닉네임으로 기존 회원 조회 (가짜 이메일 유저도 매칭됨)
+        java.util.Optional<User> existingUserOpt = userRepository.findByGithubNickname(githubNickname);
+
+        // 2순위: 닉네임으로 못 찾으면 이메일로 조회 (닉네임 컬럼 추가 전 가입 유저 대응)
+        if (existingUserOpt.isEmpty() && finalEmail != null) {
+            existingUserOpt = userRepository.findByEmail(finalEmail);
+        }
 
         if (existingUserOpt.isPresent()) {
-            log.info("기존 회원 로그인: 깃허브 최신 프로필로 동기화합니다. 이메일: {}", finalEmail);
+            log.info("기존 회원 로그인: 깃허브 최신 프로필로 동기화합니다. 닉네임: {}", githubNickname);
             user = existingUserOpt.get();
-            user.updateGithubProfile(finalName, userInfo.getAvatar_url());
+            user.updateGithubProfile(finalName, githubNickname, userInfo.getAvatar_url());
+            // 실제 이메일로 동기화 (가짜 이메일 → 진짜 이메일 교체)
+            if (finalEmail != null && !finalEmail.equals(user.getEmail())) {
+                log.info("이메일 동기화: {} → {}", user.getEmail(), finalEmail);
+                user.setEmail(finalEmail);
+            }
             user = userRepository.save(user);
         } else {
             log.info("DB에 새 회원 정보를 저장합니다. 이메일: {}", finalEmail);
-            isNewUser = true; //
+            isNewUser = true;
 
             User newUser = User.builder()
                 .email(finalEmail)
                 .userName(finalName)
+                .githubNickname(githubNickname)
                 .profileImageUrl(userInfo.getAvatar_url())
                 .authority(RoleType.ROLE_USER)
                 .build();
@@ -123,6 +137,45 @@ public class GithubOAuthService {
         }
 
         return (String) body.get("access_token");
+    }
+
+    /**
+     * 깃허브 /user/emails API로 primary 이메일 조회
+     */
+    private String getGithubPrimaryEmail(String accessToken) {
+        String emailUrl = "https://api.github.com/user/emails";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> request = new HttpEntity<>(headers);
+
+        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+            emailUrl, HttpMethod.GET, request,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+        List<Map<String, Object>> emails = response.getBody();
+        if (emails == null || emails.isEmpty()) {
+            log.warn("GitHub /user/emails API에서 이메일을 가져올 수 없습니다.");
+            return null;
+        }
+
+        // primary + verified 이메일 우선
+        for (Map<String, Object> e : emails) {
+            if (Boolean.TRUE.equals(e.get("primary")) && Boolean.TRUE.equals(e.get("verified"))) {
+                return (String) e.get("email");
+            }
+        }
+
+        // primary만이라도
+        for (Map<String, Object> e : emails) {
+            if (Boolean.TRUE.equals(e.get("primary"))) {
+                return (String) e.get("email");
+            }
+        }
+
+        // 아무거나라도
+        return (String) emails.get(0).get("email");
     }
 
     /**
