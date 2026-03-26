@@ -8,7 +8,7 @@ import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
-type MatchType = 'suitable' | 'average' | 'insufficient';
+type MatchType = 'excellent' | 'good' | 'average' | 'poor' | 'insufficient';
 
 interface JobListing {
   id: number;
@@ -80,13 +80,17 @@ const mapJobCategory = (category: string): RoleCode | null => {
 const DEFAULT_PAGE_SIZE = 10;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
-const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
-  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E', percent: 100 },
-  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705', percent: 66 },
-  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444', percent: 33 },
+const MATCH_CONFIG: Record<MatchType, { label: string; color: string; dots: number }> = {
+  excellent:    { label: '최적합', color: '#16A34A', dots: 5 },
+  good:         { label: '적합',   color: '#22C55E', dots: 4 },
+  average:      { label: '보통',   color: '#F2B705', dots: 3 },
+  poor:         { label: '미흡',   color: '#F97316', dots: 2 },
+  insufficient: { label: '부족',   color: '#EF4444', dots: 1 },
 };
 
-const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insufficient: 1 };
+const MATCH_RANK: Record<MatchType, number> = {
+  excellent: 5, good: 4, average: 3, poor: 2, insufficient: 1,
+};
 
 // ── 정렬 함수 ─────────────────────────────────────────────────────────────────
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
@@ -116,7 +120,11 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
   url: item.url ?? '',
-  match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
+  match: item.matchStatus === '최적합' ? 'excellent'
+       : item.matchStatus === '적합'   ? 'good'
+       : item.matchStatus === '보통'   ? 'average'
+       : item.matchStatus === '미흡'   ? 'poor'
+       : 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
   topPercentile: item.topPercentile,
@@ -326,14 +334,22 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 매칭 뱃지 + 북마크 */}
+      {/* 매칭 표시 + 북마크 */}
       <div className="flex items-center gap-3 flex-shrink-0 self-end sm:self-center">
-        <span
-          className="text-[12px] font-bold px-3 py-1 rounded-full"
-          style={{ background: match.bg, color: match.color }}
-        >
-          {match.label}
-        </span>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: i <= match.dots ? match.color : '#E5E7EB' }}
+              />
+            ))}
+          </div>
+          <span className="text-[11px] font-bold" style={{ color: match.color }}>
+            {match.label}
+          </span>
+        </div>
         <BookmarkBtn
           active={bookmarked}
           onClick={e => {

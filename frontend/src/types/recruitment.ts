@@ -9,7 +9,7 @@ export interface JobItem {
   salary: string;
   url: string;
   deadline: string;
-  matchStatus: '적합' | '보통' | '부족';
+  matchStatus: '최적합' | '적합' | '보통' | '미흡' | '부족';
   matchPercentage: number;
   cutoffHigh: number;
   cutoffMedium: number;
