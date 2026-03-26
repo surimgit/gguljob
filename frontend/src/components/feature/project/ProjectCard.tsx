@@ -9,17 +9,24 @@ export interface ProjectCardProps {
 
 const FALLBACK_AVATAR_COLOR = '#6366f1';
 
-const STATUS_LABEL: Record<string, string> = {
+type DisplayStatus = BackendProjectStatus | 'CLOSED';
+
+export const STATUS_LABEL: Record<DisplayStatus, string> = {
   RECRUITING: '모집중',
   PROCEEDING: '진행중',
   DONE: '마감',
   CLOSED: '모집 마감',
 };
 
-function getStatusStyle(status: BackendProjectStatus) {
+export function getStatusStyle(status: DisplayStatus) {
   if (status === 'RECRUITING') return { dot: '#43b581', text: '#22c55e' };
-  if (status === 'DONE') return { dot: '#9ca3af', text: '#9ca3af' };
+  if (status === 'DONE' || status === 'CLOSED') return { dot: '#9ca3af', text: '#9ca3af' };
   return { dot: '#f59e0b', text: '#f59e0b' };
+}
+
+export function getEffectiveStatus(status: BackendProjectStatus, positions: { currentCount: number; targetCount: number }[]): DisplayStatus {
+  if (status === 'RECRUITING' && !positions.some((p) => p.currentCount < p.targetCount)) return 'CLOSED';
+  return status;
 }
 
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
@@ -27,9 +34,8 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
 
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
 
-  const hasOpenPositions = positions.some((p) => p.currentCount < p.targetCount);
-  const effectiveStatus = status === 'RECRUITING' && !hasOpenPositions ? 'CLOSED' : status;
-  const statusStyle = getStatusStyle(effectiveStatus === 'CLOSED' ? 'DONE' : effectiveStatus);
+  const effectiveStatus = getEffectiveStatus(status, positions);
+  const statusStyle = getStatusStyle(effectiveStatus);
 
   const activePositions = Object.values(
     positions
