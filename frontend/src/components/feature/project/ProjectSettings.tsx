@@ -1046,7 +1046,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
                     .then(() => {
                       toast.success("팀에서 나갔습니다.");
                       setShowLeaveModal(false);
-                      navigate("/myprojects");
+                      navigate("/my-projects");
                     })
                     .catch(() => toast.error("팀 나가기에 실패했습니다. 다시 시도해주세요."));
                 }}
