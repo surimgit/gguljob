@@ -1,3 +1,5 @@
+import type { MatchStatus } from '../constants/match';
+
 // GET /api/v1/jobs, /api/v1/jobs/recommended/top, /api/v1/jobs/bookmarks 응답
 export interface JobItem {
   jobId: number;
@@ -9,7 +11,7 @@ export interface JobItem {
   salary: string;
   url: string;
   deadline: string;
-  matchStatus: '최적합' | '적합' | '보통' | '미흡' | '부족';
+  matchStatus: MatchStatus;
   matchPercentage: number;
   cutoffHigh: number;
   cutoffMedium: number;
