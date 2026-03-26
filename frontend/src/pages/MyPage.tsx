@@ -12,7 +12,7 @@ import {
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
-import { buildOnboardingPayload, userToFormData } from '../components/feature/auth/utils/onboardingMappers';
+import { buildOnboardingPayload, userToFormData, type OnboardingFormData } from '../components/feature/auth/utils/onboardingMappers';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { getMe, withdrawApi, updateProfileApi } from '../api/user';
@@ -128,15 +128,7 @@ const MyPage = () => {
     getMe().then((u) => setUser(u)).catch(() => {});
   };
 
-  const handleOnboardingComplete = async (formData: {
-    goals: string[];
-    position: string;
-    experience: string;
-    skills: string[];
-    mbti: string;
-    leaderScore: number;
-    workExperience: string;
-  }) => {
+  const handleOnboardingComplete = async (formData: OnboardingFormData) => {
     try {
       const payload = buildOnboardingPayload(formData);
       if (!payload) {
