@@ -7,6 +7,7 @@ import { getRecommendedTop3 } from '../../../api/jobs';
 import { useAuthStore } from '../../../stores/authStore';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
+import { type MatchStatus, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 /** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
 const formatSalary = (salary: string): string => {
@@ -26,15 +27,6 @@ const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 
 type Badge = 'NEW' | 'HOT';
 
-type MatchStatus = '최적합' | '적합' | '보통' | '미흡' | '부족';
-
-const MATCH_CONFIG: Record<MatchStatus, { label: string; color: string; dots: number }> = {
-  최적합: { label: '최적합', color: '#16A34A', dots: 5 },
-  적합:   { label: '적합',   color: '#22C55E', dots: 4 },
-  보통:   { label: '보통',   color: '#F2B705', dots: 3 },
-  미흡:   { label: '미흡',   color: '#F97316', dots: 2 },
-  부족:   { label: '부족',   color: '#EF4444', dots: 1 },
-};
 
 interface JobCardProps {
   jobId: number;
@@ -112,7 +104,7 @@ const JobCard = ({
 }: JobCardProps) => {
   const dday = calcDday(deadline);
   const ddayColor = getDdayColor(dday);
-  const match = MATCH_CONFIG[matchStatus];
+  const match = MATCH_CONFIG[MATCH_STATUS_TO_TYPE[matchStatus] ?? 'insufficient'];
 
   return (
     <div

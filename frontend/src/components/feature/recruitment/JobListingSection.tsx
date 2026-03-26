@@ -6,9 +6,7 @@ import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
-
-// ── 타입 ──────────────────────────────────────────────────────────────────────
-type MatchType = 'excellent' | 'good' | 'average' | 'poor' | 'insufficient';
+import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 interface JobListing {
   id: number;
@@ -80,17 +78,6 @@ const mapJobCategory = (category: string): RoleCode | null => {
 const DEFAULT_PAGE_SIZE = 20;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
-const MATCH_CONFIG: Record<MatchType, { label: string; color: string; dots: number }> = {
-  excellent:    { label: '최적합', color: '#16A34A', dots: 5 },
-  good:         { label: '적합',   color: '#22C55E', dots: 4 },
-  average:      { label: '보통',   color: '#F2B705', dots: 3 },
-  poor:         { label: '미흡',   color: '#F97316', dots: 2 },
-  insufficient: { label: '부족',   color: '#EF4444', dots: 1 },
-};
-
-const MATCH_RANK: Record<MatchType, number> = {
-  excellent: 5, good: 4, average: 3, poor: 2, insufficient: 1,
-};
 
 // ── 정렬 함수 ─────────────────────────────────────────────────────────────────
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
@@ -120,11 +107,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
   url: item.url ?? '',
-  match: item.matchStatus === '최적합' ? 'excellent'
-       : item.matchStatus === '적합'   ? 'good'
-       : item.matchStatus === '보통'   ? 'average'
-       : item.matchStatus === '미흡'   ? 'poor'
-       : 'insufficient',
+  match: MATCH_STATUS_TO_TYPE[item.matchStatus] ?? 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
   topPercentile: item.topPercentile,
