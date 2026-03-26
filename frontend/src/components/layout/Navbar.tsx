@@ -250,7 +250,7 @@ const Navbar = () => {
             <Container className="h-16 flex items-center px-4 relative">
                 {/* 로고 */}
                 <Link to="/" onClick={() => window.scrollTo(0, 0)} className="flex items-center shrink-0">
-                    <img src={gguljobLogo} alt="꿀잡" className="h-26" />
+                    <img src={gguljobLogo} alt="꿀잡" className="h-12" />
                 </Link>
 
                 {/* 데스크톱 네비게이션 — 화면 정중앙 */}
