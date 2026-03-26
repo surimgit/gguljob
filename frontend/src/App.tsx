@@ -77,13 +77,11 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
 
       <Route element={<Layout />}>
-        {/* 공개 라우트 */}
-<Route path="/projects" element={<ProjectFind />} />
-        <Route path="/recruitment" element={<Recruitment />} />
-        <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
-
         {/* 로그인 필요 라우트 */}
         <Route element={<PrivateRoute />}>
+          <Route path="/projects" element={<ProjectFind />} />
+          <Route path="/recruitment" element={<Recruitment />} />
+          <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/projects/new" element={<CreateProject />} />
