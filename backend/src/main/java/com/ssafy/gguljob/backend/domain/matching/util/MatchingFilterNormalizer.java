@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class MatchingFilterNormalizer {
 
     private MatchingFilterNormalizer() {
@@ -56,7 +58,8 @@ public final class MatchingFilterNormalizer {
         try {
             PositionType positionType = PositionType.from(positionRaw);
             addPositionTypeAliases(positionType, candidates);
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException e) {
+            log.warn("Unrecognized position type raw string: {}", positionRaw);
         }
 
         return List.copyOf(candidates);
@@ -78,11 +81,15 @@ public final class MatchingFilterNormalizer {
 
         if ("FE".equalsIgnoreCase(role) || "FE 모집중".equalsIgnoreCase(role)) {
             candidates.add("FRONTEND");
-            candidates.add("FE 모집중");
+            if (!"FE 모집중".equalsIgnoreCase(role)) {
+                candidates.add("FE 모집중");
+            }
         }
         if ("BE".equalsIgnoreCase(role) || "BE 모집중".equalsIgnoreCase(role)) {
             candidates.add("BACKEND");
-            candidates.add("BE 모집중");
+            if (!"BE 모집중".equalsIgnoreCase(role)) {
+                candidates.add("BE 모집중");
+            }
         }
     }
 
