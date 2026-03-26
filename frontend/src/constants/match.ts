@@ -1,14 +1,13 @@
-export type MatchStatus = '최적합' | '적합' | '보통' | '미흡' | '부족';
-
-export type MatchType = 'excellent' | 'good' | 'average' | 'poor' | 'insufficient';
-
-export const MATCH_STATUS_TO_TYPE: Record<MatchStatus, MatchType> = {
+export const MATCH_STATUS_TO_TYPE = {
   최적합: 'excellent',
   적합: 'good',
   보통: 'average',
   미흡: 'poor',
   부족: 'insufficient',
-};
+} as const;
+
+export type MatchStatus = keyof typeof MATCH_STATUS_TO_TYPE;
+export type MatchType = (typeof MATCH_STATUS_TO_TYPE)[MatchStatus];
 
 export const MATCH_CONFIG: Record<MatchType, { label: string; color: string; dots: number }> = {
   excellent:    { label: '최적합', color: '#16A34A', dots: 5 },
