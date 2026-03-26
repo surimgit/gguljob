@@ -242,7 +242,7 @@ const Navbar = () => {
         >
             <Container className="h-16 flex items-center px-4 relative">
                 {/* 로고 */}
-                <Link to="/" className="flex items-center shrink-0">
+                <Link to="/" onClick={() => window.scrollTo(0, 0)} className="flex items-center shrink-0">
                     <img src={gguljobLogo} alt="꿀잡" className="h-26" />
                 </Link>
 
