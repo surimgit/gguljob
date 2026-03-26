@@ -7,6 +7,7 @@ import { getRecommendedTop3 } from '../../../api/jobs';
 import { useAuthStore } from '../../../stores/authStore';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
+import { type MatchStatus, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 /** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
 const formatSalary = (salary: string): string => {
@@ -26,6 +27,7 @@ const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 
 type Badge = 'NEW' | 'HOT';
 
+
 interface JobCardProps {
   jobId: number;
   tint: string;
@@ -41,6 +43,7 @@ interface JobCardProps {
   salary: string;
   url: string;
   deadline: string;
+  matchStatus: MatchStatus;
   bookmarked: boolean;
   onToggleBookmark: (id: number) => void;
 }
@@ -95,11 +98,13 @@ const JobCard = ({
   salary,
   url,
   deadline,
+  matchStatus,
   bookmarked,
   onToggleBookmark,
 }: JobCardProps) => {
   const dday = calcDday(deadline);
   const ddayColor = getDdayColor(dday);
+  const match = MATCH_CONFIG[MATCH_STATUS_TO_TYPE[matchStatus] ?? 'insufficient'];
 
   return (
     <div
@@ -191,11 +196,27 @@ const JobCard = ({
         <span className="text-sm" style={{ color: '#6B7280' }}>{experience}</span>
       </div>
 
-      {/* 고용형태 · 연봉 */}
-      <div className="flex items-center gap-1.5 mt-auto">
-        <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
-        <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-        <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+      {/* 고용형태 · 연봉 + 적합도 */}
+      <div className="flex items-end justify-between mt-auto">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
+          <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
+          <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                className="w-2 h-2 rounded-full"
+                style={{ background: i <= match.dots ? match.color : '#E5E7EB' }}
+              />
+            ))}
+          </div>
+          <span className="text-[10px] font-bold" style={{ color: match.color }}>
+            {match.label}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -302,6 +323,7 @@ const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroP
                 salary={job.salary}
                 url={job.url}
                 deadline={job.deadline}
+                matchStatus={job.matchStatus}
                 bookmarked={bookmarkedIds.has(job.jobId)}
                 onToggleBookmark={onToggleBookmark}
               />

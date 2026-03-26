@@ -6,9 +6,7 @@ import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
-
-// ── 타입 ──────────────────────────────────────────────────────────────────────
-type MatchType = 'suitable' | 'average' | 'insufficient';
+import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 interface JobListing {
   id: number;
@@ -77,16 +75,9 @@ const mapJobCategory = (category: string): RoleCode | null => {
 };
 
 // ── 상수 ──────────────────────────────────────────────────────────────────────
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 20;
 const SORT_OPTIONS = ['매칭순', '마감순'];
 
-const MATCH_CONFIG: Record<MatchType, { label: string; bg: string; color: string; percent: number }> = {
-  suitable:     { label: '적합', bg: 'rgba(34,197,94,0.23)',  color: '#22C55E', percent: 100 },
-  average:      { label: '보통', bg: '#FFF2C6',              color: '#F2B705', percent: 66 },
-  insufficient: { label: '부족', bg: 'rgba(239,68,68,0.23)', color: '#EF4444', percent: 33 },
-};
-
-const MATCH_RANK: Record<MatchType, number> = { suitable: 3, average: 2, insufficient: 1 };
 
 // ── 정렬 함수 ─────────────────────────────────────────────────────────────────
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
@@ -116,7 +107,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
   salary: formatSalary(item.salary),
   deadline: item.deadline ?? '',
   url: item.url ?? '',
-  match: item.matchStatus === '적합' ? 'suitable' : item.matchStatus === '보통' ? 'average' : 'insufficient',
+  match: MATCH_STATUS_TO_TYPE[item.matchStatus] ?? 'insufficient',
   techStacks: parseTechStacks(item.techStacks),
   jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
   topPercentile: item.topPercentile,
@@ -326,14 +317,22 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 매칭 뱃지 + 북마크 */}
+      {/* 매칭 표시 + 북마크 */}
       <div className="flex items-center gap-3 flex-shrink-0 self-end sm:self-center">
-        <span
-          className="text-[12px] font-bold px-3 py-1 rounded-full"
-          style={{ background: match.bg, color: match.color }}
-        >
-          {match.label}
-        </span>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: i <= match.dots ? match.color : '#E5E7EB' }}
+              />
+            ))}
+          </div>
+          <span className="text-[11px] font-bold" style={{ color: match.color }}>
+            {match.label}
+          </span>
+        </div>
         <BookmarkBtn
           active={bookmarked}
           onClick={e => {
@@ -355,6 +354,7 @@ interface JobListingSectionProps {
 
 const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -415,6 +415,15 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     }
   }, [showBookmarked]);
 
+  // 페이지 변경 시 섹션 상단으로 스크롤 (초기 마운트 제외)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [currentPage]);
+
   // 필터링 → 정렬 → 페이지네이션
   const jobsFilteredByStack = (() => {
     if (!activeCategory) return jobs;
@@ -461,7 +470,6 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
