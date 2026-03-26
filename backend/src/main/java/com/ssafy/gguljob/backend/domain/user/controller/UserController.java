@@ -1,5 +1,7 @@
 package com.ssafy.gguljob.backend.domain.user.controller;
 
+import com.ssafy.gguljob.backend.domain.join.dto.MyApplicationDto;
+import com.ssafy.gguljob.backend.domain.join.service.JoinRequestService;
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingService;
@@ -48,6 +50,7 @@ public class UserController {
     private final ProjectService projectService;
     private final TroubleshootingService troubleshootingService;
     private final MatchingService matchingService;
+    private final JoinRequestService joinRequestService;
 
     @Operation(summary = "직무 전체 목록 조회")
     @GetMapping("/positions")
@@ -146,6 +149,16 @@ public class UserController {
         String imageUrl = userService.updateProfileImage(userDetails.getId(), file);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지 업로드 성공", imageUrl));
+    }
+
+    @Operation(summary = "내 지원/초대 내역 조회", description = "로그인한 유저의 프로젝트 지원 및 초대 내역을 최신순으로 조회합니다.")
+    @GetMapping("/me/applications")
+    public ResponseEntity<ApiResponseDto<List<MyApplicationDto>>> getMyApplications(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        List<MyApplicationDto> applications = joinRequestService.getMyApplications(userDetails.getId());
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "지원/초대 내역 조회 성공", applications));
     }
 
     @Operation(summary = "타 사용자 프로필 조회", description = "사용자 ID를 기반으로 다른 사용자의 공개 프로필을 조회합니다.")

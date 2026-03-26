@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.join.service;
 
+import com.ssafy.gguljob.backend.domain.join.dto.MyApplicationDto;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
@@ -17,7 +18,10 @@ import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,6 +39,37 @@ public class JoinRequestService {
     private final ProjectMemberRepository projectMemberRepository;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+
+    // 내 지원/초대 내역 조회
+    @Transactional(readOnly = true)
+    public List<MyApplicationDto> getMyApplications(Long userId) {
+        List<JoinRequest> requests = joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        // N+1 방지: positionId 일괄 조회 후 Map으로 캐싱
+        List<Long> positionIds = requests.stream()
+            .map(JoinRequest::getPositionId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, ProjectPosition> positionMap = positionIds.isEmpty()
+            ? Collections.emptyMap()
+            : projectPositionRepository.findAllById(positionIds).stream()
+                .collect(Collectors.toMap(ProjectPosition::getId, pp -> pp));
+
+        return requests.stream()
+            .map(request -> {
+                String positionName = null;
+                if (request.getPositionId() != null) {
+                    ProjectPosition pp = positionMap.get(request.getPositionId());
+                    if (pp != null) positionName = pp.getRole().name();
+                } else if (request.getRole() != null) {
+                    positionName = request.getRole().name();
+                }
+                return MyApplicationDto.of(request, positionName);
+            })
+            .collect(Collectors.toList());
+    }
 
     // 유저 -> 프로젝트 지원
     @Transactional
