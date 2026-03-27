@@ -51,7 +51,8 @@ public class MatchingService {
             throw new OnboardingRequiredException();
         }
 
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        // Neo4j에서 전체 조회 (페이지네이션 없이) 후 MySQL 필터링 → 수동 페이지네이션
+        Pageable allPageable = PageRequest.of(0, Integer.MAX_VALUE);
 
         List<String> joinedProjectIds = projectMemberRepository
             .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
@@ -66,7 +67,7 @@ public class MatchingService {
             normalizedDomains,
             normalizedRoles,
             skillIds,
-            unsortedPageable
+            allPageable
         );
 
         if (neo4jResults.isEmpty()) return Page.empty(pageable);
@@ -74,15 +75,25 @@ public class MatchingService {
         List<Long> projectIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.projectId())).toList();
         Map<Long, ProjectResponse.ProjectCardDto> mysqlDataMap = projectService.getProjectCardsMap(projectIds);
 
-        List<ProjectResponse.ProjectCardDto> finalContent = neo4jResults.stream()
+        List<ProjectResponse.ProjectCardDto> allFiltered = neo4jResults.stream()
             .map(neoDto -> {
                 ProjectResponse.ProjectCardDto card = mysqlDataMap.get(Long.valueOf(neoDto.projectId()));
                 return (card != null) ? card.withScore(neoDto.score()) : null;
             })
             .filter(Objects::nonNull)
+            .filter(card -> card.status() == com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.RECRUITING)
+            .filter(card -> card.positions().stream()
+                .anyMatch(pos -> pos.currentCount() < pos.targetCount()))
             .toList();
 
-        return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
+        // 수동 페이지네이션
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allFiltered.size());
+        List<ProjectResponse.ProjectCardDto> pageContent = start >= allFiltered.size()
+            ? List.of()
+            : allFiltered.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, allFiltered.size());
     }
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")

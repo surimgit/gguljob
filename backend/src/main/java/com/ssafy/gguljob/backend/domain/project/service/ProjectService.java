@@ -471,6 +471,9 @@ public class ProjectService {
         return topProjects.stream()
             .map(p -> cardMap.get(p.getId()))
             .filter(java.util.Objects::nonNull)
+            .filter(card -> card.status() == ProjectStatus.RECRUITING)
+            .filter(card -> card.positions().stream()
+                .anyMatch(pos -> pos.currentCount() < pos.targetCount()))
             .toList();
     }
 
