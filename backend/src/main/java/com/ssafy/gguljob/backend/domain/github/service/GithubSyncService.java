@@ -271,11 +271,14 @@ public class GithubSyncService {
                 .toBodilessEntity();
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                log.warn("GitHub 토큰 인증 실패 (401): owner={}, repo={}, message={}", owner, repo, e.getMessage());
                 throw new BadRequestException("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해 주세요.");
             }
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.warn("GitHub 레포지토리를 찾을 수 없음 (404): owner={}, repo={}, message={}", owner, repo, e.getMessage());
                 throw new ResourceNotFoundException("레포지토리를 찾을 수 없습니다. URL과 접근 권한을 확인해 주세요.");
             }
+            log.error("GitHub 연동 중 예상치 못한 HTTP 오류 발생: statusCode={}, owner={}, repo={}", e.getStatusCode(), owner, repo, e);
             throw new BadRequestException("GitHub 연동에 실패했습니다: " + e.getMessage());
         }
     }
