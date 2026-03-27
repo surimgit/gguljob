@@ -38,6 +38,7 @@ import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.global.exception.BadRequestException;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.util.Arrays;
 import java.util.List;
@@ -228,7 +229,7 @@ public class ProjectService {
         // GitHub 토큰 및 레포 접근 권한 사전 검증 (실패 시 등록 중단)
         String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
         if (urlParts.length < 2) {
-            throw new IllegalArgumentException("올바른 GitHub 레포지토리 URL 형식이 아닙니다.");
+            throw new BadRequestException("올바른 GitHub 레포지토리 URL 형식이 아닙니다.");
         }
         String owner = urlParts[0];
         String repo = urlParts[1].replace(".git", "");

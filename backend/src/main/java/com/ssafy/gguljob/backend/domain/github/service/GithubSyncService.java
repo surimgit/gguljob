@@ -12,6 +12,8 @@ import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.BadRequestException;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -22,8 +24,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
@@ -255,7 +259,8 @@ public class GithubSyncService {
 
     /**
      * GitHub 토큰과 레포 접근 권한을 검증합니다.
-     * @throws IllegalArgumentException 토큰이 유효하지 않거나 레포에 접근할 수 없는 경우
+     * @throws BadRequestException 토큰이 유효하지 않은 경우 (401)
+     * @throws ResourceNotFoundException 레포지토리를 찾을 수 없는 경우 (404)
      */
     public void validateGitHubAccess(String owner, String repo, String token) {
         try {
@@ -264,15 +269,14 @@ public class GithubSyncService {
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .toBodilessEntity();
-        } catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-            if (msg.contains("401") || msg.contains("unauthorized")) {
-                throw new IllegalArgumentException("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해 주세요.");
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new BadRequestException("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해 주세요.");
             }
-            if (msg.contains("404") || msg.contains("not found")) {
-                throw new IllegalArgumentException("레포지토리를 찾을 수 없습니다. URL과 접근 권한을 확인해 주세요.");
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new ResourceNotFoundException("레포지토리를 찾을 수 없습니다. URL과 접근 권한을 확인해 주세요.");
             }
-            throw new IllegalArgumentException("GitHub 연동에 실패했습니다: " + e.getMessage());
+            throw new BadRequestException("GitHub 연동에 실패했습니다: " + e.getMessage());
         }
     }
 

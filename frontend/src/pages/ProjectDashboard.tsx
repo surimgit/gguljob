@@ -767,6 +767,9 @@ const ProjectDashboard = () => {
                         </div>
                         <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
                           GitHub Settings → Developer settings → Personal access tokens에서 발급하세요. repo 권한이 필요합니다.
+                          <br />
+                          토큰은 <code className="font-mono">ghp_</code> 또는{" "}
+                          <code className="font-mono">github_pat_</code>으로 시작해야 합니다.
                         </p>
                       </div>
                     )}
