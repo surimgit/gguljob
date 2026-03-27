@@ -34,6 +34,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ssafy.gguljob.backend.domain.skill.service.SkillService;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -348,6 +349,13 @@ public class UserService {
                 Page<UserSummary> userSummaries = users.map(UserResponse.UserSummary::from);
 
                 return UserResponse.UserPageResponse.of(userSummaries);
+        }
+
+        @Transactional(readOnly = true)
+        public UserResponse.UserSummary searchByEmail(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("해당 이메일로 가입된 사용자가 없습니다."));
+                return UserResponse.UserSummary.from(user);
         }
 
         public MemberFilterResponseDto getMemberFilters() {

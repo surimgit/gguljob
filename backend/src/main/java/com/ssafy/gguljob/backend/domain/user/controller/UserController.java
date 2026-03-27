@@ -182,6 +182,17 @@ public class UserController {
 //        return ResponseEntity.ok(response);
 //    }
 
+    @Operation(summary = "이메일로 사용자 검색", description = "팀원 초대 시 이메일로 가입 여부를 확인하고 기본 프로필을 반환합니다. 존재하지 않으면 404를 반환합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponseDto<UserResponse.UserSummary>> searchByEmail(
+        @RequestParam String email) {
+
+        log.info("이메일 사용자 검색 API 호출 - 이메일: {}", email);
+
+        UserResponse.UserSummary result = userService.searchByEmail(email);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "사용자 검색 성공", result));
+    }
+
     @Operation(summary = "팀원(유저) 검색 필터 옵션(메뉴판) 조회", description = "팀원 찾기 페이지의 포지션 및 숙련도 필터 목록(value, label)을 제공합니다.")
     @GetMapping("/filters")
     public ResponseEntity<com.ssafy.gguljob.backend.domain.user.dto.MemberFilterResponseDto> getMemberFilters() {

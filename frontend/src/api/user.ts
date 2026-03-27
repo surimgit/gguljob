@@ -105,6 +105,21 @@ export interface UserProfileDto {
 export const getUserProfile = (userId: number) =>
   api.get<{ data: UserProfileDto }>(`/v1/user/${userId}`);
 
+/** GET /v1/user/search?email={email} → 이메일로 사용자 검색 (팀원 초대용) */
+export interface UserSearchResult {
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
+  roles: string[];
+  experience: string | null;
+  description: string | null;
+}
+
+export const searchUserByEmail = async (email: string): Promise<UserSearchResult> => {
+  const res = await api.get('/v1/user/search', { params: { email } });
+  return res.data.data;
+};
+
 /** GET /v1/user/positions → 직무 전체 목록 조회 */
 export interface PositionDto {
   code: string;
