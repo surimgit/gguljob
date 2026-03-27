@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sparkles, MessageSquare, Send, AlertTriangle, Lightbulb, Code2, GitMerge, Pencil } from 'lucide-react';
 import cardTroubleShooting from '../../../assets/images/card_trouble_shooting.png';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -229,6 +229,10 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
+  const availablePrIds = useMemo(
+    () => new Set(aiMrList.filter(mr => !generatedPrIds.has(mr.id)).map(mr => mr.id)),
+    [aiMrList, generatedPrIds],
+  );
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -515,7 +519,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
 
 <button
                   onClick={async () => {
-                    const availablePrIds = new Set(aiMrList.filter(mr => !generatedPrIds.has(mr.id)).map(mr => mr.id));
                     if (!selectedMrId || !availablePrIds.has(selectedMrId)) return;
                     setAiGenerating(true);
                     setAiSuccess(false);
@@ -531,7 +534,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       setAiGenerating(false);
                     }
                   }}
-                  disabled={aiGenerating || !selectedMrId || !aiMrList.filter(mr => !generatedPrIds.has(mr.id)).some(mr => mr.id === selectedMrId)}
+                  disabled={aiGenerating || !selectedMrId || !availablePrIds.has(selectedMrId)}
                   className="w-full py-3.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
                 >
