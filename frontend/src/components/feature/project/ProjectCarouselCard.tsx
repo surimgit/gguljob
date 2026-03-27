@@ -1,5 +1,6 @@
 import type { ProjectCardDto } from '../../../types/project';
-import { CATEGORY_COLORS, THUMBNAIL_GRADIENTS } from '../../../constants/domains';
+import { CATEGORY_COLORS } from '../../../constants/domains';
+import defaultThumbnail from '../../../assets/images/project_photo2.png';
 
 export interface ProjectCarouselCardProps {
   project: ProjectCardDto;
@@ -9,7 +10,6 @@ export interface ProjectCarouselCardProps {
 const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => {
   const { domain, title, description, imageUrl } = project;
 
-  const gradient = THUMBNAIL_GRADIENTS[domain] ?? 'linear-gradient(149deg, #F5F5F5, #E0E0E0)';
   const categoryColor = CATEGORY_COLORS[domain] ?? '#6b7280';
 
   return (
@@ -19,12 +19,13 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
     >
       {/* 상단 썸네일 */}
       <div
-        className="absolute top-0 left-0 w-full h-[100px] overflow-hidden"
-        style={{ background: imageUrl ? undefined : gradient }}
+        className={`absolute top-0 left-0 w-full h-[100px] overflow-hidden bg-[#f0ebe3] ${!imageUrl ? 'flex justify-center items-center' : ''}`}
       >
-        {imageUrl && (
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
-        )}
+        <img
+          src={imageUrl || defaultThumbnail}
+          alt={title}
+          className={imageUrl ? 'w-full h-full object-cover' : 'h-[70%] object-contain'}
+        />
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
           <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
