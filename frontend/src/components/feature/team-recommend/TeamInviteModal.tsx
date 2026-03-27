@@ -13,6 +13,7 @@ interface TeamInviteModalProps {
   memberName: string;
   userId: number;
   fixedProjectId?: number;
+  fixedProjectTitle?: string;
 }
 
 const JOB_OPTIONS = ROLE_LIST.map(code => ({
@@ -22,7 +23,7 @@ const JOB_OPTIONS = ROLE_LIST.map(code => ({
 
 const MAX_MESSAGE_LENGTH = 200;
 
-const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId }: TeamInviteModalProps) => {
+const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, fixedProjectTitle }: TeamInviteModalProps) => {
   const [selectedProject, setSelectedProject] = useState(fixedProjectId ? String(fixedProjectId) : '');
   const [selectedJob, setSelectedJob] = useState('');
   const [message, setMessage] = useState('');
@@ -85,7 +86,16 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId }
         <p className="text-sm text-text-secondary mb-4">초대할 프로젝트와 직무를 선택하세요</p>
 
         {/* 프로젝트 선택 */}
-        {!fixedProjectId && (
+        {fixedProjectId ? (
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-text-primary mb-2">
+              프로젝트
+            </label>
+            <div className="rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm text-text-primary">
+              {fixedProjectTitle ?? '프로젝트'}
+            </div>
+          </div>
+        ) : (
           <div className="mb-4">
             <label className="block text-sm font-semibold text-text-primary mb-2">
               프로젝트 선택 <span className="text-red-500">*</span>
