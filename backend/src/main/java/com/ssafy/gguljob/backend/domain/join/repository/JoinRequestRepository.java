@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> {
-    // 이미 지원한 프로젝트인지 검증
-    boolean existsByProjectIdAndUserId(Long projectId, Long userId);
+    // 이미 지원한 프로젝트인지 검증 (PENDING 상태만 확인 — 거절/취소 후 재지원/재초대 허용)
+    boolean existsByProjectIdAndUserIdAndStatus(Long projectId, Long userId, com.ssafy.gguljob.backend.domain.join.type.JoinRequestStatus status);
 
     // 특정 프로젝트의 '대기 중(PENDING)'인 참가 신청 목록만 최신순으로 조회
     @Query("SELECT j FROM JoinRequest j " +

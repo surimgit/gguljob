@@ -5,6 +5,7 @@ import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
+import com.ssafy.gguljob.backend.domain.join.type.JoinRequestStatus;
 import com.ssafy.gguljob.backend.domain.join.type.JoinRequestType;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
@@ -75,7 +76,7 @@ public class JoinRequestService {
     // 유저 -> 프로젝트 지원
     @Transactional
     public void applyProject(Long userId, Long projectId, Long positionId, String appealContent) {
-        if (joinRequestRepository.existsByProjectIdAndUserId(projectId, userId)) {
+        if (joinRequestRepository.existsByProjectIdAndUserIdAndStatus(projectId, userId, JoinRequestStatus.PENDING)) {
             throw new IllegalArgumentException("이미 해당 프로젝트에 지원했거나 초대받은 상태입니다.");
         }
 
@@ -111,7 +112,7 @@ public class JoinRequestService {
             throw new IllegalArgumentException("프로젝트 리더만 팀원을 초대할 수 있습니다.");
         }
 
-        if (joinRequestRepository.existsByProjectIdAndUserId(projectId, targetUserId)) {
+        if (joinRequestRepository.existsByProjectIdAndUserIdAndStatus(projectId, targetUserId, JoinRequestStatus.PENDING)) {
             throw new IllegalArgumentException("이미 초대했거나 지원한 유저입니다.");
         }
 

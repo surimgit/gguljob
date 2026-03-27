@@ -31,7 +31,7 @@ import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
-import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject } from "../../../api/projects";
+import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject, deleteProject } from "../../../api/projects";
 import {
   SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
   SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
@@ -45,6 +45,7 @@ type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
   projectId?: number;
+  isLeader?: boolean;
   onSaved?: () => void;
 }
 
@@ -152,14 +153,15 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 };
 
 /* ── 컴포넌트 ── */
-const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps) => {
+const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved }: ProjectSettingsProps) => {
   const navigate = useNavigate();
   const info = dashboard?.projectInfo;
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isLeader, setIsLeader] = useState(true);
+  const isLeader = isLeaderProp ?? false;
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [originalTitle, setOriginalTitle] = useState("");
@@ -263,9 +265,9 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showImageMenu]);
 
-  // GET /edit → 폼 초기화
+  // GET /edit → 폼 초기화 (팀장만 호출)
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !isLeaderProp) return;
     setLoading(true);
     getProjectEditForm(projectId)
       .then(({ data: form }) => {
@@ -295,7 +297,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
       })
       .catch((err) => {
         console.error("프로젝트 설정 로드 실패:", err);
-        setIsLeader(false);
         // 폴백: dashboard 데이터 사용
         if (info) {
           setName(info.teamName ?? info.title ?? "");
@@ -314,7 +315,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
         }));
       })
       .finally(() => setLoading(false));
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId, isLeaderProp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasChanges = useMemo(() => {
     if (!initialSnapshot) return false;
@@ -966,6 +967,7 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
           </p>
         </div>
         <button
+          onClick={() => setShowDeleteModal(true)}
           className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"
           style={{ background: "var(--color-error)" }}
           onMouseEnter={(e) =>
@@ -991,9 +993,6 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
             style={{ color: "var(--color-error)" }}
           >
             팀 나가기
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
-            팀에서 나가면 다시 합류하려면 신청이 필요합니다
           </p>
         </div>
         <button
@@ -1056,6 +1055,54 @@ const ProjectSettings = ({ dashboard, projectId, onSaved }: ProjectSettingsProps
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
               >
                 나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 프로젝트 삭제 확인 모달 ── */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-4xl">🗑️</span>
+            <p className="text-lg font-bold" style={{ color: "var(--color-error)" }}>프로젝트를 삭제하시겠습니까?</p>
+            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+              삭제된 프로젝트는 복구할 수 없습니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
+                style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (!projectId) return;
+                  deleteProject(projectId)
+                    .then(() => {
+                      toast.success("프로젝트가 삭제되었습니다.");
+                      setShowDeleteModal(false);
+                      navigate("/my-projects");
+                    })
+                    .catch(() => toast.error("프로젝트 삭제에 실패했습니다. 다시 시도해주세요."));
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "var(--color-error)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#DC2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
+              >
+                삭제하기
               </button>
             </div>
           </div>
