@@ -3,6 +3,7 @@ package com.ssafy.gguljob.backend.domain.notification.controller;
 import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.dto.UnreadCountResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
+import com.ssafy.gguljob.backend.domain.notification.service.SseEmitterService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
 import com.ssafy.gguljob.backend.global.dto.ApiResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.dto.NotificationReadStatusResponseDto;
@@ -13,6 +14,8 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -28,6 +32,18 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "알림 API", description = "알림 조회 및 관리 API")
 public class NotificationController {
     private final NotificationService notificationService;
+    private final SseEmitterService sseEmitterService;
+
+    @Operation(summary = "SSE 알림 구독", description = "실시간 알림 수신을 위한 SSE 연결을 생성합니다.")
+    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        HttpServletResponse response) {
+        // Nginx 등 리버스 프록시 버퍼링 방지
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache");
+        return sseEmitterService.subscribe(userDetails.getId());
+    }
 
     @Operation(summary = "내 알림 목록 조회", description = "내 알림을 최신순으로 조회합니다. (무한 스크롤 지원)")
     @GetMapping
