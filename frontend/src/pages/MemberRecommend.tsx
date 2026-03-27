@@ -74,7 +74,7 @@ const MemberRecommend = () => {
         const found = data.find((p) => p.projectId === Number(projectId));
         if (found) setProjectTitle(found.title);
       })
-      .catch(() => {});
+      .catch((error) => console.error('Failed to fetch project title:', error));
   }, [projectId]);
 
   /* 현재 팀원 userId 목록 조회 */
