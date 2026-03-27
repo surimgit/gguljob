@@ -122,7 +122,7 @@ export interface MyApplicationDto {
   projectId: number;
   projectTitle: string;
   positionName: string | null;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED';
   requestType: 'APPLY' | 'INVITE';
   createdAt: string;
 }

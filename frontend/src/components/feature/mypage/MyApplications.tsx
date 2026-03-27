@@ -9,6 +9,7 @@ const STATUS_MAP: Record<MyApplicationDto['status'], { label: string; color: str
   PENDING:  { label: '대기중', color: '#ca8a04', bg: '#fefce8' },
   ACCEPTED: { label: '수락됨', color: '#16a34a', bg: '#f0fdf4' },
   REJECTED: { label: '거절됨', color: '#dc2626', bg: '#fef2f2' },
+  CANCELED: { label: '취소됨', color: '#6b7280', bg: '#f3f4f6' },
 };
 
 const TYPE_LABEL: Record<MyApplicationDto['requestType'], string> = {
