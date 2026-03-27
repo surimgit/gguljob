@@ -1,7 +1,7 @@
 import Container from '../common/Container';
-import findGif from '../../assets/gif/find.gif';
-import troubleshootingGif from '../../assets/gif/troubleshooting.gif';
-import jobGif from '../../assets/gif/job.gif';
+import findMp4 from '../../assets/mp4/find.mp4';
+import troubleshootingMp4 from '../../assets/mp4/troubleshooting.mp4';
+import jobMp4 from '../../assets/mp4/job.mp4';
 
 type FeatureItemProps = {
   number: string;
@@ -10,10 +10,10 @@ type FeatureItemProps = {
   description: string;
   emoji: string;
   bg: string;
-  image?: string;
+  video?: string;
 };
 
-const FeatureItem = ({ number, badge, title, description, emoji, bg, image }: FeatureItemProps) => (
+const FeatureItem = ({ number, badge, title, description, emoji, bg, video }: FeatureItemProps) => (
   <div className="py-14" style={{ backgroundColor: bg }}>
     <Container>
       <div className="flex flex-col md:flex-row items-center gap-10 px-20 py-12">
@@ -27,11 +27,9 @@ const FeatureItem = ({ number, badge, title, description, emoji, bg, image }: Fe
           <p className="text-xl font-semibold text-text-brown-2 leading-[3rem] whitespace-pre-line mt-2">{description}</p>
         </div>
 
-        {/* 목업 이미지 플레이스홀더 */}
-        {/* TODO: 실제 스크린샷/목업 이미지로 교체 */}
         <div className="flex-shrink-0 w-full md:w-[700px] h-120 bg-white border border-border rounded-2xl shadow-md flex items-center justify-center overflow-hidden">
-          {image ? (
-            <img src={image} alt={title} className="w-full h-full object-cover" />
+          {video ? (
+            <video src={video} className="w-full h-full object-cover" autoPlay loop muted playsInline />
           ) : (
             <div className="flex flex-col items-center gap-2 text-text-tertiary">
               <span className="text-5xl">{emoji}</span>
@@ -53,7 +51,7 @@ const FEATURES: FeatureItemProps[] = [
       '아이디어를 현실로 구현할 팀을 연결해요. \n 기술 스택, 목표, 협업 성향을 바탕으로 \n 나와 잘 맞는 팀원과 프로젝트를 찾을 수 있어요.',
     emoji: '🔍',
     bg: '#F8EFD2',
-    image: findGif,
+    video: findMp4,
   },
   {
     number: '02',
@@ -62,7 +60,7 @@ const FEATURES: FeatureItemProps[] = [
     description:
       '개발 중 겪은 문제와 해결 과정을 한 곳에 기록해요. \n 흩어지기 쉬운 고민의 흐름을 정리해 \n 나만의 트러블슈팅 자산으로 남길 수 있어요.',
     emoji: '🛠️',
-    image: troubleshootingGif,
+    video: troubleshootingMp4,
     bg: '#FFFCF0',
   },
   {
@@ -73,7 +71,7 @@ const FEATURES: FeatureItemProps[] = [
       '내 프로젝트 경험과 맞는 채용 공고를 추천받아요. \n 포트폴리오와 연결되는 공고를 빠르게 확인하고 \n 다음 기호까지 자연스럽게 이어갈 수 있어요.',
     emoji: '💼',
     bg: '#EEE4C6',
-    image: jobGif,
+    video: jobMp4,
   },
 ];
 
