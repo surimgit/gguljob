@@ -135,6 +135,9 @@ export const acceptRequest = (requestId: number) =>
 export const rejectRequest = (requestId: number) =>
   api.post(`/v1/projects/requests/${requestId}/reject`);
 
+export const cancelRequest = (requestId: number) =>
+  api.delete(`/v1/projects/requests/${requestId}/cancel`);
+
 /* ── 팀원 목록 (일반) ── */
 
 export const getProjectMembers = (projectId: number) =>

@@ -1,18 +1,21 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import Pagination from '../components/common/Pagination';
+import BaseModal from '../components/common/BaseModal';
 import { getMyApplications, type MyApplicationDto } from '../api/user';
+import { cancelRequest } from '../api/projects';
 
 // ── 상수 ────────────────────────────────────────────────────────────────────────
 const ITEMS_PER_PAGE = 10;
 
-type FilterTab = 'all' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
+type FilterTab = 'all' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED';
 
 const STATUS_MAP: Record<MyApplicationDto['status'], { label: string; color: string; bg: string }> = {
   PENDING:  { label: '대기중', color: '#ca8a04', bg: '#fefce8' },
   ACCEPTED: { label: '수락됨', color: '#16a34a', bg: '#f0fdf4' },
   REJECTED: { label: '거절됨', color: '#dc2626', bg: '#fef2f2' },
+  CANCELED: { label: '취소됨', color: '#6b7280', bg: '#f3f4f6' },
 };
 
 const TYPE_LABEL: Record<MyApplicationDto['requestType'], string> = {
@@ -25,6 +28,7 @@ const BADGE_STYLES: Record<FilterTab, { border: string; bg: string }> = {
   PENDING:  { border: '#ca8a04', bg: '#fefce8' },
   ACCEPTED: { border: '#16a34a', bg: '#f0fdf4' },
   REJECTED: { border: '#dc2626', bg: '#fef2f2' },
+  CANCELED: { border: '#6b7280', bg: '#f3f4f6' },
 };
 
 // ── 날짜 포맷 ──────────────────────────────────────────────────────────────────
@@ -34,14 +38,24 @@ const formatDate = (dateStr: string): string => {
 };
 
 // ── 카드 컴포넌트 ──────────────────────────────────────────────────────────────
-const ApplicationCard = ({ item }: { item: MyApplicationDto }) => {
+const ApplicationCard = ({ item, onCancelClick }: { item: MyApplicationDto; onCancelClick: (item: MyApplicationDto) => void }) => {
   const navigate = useNavigate();
   const status = STATUS_MAP[item.status];
 
+  const handleCardClick = () => {
+    if (item.status === 'ACCEPTED') navigate(`/my-projects/${item.projectId}`);
+    else if (item.status !== 'CANCELED') navigate('/projects');
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCancelClick(item);
+  };
+
   return (
     <div
-      onClick={() => navigate(item.status === 'ACCEPTED' ? `/my-projects/${item.projectId}` : `/projects`)}
-      className="flex items-center justify-between gap-4 bg-surface border-2 border-border rounded-2xl px-6 py-5 hover:shadow-md hover:border-primary-hover transition-all cursor-pointer"
+      onClick={handleCardClick}
+      className={`flex items-center justify-between gap-4 bg-surface border-2 border-border rounded-2xl px-6 py-5 transition-all ${item.status === 'CANCELED' ? 'opacity-60' : 'hover:shadow-md hover:border-primary-hover cursor-pointer'}`}
     >
       <div className="flex flex-col gap-1.5 min-w-0 flex-1">
         <h3 className="text-[16px] font-bold text-text-primary truncate">
@@ -64,9 +78,19 @@ const ApplicationCard = ({ item }: { item: MyApplicationDto }) => {
           )}
         </div>
       </div>
-      <span className="text-[12px] text-text-tertiary flex-shrink-0">
-        {formatDate(item.createdAt)}
-      </span>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {item.status === 'PENDING' && (
+          <button
+            onClick={handleCancel}
+            className="px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#dc2626] bg-[#fef2f2] hover:bg-[#fee2e2] transition-colors"
+          >
+            취소
+          </button>
+        )}
+        <span className="text-[12px] text-text-tertiary">
+          {formatDate(item.createdAt)}
+        </span>
+      </div>
     </div>
   );
 };
@@ -92,6 +116,8 @@ const ApplicationList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [cancelTarget, setCancelTarget] = useState<MyApplicationDto | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     getMyApplications()
@@ -99,6 +125,22 @@ const ApplicationList = () => {
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
+
+  const handleCancelConfirm = useCallback(async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      await cancelRequest(cancelTarget.requestId);
+      setItems((prev) => prev.map((item) =>
+        item.requestId === cancelTarget.requestId ? { ...item, status: 'CANCELED' as const } : item
+      ));
+      setCancelTarget(null);
+    } catch {
+      alert('취소에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setCancelling(false);
+    }
+  }, [cancelTarget]);
 
   const filtered = useMemo(() => {
     if (activeTab === 'all') return items;
@@ -120,6 +162,7 @@ const ApplicationList = () => {
     PENDING: items.filter((i) => i.status === 'PENDING').length,
     ACCEPTED: items.filter((i) => i.status === 'ACCEPTED').length,
     REJECTED: items.filter((i) => i.status === 'REJECTED').length,
+    CANCELED: items.filter((i) => i.status === 'CANCELED').length,
   }), [items]);
 
   const goToPage = (page: number) => {
@@ -153,6 +196,7 @@ const ApplicationList = () => {
             { key: 'PENDING' as FilterTab, label: `대기중 ${counts.PENDING}` },
             { key: 'ACCEPTED' as FilterTab, label: `수락됨 ${counts.ACCEPTED}` },
             { key: 'REJECTED' as FilterTab, label: `거절됨 ${counts.REJECTED}` },
+            { key: 'CANCELED' as FilterTab, label: `취소됨 ${counts.CANCELED}` },
           ]).map((badge) => {
             const style = BADGE_STYLES[badge.key];
             const isActive = activeTab === badge.key;
@@ -181,7 +225,7 @@ const ApplicationList = () => {
             Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
           ) : paginated.length > 0 ? (
             paginated.map((item) => (
-              <ApplicationCard key={item.requestId} item={item} />
+              <ApplicationCard key={item.requestId} item={item} onCancelClick={setCancelTarget} />
             ))
           ) : (
             <p className="text-center py-12 text-sm text-text-tertiary">
@@ -195,6 +239,42 @@ const ApplicationList = () => {
           <Pagination current={currentPage} totalPages={totalPages} onChange={goToPage} className="py-10" />
         )}
       </div>
+
+      {/* 취소 확인 모달 */}
+      <BaseModal
+        isOpen={!!cancelTarget}
+        onClose={() => !cancelling && setCancelTarget(null)}
+        containerClassName="bg-white rounded-[20px] w-[400px] shadow-2xl p-[32px] text-center"
+      >
+        <div className="flex justify-center mb-[20px]">
+          <div className="w-[56px] h-[56px] rounded-full bg-[#fef2f2] flex items-center justify-center">
+            <X size={28} className="text-[#dc2626]" />
+          </div>
+        </div>
+        <h3 className="font-black text-[#111827] text-[18px] mb-[8px]">
+          {cancelTarget?.requestType === 'INVITE' ? '초대를 취소하시겠습니까?' : '지원을 취소하시겠습니까?'}
+        </h3>
+        <p className="text-[#9ca3af] text-[14px] font-bold mb-[28px]">
+          <span className="text-[#111827]">{cancelTarget?.projectTitle}</span>
+          {cancelTarget?.requestType === 'INVITE' ? ' 초대가' : ' 지원이'} 취소됩니다.
+        </p>
+        <div className="flex gap-[12px]">
+          <button
+            onClick={() => setCancelTarget(null)}
+            disabled={cancelling}
+            className="flex-1 py-[14px] rounded-[12px] border-2 border-[#e5e7eb] text-[#6b7280] font-bold text-[14px] hover:bg-[#f7f8fa] transition-colors"
+          >
+            돌아가기
+          </button>
+          <button
+            onClick={handleCancelConfirm}
+            disabled={cancelling}
+            className="flex-1 py-[14px] rounded-[12px] bg-[#dc2626] text-white font-bold text-[14px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50"
+          >
+            {cancelling ? '취소 중...' : '취소하기'}
+          </button>
+        </div>
+      </BaseModal>
     </div>
   );
 };
