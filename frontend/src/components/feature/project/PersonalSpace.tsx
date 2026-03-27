@@ -13,6 +13,16 @@ import type { PullRequestListItem } from '../../../api/projects';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import EmptyState from './EmptyState';
 
+// ── 유틸 ──────────────────────────────────────────────────────────────────────
+const timeAgo = (dateStr: string): string => {
+  const diffMin = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+  if (diffMin < 1) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  return `${Math.floor(diffHour / 24)}일 전`;
+};
+
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 type MrStatus = 'Open' | 'Merged' | 'Closed';
 
@@ -228,6 +238,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [generatedPrIds, setGeneratedPrIds] = useState<Set<number>>(new Set());
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
   const [selectedMrId, setSelectedMrId] = useState<number | null>(null);
   const availablePrIds = useMemo(
     () => new Set(aiMrList.filter(mr => !generatedPrIds.has(mr.id)).map(mr => mr.id)),
@@ -306,6 +317,9 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         diffUrl: pr.diff_url ?? null,
       })));
       setGeneratedPrIds(new Set(tsData.data.content.map((ts: TroubleshootingListItem) => Number(ts.prId))));
+      const latest = tsData.data.content.reduce((acc: string | null, ts: TroubleshootingListItem) =>
+        !acc || ts.createdAt > acc ? ts.createdAt : acc, null);
+      setLastAnalyzedAt(latest);
     } catch (err) {
       console.error('전체 PR 목록 조회 실패:', err);
     }
@@ -427,7 +441,9 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                     <span className="text-lg font-bold text-text-primary">AI 트러블슈팅 자동 생성</span>
                     <span className="text-[10px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
                   </div>
-                  <span className="text-sm text-text-tertiary font-medium">마지막 분석: 3분 전</span>
+                  {lastAnalyzedAt && (
+                    <span className="text-sm text-text-tertiary font-medium">마지막 분석: {timeAgo(lastAnalyzedAt)}</span>
+                  )}
                 </div>
 
                 <p className="text-sm text-text-secondary leading-relaxed mb-1">
