@@ -598,4 +598,21 @@ public class ProjectService {
             }
         }
     }
+
+    // 프로젝트 팀원 목록 조회
+    @Transactional(readOnly = true)
+    public List<ProjectResponse.ProjectMemberDto> getProjectMembers(Long projectId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+
+        return projectMemberRepository.findAllByProjectIdAndStatus(projectId, MemberStatus.ATTEND).stream()
+            .map(pm -> new ProjectResponse.ProjectMemberDto(
+                pm.getId(),
+                pm.getUser().getId(),
+                pm.getRole().name(),
+                pm.getUser().getUserName(),
+                pm.getUser().getProfileImageUrl()
+            ))
+            .collect(Collectors.toList());
+    }
 }
