@@ -3,6 +3,7 @@ package com.ssafy.gguljob.backend.domain.notification.event;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
 import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
 import com.ssafy.gguljob.backend.domain.notification.repository.NotificationRepository;
+import com.ssafy.gguljob.backend.domain.notification.service.SseEmitterService;
 import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
@@ -19,6 +20,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final SseEmitterService sseEmitterService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -49,6 +51,11 @@ public class NotificationEventListener {
                 .build();
 
             notificationRepository.save(notification);
+
+            // SSE 실시간 알림 발송
+            long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(user.getId());
+            sseEmitterService.notifyUser(user.getId(), notification.getId(),
+                category.name(), event.getMessage(), unreadCount);
         });
     }
 }

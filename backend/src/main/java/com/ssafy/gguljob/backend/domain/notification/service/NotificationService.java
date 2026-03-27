@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final SseEmitterService sseEmitterService;
 
     @Transactional(readOnly = true)
     public Page<NotificationResponseDto> getMyNotifications(Long userId, Pageable pageable) {
@@ -101,7 +102,12 @@ public class NotificationService {
             .referenceId(referenceId)
             .referenceUrl(referenceUrl)
             .build();
-        
+
         notificationRepository.save(notification);
+
+        // SSE 실시간 알림 발송
+        long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(user.getId());
+        sseEmitterService.notifyUser(user.getId(), notification.getId(),
+            category.name(), content, unreadCount);
     }
 }

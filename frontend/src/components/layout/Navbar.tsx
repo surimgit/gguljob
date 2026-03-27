@@ -16,6 +16,7 @@ import GitHubLoginButton from '../feature/auth/GitHubLoginButton';
 import gguljobLogo from '../../assets/images/gguljob_logo.png';
 import NotificationPanel from '../feature/notification/NotificationPanel';
 import type { Notification } from '../feature/notification/NotificationPanel';
+import useNotificationSSE from '../../hooks/useNotificationSSE';
 
 /** 백엔드 응답 → 프론트 Notification 변환 */
 const toNotification = (dto: NotificationDto): Notification => {
@@ -49,22 +50,14 @@ const Navbar = () => {
     const [showNotification, setShowNotification] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const prevUnreadRef = useRef<number>(-1);
     const notifRef = useRef<HTMLDivElement>(null);
 
-    // 안 읽은 알림 개수 조회
+    // 안 읽은 알림 개수 조회 (초기 로드 + 패널 액션 후 갱신용)
     const fetchUnreadCount = useCallback(async () => {
         if (!isAuthenticated) return;
         try {
             const { data } = await getUnreadCount();
-            const newCount = data.data.count;
-            // 첫 호출(-1)이 아닌 경우에만 토스트 표시
-            if (prevUnreadRef.current >= 0 && newCount > prevUnreadRef.current) {
-                const diff = newCount - prevUnreadRef.current;
-                toast(`새 알림이 ${diff}건 도착했습니다.`, { icon: '🔔' });
-            }
-            prevUnreadRef.current = newCount;
-            setUnreadCount(newCount);
+            setUnreadCount(data.data.count);
         } catch (err) {
             console.error('[알림] unread count 조회 실패:', err);
         }
@@ -81,12 +74,21 @@ const Navbar = () => {
         }
     }, [isAuthenticated]);
 
-    // 로그인 시 + 주기적으로 unread count 갱신
+    // 초기 unread count 조회
     useEffect(() => {
         fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000);
-        return () => clearInterval(interval);
     }, [fetchUnreadCount]);
+
+    // SSE로 실시간 알림 수신
+    useNotificationSSE({
+        enabled: isAuthenticated,
+        onNotification: (event) => {
+            setUnreadCount(event.unreadCount);
+            toast(`새 알림이 도착했습니다.`, { icon: '🔔' });
+            // 알림 패널이 열려있으면 목록도 갱신
+            if (showNotification) fetchNotifications();
+        },
+    });
 
     // 알림 패널 열 때 목록 조회
     useEffect(() => {
