@@ -407,7 +407,7 @@ const CreateProject = () => {
                     aria-label="포지션 선택"
                     tabIndex={-1}
                     onKeyDown={(e) => {
-                      const currentIdx = ROLE_LIST.indexOf(memberDraft.position);
+                      const currentIdx = ROLE_LIST.indexOf(memberDraft.position as typeof ROLE_LIST[number]);
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
                         const next = Math.min(currentIdx + 1, ROLE_LIST.length - 1);
