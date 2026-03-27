@@ -95,10 +95,20 @@ public class ProjectService {
             .build();
 
         Project savedProject = projectRepository.save(project);
+
+        // 팀장 역할에 대한 모집 포지션 생성 (FE에서 인원 조정/상태 변경 가능하도록)
+        ProjectPosition leaderPosition = ProjectPosition.builder()
+            .project(savedProject)
+            .role(request.leaderRole())
+            .targetCount(1)
+            .build();
+        ProjectPosition savedLeaderPosition = projectPositionRepository.save(leaderPosition);
+
         ProjectMember projectMember = ProjectMember.builder()
             .project(savedProject)
             .user(leader)
             .role(request.leaderRole())
+            .projectPosition(savedLeaderPosition)
             .build();
 
         projectMemberRepository.save(projectMember);

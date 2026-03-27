@@ -929,6 +929,8 @@ const TeamManagement = ({
           const roleApps = applications.filter(
             (a) => a.role === role.name && a.status === "pending",
           );
+          // 모집 공고가 없는 역할(팀장 등)은 숫자 ID가 없으므로 편집 불가
+          const isRecruitableRole = !isNaN(Number(role.id));
 
           return (
             <div
@@ -946,41 +948,45 @@ const TeamManagement = ({
                   {getRoleDisplayName(role.name)}
                 </span>
                 <div className="flex items-center gap-2">
-                  {/* 인원 조정 */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleUpdateCount(role.id, -1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                      style={{ border: "1px solid var(--color-border)" }}
-                    >
-                      <Minus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
-                    </button>
-                    <span
-                      className="text-sm font-bold w-6 text-center"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {role.total}
-                    </span>
-                    <button
-                      onClick={() => handleUpdateCount(role.id, 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                      style={{ border: "1px solid var(--color-border)" }}
-                    >
-                      <Plus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
-                    </button>
-                  </div>
-                  <StatusDropdown
-                    roleId={role.id}
-                    currentStatus={role.status}
-                    onSelect={handleUpdateStatus}
-                  />
-                  <button
-                    onClick={() => handleDeleteRole(role.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {isRecruitableRole && (
+                    <>
+                      {/* 인원 조정 */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleUpdateCount(role.id, -1)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                          style={{ border: "1px solid var(--color-border)" }}
+                        >
+                          <Minus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
+                        </button>
+                        <span
+                          className="text-sm font-bold w-6 text-center"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {role.total}
+                        </span>
+                        <button
+                          onClick={() => handleUpdateCount(role.id, 1)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                          style={{ border: "1px solid var(--color-border)" }}
+                        >
+                          <Plus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
+                        </button>
+                      </div>
+                      <StatusDropdown
+                        roleId={role.id}
+                        currentStatus={role.status}
+                        onSelect={handleUpdateStatus}
+                      />
+                      <button
+                        onClick={() => handleDeleteRole(role.id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 

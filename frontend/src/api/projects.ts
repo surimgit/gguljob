@@ -104,6 +104,9 @@ export const uploadProjectImage = (projectId: number, file: File) => {
   });
 };
 
+export const deleteProject = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}`);
+
 export const deleteProjectImage = (projectId: number) =>
   api.delete(`/v1/projects/${projectId}/image`);
 

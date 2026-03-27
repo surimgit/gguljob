@@ -388,6 +388,7 @@ const ProjectDashboard = () => {
             <ProjectSettings
               dashboard={dashboard}
               projectId={id ? Number(id) : undefined}
+              isLeader={isLeader}
               onSaved={() => { if (id) { fetchDashboard(Number(id)); fetchMyProjects(); } }}
             />
           </div>
