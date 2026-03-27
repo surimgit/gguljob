@@ -4,5 +4,6 @@ public enum ActionStatus {
     NONE,
     PENDING,
     ACCEPTED,
-    REJECTED
+    REJECTED,
+    CANCELED
 }
