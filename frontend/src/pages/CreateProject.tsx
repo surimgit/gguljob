@@ -73,6 +73,8 @@ const CreateProject = () => {
   const [memberDraft, setMemberDraft] = useState<Member>({ name: '', position: '', email: '' });
   const [positionOpen, setPositionOpen] = useState(false);
   const positionRef = useRef<HTMLDivElement>(null);
+  const positionBtnRef = useRef<HTMLButtonElement>(null);
+  const positionListRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -360,6 +362,7 @@ const CreateProject = () => {
               />
               <div ref={positionRef} className="relative w-full">
                 <button
+                  ref={positionBtnRef}
                   type="button"
                   onClick={() => setPositionOpen((prev) => !prev)}
                   onKeyDown={(e) => {
@@ -376,6 +379,7 @@ const CreateProject = () => {
                   aria-haspopup="listbox"
                   aria-expanded={positionOpen}
                   aria-controls="position-listbox"
+                  aria-activedescendant={positionOpen && memberDraft.position ? `position-option-${memberDraft.position}` : undefined}
                   className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors flex items-center justify-between cursor-pointer"
                   style={{
                     backgroundColor: 'var(--color-surface)',
@@ -394,6 +398,10 @@ const CreateProject = () => {
                 </button>
                 {positionOpen && (
                   <ul
+                    ref={(node) => {
+                      (positionListRef as React.MutableRefObject<HTMLUListElement | null>).current = node;
+                      if (node) node.focus();
+                    }}
                     id="position-listbox"
                     role="listbox"
                     aria-label="포지션 선택"
@@ -411,8 +419,10 @@ const CreateProject = () => {
                       } else if (e.key === 'Enter') {
                         e.preventDefault();
                         setPositionOpen(false);
+                        positionBtnRef.current?.focus();
                       } else if (e.key === 'Escape') {
                         setPositionOpen(false);
+                        positionBtnRef.current?.focus();
                       }
                     }}
                     className="absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden"
@@ -424,6 +434,7 @@ const CreateProject = () => {
                     {ROLE_LIST.map((role) => (
                       <li
                         key={role}
+                        id={`position-option-${role}`}
                         role="option"
                         aria-selected={memberDraft.position === role}
                         onClick={() => {
