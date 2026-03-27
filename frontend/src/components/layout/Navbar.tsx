@@ -28,16 +28,16 @@ const toNotification = (dto: NotificationDto): Notification => {
     else if (diffMin < 1440) time = `${Math.floor(diffMin / 60)}시간 전`;
     else time = `${Math.floor(diffMin / 1440)}일 전`;
 
-  return {
-    id: dto.notificationId,
-    type: dto.category,
-    message: dto.content,
-    time,
-    isRead: dto.isRead,
-    actionStatus: dto.actionStatus ?? 'NONE',
-    referenceId: dto.referenceId,
-    referenceUrl: dto.referenceUrl?.replace(/^\/projects\/(\d+)/, '/my-projects/$1') ?? null,
-  };
+    return {
+        id: dto.notificationId,
+        type: dto.category,
+        message: dto.content,
+        time,
+        isRead: dto.isRead,
+        actionStatus: dto.actionStatus ?? 'NONE',
+        referenceId: dto.referenceId,
+        referenceUrl: dto.referenceUrl?.replace(/^\/projects\/(\d+)/, '/my-projects/$1') ?? null,
+    };
 };
 
 const Navbar = () => {
@@ -162,7 +162,24 @@ const Navbar = () => {
     const guardLink = (e: React.MouseEvent) => {
         if (!isAuthenticated) {
             e.preventDefault();
-            toast('로그인이 필요한 서비스입니다.', { icon: '🔒' });
+            {
+                const id = toast.custom(
+                    (t) => (
+                        <div
+                            className="pointer-events-none px-4 py-3 bg-white rounded-xl shadow-lg border border-gray-100 text-sm text-gray-800 flex items-center gap-2"
+                            style={{
+                                animation: t.visible
+                                    ? 'toast-slide-in 0.2s ease-out forwards'
+                                    : 'toast-slide-out 0.15s ease-in forwards',
+                            }}
+                        >
+                            로그인이 필요한 서비스입니다.
+                        </div>
+                    ),
+                    { duration: Infinity },
+                );
+                setTimeout(() => toast.dismiss(id), 700);
+            }
             navigate('/');
         }
     };
@@ -258,28 +275,40 @@ const Navbar = () => {
                     <div className="flex items-center justify-center gap-12 xl:gap-16 pointer-events-auto -ml-13">
                         <Link
                             to="/my-projects"
-                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
+                            onClick={(e) => {
+                                guardLink(e);
+                                window.scrollTo(0, 0);
+                            }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             내 프로젝트
                         </Link>
                         <Link
                             to="/projects"
-                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
+                            onClick={(e) => {
+                                guardLink(e);
+                                window.scrollTo(0, 0);
+                            }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             프로젝트 찾기
                         </Link>
                         <Link
                             to="/mypage/portfolio"
-                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
+                            onClick={(e) => {
+                                guardLink(e);
+                                window.scrollTo(0, 0);
+                            }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             포트폴리오
                         </Link>
                         <Link
                             to="/recruitment"
-                            onClick={(e) => { guardLink(e); window.scrollTo(0, 0); }}
+                            onClick={(e) => {
+                                guardLink(e);
+                                window.scrollTo(0, 0);
+                            }}
                             className="text-text-brown hover:text-primary-hover hover:underline hover:underline-offset-8 font-semibold text-base whitespace-nowrap transition-colors"
                         >
                             채용
