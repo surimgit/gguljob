@@ -103,7 +103,7 @@ const CreateProject = () => {
   const removeMember = (idx: number) =>
     setForm((prev) => ({ ...prev, members: prev.members.filter((_, i) => i !== idx) }));
 
-  const canSubmit = form.name.trim().length > 0 && form.leaderRole !== '' && !submitting;
+  const canSubmit = form.name.trim().length > 0 && form.leaderRole !== '' && form.domain !== '' && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -221,7 +221,7 @@ const CreateProject = () => {
           {/* 도메인 선택 */}
           <div className="mb-4">
             <label className="text-sm font-semibold mb-1.5 block" style={{ color: 'var(--color-text-primary)' }}>
-              도메인
+              도메인 <span style={{ color: 'var(--color-error)' }}>*</span>
             </label>
             <div className="flex flex-wrap gap-2 mt-2">
               {DOMAINS.map((d) => {
