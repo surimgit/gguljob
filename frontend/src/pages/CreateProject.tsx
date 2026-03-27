@@ -362,6 +362,20 @@ const CreateProject = () => {
                 <button
                   type="button"
                   onClick={() => setPositionOpen((prev) => !prev)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPositionOpen((prev) => !prev);
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setPositionOpen(true);
+                    } else if (e.key === 'Escape') {
+                      setPositionOpen(false);
+                    }
+                  }}
+                  aria-haspopup="listbox"
+                  aria-expanded={positionOpen}
+                  aria-controls="position-listbox"
                   className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors flex items-center justify-between cursor-pointer"
                   style={{
                     backgroundColor: 'var(--color-surface)',
@@ -380,6 +394,27 @@ const CreateProject = () => {
                 </button>
                 {positionOpen && (
                   <ul
+                    id="position-listbox"
+                    role="listbox"
+                    aria-label="포지션 선택"
+                    tabIndex={-1}
+                    onKeyDown={(e) => {
+                      const currentIdx = ROLE_LIST.indexOf(memberDraft.position);
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const next = Math.min(currentIdx + 1, ROLE_LIST.length - 1);
+                        setMemberDraft((prev) => ({ ...prev, position: ROLE_LIST[next] }));
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prev = Math.max(currentIdx - 1, 0);
+                        setMemberDraft((p) => ({ ...p, position: ROLE_LIST[prev] }));
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        setPositionOpen(false);
+                      } else if (e.key === 'Escape') {
+                        setPositionOpen(false);
+                      }
+                    }}
                     className="absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden"
                     style={{
                       backgroundColor: 'var(--color-surface)',
@@ -389,6 +424,8 @@ const CreateProject = () => {
                     {ROLE_LIST.map((role) => (
                       <li
                         key={role}
+                        role="option"
+                        aria-selected={memberDraft.position === role}
                         onClick={() => {
                           setMemberDraft((prev) => ({ ...prev, position: role }));
                           setPositionOpen(false);
