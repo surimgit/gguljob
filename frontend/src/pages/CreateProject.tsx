@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Info,
@@ -71,6 +71,18 @@ const CreateProject = () => {
 
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [memberDraft, setMemberDraft] = useState<Member>({ name: '', position: '', email: '' });
+  const [positionOpen, setPositionOpen] = useState(false);
+  const positionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (positionRef.current && !positionRef.current.contains(e.target as Node)) {
+        setPositionOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   /* ── 핸들러 ── */
 
@@ -346,23 +358,61 @@ const CreateProject = () => {
                 onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
                 onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
               />
-              <select
-                value={memberDraft.position}
-                onChange={(e) => setMemberDraft((prev) => ({ ...prev, position: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors"
-                style={{
-                  backgroundColor: 'var(--color-surface)',
-                  borderColor: 'var(--color-border)',
-                  color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-              >
-                <option value="">포지션 선택</option>
-                {ROLE_LIST.map((role) => (
-                  <option key={role} value={role}>{getRoleDisplayName(role)}</option>
-                ))}
-              </select>
+              <div ref={positionRef} className="relative w-full">
+                <button
+                  type="button"
+                  onClick={() => setPositionOpen((prev) => !prev)}
+                  className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors flex items-center justify-between cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--color-surface)',
+                    borderColor: positionOpen ? 'var(--color-primary)' : 'var(--color-border)',
+                    color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                  }}
+                >
+                  <span>{memberDraft.position ? getRoleDisplayName(memberDraft.position) : '포지션 선택'}</span>
+                  <ChevronDown
+                    className="w-4 h-4 transition-transform"
+                    style={{
+                      transform: positionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      color: 'var(--color-text-tertiary)',
+                    }}
+                  />
+                </button>
+                {positionOpen && (
+                  <ul
+                    className="absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden"
+                    style={{
+                      backgroundColor: 'var(--color-surface)',
+                      borderColor: 'var(--color-border)',
+                    }}
+                  >
+                    {ROLE_LIST.map((role) => (
+                      <li
+                        key={role}
+                        onClick={() => {
+                          setMemberDraft((prev) => ({ ...prev, position: role }));
+                          setPositionOpen(false);
+                        }}
+                        className="px-4 py-2.5 text-sm cursor-pointer transition-colors"
+                        style={{
+                          backgroundColor: memberDraft.position === role ? 'var(--color-primary-soft)' : 'transparent',
+                          color: memberDraft.position === role ? 'var(--color-primary-hover)' : 'var(--color-text-primary)',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (memberDraft.position !== role) {
+                            e.currentTarget.style.backgroundColor = 'var(--color-background)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = memberDraft.position === role ? 'var(--color-primary-soft)' : 'transparent';
+                        }}
+                      >
+                        {getRoleDisplayName(role)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
             <input
               type="email"
