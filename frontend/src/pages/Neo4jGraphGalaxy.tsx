@@ -6,44 +6,190 @@ import api from '../api';
 interface GraphNode {
   id: string;
   label: string;
-  type: 'user' | 'skill' | 'role' | 'project';
+  type: 'user' | 'skill' | 'role' | 'project' | 'recruitment';
   size: number;
   x?: number;
   y?: number;
   z?: number;
   __linkCount?: number;
+  __rand?: number;
 }
 
-interface GraphLink {
-  source: any;
-  target: any;
-  label: string;
-}
+interface GraphLink { source: any; target: any; label: string; }
+interface GraphData { nodes: GraphNode[]; links: GraphLink[]; }
 
-interface GraphData {
-  nodes: GraphNode[];
-  links: GraphLink[];
-}
+// ── 더미 데이터 ──
+const DUMMY_LINKS: GraphLink[] = [
+  // users → skills
+  { source: 'user-1', target: 'skill-React',      label: 'HAS_SKILL' },
+  { source: 'user-1', target: 'skill-TypeScript', label: 'HAS_SKILL' },
+  { source: 'user-1', target: 'skill-Next.js',    label: 'HAS_SKILL' },
+  { source: 'user-2', target: 'skill-Spring',     label: 'HAS_SKILL' },
+  { source: 'user-2', target: 'skill-Java',       label: 'HAS_SKILL' },
+  { source: 'user-2', target: 'skill-MySQL',      label: 'HAS_SKILL' },
+  { source: 'user-3', target: 'skill-Python',     label: 'HAS_SKILL' },
+  { source: 'user-3', target: 'skill-PyTorch',    label: 'HAS_SKILL' },
+  { source: 'user-4', target: 'skill-Docker',     label: 'HAS_SKILL' },
+  { source: 'user-4', target: 'skill-Kubernetes', label: 'HAS_SKILL' },
+  { source: 'user-5', target: 'skill-React',      label: 'HAS_SKILL' },
+  { source: 'user-5', target: 'skill-Vue',        label: 'HAS_SKILL' },
+  { source: 'user-6', target: 'skill-Spring',     label: 'HAS_SKILL' },
+  { source: 'user-6', target: 'skill-Redis',      label: 'HAS_SKILL' },
+  { source: 'user-7', target: 'skill-Python',     label: 'HAS_SKILL' },
+  { source: 'user-7', target: 'skill-FastAPI',    label: 'HAS_SKILL' },
+  { source: 'user-8', target: 'skill-TypeScript', label: 'HAS_SKILL' },
+  { source: 'user-8', target: 'skill-GraphQL',    label: 'HAS_SKILL' },
+  // users → roles
+  { source: 'user-1', target: 'role-Frontend',  label: 'WANTS_ROLE' },
+  { source: 'user-2', target: 'role-Backend',   label: 'WANTS_ROLE' },
+  { source: 'user-3', target: 'role-AI/ML',     label: 'WANTS_ROLE' },
+  { source: 'user-4', target: 'role-DevOps',    label: 'WANTS_ROLE' },
+  { source: 'user-5', target: 'role-Frontend',  label: 'WANTS_ROLE' },
+  { source: 'user-6', target: 'role-Backend',   label: 'WANTS_ROLE' },
+  { source: 'user-7', target: 'role-AI/ML',     label: 'WANTS_ROLE' },
+  { source: 'user-8', target: 'role-Fullstack', label: 'WANTS_ROLE' },
+  // projects → recruitments
+  { source: 'project-1', target: 'recruit-1a', label: 'HAS_RECRUITMENT' },
+  { source: 'project-1', target: 'recruit-1b', label: 'HAS_RECRUITMENT' },
+  { source: 'project-2', target: 'recruit-2a', label: 'HAS_RECRUITMENT' },
+  { source: 'project-3', target: 'recruit-3a', label: 'HAS_RECRUITMENT' },
+  { source: 'project-4', target: 'recruit-4a', label: 'HAS_RECRUITMENT' },
+  { source: 'project-4', target: 'recruit-4b', label: 'HAS_RECRUITMENT' },
+  { source: 'project-5', target: 'recruit-5a', label: 'HAS_RECRUITMENT' },
+  // recruitments → skills
+  { source: 'recruit-1a', target: 'skill-React',      label: 'REQUIRES_SKILL' },
+  { source: 'recruit-1a', target: 'skill-TypeScript', label: 'REQUIRES_SKILL' },
+  { source: 'recruit-1b', target: 'skill-Spring',     label: 'REQUIRES_SKILL' },
+  { source: 'recruit-1b', target: 'skill-MySQL',      label: 'REQUIRES_SKILL' },
+  { source: 'recruit-2a', target: 'skill-Python',     label: 'REQUIRES_SKILL' },
+  { source: 'recruit-2a', target: 'skill-PyTorch',    label: 'REQUIRES_SKILL' },
+  { source: 'recruit-3a', target: 'skill-Docker',     label: 'REQUIRES_SKILL' },
+  { source: 'recruit-3a', target: 'skill-Kubernetes', label: 'REQUIRES_SKILL' },
+  { source: 'recruit-4a', target: 'skill-TypeScript', label: 'REQUIRES_SKILL' },
+  { source: 'recruit-4b', target: 'skill-GraphQL',    label: 'REQUIRES_SKILL' },
+  { source: 'recruit-5a', target: 'skill-Vue',        label: 'REQUIRES_SKILL' },
+  { source: 'recruit-5a', target: 'skill-FastAPI',    label: 'REQUIRES_SKILL' },
+  // recruitments → roles
+  { source: 'recruit-1a', target: 'role-Frontend',  label: 'REQUIRES_ROLE' },
+  { source: 'recruit-1b', target: 'role-Backend',   label: 'REQUIRES_ROLE' },
+  { source: 'recruit-2a', target: 'role-AI/ML',     label: 'REQUIRES_ROLE' },
+  { source: 'recruit-3a', target: 'role-DevOps',    label: 'REQUIRES_ROLE' },
+  { source: 'recruit-4a', target: 'role-Fullstack', label: 'REQUIRES_ROLE' },
+  { source: 'recruit-4b', target: 'role-Fullstack', label: 'REQUIRES_ROLE' },
+  { source: 'recruit-5a', target: 'role-Frontend',  label: 'REQUIRES_ROLE' },
+];
 
-// 갤럭시 컬러: 따뜻한 흰색 ~ 핑크/오렌지 그라데이션
-const GALAXY_COLORS: Record<string, number> = {
-  user:    0xFFFFFF,
-  skill:   0xFFDDAA,
-  role:    0xFFAACC,
-  project: 0xDDAAFF,
+const buildDummyData = (): GraphData => {
+  const nodes: GraphNode[] = [
+    { id: 'user-1', label: '김민준',    type: 'user',        size: 12 },
+    { id: 'user-2', label: '이서연',    type: 'user',        size: 12 },
+    { id: 'user-3', label: '박지호',    type: 'user',        size: 12 },
+    { id: 'user-4', label: '최유나',    type: 'user',        size: 12 },
+    { id: 'user-5', label: '정다은',    type: 'user',        size: 12 },
+    { id: 'user-6', label: '한승우',    type: 'user',        size: 12 },
+    { id: 'user-7', label: '오현진',    type: 'user',        size: 12 },
+    { id: 'user-8', label: '강태양',    type: 'user',        size: 12 },
+    { id: 'skill-React',      label: 'React',      type: 'skill', size: 6 },
+    { id: 'skill-TypeScript', label: 'TypeScript', type: 'skill', size: 6 },
+    { id: 'skill-Next.js',    label: 'Next.js',    type: 'skill', size: 6 },
+    { id: 'skill-Spring',     label: 'Spring',     type: 'skill', size: 6 },
+    { id: 'skill-Java',       label: 'Java',       type: 'skill', size: 6 },
+    { id: 'skill-MySQL',      label: 'MySQL',      type: 'skill', size: 6 },
+    { id: 'skill-Python',     label: 'Python',     type: 'skill', size: 6 },
+    { id: 'skill-PyTorch',    label: 'PyTorch',    type: 'skill', size: 6 },
+    { id: 'skill-Docker',     label: 'Docker',     type: 'skill', size: 6 },
+    { id: 'skill-Kubernetes', label: 'Kubernetes', type: 'skill', size: 6 },
+    { id: 'skill-Vue',        label: 'Vue',        type: 'skill', size: 6 },
+    { id: 'skill-Redis',      label: 'Redis',      type: 'skill', size: 6 },
+    { id: 'skill-FastAPI',    label: 'FastAPI',    type: 'skill', size: 6 },
+    { id: 'skill-GraphQL',    label: 'GraphQL',    type: 'skill', size: 6 },
+    { id: 'role-Frontend',  label: 'Frontend',  type: 'role', size: 8 },
+    { id: 'role-Backend',   label: 'Backend',   type: 'role', size: 8 },
+    { id: 'role-AI/ML',     label: 'AI / ML',   type: 'role', size: 8 },
+    { id: 'role-DevOps',    label: 'DevOps',    type: 'role', size: 8 },
+    { id: 'role-Fullstack', label: 'Fullstack', type: 'role', size: 8 },
+    { id: 'project-1', label: '꿀잡 - 팀 매칭', type: 'project', size: 10 },
+    { id: 'project-2', label: 'AI 추천 엔진',   type: 'project', size: 10 },
+    { id: 'project-3', label: 'DevOps 플랫폼',  type: 'project', size: 10 },
+    { id: 'project-4', label: '오픈 커머스',    type: 'project', size: 10 },
+    { id: 'project-5', label: '대시보드 SaaS',  type: 'project', size: 10 },
+    { id: 'recruit-1a', label: 'FE 개발자 모집',   type: 'recruitment', size: 7 },
+    { id: 'recruit-1b', label: 'BE 개발자 모집',   type: 'recruitment', size: 7 },
+    { id: 'recruit-2a', label: 'AI 엔지니어 모집', type: 'recruitment', size: 7 },
+    { id: 'recruit-3a', label: 'DevOps 엔지니어',  type: 'recruitment', size: 7 },
+    { id: 'recruit-4a', label: '풀스택 개발자',    type: 'recruitment', size: 7 },
+    { id: 'recruit-4b', label: 'API 개발자',       type: 'recruitment', size: 7 },
+    { id: 'recruit-5a', label: 'FE/BE 통합 모집',  type: 'recruitment', size: 7 },
+  ];
+  const linkCount: Record<string, number> = {};
+  DUMMY_LINKS.forEach((l) => {
+    linkCount[l.source as string] = (linkCount[l.source as string] || 0) + 1;
+    linkCount[l.target as string] = (linkCount[l.target as string] || 0) + 1;
+  });
+  nodes.forEach((n) => { n.__linkCount = linkCount[n.id] || 0; n.__rand = Math.random(); });
+  return { nodes, links: DUMMY_LINKS };
 };
 
-const Neo4jGraphGalaxy = () => {
-  const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
-  const graphRef = useRef<any>(null);
-  const angleRef = useRef(0);
-  const animFrameRef = useRef<number>(0);
-  const rotatingRef = useRef(true);
+// ── 글로우 텍스처 ──
+const createGlowTexture = (): THREE.Texture => {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const half = size / 2;
+  const g = ctx.createRadialGradient(half, half, 0, half, half, half);
+  g.addColorStop(0,    'rgba(255,255,255,1)');
+  g.addColorStop(0.15, 'rgba(255,255,255,0.8)');
+  g.addColorStop(0.4,  'rgba(255,255,255,0.15)');
+  g.addColorStop(1,    'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+};
+let _glowTex: THREE.Texture | null = null;
+const getGlowTexture = () => { if (!_glowTex) _glowTex = createGlowTexture(); return _glowTex; };
 
-  // ── 데이터 fetch + 링크 카운트 계산 ──
+// ── 노드 색상 ──
+const getNodeColor = (type: string, rand: number): THREE.Color => {
+  if (type === 'recruitment') {
+    // 금색 (채용공고)
+    return new THREE.Color(1.0, 0.75 + rand * 0.1, rand * 0.08);
+  }
+  if (type === 'project') {
+    // 하늘색 (프로젝트)
+    return new THREE.Color(0.4 + rand * 0.1, 0.85 + rand * 0.1, 1.0);
+  }
+  // 백색 (user, skill, role)
+  const b = 0.85 + rand * 0.15;
+  return new THREE.Color(b, b, b);
+};
+
+// ── 항상 밝게 유지할 타입 ──
+const isAlwaysBright = (type: string) => type === 'project' || type === 'recruitment';
+
+const defaultOpacity = (links: number) => Math.min(0.55 + links * 0.04, 1);
+
+// ── Wave 파라미터 ──
+const WAVE_INTERVAL = 280;
+const FADE_DURATION = 1200;
+
+const Neo4jGraphGalaxy = () => {
+  const [graphData, setGraphData] = useState<GraphData>(() => buildDummyData());
+  const [search, setSearch]       = useState('');
+  const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
+
+  const graphRef       = useRef<any>(null);
+  const animRef        = useRef<number>(0);
+  const waveStartRef   = useRef<number>(0);
+
+  const nodeMatMap     = useRef<Map<string, THREE.SpriteMaterial>>(new Map());
+  const nodeTypeMap    = useRef<Map<string, string>>(new Map());
+  const nodeLinkCntMap = useRef<Map<string, number>>(new Map());
+  const linkEntries    = useRef<Array<{ link: any; mat: THREE.LineBasicMaterial }>>([]);
+
+  // ── API fetch ──
   useEffect(() => {
     api.get('/v1/admin/neo4j/graph')
       .then(({ data }) => {
@@ -52,157 +198,184 @@ const Neo4jGraphGalaxy = () => {
           linkCount[l.source] = (linkCount[l.source] || 0) + 1;
           linkCount[l.target] = (linkCount[l.target] || 0) + 1;
         });
-        data.nodes.forEach((n: GraphNode) => {
-          n.__linkCount = linkCount[n.id] || 0;
-        });
+        data.nodes.forEach((n: GraphNode) => { n.__linkCount = linkCount[n.id] || 0; n.__rand = Math.random(); });
         setGraphData(data);
-        setLoading(false);
       })
-      .catch((err) => {
-        console.error('Graph fetch failed:', err);
-        setLoading(false);
-      });
+      .catch(() => {});
   }, []);
 
-  // ── 검색 필터 ──
+  // graphData 변경 시 캐시 초기화
+  useEffect(() => {
+    nodeMatMap.current.clear();
+    nodeTypeMap.current.clear();
+    nodeLinkCntMap.current.clear();
+    linkEntries.current = [];
+  }, [graphData]);
+
+  // ── 검색 ──
   const highlightIds = useMemo(() => {
     if (!search.trim()) return null;
     const q = search.toLowerCase();
     const set = new Set<string>();
-    graphData.nodes.forEach((n) => {
-      if (n.label.toLowerCase().includes(q)) set.add(n.id);
-    });
+    graphData.nodes.forEach((n) => { if (n.label.toLowerCase().includes(q)) set.add(n.id); });
     return set.size > 0 ? set : null;
   }, [search, graphData.nodes]);
 
-  // ── 호버 시 연결 노드 ──
-  const connectedIds = useMemo(() => {
-    if (!hoverNode) return null;
-    const set = new Set<string>();
-    set.add(hoverNode.id);
-    graphData.links.forEach((link) => {
-      const src = typeof link.source === 'object' ? link.source.id : link.source;
-      const tgt = typeof link.target === 'object' ? link.target.id : link.target;
-      if (src === hoverNode.id) set.add(tgt);
-      if (tgt === hoverNode.id) set.add(src);
+  useEffect(() => {
+    if (hoverNode) return;
+    nodeMatMap.current.forEach((mat, id) => {
+      const links = nodeLinkCntMap.current.get(id) || 0;
+      mat.opacity = highlightIds
+        ? (highlightIds.has(id) ? defaultOpacity(links) : 0.04)
+        : defaultOpacity(links);
     });
-    return set;
-  }, [hoverNode, graphData.links]);
+  }, [highlightIds, hoverNode]);
 
-  // ── 자동 회전 ──
-  useEffect(() => {
-    if (!graphRef.current || graphData.nodes.length === 0) return;
-    const dist = 500;
-    const rotate = () => {
-      if (!graphRef.current || !rotatingRef.current) {
-        animFrameRef.current = requestAnimationFrame(rotate);
-        return;
-      }
-      angleRef.current += 0.001;
-      graphRef.current.cameraPosition({
-        x: dist * Math.sin(angleRef.current),
-        y: 80 * Math.sin(angleRef.current * 0.3),
-        z: dist * Math.cos(angleRef.current),
-      });
-      animFrameRef.current = requestAnimationFrame(rotate);
-    };
-    setTimeout(() => { animFrameRef.current = requestAnimationFrame(rotate); }, 1000);
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, [graphData]);
+  // ── Sprite 노드 생성 ──
+  const createStarSprite = useCallback((node: any) => {
+    const rand  = node.__rand ?? Math.random();
+    const links = node.__linkCount || 0;
 
-  // ── 렌더러 세팅 ──
-  useEffect(() => {
-    if (!graphRef.current) return;
-    const renderer = graphRef.current.renderer();
-    if (renderer) {
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.8;
-    }
-  }, [graphData]);
+    nodeLinkCntMap.current.set(node.id, links);
+    nodeTypeMap.current.set(node.id, node.type);
+
+    const baseScale = node.type === 'user' ? 8 : node.type === 'project' ? 7 : node.type === 'recruitment' ? 5 : 4;
+    const scale     = baseScale + Math.min(links * 0.5, 12);
+
+    const mat = new THREE.SpriteMaterial({
+      map: getGlowTexture(),
+      color: getNodeColor(node.type, rand),
+      transparent: true,
+      opacity: defaultOpacity(links),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+
+    nodeMatMap.current.set(node.id, mat);
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(scale, scale, 1);
+    return sprite;
+  }, []);
+
+  // ── Link 객체 생성 ──
+  const createLinkObject = useCallback((link: any) => {
+    const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 });
+    linkEntries.current.push({ link, mat });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 1, 1, 1], 3));
+    return new THREE.Line(geo, mat);
+  }, []);
+
+  const updateLinkPosition = useCallback((lineObj: any, coords: { start: any; end: any }) => {
+    const { start, end } = coords;
+    const pos = lineObj.geometry.attributes.position.array as Float32Array;
+    pos[0] = start.x; pos[1] = start.y; pos[2] = start.z;
+    pos[3] = end.x;   pos[4] = end.y;   pos[5] = end.z;
+    lineObj.geometry.attributes.position.needsUpdate = true;
+    return true;
+  }, []);
 
   // ── 노드 클릭 ──
   const handleNodeClick = useCallback((node: any) => {
     if (!graphRef.current) return;
-    rotatingRef.current = false;
-    const d = 60;
-    const ratio = 1 + d / Math.hypot(node.x, node.y, node.z);
+    const ratio = 1 + 50 / Math.hypot(node.x, node.y, node.z);
     graphRef.current.cameraPosition(
-      { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
-      node,
-      2000,
+      { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio }, node, 2000,
     );
   }, []);
 
-  // ── 별(Star) 노드 오브젝트 ──
-  const createStarNode = useCallback((node: any) => {
-    const links = node.__linkCount || 0;
-    const color = GALAXY_COLORS[node.type] || 0xFFFFFF;
+  // ── Wave propagation 애니메이션 ──
+  useEffect(() => {
+    cancelAnimationFrame(animRef.current);
 
-    // 허브 노드일수록 크게
-    const baseSize = node.type === 'user' ? 1.2 : 0.8;
-    const starSize = baseSize + Math.min(links * 0.15, 4);
-
-    // 하이라이트 여부
-    const isSearched = highlightIds ? highlightIds.has(node.id) : true;
-    const isConnected = connectedIds ? connectedIds.has(node.id) : true;
-    const isVisible = isSearched && isConnected;
-
-    const group = new THREE.Group();
-
-    // 코어 (밝은 점)
-    const coreGeo = new THREE.SphereGeometry(starSize, 16, 16);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: isVisible ? 1 : 0.03,
-    });
-    group.add(new THREE.Mesh(coreGeo, coreMat));
-
-    // 글로우 (허브 노드만 - 밝은 후광)
-    if (links > 5 && isVisible) {
-      const glowGeo = new THREE.SphereGeometry(starSize * 3, 16, 16);
-      const glowMat = new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: Math.min(links * 0.008, 0.15),
+    if (!hoverNode) {
+      nodeMatMap.current.forEach((mat, id) => {
+        const links = nodeLinkCntMap.current.get(id) || 0;
+        mat.opacity = highlightIds
+          ? (highlightIds.has(id) ? defaultOpacity(links) : 0.04)
+          : defaultOpacity(links);
       });
-      group.add(new THREE.Mesh(glowGeo, glowMat));
+      linkEntries.current.forEach(({ mat }) => { mat.opacity = 0.2; });
+      return;
     }
 
-    return group;
-  }, [highlightIds, connectedIds]);
+    // BFS
+    const distMap = new Map<string, number>();
+    distMap.set(hoverNode.id, 0);
+    const queue: string[] = [hoverNode.id];
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      const d    = distMap.get(curr)!;
+      graphData.links.forEach((l) => {
+        const s = typeof l.source === 'object' ? l.source.id : l.source;
+        const t = typeof l.target === 'object' ? l.target.id : l.target;
+        if (s === curr && !distMap.has(t)) { distMap.set(t, d + 1); queue.push(t); }
+        if (t === curr && !distMap.has(s)) { distMap.set(s, d + 1); queue.push(s); }
+      });
+    }
 
-  // ── 링크 색상 ──
-  const getLinkColor = useCallback((link: any) => {
-    if (!connectedIds) return 'rgba(255,255,255,0.04)';
-    const src = typeof link.source === 'object' ? link.source.id : link.source;
-    const tgt = typeof link.target === 'object' ? link.target.id : link.target;
-    if (connectedIds.has(src) && connectedIds.has(tgt)) return 'rgba(255,200,160,0.3)';
-    return 'rgba(255,255,255,0.01)';
-  }, [connectedIds]);
+    waveStartRef.current = performance.now();
 
-  const getLinkWidth = useCallback((link: any) => {
-    if (!connectedIds) return 0.2;
-    const src = typeof link.source === 'object' ? link.source.id : link.source;
-    const tgt = typeof link.target === 'object' ? link.target.id : link.target;
-    return (connectedIds.has(src) && connectedIds.has(tgt)) ? 1.5 : 0.1;
-  }, [connectedIds]);
+    const tick = () => {
+      const elapsed = performance.now() - waveStartRef.current;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-black">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-3 h-3 bg-white rounded-full animate-ping" />
-          <span className="text-white/30 text-xs font-mono tracking-[0.3em]">MAPPING GALAXY</span>
-        </div>
-      </div>
-    );
-  }
+      nodeMatMap.current.forEach((mat, nodeId) => {
+        const type   = nodeTypeMap.current.get(nodeId) ?? '';
+        const always = isAlwaysBright(type);
+        const dist   = distMap.get(nodeId);
+
+        if (dist === undefined) {
+          if (always) {
+            const links = nodeLinkCntMap.current.get(nodeId) || 0;
+            const t = Math.min(elapsed / (FADE_DURATION * 2), 1);
+            mat.opacity = 0.02 + (defaultOpacity(links) - 0.02) * t;
+          } else {
+            mat.opacity = 0.02;
+          }
+          return;
+        }
+
+        const arrival = dist * WAVE_INTERVAL;
+        if (elapsed < arrival) {
+          mat.opacity = 0.02;
+        } else {
+          const t      = Math.min((elapsed - arrival) / FADE_DURATION, 1);
+          const links  = nodeLinkCntMap.current.get(nodeId) || 0;
+          const target = always
+            ? defaultOpacity(links)
+            : dist === 0 ? 1.0 : dist === 1 ? 0.85 : dist === 2 ? 0.5 : 0.25;
+          mat.opacity = 0.02 + (target - 0.02) * t;
+        }
+      });
+
+      linkEntries.current.forEach(({ link, mat }) => {
+        const s  = typeof link.source === 'object' ? link.source.id : link.source;
+        const t  = typeof link.target === 'object' ? link.target.id : link.target;
+        const ds = distMap.get(s);
+        const dt = distMap.get(t);
+        if (ds === undefined || dt === undefined) { mat.opacity = 0.02; return; }
+        const maxDist = Math.max(ds, dt);
+        const arrival = maxDist * WAVE_INTERVAL;
+        if (elapsed < arrival) {
+          mat.opacity = 0.02;
+        } else {
+          const t2     = Math.min((elapsed - arrival) / FADE_DURATION, 1);
+          const target = maxDist === 0 ? 0.9 : maxDist === 1 ? 0.75 : maxDist === 2 ? 0.4 : 0.15;
+          mat.opacity  = 0.02 + (target - 0.02) * t2;
+        }
+      });
+
+      animRef.current = requestAnimationFrame(tick);
+    };
+
+    animRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [hoverNode, graphData.links, highlightIds]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* ── 검색바 (좌상단, 극도로 미니멀) ── */}
+      {/* 검색바 */}
       <div className="absolute top-5 left-5 z-10">
         <div className="flex items-center bg-[#111] border border-white/10 rounded-md overflow-hidden">
           <input
@@ -220,7 +393,7 @@ const Neo4jGraphGalaxy = () => {
         </div>
       </div>
 
-      {/* ── 호버 시 노드 정보 (우하단) ── */}
+      {/* 호버 정보 */}
       {hoverNode && (
         <div className="absolute bottom-8 right-8 z-10">
           <div className="text-right">
@@ -235,25 +408,14 @@ const Neo4jGraphGalaxy = () => {
       <ForceGraph3D
         ref={graphRef}
         graphData={graphData}
-        nodeThreeObject={createStarNode}
+        nodeThreeObject={createStarSprite}
+        nodeThreeObjectExtend={false}
         nodeLabel={() => ''}
-        onNodeHover={(node: any) => {
-          setHoverNode(node || null);
-          rotatingRef.current = !node;
-        }}
+        onNodeHover={(node: any) => setHoverNode(node || null)}
         onNodeClick={handleNodeClick}
-        linkColor={getLinkColor}
-        linkWidth={getLinkWidth}
-        linkOpacity={1}
-        linkDirectionalParticles={(link: any) => {
-          if (!connectedIds) return 0;
-          const src = typeof link.source === 'object' ? link.source.id : link.source;
-          const tgt = typeof link.target === 'object' ? link.target.id : link.target;
-          return (connectedIds.has(src) && connectedIds.has(tgt)) ? 2 : 0;
-        }}
-        linkDirectionalParticleWidth={1}
-        linkDirectionalParticleSpeed={0.003}
-        linkDirectionalParticleColor={() => '#FFDDAA'}
+        linkThreeObject={createLinkObject}
+        linkPositionUpdate={updateLinkPosition}
+        linkThreeObjectExtend={false}
         backgroundColor="#000000"
         showNavInfo={false}
         warmupTicks={100}
