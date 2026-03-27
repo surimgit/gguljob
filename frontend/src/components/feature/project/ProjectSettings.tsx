@@ -972,6 +972,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           </p>
         </div>
         <button
+          onClick={() => setShowDeleteModal(true)}
           className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"
           style={{ background: "var(--color-error)" }}
           onMouseEnter={(e) =>
