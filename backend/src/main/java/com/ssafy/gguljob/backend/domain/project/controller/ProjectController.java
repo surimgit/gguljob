@@ -143,12 +143,13 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "프로젝트 팀원 목록 조회", description = "프로젝트에 소속된 팀원 목록을 조회합니다.")
+    @Operation(summary = "프로젝트 팀원 목록 조회", description = "프로젝트에 소속된 팀원 목록을 조회합니다. 프로젝트 멤버만 조회 가능합니다.")
     @GetMapping("/{projectId}/members")
     public ResponseEntity<ApiResponseDto<List<ProjectResponse.ProjectMemberDto>>> getProjectMembers(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long projectId) {
 
-        List<ProjectResponse.ProjectMemberDto> members = projectService.getProjectMembers(projectId);
+        List<ProjectResponse.ProjectMemberDto> members = projectService.getProjectMembers(userDetails.getId(), projectId);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 목록 조회가 완료되었습니다.", members));
     }
 

@@ -601,9 +601,16 @@ public class ProjectService {
 
     // 프로젝트 팀원 목록 조회
     @Transactional(readOnly = true)
-    public List<ProjectResponse.ProjectMemberDto> getProjectMembers(Long projectId) {
+    public List<ProjectResponse.ProjectMemberDto> getProjectMembers(Long loginUserId, Long projectId) {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_IdAndStatus(
+            projectId, loginUserId, MemberStatus.ATTEND
+        );
+        if (!isMember) {
+            throw new IllegalArgumentException("프로젝트 멤버만 팀원 목록을 조회할 수 있습니다.");
+        }
 
         return projectMemberRepository.findAllByProjectIdAndStatus(projectId, MemberStatus.ATTEND).stream()
             .map(pm -> new ProjectResponse.ProjectMemberDto(
