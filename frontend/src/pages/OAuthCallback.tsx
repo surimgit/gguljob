@@ -33,7 +33,7 @@ const OAuthCallback = () => {
         if (needsOnboarding) {
           setShowProfileModal(true);
         } else {
-          navigate('/', { replace: true });
+          navigate('/my-projects', { replace: true });
         }
       })
       .catch((err) => {
@@ -91,7 +91,7 @@ const OAuthCallback = () => {
             await onboardApi(payload);
             const updatedUser = await getMe();
             setUser(updatedUser);
-            navigate('/', { replace: true });
+            navigate('/my-projects', { replace: true });
           } catch (err) {
             if (axios.isAxiosError(err)) {
               console.error('[온보딩] API 에러:', err.response?.status, err.response?.data);
