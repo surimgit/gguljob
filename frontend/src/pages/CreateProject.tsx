@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
 import { ROLE_LIST, getRoleDisplayName, SKILLS_BY_CATEGORY, SKILL_CATEGORY_META } from '../constants/skills';
+import { searchUserByEmail } from '../api/user';
+import { inviteUser } from '../api/projects';
 
 /* ── 상수 ── */
 
@@ -40,9 +42,16 @@ const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
 /* ── 타입 ── */
 
 interface Member {
-  name: string;
+  userId: number;
+  userName: string;
   position: string;
-  email: string;
+  profileImageUrl: string | null;
+}
+
+interface VerifiedUser {
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
 }
 
 interface ProjectFormState {
@@ -70,7 +79,10 @@ const CreateProject = () => {
   });
 
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-  const [memberDraft, setMemberDraft] = useState<Member>({ name: '', position: '', email: '' });
+  const [memberDraft, setMemberDraft] = useState({ email: '', position: '' });
+  const [verifiedUser, setVerifiedUser] = useState<VerifiedUser | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   /* ── 핸들러 ── */
 
@@ -92,12 +104,45 @@ const CreateProject = () => {
       };
     });
 
-  const canAddMember = memberDraft.name.trim() && memberDraft.position && memberDraft.email.trim();
+  const canAddMember = verifiedUser !== null && memberDraft.position !== '';
+
+  const handleVerifyEmail = async () => {
+    const email = memberDraft.email.trim();
+    if (!email) return;
+    setVerifying(true);
+    setVerifyError(null);
+    setVerifiedUser(null);
+    try {
+      const result = await searchUserByEmail(email);
+      setVerifiedUser(result);
+    } catch {
+      setVerifyError('해당 이메일로 가입된 사용자가 없습니다.');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const addMember = () => {
-    if (!canAddMember) return;
-    setForm((prev) => ({ ...prev, members: [...prev.members, memberDraft] }));
-    setMemberDraft({ name: '', position: '', email: '' });
+    if (!canAddMember || !verifiedUser) return;
+    if (form.members.some((m) => m.userId === verifiedUser.userId)) {
+      setVerifyError('이미 추가된 팀원입니다.');
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      members: [
+        ...prev.members,
+        {
+          userId: verifiedUser.userId,
+          userName: verifiedUser.userName,
+          position: memberDraft.position,
+          profileImageUrl: verifiedUser.profileImageUrl,
+        },
+      ],
+    }));
+    setMemberDraft({ email: '', position: '' });
+    setVerifiedUser(null);
+    setVerifyError(null);
   };
 
   const removeMember = (idx: number) =>
@@ -115,6 +160,11 @@ const CreateProject = () => {
         description: form.description,
         leaderRole: form.leaderRole,
       });
+      if (form.members.length > 0) {
+        await Promise.allSettled(
+          form.members.map((m) => inviteUser(projectId, m.userId, { role: m.position }))
+        );
+      }
       navigate(`/my-projects/${projectId}`);
     } catch {
       alert('프로젝트 생성에 실패했습니다.');
@@ -331,53 +381,84 @@ const CreateProject = () => {
 
           {/* 입력 폼 */}
           <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-primary-soft)' }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* 이메일 + 확인 버튼 */}
+            <div className="flex gap-2">
               <input
-                type="text"
-                value={memberDraft.name}
-                onChange={(e) => setMemberDraft((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="이름"
-                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors"
+                type="email"
+                value={memberDraft.email}
+                onChange={(e) => {
+                  setMemberDraft((prev) => ({ ...prev, email: e.target.value }));
+                  setVerifiedUser(null);
+                  setVerifyError(null);
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyEmail(); }}
+                placeholder="초대할 팀원의 이메일"
+                className="flex-1 px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors"
                 style={{
                   backgroundColor: 'var(--color-surface)',
-                  borderColor: 'var(--color-border)',
+                  borderColor: verifiedUser ? 'var(--color-primary)' : 'var(--color-border)',
                   color: 'var(--color-text-primary)',
                 }}
                 onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
+                onBlur={(e) => (e.target.style.borderColor = verifiedUser ? 'var(--color-primary)' : 'var(--color-border)')}
               />
-              <select
-                value={memberDraft.position}
-                onChange={(e) => setMemberDraft((prev) => ({ ...prev, position: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors"
+              <button
+                type="button"
+                onClick={handleVerifyEmail}
+                disabled={!memberDraft.email.trim() || verifying}
+                className="px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap"
                 style={{
                   backgroundColor: 'var(--color-surface)',
                   borderColor: 'var(--color-border)',
-                  color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: memberDraft.email.trim() && !verifying ? 'pointer' : 'not-allowed',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
               >
-                <option value="">포지션 선택</option>
-                {ROLE_LIST.map((role) => (
-                  <option key={role} value={role}>{getRoleDisplayName(role)}</option>
-                ))}
-              </select>
+                {verifying ? '확인 중...' : '사용자 확인'}
+              </button>
             </div>
-            <input
-              type="email"
-              value={memberDraft.email}
-              onChange={(e) => setMemberDraft((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="이메일"
+
+            {/* 검증 결과 */}
+            {verifiedUser && (
+              <div
+                className="flex items-center gap-3 mt-3 px-3 py-2.5 rounded-lg"
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-primary)' }}
+              >
+                {verifiedUser.profileImageUrl ? (
+                  <img src={verifiedUser.profileImageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold" style={{ color: 'var(--color-text-secondary)' }}>
+                    {verifiedUser.userName.charAt(0)}
+                  </div>
+                )}
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                  {verifiedUser.userName}
+                </span>
+                <span className="text-xs ml-auto" style={{ color: 'var(--color-primary)' }}>확인됨</span>
+              </div>
+            )}
+            {verifyError && (
+              <p className="text-xs mt-2 px-1" style={{ color: 'var(--color-error)' }}>{verifyError}</p>
+            )}
+
+            {/* 포지션 선택 */}
+            <select
+              value={memberDraft.position}
+              onChange={(e) => setMemberDraft((prev) => ({ ...prev, position: e.target.value }))}
               className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none mt-3 transition-colors"
               style={{
                 backgroundColor: 'var(--color-surface)',
                 borderColor: 'var(--color-border)',
-                color: 'var(--color-text-primary)',
+                color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
               }}
               onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
               onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-            />
+            >
+              <option value="">초대할 포지션 선택</option>
+              {ROLE_LIST.map((role) => (
+                <option key={role} value={role}>{getRoleDisplayName(role)}</option>
+              ))}
+            </select>
 
             <button
               type="button"
@@ -411,17 +492,23 @@ const CreateProject = () => {
                   className="flex items-center justify-between px-4 py-3 rounded-xl"
                   style={{ backgroundColor: 'var(--color-background)' }}
                 >
-                  <div className="flex flex-col">
+                  <div className="flex items-center gap-3">
+                    {m.profileImageUrl ? (
+                      <img src={m.profileImageUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }}>
+                        {m.userName.charAt(0)}
+                      </div>
+                    )}
                     <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                      {m.name}
+                      {m.userName}
                       <span
                         className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary-hover)' }}
                       >
-                        {m.position}
+                        {getRoleDisplayName(m.position)}
                       </span>
                     </span>
-                    <span className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>{m.email}</span>
                   </div>
                   <button
                     type="button"
