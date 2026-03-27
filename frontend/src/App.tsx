@@ -17,6 +17,10 @@ import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
 import PortfolioList from './pages/PortfolioList';
 import ApplicationList from './pages/ApplicationList';
+import Neo4jGraph from './pages/Neo4jGraph';
+import Neo4jGraphCyber from './pages/Neo4jGraphCyber';
+import Neo4jGraphGalaxy from './pages/Neo4jGraphGalaxy';
+import Neo4jGraphGalaxy2D from './pages/Neo4jGraphGalaxy2D';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -76,6 +80,10 @@ const AppRoutes = () => {
 
       {/* 홈은 자체 Layout(Navbar+Footer) 포함 */}
       <Route path="/" element={<Home />} />
+      <Route path="/graph" element={<Neo4jGraph />} />
+      <Route path="/graph2" element={<Neo4jGraphCyber />} />
+      <Route path="/graph3" element={<Neo4jGraphGalaxy />} />
+      <Route path="/graph3-2d" element={<Neo4jGraphGalaxy2D />} />
 
       <Route element={<Layout />}>
         {/* 로그인 필요 라우트 */}
