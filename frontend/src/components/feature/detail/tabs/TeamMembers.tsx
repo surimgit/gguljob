@@ -929,8 +929,9 @@ const TeamManagement = ({
           const roleApps = applications.filter(
             (a) => a.role === role.name && a.status === "pending",
           );
-          // role.id가 숫자(positionId)인 경우, 해당 역할은 모집 공고와 연결되어 인원 조정, 상태 변경, 삭제 컨트롤이 표시됩니다.
-          const isManageableRole = !isNaN(Number(role.id));
+          // role.id가 양의 정수(positionId)인 경우, 해당 역할은 모집 공고와 연결되어 인원 조정, 상태 변경, 삭제 컨트롤이 표시됩니다.
+          const numId = Number(role.id);
+          const isManageableRole = !isNaN(numId) && numId > 0;
           // 모집 공고가 있더라도 현재 멤버가 있으면 삭제 불가
           const isDeletableRole = isManageableRole && roleMembers.length === 0;
 
