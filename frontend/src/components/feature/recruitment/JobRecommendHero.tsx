@@ -203,20 +203,12 @@ const JobCard = ({
           <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
           <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
         </div>
-        <div className="flex flex-col items-center gap-0.5">
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <span
-                key={i}
-                className="w-2 h-2 rounded-full"
-                style={{ background: i <= match.dots ? match.color : '#E5E7EB' }}
-              />
-            ))}
-          </div>
-          <span className="text-[10px] font-bold" style={{ color: match.color }}>
-            {match.label}
-          </span>
-        </div>
+        <span
+          className="text-[14px] font-bold px-3.5 py-1.5 rounded-full"
+          style={{ background: `${match.color}18`, color: match.color }}
+        >
+          {match.label}
+        </span>
       </div>
     </div>
   );
