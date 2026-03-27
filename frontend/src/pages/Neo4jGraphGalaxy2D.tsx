@@ -152,7 +152,9 @@ const WAVE_INTERVAL = 280;
 const FADE_DURATION = 1200;
 
 const Neo4jGraphGalaxy2D = () => {
-  const [graphData, setGraphData] = useState<GraphData>(() => buildDummyData());
+  const [graphData, setGraphData] = useState<GraphData>(() =>
+    import.meta.env.DEV ? buildDummyData() : { nodes: [], links: [] }
+  );
   const [search, setSearch]       = useState('');
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
 
