@@ -929,8 +929,10 @@ const TeamManagement = ({
           const roleApps = applications.filter(
             (a) => a.role === role.name && a.status === "pending",
           );
-          // 모집 공고가 없는 역할(팀장 등)은 숫자 ID가 없으므로 편집 불가
+          // 모집 공고가 있는 역할(positionId가 숫자)만 편집 가능
           const isRecruitableRole = !isNaN(Number(role.id));
+          // 현재 멤버가 있는 역할은 삭제 불가
+          const isDeletableRole = isRecruitableRole && roleMembers.length === 0;
 
           return (
             <div
@@ -978,13 +980,15 @@ const TeamManagement = ({
                         currentStatus={role.status}
                         onSelect={handleUpdateStatus}
                       />
-                      <button
-                        onClick={() => handleDeleteRole(role.id)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
-                        style={{ color: "var(--color-text-tertiary)" }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {isDeletableRole && (
+                        <button
+                          onClick={() => handleDeleteRole(role.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

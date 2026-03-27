@@ -158,11 +158,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
   const info = dashboard?.projectInfo;
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isLeader, setIsLeader] = useState(isLeaderProp ?? true);
-
-  useEffect(() => {
-    if (isLeaderProp !== undefined) setIsLeader(isLeaderProp);
-  }, [isLeaderProp]);
+  const isLeader = isLeaderProp ?? false;
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -301,7 +297,6 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       })
       .catch((err) => {
         console.error("프로젝트 설정 로드 실패:", err);
-        setIsLeader(false);
         // 폴백: dashboard 데이터 사용
         if (info) {
           setName(info.teamName ?? info.title ?? "");
