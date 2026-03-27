@@ -393,7 +393,10 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
         </div>
         {subTab === 'troubleshooting' && (
           <button
-            onClick={() => setShowAiSection(prev => !prev)}
+            onClick={() => {
+              setShowAiSection(prev => !prev);
+              setSelectedMrId(null);
+            }}
             className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-shrink-0 transition-all hover:scale-105 active:scale-95 border border-[#c7d2fe]"
             style={{ background: 'linear-gradient(180deg, #f5f3ff 0%, #eef2ff 100%)', boxShadow: '0 4px 16px 0 rgba(199,210,254,0.4)' }}
           >
@@ -512,7 +515,8 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
 
 <button
                   onClick={async () => {
-                    if (!selectedMrId) return;
+                    const availablePrIds = new Set(aiMrList.filter(mr => !generatedPrIds.has(mr.id)).map(mr => mr.id));
+                    if (!selectedMrId || !availablePrIds.has(selectedMrId)) return;
                     setAiGenerating(true);
                     setAiSuccess(false);
                     try {
@@ -527,7 +531,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       setAiGenerating(false);
                     }
                   }}
-                  disabled={aiGenerating || !selectedMrId}
+                  disabled={aiGenerating || !selectedMrId || !aiMrList.filter(mr => !generatedPrIds.has(mr.id)).some(mr => mr.id === selectedMrId)}
                   className="w-full py-3.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
                 >
