@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Info,
@@ -83,6 +83,20 @@ const CreateProject = () => {
   const [verifiedUser, setVerifiedUser] = useState<VerifiedUser | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [positionOpen, setPositionOpen] = useState(false);
+  const positionRef = useRef<HTMLDivElement>(null);
+  const positionBtnRef = useRef<HTMLButtonElement>(null);
+  const positionListRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (positionRef.current && !positionRef.current.contains(e.target as Node)) {
+        setPositionOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   /* ── 핸들러 ── */
 
@@ -442,23 +456,68 @@ const CreateProject = () => {
             )}
 
             {/* 포지션 선택 */}
-            <select
-              value={memberDraft.position}
-              onChange={(e) => setMemberDraft((prev) => ({ ...prev, position: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none mt-3 transition-colors"
-              style={{
-                backgroundColor: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-              onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-            >
-              <option value="">초대할 포지션 선택</option>
-              {ROLE_LIST.map((role) => (
-                <option key={role} value={role}>{getRoleDisplayName(role)}</option>
-              ))}
-            </select>
+            <div ref={positionRef} className="relative mt-3">
+              <button
+                ref={positionBtnRef}
+                type="button"
+                onClick={() => setPositionOpen((prev) => !prev)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPositionOpen((prev) => !prev); }
+                  else if (e.key === 'ArrowDown') { e.preventDefault(); setPositionOpen(true); }
+                  else if (e.key === 'Escape') { setPositionOpen(false); }
+                }}
+                aria-haspopup="listbox"
+                aria-expanded={positionOpen}
+                aria-controls="position-listbox"
+                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors flex items-center justify-between cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--color-surface)',
+                  borderColor: positionOpen ? 'var(--color-primary)' : 'var(--color-border)',
+                  color: memberDraft.position ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                }}
+              >
+                <span>{memberDraft.position ? getRoleDisplayName(memberDraft.position) : '초대할 포지션 선택'}</span>
+                <ChevronDown
+                  className="w-4 h-4 transition-transform"
+                  style={{ transform: positionOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: 'var(--color-text-tertiary)' }}
+                />
+              </button>
+              {positionOpen && (
+                <ul
+                  ref={(node) => { (positionListRef as React.MutableRefObject<HTMLUListElement | null>).current = node; if (node) node.focus(); }}
+                  id="position-listbox"
+                  role="listbox"
+                  tabIndex={-1}
+                  onKeyDown={(e) => {
+                    const idx = ROLE_LIST.indexOf(memberDraft.position);
+                    if (e.key === 'ArrowDown') { e.preventDefault(); setMemberDraft((prev) => ({ ...prev, position: ROLE_LIST[Math.min(idx + 1, ROLE_LIST.length - 1)] })); }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); setMemberDraft((prev) => ({ ...prev, position: ROLE_LIST[Math.max(idx - 1, 0)] })); }
+                    else if (e.key === 'Enter') { e.preventDefault(); setPositionOpen(false); positionBtnRef.current?.focus(); }
+                    else if (e.key === 'Escape') { setPositionOpen(false); positionBtnRef.current?.focus(); }
+                  }}
+                  className="absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden"
+                  style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+                >
+                  {ROLE_LIST.map((role) => (
+                    <li
+                      key={role}
+                      role="option"
+                      aria-selected={memberDraft.position === role}
+                      onClick={() => { setMemberDraft((prev) => ({ ...prev, position: role })); setPositionOpen(false); }}
+                      className="px-4 py-2.5 text-sm cursor-pointer transition-colors"
+                      style={{
+                        backgroundColor: memberDraft.position === role ? 'var(--color-primary-soft)' : 'transparent',
+                        color: memberDraft.position === role ? 'var(--color-primary-hover)' : 'var(--color-text-primary)',
+                      }}
+                      onMouseEnter={(e) => { if (memberDraft.position !== role) e.currentTarget.style.backgroundColor = 'var(--color-background)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = memberDraft.position === role ? 'var(--color-primary-soft)' : 'transparent'; }}
+                    >
+                      {getRoleDisplayName(role)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
             <button
               type="button"
