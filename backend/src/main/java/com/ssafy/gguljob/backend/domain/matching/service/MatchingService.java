@@ -51,8 +51,8 @@ public class MatchingService {
             throw new OnboardingRequiredException();
         }
 
-        // Neo4j에서 전체 조회 (페이지네이션 없이) 후 MySQL 필터링 → 수동 페이지네이션
-        Pageable allPageable = PageRequest.of(0, Integer.MAX_VALUE);
+        // Neo4j에서 충분한 후보를 조회한 뒤 MySQL 필터링 → 수동 페이지네이션
+        Pageable allPageable = PageRequest.of(0, 10000);
 
         List<String> joinedProjectIds = projectMemberRepository
             .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
