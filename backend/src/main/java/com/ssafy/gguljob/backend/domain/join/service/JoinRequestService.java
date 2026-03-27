@@ -16,6 +16,7 @@ import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
 import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
 import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import java.util.Collections;
@@ -172,6 +173,9 @@ public class JoinRequestService {
             .build();
 
         projectMemberRepository.save(newMember);
+
+        // Neo4j 동기화 (멤버 추가로 포지션 현황 변경)
+        eventPublisher.publishEvent(new ProjectSyncEvent(joinRequest.getProject().getId()));
 
         Long targetNotifyUserId = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? joinRequest.getUser().getId()

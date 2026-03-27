@@ -60,6 +60,9 @@ public class ProjectMemberService {
             );
         }
 
+        // Neo4j 동기화 (멤버 탈퇴로 포지션 현황 변경)
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+
         String message = (newLeaderId != null) ? "팀을 성공적으로 나갔으며, 리더 권한이 위임되었습니다." : "팀을 성공적으로 나갔습니다.";
 
         return new ProjectMemberResponse.ProjectLeaveResponse(projectId, userId, newLeaderId, message);
@@ -112,6 +115,9 @@ public class ProjectMemberService {
         }
 
         targetMember.revokeProject();
+
+        // Neo4j 동기화 (멤버 추방으로 포지션 현황 변경)
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
 
         return new ProjectMemberResponse.ProjectKickResponse(
             projectId,
@@ -271,5 +277,8 @@ public class ProjectMemberService {
             .orElseThrow(() -> new ResourceNotFoundException("해당 모집 공고를 찾을 수 없습니다."));
 
         projectPositionRepository.delete(position);
+
+        // Neo4j 동기화 (포지션 삭제로 역할 정보 변경)
+        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
     }
 }

@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
+
 import java.util.List;
 
 @Slf4j
@@ -34,15 +36,27 @@ public class ProjectSyncEventListener {
 
         Project project = projectRepository.findById(event.id()).orElse(null);
 
+        // 모집 중이 아닌 프로젝트 → 노드 삭제
         if (project == null || project.getStatus() != ProjectStatus.RECRUITING) {
             projectNodeRepository.deleteById(String.valueOf(event.id()));
-            log.info("프로젝트 [{}]는 모집 중이 아니므로 Neo4j 동기화를 스킵합니다.", event.id());
+            log.info("프로젝트 [{}]는 모집 중이 아니므로 Neo4j에서 삭제합니다.", event.id());
+            return;
+        }
+
+        // 빈 포지션이 없는 프로젝트 (모집 인원 다 참) → 노드 삭제
+        List<ProjectPosition> positions = projectPositionRepository.findAllByProjectId(project.getId());
+        boolean hasOpenPosition = positions.stream()
+            .anyMatch(p -> p.getCurrentCount() < p.getTargetCount());
+
+        if (!hasOpenPosition) {
+            projectNodeRepository.deleteById(String.valueOf(event.id()));
+            log.info("프로젝트 [{}]는 모집 인원이 모두 충원되어 Neo4j에서 삭제합니다.", event.id());
             return;
         }
 
         List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
-        List<String> roles = projectPositionRepository.findAllByProjectId(project.getId())
-            .stream().map(p -> MatchingFilterNormalizer.toNeo4jRoleName(p.getRole())).toList();
+        List<String> roles = positions.stream()
+            .map(p -> MatchingFilterNormalizer.toNeo4jRoleName(p.getRole())).toList();
 
         projectNodeRepository.syncProjectToNeo4j(
             String.valueOf(project.getId()),
