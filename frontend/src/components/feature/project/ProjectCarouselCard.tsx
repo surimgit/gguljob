@@ -19,12 +19,12 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
     >
       {/* 상단 썸네일 */}
       <div
-        className="absolute top-0 left-0 w-full h-[100px] overflow-hidden bg-[#f0ebe3]"
+        className={`absolute top-0 left-0 w-full h-[100px] overflow-hidden bg-[#f0ebe3] ${!imageUrl ? 'flex justify-center items-center' : ''}`}
       >
         <img
           src={imageUrl || defaultThumbnail}
           alt={title}
-          className={imageUrl ? 'w-full h-full object-cover' : 'h-[70%] object-contain m-auto mt-[7%] ml-[35%]'}
+          className={imageUrl ? 'w-full h-full object-cover' : 'h-[70%] object-contain'}
         />
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
