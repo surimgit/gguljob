@@ -225,18 +225,22 @@ public class ProjectService {
             }
         }
 
+        // GitHub 토큰 및 레포 접근 권한 사전 검증 (실패 시 등록 중단)
+        String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
+        if (urlParts.length < 2) {
+            throw new IllegalArgumentException("올바른 GitHub 레포지토리 URL 형식이 아닙니다.");
+        }
+        String owner = urlParts[0];
+        String repo = urlParts[1].replace(".git", "");
+        githubSyncService.validateGitHubAccess(owner, repo, request.githubToken());
+
         // README 동기화 (실패해도 등록은 계속 진행)
         try {
-            String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
-            if (urlParts.length >= 2) {
-                String owner = urlParts[0];
-                String repo = urlParts[1].replace(".git", "");
-                String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
-                if (readme != null && !readme.isBlank()) {
-                    project.updateReadme(readme);
-                    log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
-                    eventPublisher.publishEvent(new UserProfileSyncEvent(userId));
-                }
+            String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
+            if (readme != null && !readme.isBlank()) {
+                project.updateReadme(readme);
+                log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
+                eventPublisher.publishEvent(new UserProfileSyncEvent(userId));
             }
         } catch (Exception e) {
             log.warn("❌ README 가져오기 실패 (등록은 계속 진행): {}", e.getMessage());

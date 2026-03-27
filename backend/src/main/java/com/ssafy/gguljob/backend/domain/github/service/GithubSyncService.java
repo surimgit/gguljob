@@ -253,6 +253,29 @@ public class GithubSyncService {
         }
     }
 
+    /**
+     * GitHub 토큰과 레포 접근 권한을 검증합니다.
+     * @throws IllegalArgumentException 토큰이 유효하지 않거나 레포에 접근할 수 없는 경우
+     */
+    public void validateGitHubAccess(String owner, String repo, String token) {
+        try {
+            restClient.get()
+                .uri("/repos/{owner}/{repo}", owner, repo)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .toBodilessEntity();
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("401") || msg.contains("unauthorized")) {
+                throw new IllegalArgumentException("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해 주세요.");
+            }
+            if (msg.contains("404") || msg.contains("not found")) {
+                throw new IllegalArgumentException("레포지토리를 찾을 수 없습니다. URL과 접근 권한을 확인해 주세요.");
+            }
+            throw new IllegalArgumentException("GitHub 연동에 실패했습니다: " + e.getMessage());
+        }
+    }
+
     public String fetchReadmeFromGithub(String owner, String repo, String token) {
         String apiUrl = String.format("https://api.github.com/repos/%s/%s/readme", owner, repo);
 
