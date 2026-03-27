@@ -690,7 +690,7 @@ const ProjectDashboard = () => {
                             type="password"
                             value={tokenInput}
                             onChange={(e) => setTokenInput(e.target.value)}
-                            placeholder="GitHub Personal Access Token"
+                            placeholder="ghp_xxxx 또는 github_pat_xxxx"
                             className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
                             style={{ border: "1px solid var(--color-border)" }}
                             onFocus={(e) =>
@@ -705,6 +705,15 @@ const ProjectDashboard = () => {
                           <button
                             onClick={() => {
                               if (!id) return;
+                              const isValidToken =
+                                tokenInput.startsWith("ghp_") ||
+                                tokenInput.startsWith("github_pat_");
+                              if (!isValidToken) {
+                                toast.error(
+                                  "유효하지 않은 토큰 형식입니다. ghp_ 또는 github_pat_ 으로 시작하는 토큰을 입력해 주세요.",
+                                );
+                                return;
+                              }
                               api
                                 .put<{ webhookSecret: string }>(
                                   `/v1/projects/${id}/git-repo`,
@@ -756,6 +765,12 @@ const ProjectDashboard = () => {
                             취소
                           </button>
                         </div>
+                        <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                          GitHub Settings → Developer settings → Personal access tokens에서 발급하세요. repo 권한이 필요합니다.
+                          <br />
+                          토큰은 <code className="font-mono">ghp_</code> 또는{" "}
+                          <code className="font-mono">github_pat_</code>으로 시작해야 합니다.
+                        </p>
                       </div>
                     )}
 
