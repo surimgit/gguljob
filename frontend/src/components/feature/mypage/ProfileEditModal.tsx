@@ -120,9 +120,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showImageMenu]);
 
-  const eligibleProjects = availableProjects.filter(
-    (p) => p.status === 'RECRUITING' || p.status === 'PROCEEDING' || p.status === 'DONE'
-  );
+  const eligibleProjects = availableProjects;
 
   const isSelected = (projectId: number) =>
     form.projects.some((p) => p.id === String(projectId));
@@ -410,7 +408,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
             {/* 프로젝트 리스트박스 */}
             {eligibleProjects.length === 0 ? (
               <p className="text-sm text-text-tertiary py-4 text-center">
-                진행 중이거나 완료한 프로젝트가 없습니다.
+                참여 중인 프로젝트가 없습니다.
               </p>
             ) : (
               <ul className="border border-border rounded-xl overflow-hidden bg-white max-h-48 overflow-y-auto">

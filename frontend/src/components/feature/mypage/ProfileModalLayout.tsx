@@ -1,4 +1,5 @@
 import { useReducer, useRef, useEffect, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BaseModal } from '../../common';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
@@ -71,6 +72,7 @@ const stackReducer = (state: StackState, action: StackAction): StackState => {
 };
 
 const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClassName = "bg-white rounded-3xl w-[900px] overflow-hidden shadow-2xl" }: ProfileModalLayoutProps) => {
+  const navigate = useNavigate();
   const [{ page: stackPage, pages }, dispatch] = useReducer(stackReducer, { page: 0, pages: [[]] });
   const containerHeight = MAX_ROWS_PER_PAGE * 40 + (MAX_ROWS_PER_PAGE - 1) * 8;
   const measureRef = useRef<HTMLDivElement>(null);
@@ -224,7 +226,11 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
             </h3>
             <div className="flex gap-3">
               {user.projects.slice(0, 2).map((project, pi) => (
-                <div key={project.id} className={`rounded-2xl overflow-hidden flex-1 ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}>
+                <div
+                  key={project.id}
+                  className={`rounded-2xl overflow-hidden flex-1 cursor-pointer hover:brightness-95 transition-[filter] ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}
+                  onClick={() => { onClose(); navigate(`/my-projects/${project.id}`); }}
+                >
                   <div className="p-4 pb-3">
                     <span className="text-2xl mb-2 block">{project.emoji}</span>
                     {STATUS_BADGE[project.period] && (
