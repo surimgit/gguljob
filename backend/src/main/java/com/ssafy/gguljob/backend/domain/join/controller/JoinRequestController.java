@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -77,5 +78,17 @@ public class JoinRequestController {
         joinRequestService.rejectRequest(userDetails.getId(), requestId);
 
         return ResponseEntity.ok(new ApiResponseDto<>(200, "요청이 처리(거절)되었습니다.", null));
+    }
+
+    // 프로젝트 지원/초대 취소
+    @Operation(summary = "프로젝트 지원/초대 취소", description = "지원자가 본인의 지원을 취소하거나, 리더가 초대를 취소합니다.")
+    @DeleteMapping("/requests/{requestId}/cancel")
+    public ResponseEntity<ApiResponseDto<Void>> cancelJoinRequest(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long requestId) {
+
+        joinRequestService.cancelRequest(userDetails.getId(), requestId);
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "요청이 취소되었습니다.", null));
     }
 }

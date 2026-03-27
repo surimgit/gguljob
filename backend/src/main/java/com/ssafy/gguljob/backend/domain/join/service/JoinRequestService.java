@@ -223,4 +223,26 @@ public class JoinRequestService {
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
         ));
     }
+
+    // 프로젝트 지원/초대 취소 로직
+    @Transactional
+    public void cancelRequest(Long loginUserId, Long requestId) {
+        JoinRequest joinRequest = joinRequestRepository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요청입니다."));
+
+        // 권한 검증: 지원은 본인만, 초대는 리더만 취소 가능
+        if (joinRequest.getRequestType() == JoinRequestType.APPLY) {
+            if (!joinRequest.getUser().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("본인의 지원만 취소할 수 있습니다.");
+            }
+        } else if (joinRequest.getRequestType() == JoinRequestType.INVITE) {
+            if (!joinRequest.getProject().getLeader().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("프로젝트 리더만 초대를 취소할 수 있습니다.");
+            }
+        }
+
+        joinRequest.cancel();
+
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.CANCELED);
+    }
 }
