@@ -66,6 +66,11 @@ public class ProjectPosition extends BaseTimeEntity {
         this.requirement = requirement;
     }
 
+    // 현재 인원 변경
+    public void changeCurrentCount(Integer currentCount) {
+        this.currentCount = currentCount;
+    }
+
     // 상태 변경
     public void changeStatus(PositionStatus status) {
         this.status = status;

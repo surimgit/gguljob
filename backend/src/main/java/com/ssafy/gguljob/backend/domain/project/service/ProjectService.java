@@ -102,6 +102,7 @@ public class ProjectService {
             .role(request.leaderRole())
             .targetCount(1)
             .build();
+        leaderPosition.changeCurrentCount(1); // 팀장이 즉시 합류하므로 currentCount = 1
         ProjectPosition savedLeaderPosition = projectPositionRepository.save(leaderPosition);
 
         ProjectMember projectMember = ProjectMember.builder()
