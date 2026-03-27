@@ -11,320 +11,331 @@ import { type MatchStatus, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../c
 
 /** 연봉 포맷: 숫자 범위에 "만원" 붙이기, 이미 단위 있으면 그대로 */
 const formatSalary = (salary: string): string => {
-  if (!salary) return '회사내규';
-  if (/만원|원|억/.test(salary)) return salary;
-  if (/^[\d,]+([-~][\d,]+)?$/.test(salary.trim())) return `${salary}만원`;
-  return salary;
+    if (!salary) return '회사내규';
+    if (/만원|원|억/.test(salary)) return salary;
+    if (/^[\d,]+([-~][\d,]+)?$/.test(salary.trim())) return `${salary}만원`;
+    return salary;
 };
 
-const RANK_TINTS = [
-  'rgba(255,239,156,0.21)',
-  'rgba(217,234,239,0.42)',
-  'rgba(255,213,174,0.40)',
-];
+const RANK_TINTS = ['rgba(255,239,156,0.21)', 'rgba(217,234,239,0.42)', 'rgba(255,213,174,0.40)'];
 
 const LOGO_COLORS = ['#3B82F6', '#F2B705', '#22C55E', '#EF4444', '#8B5CF6'];
 
 type Badge = 'NEW' | 'HOT';
 
-
 interface JobCardProps {
-  jobId: number;
-  tint: string;
-  rank: number;
-  badges: Badge[];
-  company: string;
-  logoText: string;
-  logoColor: string;
-  role: string;
-  location: string;
-  experience: string;
-  employmentType: string;
-  salary: string;
-  url: string;
-  deadline: string;
-  matchStatus: MatchStatus;
-  bookmarked: boolean;
-  onToggleBookmark: (id: number) => void;
+    jobId: number;
+    tint: string;
+    rank: number;
+    badges: Badge[];
+    company: string;
+    logoText: string;
+    logoColor: string;
+    role: string;
+    location: string;
+    experience: string;
+    employmentType: string;
+    salary: string;
+    url: string;
+    deadline: string;
+    matchStatus: MatchStatus;
+    bookmarked: boolean;
+    onToggleBookmark: (id: number) => void;
 }
 
-
 const BadgeChip = ({ type }: { type: Badge }) => {
-  if (type === 'NEW') {
+    if (type === 'NEW') {
+        return <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-primary-soft text-text-brown">NEW</span>;
+    }
     return (
-      <span
-        className="text-[11px] font-bold px-2 py-0.5 rounded bg-primary-soft text-text-brown"
-      >
-        NEW
-      </span>
+        <span
+            className="text-[11px] font-bold px-2 py-0.5 rounded"
+            style={{ background: 'rgba(239,68,68,0.23)', color: '#EF4444' }}
+        >
+            HOT
+        </span>
     );
-  }
-  return (
-    <span
-      className="text-[11px] font-bold px-2 py-0.5 rounded"
-      style={{ background: 'rgba(239,68,68,0.23)', color: '#EF4444' }}
-    >
-      HOT
-    </span>
-  );
 };
 
 const medalImages: Record<number, string> = {
-  1: goldMedalImg,
-  2: silverMedalImg,
-  3: bronzeMedalImg,
+    1: goldMedalImg,
+    2: silverMedalImg,
+    3: bronzeMedalImg,
 };
 
 const RankMedal = ({ rank }: { rank: number }) => (
-  <img
-    src={medalImages[rank] ?? bronzeMedalImg}
-    alt={`${rank}등 메달`}
-    style={{ width: '64px', height: '64px', objectFit: 'contain' }}
-  />
+    <img
+        src={medalImages[rank] ?? bronzeMedalImg}
+        alt={`${rank}등 메달`}
+        style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+    />
 );
 
 const JobCard = ({
-  jobId,
-  tint,
-  rank,
-  badges,
-  company,
-  logoText,
-  logoColor,
-  role,
-  location,
-  experience,
-  employmentType,
-  salary,
-  url,
-  deadline,
-  matchStatus,
-  bookmarked,
-  onToggleBookmark,
+    jobId,
+    tint,
+    rank,
+    badges,
+    company,
+    logoText,
+    logoColor,
+    role,
+    location,
+    experience,
+    employmentType,
+    salary,
+    url,
+    deadline,
+    matchStatus,
+    bookmarked,
+    onToggleBookmark,
 }: JobCardProps) => {
-  const dday = calcDday(deadline);
-  const ddayColor = getDdayColor(dday);
-  const match = MATCH_CONFIG[MATCH_STATUS_TO_TYPE[matchStatus] ?? 'insufficient'];
+    const dday = calcDday(deadline);
+    const ddayColor = getDdayColor(dday);
+    const match = MATCH_CONFIG[MATCH_STATUS_TO_TYPE[matchStatus] ?? 'insufficient'];
 
-  return (
-    <div
-      role="link"
-      tabIndex={0}
-      aria-label={`${company} - ${role}`}
-      onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
-      onKeyDown={e => { if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
-      className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[230px] sm:min-h-[250px]"
-      style={{
-        boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
-        background: tint,
-        padding: '20px 20px 20px 20px',
-      }}
-    >
-      {/* 랭킹 메달 */}
-      <div className="absolute" style={{ top: rank === 3 ? '-44px' : '-48px', left: '6px' }}>
-        <RankMedal rank={rank} />
-      </div>
-
-      {/* 디데이 + 북마크 */}
-      <div className="absolute top-3 right-3 flex items-center gap-2">
-        {dday && (
-          <span
-            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: `${ddayColor}18`, color: ddayColor }}
-          >
-            {dday}
-          </span>
-        )}
-        <button
-          aria-label="북마크"
-          onClick={(e) => { e.stopPropagation(); onToggleBookmark(jobId); }}
-        >
-          <svg
-            className="w-7 h-7"
-            fill={bookmarked ? '#F2B705' : 'none'}
-            stroke={bookmarked ? '#F2B705' : '#9CA3AF'}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* 회사 로고 + 배지 + 회사명 */}
-      <div className="flex items-center gap-3 mt-5">
+    return (
         <div
-          className="flex items-center justify-center font-black text-white flex-shrink-0"
-          style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            background: logoColor,
-            fontSize: '20px',
-          }}
+            role="link"
+            tabIndex={0}
+            aria-label={`${company} - ${role}`}
+            onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer');
+            }}
+            className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[230px] sm:min-h-[250px]"
+            style={{
+                boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
+                background: tint,
+                padding: '20px 20px 20px 20px',
+            }}
         >
-          {logoText}
+            {/* 랭킹 메달 */}
+            <div className="absolute" style={{ top: rank === 3 ? '-44px' : '-48px', left: '6px' }}>
+                <RankMedal rank={rank} />
+            </div>
+
+            {/* 디데이 + 북마크 */}
+            <div className="absolute top-3 right-3 flex items-center gap-2">
+                {dday && (
+                    <span
+                        className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: `${ddayColor}18`, color: ddayColor }}
+                    >
+                        {dday}
+                    </span>
+                )}
+                <button
+                    aria-label="북마크"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleBookmark(jobId);
+                    }}
+                >
+                    <svg
+                        className="w-7 h-7"
+                        fill={bookmarked ? '#F2B705' : 'none'}
+                        stroke={bookmarked ? '#F2B705' : '#9CA3AF'}
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                        />
+                    </svg>
+                </button>
+            </div>
+
+            {/* 회사 로고 + 배지 + 회사명 */}
+            <div className="flex items-center gap-3 mt-5">
+                <div
+                    className="flex items-center justify-center font-black text-white flex-shrink-0"
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: logoColor,
+                        fontSize: '20px',
+                    }}
+                >
+                    {logoText}
+                </div>
+
+                {/* 회사명 + 배지 */}
+                <div className="flex items-center gap-1.5">
+                    <p className="font-bold" style={{ fontSize: '22px', color: '#111827', lineHeight: '1.2' }}>
+                        {company}
+                    </p>
+                    {badges.map((b) => (
+                        <BadgeChip key={b} type={b} />
+                    ))}
+                </div>
+            </div>
+
+            {/* 직무 */}
+            <p className="font-bold mt-3 truncate" style={{ fontSize: '17px', color: '#111827', lineHeight: '1.3' }}>
+                {role}
+            </p>
+
+            {/* 위치 · 경력 */}
+            <div className="flex items-center gap-1.5 mt-2">
+                <span className="text-sm" style={{ color: '#6B7280' }}>
+                    {location}
+                </span>
+                <span className="text-sm" style={{ color: '#6B7280' }}>
+                    ·
+                </span>
+                <span className="text-sm" style={{ color: '#6B7280' }}>
+                    {experience}
+                </span>
+            </div>
+
+            {/* 고용형태 · 연봉 + 적합도 */}
+            <div className="flex items-end justify-between mt-auto">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-sm" style={{ color: '#6B7280' }}>
+                        {employmentType}
+                    </span>
+                    <span className="text-sm" style={{ color: '#6B7280' }}>
+                        ·
+                    </span>
+                    <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+                </div>
+                <span
+                    className="text-[15px] font-bold px-3.5 py-1.5 rounded-full"
+                    style={{ background: `${match.color}18`, color: match.color }}
+                >
+                    {match.label}
+                </span>
+            </div>
         </div>
-
-        {/* 회사명 + 배지 */}
-        <div className="flex items-center gap-1.5">
-          <p className="font-bold" style={{ fontSize: '22px', color: '#111827', lineHeight: '1.2' }}>
-            {company}
-          </p>
-          {badges.map(b => (
-            <BadgeChip key={b} type={b} />
-          ))}
-        </div>
-      </div>
-
-      {/* 직무 */}
-      <p
-        className="font-bold mt-3 truncate"
-        style={{ fontSize: '17px', color: '#111827', lineHeight: '1.3' }}
-      >
-        {role}
-      </p>
-
-      {/* 위치 · 경력 */}
-      <div className="flex items-center gap-1.5 mt-2">
-        <span className="text-sm" style={{ color: '#6B7280' }}>{location}</span>
-        <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-        <span className="text-sm" style={{ color: '#6B7280' }}>{experience}</span>
-      </div>
-
-      {/* 고용형태 · 연봉 + 적합도 */}
-      <div className="flex items-end justify-between mt-auto">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm" style={{ color: '#6B7280' }}>{employmentType}</span>
-          <span className="text-sm" style={{ color: '#6B7280' }}>·</span>
-          <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
-        </div>
-        <span
-          className="text-[14px] font-bold px-3.5 py-1.5 rounded-full"
-          style={{ background: `${match.color}18`, color: match.color }}
-        >
-          {match.label}
-        </span>
-      </div>
-    </div>
-  );
+    );
 };
 
 interface JobRecommendHeroProps {
-  bookmarkedIds: Set<number>;
-  onToggleBookmark: (id: number) => void;
+    bookmarkedIds: Set<number>;
+    onToggleBookmark: (id: number) => void;
 }
 
 const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
-  const [top3, setTop3] = useState<JobItem[]>([]);
-  const user = useAuthStore(s => s.user);
+    const [top3, setTop3] = useState<JobItem[]>([]);
+    const user = useAuthStore((s) => s.user);
 
-  const userName = user?.name ?? '사용자';
-  const userSkills = user?.techStacks?.length ? user.techStacks : user?.skills?.map(s => s.name) ?? [];
+    const userName = user?.name ?? '사용자';
+    const userSkills = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
 
-  useEffect(() => {
-    getRecommendedTop3()
-      .then(({ data }) => { if (data.length > 0) setTop3(data.slice(0, 3)); })
-      .catch(() => {});
-  }, []);
+    useEffect(() => {
+        getRecommendedTop3()
+            .then(({ data }) => {
+                if (data.length > 0) setTop3(data.slice(0, 3));
+            })
+            .catch(() => {});
+    }, []);
 
-  return (
-    <>
-      {/* ── 히어로 배너 + 이미지 래퍼 ── */}
-      <div className="relative w-[calc(100%+32px)] sm:w-[calc(100%+48px)] lg:w-[calc(100%+64px)] -mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
-        {/* 배너 배경 */}
-        <div
-          data-navbar-hero
-          className="overflow-hidden bg-primary-soft/[0.36]"
-          style={{ minHeight: '380px' }}
-        >
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 lg:pl-[6%]">
-            {/* 메인 타이틀 */}
-            <p
-              className="font-bold text-[28px] sm:text-[32px] lg:text-[40px]"
-              style={{ color: '#111827', lineHeight: '1.35' }}
-            >
-              {userName}님의 기술 스택과<br />
-              가장 잘 맞는 채용 공고를 추천해드려요!
-            </p>
+    return (
+        <>
+            {/* ── 히어로 배너 + 이미지 래퍼 ── */}
+            <div className="relative w-[calc(100%+32px)] sm:w-[calc(100%+48px)] lg:w-[calc(100%+64px)] -mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
+                {/* 배너 배경 */}
+                <div data-navbar-hero className="overflow-hidden bg-primary-soft/[0.36]" style={{ minHeight: '380px' }}>
+                    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative flex flex-col justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 lg:pl-[6%]">
+                        {/* 메인 타이틀 */}
+                        <p
+                            className="font-bold text-[28px] sm:text-[32px] lg:text-[40px]"
+                            style={{ color: '#111827', lineHeight: '1.35' }}
+                        >
+                            {userName}님의 기술 스택과
+                            <br />
+                            가장 잘 맞는 채용 공고를 추천해드려요!
+                        </p>
 
-            {/* 부제목 */}
-            <p className="mt-5 sm:mt-6 text-[16px] sm:text-[18px] lg:text-[22px]" style={{ color: '#4A5565' }}>
-              포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
-            </p>
+                        {/* 부제목 */}
+                        <p
+                            className="mt-5 sm:mt-6 text-[16px] sm:text-[18px] lg:text-[22px]"
+                            style={{ color: '#4A5565' }}
+                        >
+                            포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
+                        </p>
 
-            {/* 기술스택 태그 */}
-            {userSkills.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap mt-5 max-w-full lg:max-w-[50%]">
-                {userSkills.slice(0, 8).map(stack => (
-                  <span
-                    key={stack}
-                    className="font-semibold"
-                    style={{
-                      background: '#BFE8F5',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      color: '#6B7280',
-                      padding: '6px 14px',
-                      boxShadow: '2px 2px 4px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {stack}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                        {/* 기술스택 태그 */}
+                        {userSkills.length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap mt-5 max-w-full lg:max-w-[50%]">
+                                {userSkills.slice(0, 8).map((stack) => (
+                                    <span
+                                        key={stack}
+                                        className="font-semibold"
+                                        style={{
+                                            background: '#BFE8F5',
+                                            borderRadius: '8px',
+                                            fontSize: '16px',
+                                            color: '#6B7280',
+                                            padding: '6px 14px',
+                                            boxShadow: '2px 2px 4px rgba(0,0,0,0.15)',
+                                        }}
+                                    >
+                                        {stack}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-        {/* 잡매칭 이미지 — 배너 밖으로 빠져나와 섹션에 걸침 */}
-        <img
-          src={jobMatchingImg}
-          alt="잡매칭"
-          className="absolute right-[6%] top-[16%] hidden xl:block"
-          style={{ width: '450px', height: 'auto', zIndex: 10 }}
-        />
-      </div>
-
-      {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: '35px', paddingBottom: '40px' }}>
-        <h2 className="font-bold text-[22px] sm:text-[26px] lg:text-[30px]">
-          <span style={{ color: '#111827' }}>맞춤 공고 </span>
-          <span style={{ color: '#F2B705' }}>TOP 3</span>
-        </h2>
-
-        <div className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20" style={{ marginTop: '10px' }}>
-          {top3.map((job, idx) => (
-            <div key={job.jobId} className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start">
-              <JobCard
-                jobId={job.jobId}
-                tint={RANK_TINTS[idx]}
-                rank={idx + 1}
-                badges={['NEW']}
-                company={job.companyName}
-                logoText={job.companyName.charAt(0)}
-                logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
-                role={job.title}
-                location={job.region}
-                experience={job.experience}
-                employmentType={job.contractType}
-                salary={job.salary}
-                url={job.url}
-                deadline={job.deadline}
-                matchStatus={job.matchStatus}
-                bookmarked={bookmarkedIds.has(job.jobId)}
-                onToggleBookmark={onToggleBookmark}
-              />
+                {/* 잡매칭 이미지 — 배너 밖으로 빠져나와 섹션에 걸침 */}
+                <img
+                    src={jobMatchingImg}
+                    alt="잡매칭"
+                    className="absolute right-[6%] top-[16%] hidden xl:block"
+                    style={{ width: '450px', height: 'auto', zIndex: 10 }}
+                />
             </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
+
+            {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
+            <div
+                className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8"
+                style={{ paddingTop: '35px', paddingBottom: '40px' }}
+            >
+                <h2 className="font-bold text-[22px] sm:text-[26px] lg:text-[30px]">
+                    <span style={{ color: '#111827' }}>맞춤 공고 </span>
+                    <span style={{ color: '#F2B705' }}>TOP 3</span>
+                </h2>
+
+                <div
+                    className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20"
+                    style={{ marginTop: '10px' }}
+                >
+                    {top3.map((job, idx) => (
+                        <div
+                            key={job.jobId}
+                            className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start"
+                        >
+                            <JobCard
+                                jobId={job.jobId}
+                                tint={RANK_TINTS[idx]}
+                                rank={idx + 1}
+                                badges={['NEW']}
+                                company={job.companyName}
+                                logoText={job.companyName.charAt(0)}
+                                logoColor={LOGO_COLORS[job.jobId % LOGO_COLORS.length]}
+                                role={job.title}
+                                location={job.region}
+                                experience={job.experience}
+                                employmentType={job.contractType}
+                                salary={job.salary}
+                                url={job.url}
+                                deadline={job.deadline}
+                                matchStatus={job.matchStatus}
+                                bookmarked={bookmarkedIds.has(job.jobId)}
+                                onToggleBookmark={onToggleBookmark}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
 };
 
 export default JobRecommendHero;
