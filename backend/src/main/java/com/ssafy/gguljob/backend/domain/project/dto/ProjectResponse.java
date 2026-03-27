@@ -166,4 +166,12 @@ public class ProjectResponse {
     public record GitRepoRegistered(
         String webhookSecret
     ) {}
+
+    public record ProjectMemberDto(
+        Long memberId,
+        Long userId,
+        String role,
+        String userName,
+        String profileImageUrl
+    ) {}
 }
