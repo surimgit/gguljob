@@ -1361,6 +1361,7 @@ const ProjectDashboard = () => {
               <button
                 ref={chatbotBtnRef}
                 onClick={() => setChatbotOpen((prev) => !prev)}
+                aria-label={chatbotOpen ? 'AI 챗봇 닫기' : 'AI 챗봇 열기'}
                 className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 border-0 bg-transparent animate-float flex flex-col items-center"
               >
                 <div

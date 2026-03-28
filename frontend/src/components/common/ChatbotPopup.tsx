@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type RefObject } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Sparkles, X, ChevronLeft } from 'lucide-react';
 import chatbotImg from '../../assets/images/chatbot.png';
 
@@ -33,7 +33,7 @@ const ChatbotPopup = ({
   onMrSelect,
   onGenerate,
   onSendMessage,
-}: ChatbotPopupProps & { triggerRef?: RefObject<HTMLElement> }) => {
+}: ChatbotPopupProps) => {
   const [generating, setGenerating] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
