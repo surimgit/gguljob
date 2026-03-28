@@ -190,7 +190,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       // 프로필 정보 수정
       const payload: ProfileUpdateRequest = {
         description: form.bio,
-        roles: form.role ? [form.role] : [],
+        ...(form.role ? { roles: [form.role] } : {}),
         skills: form.techStacks,
         repProjectIds: form.projects.map((p) => Number(p.id)),
       };

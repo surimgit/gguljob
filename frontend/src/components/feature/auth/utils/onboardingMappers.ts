@@ -71,7 +71,7 @@ export const buildOnboardingPayload = (
 
   return {
     description: `${goalsSummary}에 관심이 있습니다.`,
-    roles: mappedRole ? [mappedRole] : [],
+    ...(mappedRole ? { roles: [mappedRole] } : {}),
     experience: mappedExp,
     skills: formData.skills,
     mbti: formData.mbti,

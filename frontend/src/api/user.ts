@@ -3,7 +3,7 @@ import type { User, PositionType } from '../types/user';
 
 export interface OnboardingRequest {
   description: string;
-  roles: PositionType[];
+  roles?: PositionType[];
   experience: 'BEGINNER' | 'JUNIOR' | 'MID_LEVEL' | 'SENIOR';
   skills: string[];
   mbti: string;
@@ -48,7 +48,7 @@ export const getMe = async (): Promise<User> => {
 
 export interface ProfileUpdateRequest {
   description?: string;
-  roles: string[];
+  roles?: string[];
   mbti?: string;
   teamTendency?: string;
   experience?: string;
