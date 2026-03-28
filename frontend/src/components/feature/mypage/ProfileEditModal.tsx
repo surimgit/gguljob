@@ -39,6 +39,7 @@ interface Project {
   id: string;
   name: string;
   description: string;
+  domain?: string;
   myRole: string;
   period: string;
   techStacks: string[];
@@ -153,7 +154,8 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       const newProject: Project = {
         id: String(project.projectId),
         name: project.title,
-        description: project.domain ?? '',
+        description: project.description ?? '',
+        domain: project.domain ?? '',
         myRole: '',
         period: STATUS_MAP[project.status] ?? project.status,
         techStacks: project.skills ?? [],

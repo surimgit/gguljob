@@ -21,6 +21,7 @@ interface Project {
   id: string;
   name: string;
   description: string;
+  domain?: string;
   myRole: string;
   period: string;
   techStacks: string[];
