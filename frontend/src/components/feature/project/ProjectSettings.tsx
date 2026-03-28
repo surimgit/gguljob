@@ -843,8 +843,8 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
 
                 {isOpen && (
                   <div className="px-4 pb-4 pt-2">
-                    {isLeader && (
-                      <div className="flex justify-end mb-2">
+                    <div className="flex flex-wrap gap-2">
+                      {isLeader && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -873,9 +873,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                         >
                           {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2">
+                      )}
                       {cat.stacks.map((stack) => {
                         const sel = (techStacks[cat.key] ?? []).includes(stack);
                         return (
