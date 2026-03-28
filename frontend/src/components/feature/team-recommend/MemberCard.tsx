@@ -72,7 +72,7 @@ const MemberCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
               {getExperienceLevelDisplay(level)}
