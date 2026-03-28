@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { getSkills, type SkillDto } from '../../api/skill';
+import { SKILL_CATEGORY_META, SKILLS } from '../../constants/skills';
+
+const CATEGORY_ORDER = Object.fromEntries(SKILL_CATEGORY_META.map((m, i) => [m.key, i]));
+const SKILL_ORDER = Object.fromEntries(SKILLS.map((s, i) => [s.name, i]));
 
 interface Props {
   value: string[];
@@ -28,12 +32,16 @@ const TechStackInput = ({ value, onChange }: Props) => {
   }, []);
 
   const categoryTabs = useMemo(
-    () => Object.keys(skillsByCategory),
+    () => Object.keys(skillsByCategory).sort(
+      (a, b) => (CATEGORY_ORDER[a] ?? 999) - (CATEGORY_ORDER[b] ?? 999)
+    ),
     [skillsByCategory],
   );
 
   const activeSkills = useMemo(
-    () => (skillsByCategory[activeCategory] ?? []).map((s) => s.name),
+    () => [...(skillsByCategory[activeCategory] ?? [])].sort(
+      (a, b) => (SKILL_ORDER[a.name] ?? 999) - (SKILL_ORDER[b.name] ?? 999)
+    ).map((s) => s.name),
     [skillsByCategory, activeCategory],
   );
 

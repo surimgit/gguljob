@@ -4,7 +4,9 @@ import {
   Database, Smartphone, Briefcase, Pen, Box, type LucideIcon,
 } from 'lucide-react';
 import { getPositions, type PositionDto } from '../../../../api/user';
-import type { RoleCode } from '../../../../constants/skills';
+import { ROLE_LIST, type RoleCode } from '../../../../constants/skills';
+
+const ROLE_ORDER = Object.fromEntries(ROLE_LIST.map((code, i) => [code, i]));
 
 const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
   FRONTEND: Monitor,
@@ -29,7 +31,12 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
 
   useEffect(() => {
     getPositions()
-      .then(setPositions)
+      .then((data) => {
+        const sorted = [...data].sort(
+          (a, b) => (ROLE_ORDER[a.code] ?? 999) - (ROLE_ORDER[b.code] ?? 999)
+        );
+        setPositions(sorted);
+      })
       .catch((e) => console.error('Failed to fetch positions:', e))
       .finally(() => setIsLoading(false));
   }, []);
