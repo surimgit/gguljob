@@ -47,6 +47,7 @@ public class MatchingProfileService {
         UserNode userNode = UserNode.builder()
             .id(user.getId())
             .userName(user.getUserName())
+            .experienceLevel(user.getExperience() != null ? user.getExperience().name() : null)
             .skills(skillNodes)
             .roles(roleNodes)
             .goals(goalNodes)
