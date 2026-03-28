@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-html {
+html, body {
   overflow-x: hidden;
+  background-color: #F7F8FA;
 }
 
 /* 스크롤바 숨기기 유틸리티 */

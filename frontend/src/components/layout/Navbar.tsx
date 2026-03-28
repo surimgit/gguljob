@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
@@ -188,48 +188,66 @@ const Navbar = () => {
 
     const location = useLocation();
 
-    // data-navbar-hero 속성을 가진 섹션의 배경색을 따라가고, 벗어나면 흰색
+    // paint 전에 실행 — 첫 프레임부터 올바른 navbar 색상 표시 (flash 방지)
+    useLayoutEffect(() => {
+        const hdr = headerRef.current;
+        if (!hdr) return;
+
+        hdr.style.transition = 'none';
+
+        const heroes = document.querySelectorAll('[data-navbar-hero]');
+        if (heroes.length > 0) {
+            const cs = getComputedStyle(heroes[0]);
+            const bg = cs.backgroundColor;
+            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
+                const cv = document.createElement('canvas');
+                cv.width = cv.height = 1;
+                const ctx = cv.getContext('2d')!;
+                ctx.fillStyle = '#F7F8FA';
+                ctx.fillRect(0, 0, 1, 1);
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, 1, 1);
+                const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+                hdr.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            } else {
+                hdr.style.backgroundColor = '';
+            }
+        } else {
+            hdr.style.backgroundColor = '';
+        }
+
+        // paint 이후 transition 재활성화 (스크롤 시 부드러운 색상 전환용)
+        const raf = requestAnimationFrame(() => {
+            if (headerRef.current) headerRef.current.style.transition = '';
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [location.pathname]);
+
+    // paint 후 실행 — 스크롤에 따른 동적 색상 업데이트
     useEffect(() => {
         let rafId: number;
-        let lastHeroEl: Element | null = null;
-        let heroColor: string | null = null;
+        const hdr = headerRef.current;
+        if (!hdr) return;
 
-        // 어떤 CSS 색상이든 bg-background 위에 합성한 불투명 RGB로 변환
-        const toOpaqueRgb = (color: string): string => {
-            const cv = document.createElement('canvas');
-            cv.width = cv.height = 1;
-            const ctx = cv.getContext('2d')!;
-            ctx.fillStyle = '#F7F8FA'; // bg-background
-            ctx.fillRect(0, 0, 1, 1);
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, 1, 1);
-            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-            return `rgb(${r}, ${g}, ${b})`;
-        };
+        const heroes = document.querySelectorAll('[data-navbar-hero]');
+        if (heroes.length === 0) return;
 
-        // data-navbar-hero 요소의 배경색 추출
-        const extractColor = (el: Element): string | null => {
-            const cs = getComputedStyle(el);
-            const bg = cs.backgroundColor;
-            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return toOpaqueRgb(bg);
-            return null;
-        };
+        const cs = getComputedStyle(heroes[0]);
+        const bg = cs.backgroundColor;
+        if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') return;
 
-        const findHeroes = (): boolean => {
-            const heroes = document.querySelectorAll('[data-navbar-hero]');
-            if (heroes.length === 0) return false;
-            heroColor = extractColor(heroes[0]);
-            lastHeroEl = heroes[heroes.length - 1];
-            return true;
-        };
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = 1;
+        const ctx = cv.getContext('2d')!;
+        ctx.fillStyle = '#F7F8FA';
+        ctx.fillRect(0, 0, 1, 1);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        const heroColor = `rgb(${r}, ${g}, ${b})`;
+        const lastHeroEl = heroes[heroes.length - 1];
 
         const sync = () => {
-            const hdr = headerRef.current;
-            if (!hdr) return;
-            if (!lastHeroEl || !heroColor) {
-                hdr.style.backgroundColor = '';
-                return;
-            }
             const heroBottom = lastHeroEl.getBoundingClientRect().bottom;
             const navBottom = hdr.getBoundingClientRect().bottom;
             hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '';
@@ -239,28 +257,6 @@ const Navbar = () => {
             cancelAnimationFrame(rafId);
             rafId = requestAnimationFrame(sync);
         };
-
-        // 페이지 이동 시 트랜지션 없이 즉시 배경색 초기화
-        if (headerRef.current) {
-            const hdr = headerRef.current;
-            hdr.style.transition = 'none';
-            hdr.style.backgroundColor = '';
-            requestAnimationFrame(() => { hdr.style.transition = ''; });
-        }
-
-        // hero 요소가 렌더링될 때까지 재시도
-        let retryCount = 0;
-        const tryInit = () => {
-            requestAnimationFrame(() => {
-                if (findHeroes()) {
-                    sync();
-                } else if (retryCount < 10) {
-                    retryCount++;
-                    setTimeout(tryInit, 100);
-                }
-            });
-        };
-        tryInit();
 
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => {
