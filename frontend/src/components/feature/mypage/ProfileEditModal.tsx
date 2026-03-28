@@ -6,6 +6,7 @@ import { BaseModal, TechStackInput } from '../../common';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
+import type { PositionType } from '../../../types/user';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, ROLE_TO_API } from '../../../constants/skills';
 import toast from 'react-hot-toast';
 
@@ -190,7 +191,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       // 프로필 정보 수정
       const payload: ProfileUpdateRequest = {
         description: form.bio,
-        roles: form.role ? [form.role] : [],
+        roles: form.role ? [form.role as PositionType] : [],
         skills: form.techStacks,
         repProjectIds: form.projects.map((p) => Number(p.id)),
       };

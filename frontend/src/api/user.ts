@@ -48,7 +48,7 @@ export const getMe = async (): Promise<User> => {
 
 export interface ProfileUpdateRequest {
   description?: string;
-  roles?: string[];
+  roles?: PositionType[];
   mbti?: string;
   teamTendency?: string;
   experience?: string;
