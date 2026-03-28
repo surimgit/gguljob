@@ -138,7 +138,7 @@ const ApplicationList = () => {
       setCancelTarget(null);
       toast.success(cancelTarget.requestType === 'INVITE' ? '초대가 취소되었습니다.' : '지원이 취소되었습니다.');
     } catch {
-      alert('취소에 실패했습니다. 다시 시도해주세요.');
+      toast.error('취소에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setCancelling(false);
     }
