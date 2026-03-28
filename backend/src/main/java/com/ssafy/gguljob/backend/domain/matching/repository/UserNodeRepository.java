@@ -35,10 +35,8 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
 
             // 그래프 점수: 직무 40점 + 스킬 비율 60점
             "WITH p, u, " +
-            "     CASE " +
-            "       WHEN totalSkills = 0 THEN (CASE WHEN isRoleMatched THEN 100 ELSE 50 END) " +
-            "       ELSE (CASE WHEN isRoleMatched THEN 40 ELSE 0 END) + toInteger((toFloat(matchedSkills) / totalSkills) * 60) " +
-            "     END AS graphScore " +
+            "     (CASE WHEN isRoleMatched THEN 40 ELSE 0 END + " +
+            "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
 
             // 벡터 유사도 점수 (유저 임베딩 ↔ 프로젝트 임베딩, 없으면 0)
             "WITH u, graphScore, " +

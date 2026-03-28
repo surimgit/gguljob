@@ -14,7 +14,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -34,7 +34,6 @@ public class ProjectEmbeddingService {
         "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings";
     private static final String EMBEDDING_MODEL = "text-embedding-3-small";
 
-    @Transactional(readOnly = true)
     public void updateEmbedding(Long projectId) {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project == null) {
