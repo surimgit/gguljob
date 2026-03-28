@@ -856,7 +856,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                               [cat.key]: allSelected ? [] : [...cat.stacks],
                             }));
                           }}
-                          className="text-xs font-bold px-3 py-1 rounded-full border transition-colors"
+                          className="text-xs font-bold px-3 py-1.5 rounded-full border transition-colors"
                           style={{
                             borderColor: "var(--color-primary)",
                             color: "var(--color-text-primary)",
