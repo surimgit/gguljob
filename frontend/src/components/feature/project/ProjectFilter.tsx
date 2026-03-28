@@ -122,14 +122,6 @@ function SkillFilterRow({
               {activeGroup?.label}
             </span>
             <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px] flex-1">
-              {skills.map((skill) => (
-                <FilterButton
-                  key={skill}
-                  text={skill}
-                  selected={selected.includes(skill)}
-                  onClick={() => toggleSkill(skill)}
-                />
-              ))}
               <FilterButton
                 text={skills.every((s) => selected.includes(s)) ? '전체 해제' : '전체 선택'}
                 selected={skills.every((s) => selected.includes(s))}
@@ -142,6 +134,14 @@ function SkillFilterRow({
                   }
                 }}
               />
+              {skills.map((skill) => (
+                <FilterButton
+                  key={skill}
+                  text={skill}
+                  selected={selected.includes(skill)}
+                  onClick={() => toggleSkill(skill)}
+                />
+              ))}
             </div>
           </div>
         </>
