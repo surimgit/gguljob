@@ -225,7 +225,7 @@ const SkillCategoryFilter = ({
                         <span className="font-bold text-[#b8a88a] text-[12px] leading-[31.5px] w-[56px] shrink-0 text-right pr-[4px]">
                             {activeLabel}
                         </span>
-                        <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+                        <div className="flex items-center ml-[12px] flex-wrap gap-x-[8px] gap-y-[4px]">
                             <FilterButton
                                 text="전체"
                                 selected={activeSkill === '전체'}
@@ -487,7 +487,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                         <span className="font-bold text-[#111827] text-[13px] leading-[31.5px] w-[56px] shrink-0">
                             정렬
                         </span>
-                        <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+                        <div className="flex items-center ml-[12px] flex-wrap gap-x-[8px] gap-y-[4px]">
                             <button
                                 onClick={() => setShowBookmarked((prev) => !prev)}
                                 className={

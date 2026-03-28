@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Pagination from '../components/common/Pagination';
 import BaseModal from '../components/common/BaseModal';
 import { getMyApplications, type MyApplicationDto } from '../api/user';
@@ -135,6 +136,7 @@ const ApplicationList = () => {
         item.requestId === cancelTarget.requestId ? { ...item, status: 'CANCELED' as const } : item
       ));
       setCancelTarget(null);
+      toast.success(cancelTarget.requestType === 'INVITE' ? '초대가 취소되었습니다.' : '지원이 취소되었습니다.');
     } catch {
       alert('취소에 실패했습니다. 다시 시도해주세요.');
     } finally {
