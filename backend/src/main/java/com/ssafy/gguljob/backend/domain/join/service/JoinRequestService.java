@@ -176,7 +176,7 @@ public class JoinRequestService {
         projectMemberRepository.save(newMember);
 
         // Neo4j 동기화 (멤버 추가로 포지션 현황 변경)
-        eventPublisher.publishEvent(new ProjectSyncEvent(joinRequest.getProject().getId()));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(joinRequest.getProject().getId()));
 
         Long targetNotifyUserId = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? joinRequest.getUser().getId()

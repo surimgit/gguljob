@@ -61,7 +61,7 @@ public class ProjectMemberService {
         }
 
         // Neo4j 동기화 (멤버 탈퇴로 포지션 현황 변경)
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
 
         String message = (newLeaderId != null) ? "팀을 성공적으로 나갔으며, 리더 권한이 위임되었습니다." : "팀을 성공적으로 나갔습니다.";
 
@@ -117,7 +117,7 @@ public class ProjectMemberService {
         targetMember.revokeProject();
 
         // Neo4j 동기화 (멤버 추방으로 포지션 현황 변경)
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
 
         return new ProjectMemberResponse.ProjectKickResponse(
             projectId,
@@ -173,7 +173,7 @@ public class ProjectMemberService {
 
         ProjectPosition savedPosition = projectPositionRepository.save(newPosition);
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
 
         return new ProjectRecruitmentDto.CreateResponse(
             savedPosition.getId(),
@@ -193,7 +193,7 @@ public class ProjectMemberService {
         // 상태 변경
         position.changeStatus(request.status());
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
 
         return new ProjectRecruitmentDto.UpdateResponse(
             position.getId(), position.getStatus(), position.getTargetCount(), "모집 상태가 변경되었습니다."
@@ -213,7 +213,7 @@ public class ProjectMemberService {
         // 인원 변경
         position.changeTargetCount(request.targetCount());
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
 
         return new ProjectRecruitmentDto.UpdateResponse(
             position.getId(), position.getStatus(), position.getTargetCount(), "모집 인원이 변경되었습니다."
@@ -279,6 +279,6 @@ public class ProjectMemberService {
         projectPositionRepository.delete(position);
 
         // Neo4j 동기화 (포지션 삭제로 역할 정보 변경)
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(projectId));
     }
 }

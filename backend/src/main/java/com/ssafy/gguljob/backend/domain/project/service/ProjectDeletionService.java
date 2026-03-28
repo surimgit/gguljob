@@ -48,7 +48,7 @@ public class ProjectDeletionService {
 
         projectRepository.delete(project);
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(projectId));
+        eventPublisher.publishEvent(ProjectSyncEvent.delete(projectId));
 
         log.info("프로젝트 삭제 완료 - projectId: {}, actorUserId: {}", projectId, actorUserId);
     }
