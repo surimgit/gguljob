@@ -216,7 +216,7 @@ const ProjectDashboard = () => {
           {/* ── 상단 탭 네비게이션 ── */}
           <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/my-projects')}
             className="text-text-tertiary hover:text-text-primary transition-colors"
           >
             <ArrowLeft className="w-6 h-6" />
