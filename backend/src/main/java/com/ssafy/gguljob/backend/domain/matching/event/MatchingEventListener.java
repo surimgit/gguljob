@@ -41,7 +41,12 @@ public class MatchingEventListener {
             }
         });
 
-        CompletableFuture.allOf(graphSync, embeddingSync).join();
+        CompletableFuture.allOf(graphSync, embeddingSync)
+            .exceptionally(ex -> {
+                log.error("Neo4j 동기화 최종 오류: userId={}, error={}", userId, ex.getMessage());
+                return null;
+            })
+            .join();
         log.info("Neo4j 동기화 완료: userId={}", userId);
     }
 }

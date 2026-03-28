@@ -355,24 +355,20 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
     const [showBookmarked, setShowBookmarked] = useState(searchParams.get('filter') === 'bookmarked');
     const [currentPage, setCurrentPage] = useState(1);
     const [jobs, setJobs] = useState<JobListing[]>([]);
-    const allJobsMapRef = useRef<Map<number, JobListing>>(new Map());
+    const allJobsMap = useMemo(() => {
+        if (!allJobsLoaded) return new Map<number, JobListing>();
+        const mapped = allJobs.map(mapToJobListing);
+        return new Map(mapped.map((j) => [j.id, j]));
+    }, [allJobs, allJobsLoaded]);
 
-    // props로 받은 전체 공고 데이터 반영 + 북마크/일반 전환
+    // 북마크/일반 전환
     useEffect(() => {
-        if (allJobsLoaded) {
-            const mapped = allJobs.map(mapToJobListing);
-            const map = new Map(mapped.map((j) => [j.id, j]));
-            allJobsMapRef.current = map;
-        }
-
         if (showBookmarked) {
             getBookmarkedJobs()
                 .then(({ data }) => {
                     const paged = data.data;
                     const bookmarks = (paged?.content ?? []).map((item) => {
-                        const scored = allJobsMapRef.current.get(item.jobId);
-                        if (scored) return scored;
-                        return mapBookmarkToJobListing(item);
+                        return allJobsMap.get(item.jobId) ?? mapBookmarkToJobListing(item);
                     });
                     setJobs(bookmarks);
                 })
@@ -390,7 +386,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 })
                 .catch(console.error);
         }
-    }, [allJobs, allJobsLoaded, showBookmarked]);
+    }, [allJobsMap, allJobsLoaded, showBookmarked]);
 
     // 페이지 변경 시 섹션 상단으로 스크롤 (초기 마운트 제외)
     useEffect(() => {
