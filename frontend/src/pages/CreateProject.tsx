@@ -319,7 +319,7 @@ const CreateProject = () => {
                         ? "var(--color-primary)"
                         : "var(--color-border)",
                       color: selected
-                        ? "var(--color-primary-hover)"
+                        ? "var(--color-text-primary)"
                         : "var(--color-text-secondary)",
                       backgroundColor: selected
                         ? "var(--color-primary-soft)"
@@ -390,7 +390,7 @@ const CreateProject = () => {
                         ? "var(--color-primary)"
                         : "var(--color-border)",
                       color: selected
-                        ? "var(--color-primary-hover)"
+                        ? "var(--color-text-primary)"
                         : "var(--color-text-secondary)",
                       backgroundColor: selected
                         ? "var(--color-primary-soft)"
@@ -453,7 +453,7 @@ const CreateProject = () => {
                           className="text-xs font-normal px-2 py-0.5 rounded-full"
                           style={{
                             backgroundColor: "var(--color-primary-soft)",
-                            color: "var(--color-primary-hover)",
+                            color: "var(--color-text-primary)",
                           }}
                         >
                           {selectedStacks.length}
@@ -492,7 +492,7 @@ const CreateProject = () => {
                           className="px-3 py-1 rounded-full border text-xs font-bold transition-colors"
                           style={{
                             borderColor: "var(--color-primary)",
-                            color: "var(--color-primary-hover)",
+                            color: "var(--color-text-primary)",
                             backgroundColor: "var(--color-primary-soft)",
                           }}
                           onMouseEnter={(e) => {
@@ -501,7 +501,7 @@ const CreateProject = () => {
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
-                            e.currentTarget.style.color = "var(--color-primary-hover)";
+                            e.currentTarget.style.color = "var(--color-text-primary)";
                           }}
                         >
                           {stacks.every((s) => selectedStacks.includes(s)) ? '전체 해제' : '전체 선택'}
@@ -522,7 +522,7 @@ const CreateProject = () => {
                                   ? "var(--color-primary-soft)"
                                   : "transparent",
                                 color: selected
-                                  ? "var(--color-primary-hover)"
+                                  ? "var(--color-text-primary)"
                                   : "var(--color-text-secondary)",
                               }}
                             >
@@ -763,7 +763,7 @@ const CreateProject = () => {
                             : "transparent",
                         color:
                           memberDraft.position === role
-                            ? "var(--color-primary-hover)"
+                            ? "var(--color-text-primary)"
                             : "var(--color-text-primary)",
                       }}
                       onMouseEnter={(e) => {
@@ -795,7 +795,7 @@ const CreateProject = () => {
                   ? "var(--color-primary-soft)"
                   : "var(--color-border)",
                 color: canAddMember
-                  ? "var(--color-primary-hover)"
+                  ? "var(--color-text-primary)"
                   : "var(--color-text-tertiary)",
                 borderColor: canAddMember
                   ? "var(--color-primary)"
@@ -850,7 +850,7 @@ const CreateProject = () => {
                         className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full"
                         style={{
                           backgroundColor: "var(--color-primary-soft)",
-                          color: "var(--color-primary-hover)",
+                          color: "var(--color-text-primary)",
                         }}
                       >
                         {getRoleDisplayName(m.position)}
