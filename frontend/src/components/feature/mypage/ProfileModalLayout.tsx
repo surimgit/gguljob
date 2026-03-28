@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BaseModal } from '../../common';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
+import { THUMBNAIL_GRADIENTS } from '../../../constants/domains';
 
 export const STACK_COLORS = [
   'border-sky-300 text-sky-600',
@@ -12,19 +13,6 @@ export const STACK_COLORS = [
   'border-amber-300 text-amber-600',
 ];
 
-export const PROJECT_BG: Record<string, string> = {
-  amber: 'bg-amber-100',
-  green: 'bg-green-100',
-  sky: 'bg-sky-100',
-  purple: 'bg-purple-100',
-};
-
-const STATUS_BADGE: Record<string, { label: string; dot: string; bg: string; text: string }> = {
-  진행중: { label: '진행중', dot: '#22c55e', bg: 'rgba(34,197,94,0.15)', text: '#16a34a' },
-  모집중: { label: '모집중', dot: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: '#d97706' },
-  완료:   { label: '완료',   dot: '#9ca3af', bg: 'rgba(156,163,175,0.15)', text: '#6b7280' },
-  중단:   { label: '중단',   dot: '#ef4444', bg: 'rgba(239,68,68,0.15)', text: '#dc2626' },
-};
 
 const MAX_ROWS_PER_PAGE = 4;
 
@@ -32,8 +20,8 @@ export interface ProfileProject {
   id: string;
   name: string;
   description: string;
-  emoji: string;
-  bgColor: 'amber' | 'green' | 'sky' | 'purple';
+  domain?: string;
+  imageUrl?: string | null;
   myRole: string;
   period: string;
   techStacks: string[];
@@ -167,7 +155,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
             </div>
 
             <h3 className="flex items-center gap-2 text-base font-bold text-text-primary mb-4">
-              🛠 기술 스택
+              기술 스택
             </h3>
 
             <div className="overflow-hidden" style={{ height: containerHeight }}>
@@ -222,49 +210,46 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
           {/* 대표 프로젝트 섹션 */}
           <div className="flex-[65] min-w-0">
             <h3 className="flex items-center gap-2 text-base font-bold text-text-primary mb-4">
-              🚀 대표 프로젝트
+              대표 프로젝트
             </h3>
             <div className="flex gap-3">
-              {user.projects.slice(0, 2).map((project, pi) => (
-                <div
-                  key={project.id}
-                  className={`rounded-2xl overflow-hidden flex-1 cursor-pointer hover:brightness-95 transition-[filter] ${PROJECT_BG[project.bgColor] ?? 'bg-gray-100'}`}
-                  onClick={() => { onClose(); navigate(`/my-projects/${project.id}`); }}
-                >
-                  <div className="p-4 pb-3">
-                    <span className="text-2xl mb-2 block">{project.emoji}</span>
-                    {STATUS_BADGE[project.period] && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mb-1"
-                        style={{
-                          background: STATUS_BADGE[project.period].bg,
-                          color: STATUS_BADGE[project.period].text,
-                        }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: STATUS_BADGE[project.period].dot }}
-                        />
-                        {STATUS_BADGE[project.period].label}
-                      </span>
-                    )}
-                    <p className="text-base font-bold text-text-primary">{project.name}</p>
-                    <p className="text-xs text-text-secondary mt-2">{project.description}</p>
-                  </div>
-                  <div className="px-4 pt-0 pb-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {project.techStacks.map((stack, i) => (
-                        <span
-                          key={stack}
-                          className={`px-3 py-1 rounded-full border-2 bg-white text-xs font-medium ${STACK_COLORS[(pi * 2 + i) % STACK_COLORS.length]}`}
-                        >
-                          {stack}
-                        </span>
-                      ))}
+              {user.projects.slice(0, 2).map((project) => {
+                const gradient = THUMBNAIL_GRADIENTS[project.domain ?? ''] ?? 'linear-gradient(149deg, #e0e7ff, #c7d2fe)';
+                return (
+                  <div
+                    key={project.id}
+                    className="flex-1 rounded-2xl overflow-hidden border border-border cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                    onClick={() => { onClose(); navigate(`/my-projects/${project.id}`); }}
+                  >
+                    {/* 상단 그라디언트 배너 */}
+                    <div
+                      className="h-28 w-full flex items-center justify-center"
+                      style={{ background: project.imageUrl ? undefined : gradient }}
+                    >
+                      {project.imageUrl && (
+                        <img src={project.imageUrl} alt={project.name} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    {/* 카드 내용 */}
+                    <div className="p-4 flex flex-col gap-2 bg-white">
+                      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-1">{project.name}</p>
+                      <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">{project.description}</p>
+                      {project.techStacks.length > 0 && (
+                        <div className="flex gap-1 flex-wrap mt-1">
+                          {project.techStacks.slice(0, 3).map((stack, i) => (
+                            <span
+                              key={stack}
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${['bg-[#eff6ff] text-[#2563eb]', 'bg-[#fefce8] text-[#ca8a04]', 'bg-[#f3f4f6] text-[#374151]'][i % 3]}`}
+                            >
+                              {stack}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

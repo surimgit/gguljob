@@ -21,8 +21,6 @@ interface Project {
   id: string;
   name: string;
   description: string;
-  emoji: string;
-  bgColor: 'amber' | 'green' | 'sky' | 'purple';
   myRole: string;
   period: string;
   techStacks: string[];
@@ -60,13 +58,11 @@ const MyPage = () => {
   // auth store의 유저 정보로 프로필 초기화
   useEffect(() => {
     if (!user) return;
-    const BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
-    const repProjects = (user.repProjects ?? []).map((p, i) => ({
+    const repProjects = (user.repProjects ?? []).map((p) => ({
       id: String(p.projectId),
       name: p.title,
       description: p.description ?? '',
-      emoji: '🚀',
-      bgColor: BG_OPTIONS[i % BG_OPTIONS.length] as 'amber' | 'green' | 'sky' | 'purple',
+      imageUrl: p.imageUrl ?? null,
       myRole: p.role ?? '',
       period: p.period ?? '',
       techStacks: p.skills ?? [],

@@ -18,22 +18,53 @@ export interface Notification {
 }
 
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
-const TEAM_ICON = {
+const ICON_CONFIG: Partial<Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }>> = {
+  // 초대 / 지원 요청 — 사람 + 플러스
+  TEAM_INVITE: {
     wrapperClass: 'bg-[#e8e8f5]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  TEAM_APPLY: {
+    wrapperClass: 'bg-[#e8e8f5]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  // 수락됨 — 사람 + 체크
+  TEAM_ACCEPTED: {
+    wrapperClass: 'bg-[#dcfce7]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <polyline points="17 11 19 13 23 9" />
       </svg>
     ),
-};
-
-const ICON_CONFIG: Partial<Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }>> = {
-  TEAM_INVITE: TEAM_ICON,
-  TEAM_APPLY: TEAM_ICON,
-  TEAM_ACCEPTED: TEAM_ICON,
-  TEAM_REJECTED: TEAM_ICON,
+  },
+  // 거절됨 — 사람 + X
+  TEAM_REJECTED: {
+    wrapperClass: 'bg-[#fee2e2]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="17" y1="9" x2="23" y2="15" />
+        <line x1="23" y1="9" x2="17" y2="15" />
+      </svg>
+    ),
+  },
   MEMBER: {
     wrapperClass: 'bg-[#f0e8f5]',
     iconEl: (

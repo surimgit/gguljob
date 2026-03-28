@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
 import { getMyPortfolios, type PortfolioSummary } from '../../../api/portfolio';
@@ -61,7 +61,6 @@ const Portfolio = () => {
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-text-primary" />
           <span>포트폴리오</span>
         </h2>
         <Link

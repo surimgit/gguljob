@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BarChart2,
   Info,
   Monitor,
   Server,
@@ -406,7 +405,6 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{isLeader ? "✏️" : "📋"}</span>
           <h1
             className="text-2xl font-bold"
             style={{ color: "var(--color-text-primary)" }}
@@ -442,10 +440,6 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
-          <BarChart2
-            className="w-4 h-4"
-            style={{ color: "var(--color-primary)" }}
-          />
           프로젝트 상태
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -488,7 +482,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
-          📋 기본 정보
+          기본 정보
         </div>
 
         {/* 프로젝트 이미지 + 프로젝트명 */}
@@ -776,7 +770,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           className="flex items-center gap-2 text-lg font-bold mb-1"
           style={{ color: "var(--color-text-primary)" }}
         >
-          ⚙️ 기술 스택
+          기술 스택
         </div>
         <p
           className="text-sm mb-4"
