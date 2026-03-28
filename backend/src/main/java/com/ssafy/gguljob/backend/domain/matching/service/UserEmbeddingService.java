@@ -81,8 +81,10 @@ public class UserEmbeddingService {
             parts.add("자기소개: " + user.getDescription().strip());
         }
 
-        // README: 완료된 프로젝트 전체 (최신순)
-        List<String> readmes = projectRepository.findReadmesByLeaderId(user.getId());
+        // README: 완료된 프로젝트 전체 (리더 + 팀원 참여 프로젝트, 최신순)
+        List<String> readmes = new java.util.ArrayList<>();
+        readmes.addAll(projectRepository.findReadmesByLeaderId(user.getId()));
+        readmes.addAll(projectRepository.findReadmesByMemberId(user.getId()));
         String readmeText = readmes.isEmpty() ? null : String.join("\n\n---\n", readmes);
 
         String profileText = String.join("\n", parts);

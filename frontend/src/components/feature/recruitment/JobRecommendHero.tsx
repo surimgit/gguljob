@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
-import { getRecommendedTop3 } from '../../../api/jobs';
 import { useAuthStore } from '../../../stores/authStore';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
@@ -215,24 +214,21 @@ const JobCard = ({
 };
 
 interface JobRecommendHeroProps {
+    allJobs: JobItem[];
     bookmarkedIds: Set<number>;
     onToggleBookmark: (id: number) => void;
 }
 
-const JobRecommendHero = ({ bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
-    const [top3, setTop3] = useState<JobItem[]>([]);
+const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
     const user = useAuthStore((s) => s.user);
 
     const userName = user?.name ?? '사용자';
     const userSkills = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
 
-    useEffect(() => {
-        getRecommendedTop3()
-            .then(({ data }) => {
-                if (data.length > 0) setTop3(data.slice(0, 3));
-            })
-            .catch(() => {});
-    }, []);
+    const top3 = useMemo(() => {
+        if (allJobs.length === 0) return [];
+        return allJobs.slice(0, 3);
+    }, [allJobs]);
 
     return (
         <>
