@@ -37,6 +37,16 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "     (CASE WHEN matchedRole IS NOT NULL THEN 40 ELSE 0 END + " +
             "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
 
+            // 프로젝트 경험 가산점: 같은 도메인 프로젝트 참여 경험 15점 + 스킬 겹침 경험 10점
+            "OPTIONAL MATCH (u)-[:PARTICIPATED_IN]->(past:Project) " +
+            "WHERE past.domain = p.domain AND past.id <> p.id " +
+            "WITH u, p, matchedRole, graphScore, count(past) > 0 AS hasDomainExp " +
+            "OPTIONAL MATCH (u)-[:PARTICIPATED_IN]->(past2:Project)-[:REQUIRES_SKILL]->(ps:Skill)<-[:REQUIRES_SKILL]-(p) " +
+            "WHERE past2.id <> p.id " +
+            "WITH u, p, matchedRole, graphScore, hasDomainExp, count(DISTINCT ps) > 0 AS hasSkillExp " +
+            "WITH u, p, matchedRole, " +
+            "     graphScore + (CASE WHEN hasDomainExp THEN 15 ELSE 0 END) + (CASE WHEN hasSkillExp THEN 10 ELSE 0 END) AS graphScore " +
+
             // 벡터 유사도 점수 (임베딩 없으면 0)
             "WITH u, p, matchedRole, graphScore, " +
             "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
