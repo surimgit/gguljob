@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type RefObject } from 'react';
 import { Sparkles, X, ChevronLeft } from 'lucide-react';
 import chatbotImg from '../../assets/images/chatbot.png';
 
@@ -12,6 +12,7 @@ interface ChatbotPopupProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'agent' | 'troubleshooting';
+  triggerRef?: React.RefObject<HTMLElement>;
   // 트러블슈팅 모드 전용
   mrList?: ChatbotMrItem[];
   selectedMrId?: number | null;
@@ -26,26 +27,31 @@ const ChatbotPopup = ({
   isOpen,
   onClose,
   mode,
+  triggerRef,
   mrList = [],
   selectedMrId = null,
   onMrSelect,
   onGenerate,
   onSendMessage,
-}: ChatbotPopupProps) => {
+}: ChatbotPopupProps & { triggerRef?: RefObject<HTMLElement> }) => {
   const [generating, setGenerating] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // 외부 클릭 시 닫기
+  // 외부 클릭 시 닫기 (트리거 버튼 제외)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        popupRef.current && !popupRef.current.contains(target) &&
+        (!triggerRef?.current || !triggerRef.current.contains(target))
+      ) {
         setGenerating(false);
         onClose();
       }
     };
     if (isOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   // 팝업이 닫힐 때 generating 초기화
   useEffect(() => {

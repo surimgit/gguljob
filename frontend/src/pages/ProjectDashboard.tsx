@@ -104,6 +104,7 @@ const ProjectDashboard = () => {
   const personalDropdownRef = useRef<HTMLDivElement>(null);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const chatbotBtnRef = useRef<HTMLButtonElement>(null);
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   const { dashboard, gitLog, dashboardLoading, fetchDashboard, fetchMyProjects } =
@@ -1358,25 +1359,29 @@ const ProjectDashboard = () => {
           {showChatbot && (
             <>
               <button
+                ref={chatbotBtnRef}
                 onClick={() => setChatbotOpen((prev) => !prev)}
                 className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 border-0 bg-transparent animate-float flex flex-col items-center"
               >
-                {!chatbotOpen && (
-                  <div className="mb-1 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg whitespace-nowrap"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
-                  >
-                    💬 AI 상담하기
-                  </div>
-                )}
+                <div
+                  className="mb-1 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg whitespace-nowrap transition-opacity duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                    opacity: chatbotOpen ? 0 : 1,
+                  }}
+                >
+                  💬 AI 상담하기
+                </div>
                 <div className="relative w-full flex-1 overflow-hidden">
                   <img
                     src={chatbotImg}
                     alt="AI 챗봇"
                     className="w-full h-full object-cover"
                   />
-                  {!chatbotOpen && (
-                    <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white animate-pulse" />
-                  )}
+                  <span
+                    className="absolute top-1 right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white animate-pulse transition-opacity duration-200"
+                    style={{ opacity: chatbotOpen ? 0 : 1 }}
+                  />
                 </div>
               </button>
 
@@ -1384,6 +1389,7 @@ const ProjectDashboard = () => {
                 isOpen={chatbotOpen}
                 onClose={() => setChatbotOpen(false)}
                 mode="agent"
+                triggerRef={chatbotBtnRef}
               />
             </>
           )}
