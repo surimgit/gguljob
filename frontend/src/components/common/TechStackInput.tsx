@@ -109,6 +109,26 @@ const TechStackInput = ({ value, onChange }: Props) => {
 
       <hr className="border-border" />
 
+      {/* 전체 선택/해제 */}
+      {!isLoading && activeSkills.length > 0 && (
+        <div className="flex justify-end -mb-1">
+          <button
+            type="button"
+            onClick={() => {
+              const allSelected = activeSkills.every((s) => value.includes(s));
+              if (allSelected) {
+                onChange(value.filter((s) => !activeSkills.includes(s)));
+              } else {
+                onChange([...value, ...activeSkills.filter((s) => !value.includes(s))]);
+              }
+            }}
+            className="text-xs font-medium text-text-secondary hover:text-primary transition-colors"
+          >
+            {activeSkills.every((s) => value.includes(s)) ? '전체 해제' : '전체 선택'}
+          </button>
+        </div>
+      )}
+
       {/* 추천 칩 */}
       <div className="flex flex-wrap gap-2">
         {activeSkills.map((stack) => {

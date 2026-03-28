@@ -121,7 +121,7 @@ function SkillFilterRow({
             <span className="font-bold text-[#b8a88a] text-[12px] leading-[31.5px] w-[56px] shrink-0 text-right pr-[4px]">
               {activeGroup?.label}
             </span>
-            <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px]">
+            <div className="flex items-center ml-[12px] flex-wrap gap-y-[4px] flex-1">
               {skills.map((skill) => (
                 <FilterButton
                   key={skill}
@@ -130,6 +130,19 @@ function SkillFilterRow({
                   onClick={() => toggleSkill(skill)}
                 />
               ))}
+              <button
+                onClick={() => {
+                  const allSelected = skills.every((s) => selected.includes(s));
+                  if (allSelected) {
+                    onChange(selected.filter((s) => !skills.includes(s)));
+                  } else {
+                    onChange([...selected, ...skills.filter((s) => !selected.includes(s))]);
+                  }
+                }}
+                className="h-[31.5px] px-[16px] rounded-[20px] font-bold text-[13px] whitespace-nowrap transition-all text-[#6366f1] hover:bg-[#eef2ff]"
+              >
+                {skills.every((s) => selected.includes(s)) ? '전체 해제' : '전체 선택'}
+              </button>
             </div>
           </div>
         </>

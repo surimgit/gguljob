@@ -842,31 +842,53 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 </button>
 
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-2 flex flex-wrap gap-2">
-                    {cat.stacks.map((stack) => {
-                      const sel = (techStacks[cat.key] ?? []).includes(stack);
-                      return (
+                  <div className="px-4 pb-4 pt-2">
+                    {isLeader && (
+                      <div className="flex justify-end mb-2">
                         <button
-                          key={stack}
-                          onClick={() => isLeader && toggleStack(cat.key, stack)}
-                          disabled={!isLeader}
-                          className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
-                          style={{
-                            borderColor: sel
-                              ? "var(--color-primary)"
-                              : "var(--color-border)",
-                            color: sel
-                              ? "var(--color-primary-hover)"
-                              : "var(--color-text-secondary)",
-                            background: sel
-                              ? "var(--color-primary-soft)"
-                              : "var(--color-surface)",
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const selected = techStacks[cat.key] ?? [];
+                            const allSelected = cat.stacks.every((s) => selected.includes(s));
+                            setTechStacks((prev) => ({
+                              ...prev,
+                              [cat.key]: allSelected ? [] : [...cat.stacks],
+                            }));
                           }}
+                          className="text-xs font-medium transition-colors"
+                          style={{ color: "var(--color-primary-hover)" }}
                         >
-                          {stack}
+                          {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
-                      );
-                    })}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {cat.stacks.map((stack) => {
+                        const sel = (techStacks[cat.key] ?? []).includes(stack);
+                        return (
+                          <button
+                            key={stack}
+                            onClick={() => isLeader && toggleStack(cat.key, stack)}
+                            disabled={!isLeader}
+                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                            style={{
+                              borderColor: sel
+                                ? "var(--color-primary)"
+                                : "var(--color-border)",
+                              color: sel
+                                ? "var(--color-primary-hover)"
+                                : "var(--color-text-secondary)",
+                              background: sel
+                                ? "var(--color-primary-soft)"
+                                : "var(--color-surface)",
+                            }}
+                          >
+                            {stack}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

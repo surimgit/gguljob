@@ -474,31 +474,53 @@ const CreateProject = () => {
                   </button>
 
                   {isOpen && (
-                    <div className="px-4 pb-4 pt-2 flex flex-wrap gap-2">
-                      {stacks.map((stack) => {
-                        const selected = selectedStacks.includes(stack);
-                        return (
-                          <button
-                            key={stack}
-                            type="button"
-                            onClick={() => toggleStack(key, stack)}
-                            className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
-                            style={{
-                              borderColor: selected
-                                ? "var(--color-primary)"
-                                : "var(--color-border)",
-                              backgroundColor: selected
-                                ? "var(--color-primary-soft)"
-                                : "transparent",
-                              color: selected
-                                ? "var(--color-primary-hover)"
-                                : "var(--color-text-secondary)",
-                            }}
-                          >
-                            {stack}
-                          </button>
-                        );
-                      })}
+                    <div className="px-4 pb-4 pt-2">
+                      <div className="flex justify-end mb-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const allSelected = stacks.every((s) => selectedStacks.includes(s));
+                            setForm((prev) => ({
+                              ...prev,
+                              techStacks: {
+                                ...prev.techStacks,
+                                [key]: allSelected ? [] : [...stacks],
+                              },
+                            }));
+                          }}
+                          className="text-xs font-medium transition-colors"
+                          style={{ color: "var(--color-primary-hover)" }}
+                        >
+                          {stacks.every((s) => selectedStacks.includes(s)) ? '전체 해제' : '전체 선택'}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {stacks.map((stack) => {
+                          const selected = selectedStacks.includes(stack);
+                          return (
+                            <button
+                              key={stack}
+                              type="button"
+                              onClick={() => toggleStack(key, stack)}
+                              className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
+                              style={{
+                                borderColor: selected
+                                  ? "var(--color-primary)"
+                                  : "var(--color-border)",
+                                backgroundColor: selected
+                                  ? "var(--color-primary-soft)"
+                                  : "transparent",
+                                color: selected
+                                  ? "var(--color-primary-hover)"
+                                  : "var(--color-text-secondary)",
+                              }}
+                            >
+                              {stack}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
