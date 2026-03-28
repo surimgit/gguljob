@@ -240,6 +240,9 @@ const Navbar = () => {
             rafId = requestAnimationFrame(sync);
         };
 
+        // 페이지 이동 시 즉시 배경색 초기화
+        if (headerRef.current) headerRef.current.style.backgroundColor = '';
+
         // hero 요소가 렌더링될 때까지 재시도
         let retryCount = 0;
         const tryInit = () => {
