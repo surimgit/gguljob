@@ -99,6 +99,7 @@ export interface UserProfileDto {
     role: string;
     period: string;
     skills: string[];
+    imageUrl?: string | null;
   }[];
   goals: string[];
 }
