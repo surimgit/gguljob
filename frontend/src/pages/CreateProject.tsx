@@ -475,7 +475,7 @@ const CreateProject = () => {
 
                   {isOpen && (
                     <div className="px-4 pb-4 pt-2">
-                      <div className="flex justify-end mb-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -489,13 +489,23 @@ const CreateProject = () => {
                               },
                             }));
                           }}
-                          className="text-xs font-medium transition-colors"
-                          style={{ color: "var(--color-primary-hover)" }}
+                          className="px-3 py-1 rounded-full border text-xs font-bold transition-colors"
+                          style={{
+                            borderColor: "var(--color-primary)",
+                            color: "var(--color-primary-hover)",
+                            backgroundColor: "var(--color-primary-soft)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                            e.currentTarget.style.color = "#fff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
+                            e.currentTarget.style.color = "var(--color-primary-hover)";
+                          }}
                         >
                           {stacks.every((s) => selectedStacks.includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
                         {stacks.map((stack) => {
                           const selected = selectedStacks.includes(stack);
                           return (

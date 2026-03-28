@@ -130,7 +130,9 @@ function SkillFilterRow({
                   onClick={() => toggleSkill(skill)}
                 />
               ))}
-              <button
+              <FilterButton
+                text={skills.every((s) => selected.includes(s)) ? '전체 해제' : '전체 선택'}
+                selected={skills.every((s) => selected.includes(s))}
                 onClick={() => {
                   const allSelected = skills.every((s) => selected.includes(s));
                   if (allSelected) {
@@ -139,10 +141,7 @@ function SkillFilterRow({
                     onChange([...selected, ...skills.filter((s) => !selected.includes(s))]);
                   }
                 }}
-                className="h-[31.5px] px-[16px] rounded-[20px] font-bold text-[13px] whitespace-nowrap transition-all text-[#6366f1] hover:bg-[#eef2ff]"
-              >
-                {skills.every((s) => selected.includes(s)) ? '전체 해제' : '전체 선택'}
-              </button>
+              />
             </div>
           </div>
         </>

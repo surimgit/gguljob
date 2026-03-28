@@ -87,31 +87,27 @@ const TechStackInput = ({ value, onChange }: Props) => {
         </>
       )}
 
-      {/* 카테고리 탭 */}
-      <div className="flex gap-1 flex-wrap">
-        {isLoading ? Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="w-16 h-7 rounded-full bg-gray-200 animate-pulse" />
-        )) : categoryTabs.map((category) => (
-          <button
-            key={category}
-            type="button"
-            onClick={() => setActiveCategory(category)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-              activeCategory === category
-                ? 'bg-primary text-text-primary'
-                : 'bg-background text-text-secondary hover:bg-primary-soft'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      <hr className="border-border" />
-
-      {/* 전체 선택/해제 */}
-      {!isLoading && activeSkills.length > 0 && (
-        <div className="flex justify-end -mb-1">
+      {/* 카테고리 탭 + 전체 선택/해제 */}
+      <div className="flex gap-1 flex-wrap items-center justify-between">
+        <div className="flex gap-1 flex-wrap">
+          {isLoading ? Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="w-16 h-7 rounded-full bg-gray-200 animate-pulse" />
+          )) : categoryTabs.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setActiveCategory(category)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                activeCategory === category
+                  ? 'bg-primary text-text-primary'
+                  : 'bg-background text-text-secondary hover:bg-primary-soft'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        {!isLoading && activeSkills.length > 0 && (
           <button
             type="button"
             onClick={() => {
@@ -122,12 +118,12 @@ const TechStackInput = ({ value, onChange }: Props) => {
                 onChange([...value, ...activeSkills.filter((s) => !value.includes(s))]);
               }
             }}
-            className="text-xs font-medium text-text-secondary hover:text-primary transition-colors"
+            className="text-xs font-bold px-3 py-1.5 rounded-full border border-primary text-primary bg-primary-soft hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
           >
             {activeSkills.every((s) => value.includes(s)) ? '전체 해제' : '전체 선택'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 추천 칩 */}
       <div className="flex flex-wrap gap-2">

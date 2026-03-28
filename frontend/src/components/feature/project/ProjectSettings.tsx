@@ -856,8 +856,20 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                               [cat.key]: allSelected ? [] : [...cat.stacks],
                             }));
                           }}
-                          className="text-xs font-medium transition-colors"
-                          style={{ color: "var(--color-primary-hover)" }}
+                          className="text-xs font-bold px-3 py-1 rounded-full border transition-colors"
+                          style={{
+                            borderColor: "var(--color-primary)",
+                            color: "var(--color-primary-hover)",
+                            backgroundColor: "var(--color-primary-soft)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                            e.currentTarget.style.color = "#fff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
+                            e.currentTarget.style.color = "var(--color-primary-hover)";
+                          }}
                         >
                           {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
