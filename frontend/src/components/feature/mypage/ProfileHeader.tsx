@@ -80,7 +80,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onEditInfo}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
             정보수정

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Wrench, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
 import { getMyTroubleshootings, type MyTroubleshootingItem } from '../../../api/troubleshooting';
@@ -79,7 +79,6 @@ const Troubleshooting = () => {
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-          <Wrench className="w-5 h-5 text-text-primary" />
           <span>트러블슈팅</span>
         </h2>
         <Link

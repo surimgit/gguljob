@@ -209,6 +209,7 @@ public class UserService {
                                                 .role(roleMap.getOrDefault(pId, "참여자"))
                                                 .period(period).skills(skillMap.getOrDefault(pId,
                                                                 Collections.emptyList()))
+                                                .imageUrl(project.getImageUrl())
                                                 .build();
                         }).toList();
                 }
@@ -316,6 +317,7 @@ public class UserService {
                                                 .role(roleMap.getOrDefault(pId, "참여자"))
                                                 .period(period).skills(skillMap.getOrDefault(pId,
                                                                 Collections.emptyList()))
+                                                .imageUrl(project.getImageUrl())
                                                 .build();
                         }).toList();
                 }

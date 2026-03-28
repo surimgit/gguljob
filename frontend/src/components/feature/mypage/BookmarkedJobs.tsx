@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bookmark, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
 import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
@@ -85,7 +85,6 @@ const BookmarkedJobs = () => {
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-          <Bookmark className="w-5 h-5 text-text-primary" />
           <span>북마크한 채용공고</span>
         </h2>
         <Link

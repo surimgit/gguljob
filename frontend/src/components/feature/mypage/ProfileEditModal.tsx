@@ -35,15 +35,11 @@ const createCroppedImage = async (imageSrc: string, pixelCrop: Area): Promise<Fi
 };
 
 
-const PROJECT_BG_OPTIONS = ['amber', 'green', 'sky', 'purple'] as const;
-
-
 interface Project {
   id: string;
   name: string;
   description: string;
-  emoji: string;
-  bgColor: 'amber' | 'green' | 'sky' | 'purple';
+  domain?: string;
   myRole: string;
   period: string;
   techStacks: string[];
@@ -70,6 +66,9 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
   const [form, setForm] = useState<ProfileEditForm>(initialData);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageMenuRef = useRef<HTMLDivElement>(null);
@@ -109,6 +108,18 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
     }
   }, [isOpen, initialData]);
 
+  // 역할 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!roleDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [roleDropdownOpen]);
+
   // 이미지 메뉴 외부 클릭 시 닫기
   useEffect(() => {
     if (!showImageMenu) return;
@@ -143,9 +154,8 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       const newProject: Project = {
         id: String(project.projectId),
         name: project.title,
-        description: project.domain ?? '',
-        emoji: '🚀',
-        bgColor: PROJECT_BG_OPTIONS[form.projects.length % PROJECT_BG_OPTIONS.length],
+        description: project.description ?? '',
+        domain: project.domain ?? '',
         myRole: '',
         period: STATUS_MAP[project.status] ?? project.status,
         techStacks: project.skills ?? [],
@@ -198,7 +208,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       await updateProfileApi(payload);
 
       onSave(form);
-      onClose();
+      setShowSuccessModal(true);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: unknown } };
       console.error('[프로필 수정] 실패:', axiosErr.response?.status, axiosErr.response?.data);
@@ -207,6 +217,33 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       setIsSaving(false);
     }
   };
+
+  if (showSuccessModal) {
+    return (
+      <BaseModal
+        isOpen={true}
+        onClose={() => { setShowSuccessModal(false); onClose(); }}
+        containerClassName="bg-white rounded-2xl w-[360px] shadow-2xl overflow-hidden"
+      >
+        <div className="flex flex-col items-center px-8 py-8 gap-4">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+            <Check className="w-7 h-7 text-green-500" />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-bold text-text-primary mb-1">저장 완료</p>
+            <p className="text-sm text-text-secondary">프로필이 성공적으로 저장되었습니다.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setShowSuccessModal(false); onClose(); }}
+            className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-semibold transition-colors"
+          >
+            확인
+          </button>
+        </div>
+      </BaseModal>
+    );
+  }
 
   return (
     <BaseModal
@@ -358,18 +395,46 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                   className="px-3 py-2 rounded-xl border border-border text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1" ref={roleDropdownRef}>
                 <label className="text-xs font-medium text-text-secondary">희망 직무</label>
-                <select
-                  value={form.role ?? ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value || null }))}
-                  className="px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">상관 없음</option>
-                  {ROLE_LIST.map((code) => (
-                    <option key={code} value={ROLE_TO_API[code]}>{ROLE_DISPLAY_NAMES[code]}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setRoleDropdownOpen((prev) => !prev)}
+                    className={`w-full flex items-center justify-between pl-3 pr-3 py-2 rounded-xl border text-sm bg-white text-text-primary transition-colors ${roleDropdownOpen ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-gray-400'}`}
+                  >
+                    <span className={form.role ? 'text-text-primary' : 'text-text-tertiary'}>
+                      {form.role ? ROLE_DISPLAY_NAMES[ROLE_LIST.find(c => ROLE_TO_API[c] === form.role) ?? ''] ?? form.role : '상관 없음'}
+                    </span>
+                    <svg className={`w-4 h-4 text-text-tertiary transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {roleDropdownOpen && (
+                    <ul className="absolute z-20 mt-1 w-full bg-white border border-border rounded-xl shadow-lg overflow-hidden">
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => { setForm((prev) => ({ ...prev, role: null })); setRoleDropdownOpen(false); }}
+                          className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-primary-soft ${!form.role ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
+                        >
+                          상관 없음
+                        </button>
+                      </li>
+                      {ROLE_LIST.map((code) => (
+                        <li key={code}>
+                          <button
+                            type="button"
+                            onClick={() => { setForm((prev) => ({ ...prev, role: ROLE_TO_API[code] })); setRoleDropdownOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-primary-soft ${form.role === ROLE_TO_API[code] ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
+                          >
+                            {ROLE_DISPLAY_NAMES[code]}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -388,7 +453,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
         <div className="bg-background mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-6">
           {/* 기술 스택 */}
           <div>
-            <h3 className="text-base font-bold text-text-primary mb-3">🛠 기술 스택</h3>
+            <h3 className="text-base font-bold text-text-primary mb-3 pl-3">기술 스택</h3>
             <TechStackInput
               value={form.techStacks}
               onChange={(stacks) => setForm((prev) => ({ ...prev, techStacks: stacks }))}
@@ -398,7 +463,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           {/* 대표 프로젝트 */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-text-primary">🚀 대표 프로젝트</h3>
+              <h3 className="text-base font-bold text-text-primary pl-3">대표 프로젝트</h3>
               <span className="text-xs text-text-tertiary">{form.projects.length}/2 선택</span>
             </div>
 

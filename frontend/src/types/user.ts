@@ -33,6 +33,7 @@ export interface RepProject {
   role: string;
   period: string;
   skills: string[];
+  imageUrl?: string | null;
 }
 
 export interface User {

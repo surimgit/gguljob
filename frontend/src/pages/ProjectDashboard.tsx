@@ -6,9 +6,6 @@ import {
   User,
   Users,
   Settings,
-  GitBranch,
-  BarChart2,
-  Zap,
   Sparkles,
   RefreshCw,
   GitCommit,
@@ -572,10 +569,6 @@ const ProjectDashboard = () => {
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                       <div className="flex items-center gap-2">
-                        <GitBranch
-                          className="w-5 h-5"
-                          style={{ color: "var(--color-primary)" }}
-                        />
                         <span
                           className="text-lg font-bold"
                           style={{ color: "var(--color-text-primary)" }}
@@ -866,7 +859,7 @@ const ProjectDashboard = () => {
                         className="flex items-center gap-2 text-lg font-bold"
                         style={{ color: "var(--color-text-primary)" }}
                       >
-                        🚀 프로젝트 주제
+                        프로젝트 주제
                       </div>
                       {isLeader && (
                         <div className="flex items-center gap-2">
@@ -1150,10 +1143,6 @@ const ProjectDashboard = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 text-lg font-bold mb-4">
-                      <BarChart2
-                        className="w-5 h-5"
-                        style={{ color: "var(--color-primary)" }}
-                      />
                       <span style={{ color: "var(--color-text-primary)" }}>
                         PR 랭킹
                       </span>
@@ -1260,10 +1249,6 @@ const ProjectDashboard = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 text-lg font-bold mb-4">
-                      <Zap
-                        className="w-5 h-5"
-                        style={{ color: "var(--color-primary)" }}
-                      />
                       <span style={{ color: "var(--color-text-primary)" }}>
                         최근 활동
                       </span>
