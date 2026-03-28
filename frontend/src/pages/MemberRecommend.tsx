@@ -40,8 +40,8 @@ const sortBySkillOrder = (skills: string[]) =>
 const toCardData = (m: RecommendedMember) => ({
   id: String(m.userId),
   name: m.userName,
-  position: m.position,
-  level: m.experienceLevel,
+  position: m.position ?? null,
+  level: m.experienceLevel ?? null,
   matchRate: m.matchScore,
   introduction: m.bio,
   techStacks: sortBySkillOrder(m.skills),

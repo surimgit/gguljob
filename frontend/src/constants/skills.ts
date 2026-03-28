@@ -224,10 +224,12 @@ export const EXPERIENCE_LEVEL_COLORS: Record<string, { color: string; bg: string
 };
 
 /** API 응답의 level 문자열을 화면 표시명으로 변환 */
-export const getExperienceLevelDisplay = (level: string): string =>
-  EXPERIENCE_DESC_TO_DISPLAY[level] ?? EXPERIENCE_LEVEL_DISPLAY[level as ExperienceLevelCode] ?? level;
+export const getExperienceLevelDisplay = (level: string | null | undefined): string => {
+  if (!level) return "-";
+  return EXPERIENCE_DESC_TO_DISPLAY[level] ?? EXPERIENCE_LEVEL_DISPLAY[level as ExperienceLevelCode] ?? level;
+};
 
-export const getExperienceLevelStyle = (level: string) => {
+export const getExperienceLevelStyle = (level: string | null | undefined) => {
   const display = getExperienceLevelDisplay(level);
   return EXPERIENCE_LEVEL_COLORS[display] ?? { color: "#6B7280", bg: "rgba(107,114,128,0.12)" };
 };

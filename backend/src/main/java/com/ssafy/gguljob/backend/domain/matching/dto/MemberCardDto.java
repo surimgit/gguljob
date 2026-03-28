@@ -19,8 +19,8 @@ public record MemberCardDto(
 
         String pos = (user.getRoles() != null && !user.getRoles().isEmpty())
             ? user.getRoles().stream().map(PositionType::getDescription).collect(Collectors.joining(", "))
-            : "미정";
-        String level = (user.getExperience() != null) ? user.getExperience().getDescription() : "미정";
+            : null;
+        String level = (user.getExperience() != null) ? user.getExperience().getDescription() : null;
 
         // 유저 스택 추출 (User엔티티 - UserSkill - Skill 구조라고 가정)
         List<String> userSkills = (user.getUserSkills() != null)

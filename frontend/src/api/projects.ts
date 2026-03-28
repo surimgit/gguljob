@@ -211,8 +211,8 @@ export interface RecommendedMember {
   userId: number;
   userName: string;
   profileImageUrl: string | null;
-  position: string;
-  experienceLevel: string;
+  position: string | null;
+  experienceLevel: string | null;
   bio: string;
   skills: string[];
   matchScore: number;

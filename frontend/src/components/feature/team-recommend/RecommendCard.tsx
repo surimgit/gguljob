@@ -3,8 +3,8 @@ import { getRoleDisplayName, getRoleColor, getExperienceLevelDisplay, getExperie
 
 interface RecommendCardProps {
   name: string;
-  position: string;
-  level: string;
+  position: string | null;
+  level: string | null;
   matchRate: number;
   introduction: string;
   techStacks: string[];
