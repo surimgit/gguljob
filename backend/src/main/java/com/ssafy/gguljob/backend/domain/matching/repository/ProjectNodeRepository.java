@@ -19,11 +19,32 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "AND ($domains IS NULL OR p.domain IN $domains) " +
             "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
             "AND ($skillIds IS NULL OR size($skillIds) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.id IN $skillIds }) " +
-            "OPTIONAL MATCH (u)-[:WANTS_ROLE]->(r:Role)<-[:REQUIRES_ROLE]-(p) " +
-            "WITH u, p, collect(DISTINCT r.name)[0] AS matchedRole " +
+
+            // 프로젝트가 요구하는 총 스킬 수
+            "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(reqSkill:Skill) " +
+            "WITH u, p, count(reqSkill) AS totalSkills " +
+
+            // 직무 매칭 여부
+            "OPTIONAL MATCH (u)-[:WANTS_ROLE]->(mr:Role)<-[:REQUIRES_ROLE]-(p) " +
+            "WITH u, p, totalSkills, collect(DISTINCT mr.name)[0] AS matchedRole " +
+
+            // 스킬 겹침 수
             "OPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(p) " +
-            "WITH p, matchedRole, COUNT(DISTINCT s) AS skillScore " +
-            "WITH p, matchedRole, (CASE WHEN matchedRole IS NOT NULL THEN 10 ELSE 0 END + skillScore) AS score " +
+            "WITH u, p, totalSkills, matchedRole, count(DISTINCT s) AS matchedSkills " +
+
+            // 그래프 점수: 직무 40점 + 스킬 정규화 60점
+            "WITH u, p, matchedRole, " +
+            "     (CASE WHEN matchedRole IS NOT NULL THEN 40 ELSE 0 END + " +
+            "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
+
+            // 벡터 유사도 점수 (임베딩 없으면 0)
+            "WITH u, p, matchedRole, graphScore, " +
+            "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
+            "          THEN toInteger(reduce(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * p.embedding[i]) * 100) " +
+            "          ELSE 0 END AS vectorScore " +
+
+            // 최종 점수: 그래프 60% + 벡터 40%
+            "WITH p, matchedRole, toInteger(graphScore * 0.6 + vectorScore * 0.4) AS score " +
             "RETURN p.id AS projectId, p.title AS projectTitle, coalesce(matchedRole, '무관') AS matchedRole, score " +
             "ORDER BY score DESC, p.id DESC SKIP $skip LIMIT $limit",
 

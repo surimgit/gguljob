@@ -33,12 +33,21 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
             "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(s:Skill)<-[:HAS_SKILL]-(u) " +
             "WITH p, totalSkills, u, isRoleMatched, count(s) AS matchedSkills " +
 
-            // 적합도 스코어 계산 (일단 포지션 40점 + 스킬 비율 60점)
-            "WITH u, " +
+            // 그래프 점수: 직무 40점 + 스킬 비율 60점
+            "WITH p, u, " +
             "     CASE " +
             "       WHEN totalSkills = 0 THEN (CASE WHEN isRoleMatched THEN 100 ELSE 50 END) " +
             "       ELSE (CASE WHEN isRoleMatched THEN 40 ELSE 0 END) + toInteger((toFloat(matchedSkills) / totalSkills) * 60) " +
-            "     END AS matchScore " +
+            "     END AS graphScore " +
+
+            // 벡터 유사도 점수 (유저 임베딩 ↔ 프로젝트 임베딩, 없으면 0)
+            "WITH u, graphScore, " +
+            "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
+            "          THEN toInteger(reduce(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * p.embedding[i]) * 100) " +
+            "          ELSE 0 END AS vectorScore " +
+
+            // 최종 점수: 그래프 60% + 벡터 40%
+            "WITH u, toInteger(graphScore * 0.6 + vectorScore * 0.4) AS matchScore " +
 
             "RETURN toString(u.id) AS userId, matchScore " +
             "ORDER BY matchScore DESC, u.id DESC " +

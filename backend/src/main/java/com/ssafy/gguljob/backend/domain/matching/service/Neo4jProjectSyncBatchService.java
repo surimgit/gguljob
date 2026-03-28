@@ -1,11 +1,11 @@
 package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepository;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectPositionRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
-import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ public class Neo4jProjectSyncBatchService {
     private final ProjectSkillRepository projectSkillRepository;
     private final ProjectPositionRepository projectPositionRepository;
     private final ProjectNodeRepository projectNodeRepository;
+    private final ProjectEmbeddingService projectEmbeddingService;
     @Qualifier("neo4jTransactionManager")
     private final PlatformTransactionManager neo4jTransactionManager;
 
@@ -37,6 +38,7 @@ public class Neo4jProjectSyncBatchService {
         for (Project project : recruitingProjects) {
             try {
                 txTemplate.executeWithoutResult(status -> syncSingleProject(project));
+                projectEmbeddingService.updateEmbedding(project.getId());
                 successCount++;
             } catch (Exception e) {
                 failCount++;
@@ -84,6 +86,13 @@ public class Neo4jProjectSyncBatchService {
             projectIdStr, projectTitle, domain, status, hasOpenPosition, roles, skills
         ));
         log.info("Neo4j 프로젝트 동기화 완료: projectId={}, status={}, hasOpenPosition={}", projectId, status, hasOpenPosition);
+
+        // 그래프 동기화 후 임베딩 비동기 업데이트 (title/description/domain/skills 기반)
+        try {
+            projectEmbeddingService.updateEmbedding(projectId);
+        } catch (Exception e) {
+            log.error("프로젝트 임베딩 업데이트 실패 (projectId={}): {}", projectId, e.getMessage());
+        }
     }
 
     private void runInNeo4jTx(Runnable action) {

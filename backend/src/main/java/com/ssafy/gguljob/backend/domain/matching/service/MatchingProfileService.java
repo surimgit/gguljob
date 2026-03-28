@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.matching.entity.*;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class MatchingProfileService {
             .collect(Collectors.toSet());
 
         var roleNodes = user.getRoles().stream()
-            .map(role -> RoleNode.builder().name(role.name()).build())
+            .map(role -> RoleNode.builder().name(MatchingFilterNormalizer.toNeo4jRoleName(role)).build())
             .collect(Collectors.toSet());
 
         var goalNodes = user.getGoals().stream()
