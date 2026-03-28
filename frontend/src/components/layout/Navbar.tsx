@@ -227,12 +227,12 @@ const Navbar = () => {
             const hdr = headerRef.current;
             if (!hdr) return;
             if (!lastHeroEl || !heroColor) {
-                hdr.style.backgroundColor = '#ffffff';
+                hdr.style.backgroundColor = '';
                 return;
             }
             const heroBottom = lastHeroEl.getBoundingClientRect().bottom;
             const navBottom = hdr.getBoundingClientRect().bottom;
-            hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '#ffffff';
+            hdr.style.backgroundColor = heroBottom > navBottom ? heroColor : '';
         };
 
         const onScroll = () => {
@@ -240,8 +240,13 @@ const Navbar = () => {
             rafId = requestAnimationFrame(sync);
         };
 
-        // 페이지 이동 시 즉시 배경색 초기화
-        if (headerRef.current) headerRef.current.style.backgroundColor = '';
+        // 페이지 이동 시 트랜지션 없이 즉시 배경색 초기화
+        if (headerRef.current) {
+            const hdr = headerRef.current;
+            hdr.style.transition = 'none';
+            hdr.style.backgroundColor = '';
+            requestAnimationFrame(() => { hdr.style.transition = ''; });
+        }
 
         // hero 요소가 렌더링될 때까지 재시도
         let retryCount = 0;
