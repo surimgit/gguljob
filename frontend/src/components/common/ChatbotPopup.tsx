@@ -52,8 +52,6 @@ const ChatbotPopup = ({
     if (!isOpen) setGenerating(false);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const isAgent = mode === 'agent';
   const title = isAgent ? '꿀잡 에이전트' : 'AI 트러블슈팅 자동 생성';
   const generatingTitle = isAgent ? '답변 생성 중...' : '트러블슈팅 생성 중...';
@@ -71,6 +69,7 @@ const ChatbotPopup = ({
       style={{
         background: '#f5f7ff',
         minHeight: generating ? (isAgent ? 360 : 420) : undefined,
+        display: isOpen ? 'flex' : 'none',
       }}
     >
       {/* 헤더 */}
