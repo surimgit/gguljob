@@ -27,7 +27,7 @@ public class Neo4jProjectSyncBatchService {
     @Qualifier("neo4jTransactionManager")
     private final PlatformTransactionManager neo4jTransactionManager;
 
-    public int syncRecruitingProjectsToNeo4j() {
+    public int syncAllProjectsToNeo4j() {
         List<Project> recruitingProjects = projectRepository.findAll();
         int successCount = 0;
         int failCount = 0;
@@ -62,6 +62,11 @@ public class Neo4jProjectSyncBatchService {
             log.warn("Neo4j 동기화 대상 프로젝트를 찾을 수 없습니다: projectId={}", projectId);
             return;
         }
+
+        // 모집 완료/종료 프로젝트도 Neo4j 노드를 유지합니다.
+        // 이유: 향후 "비슷한 프로젝트 경험자 가산점", "유사 프로젝트 추천 가산점" 등
+        // 그래프 기반 추천 로직 확장을 위해 프로젝트 이력 데이터가 필요합니다.
+        // 프로젝트 찾기 노출 여부는 hasOpenPosition 속성으로 제어합니다.
 
         var positions = projectPositionRepository.findAllByProjectId(project.getId());
         boolean hasOpenPosition = positions.stream()

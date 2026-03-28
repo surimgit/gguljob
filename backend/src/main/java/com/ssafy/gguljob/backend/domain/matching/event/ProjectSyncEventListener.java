@@ -3,7 +3,6 @@ package com.ssafy.gguljob.backend.domain.matching.event;
 import com.ssafy.gguljob.backend.domain.matching.service.Neo4jProjectSyncBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -15,8 +14,8 @@ public class ProjectSyncEventListener {
 
     private final Neo4jProjectSyncBatchService neo4jProjectSyncBatchService;
 
-    /** 프로젝트 RDB 삭제 시: Neo4j 노드도 즉시 삭제 */
-    @EventListener
+    /** 프로젝트 RDB 삭제 시: RDB 커밋 이후 Neo4j 노드 삭제 (RDB 롤백 시 불일치 방지) */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProjectDelete(ProjectSyncEvent event) {
         if (!event.delete()) return;
         try {
