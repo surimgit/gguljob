@@ -67,7 +67,9 @@ interface ProjectSummaryProps {
 }
 
 const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
-  const activeProjects = [...projects].filter((p) => p.status !== 'DONE');
+  const activeProjects = [...projects]
+    .filter((p) => p.status !== 'DONE')
+    .sort((a, b) => b.projectId - a.projectId);
 
   return (
     <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
