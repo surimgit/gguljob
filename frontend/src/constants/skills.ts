@@ -183,11 +183,18 @@ export const DISPLAY_TO_ROLE: Record<string, RoleCode> = Object.fromEntries(
   Object.entries(ROLE_DISPLAY_NAMES).map(([code, display]) => [display, code as RoleCode]),
 );
 
-export const getRoleColor = (role: string): string =>
-  ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? ROLE_COLORS[DISPLAY_TO_ROLE[role]] ?? "#6B7280";
+export const NONE_ROLE_COLOR = "#9CA3AF";
+export const NONE_ROLE_LABEL = "상관 없음";
 
-export const getRoleDisplayName = (role: string): string =>
-  ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
+export const getRoleColor = (role: string | null | undefined): string => {
+  if (!role) return NONE_ROLE_COLOR;
+  return ROLE_COLORS[role] ?? ROLE_COLORS[API_TO_ROLE[role]] ?? ROLE_COLORS[DISPLAY_TO_ROLE[role]] ?? NONE_ROLE_COLOR;
+};
+
+export const getRoleDisplayName = (role: string | null | undefined): string => {
+  if (!role) return NONE_ROLE_LABEL;
+  return ROLE_DISPLAY_NAMES[role as RoleCode] ?? ROLE_DISPLAY_NAMES[API_TO_ROLE[role]] ?? ROLE_DISPLAY_NAMES[DISPLAY_TO_ROLE[role]] ?? role;
+};
 
 /* ── 경력 레벨(ExperienceLevel) 관련 상수 ── */
 

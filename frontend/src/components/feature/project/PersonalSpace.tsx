@@ -213,7 +213,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const userName = useAuthStore((s) => s.user?.name) ?? '김도현';
   const userProfileImage = useAuthStore((s) => s.user?.profileImage);
   const userPosition = useAuthStore((s) => s.user?.position);
-  const positionLabel = userPosition ? getRoleDisplayName(userPosition) : 'Developer';
+  const positionLabel = getRoleDisplayName(userPosition);
   const [mrPage, setMrPage] = useState(0);
   const [tsPage, setTsPage] = useState(0);
   const [tsList, setTsList] = useState<TroubleshootingItem[]>([]);
@@ -395,7 +395,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
           <div className="flex flex-col gap-0.5">
             <p className="text-2xl font-bold tracking-wide text-text-primary leading-tight">{userName}</p>
             <p className="text-xl font-semibold tracking-wide leading-tight mt-2">
-              <span style={{ color: getRoleColor(userPosition ?? '') }}>{positionLabel} · </span>
+              <span style={{ color: getRoleColor(userPosition) }}>{positionLabel} · </span>
               <span className="text-text-brown">{projectTitle ?? 'DevLog 트러블슈팅 플랫폼'}</span>
             </p>
           </div>

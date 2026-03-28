@@ -45,11 +45,9 @@ const ProfileHeader = ({
           {/* 이름 + 역할 배지 */}
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{name}</span>
-            {role && (
-              <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
-                {getRoleDisplayName(role)}
-              </span>
-            )}
+            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
+              {getRoleDisplayName(role)}
+            </span>
           </div>
 
           {/* 소개글 */}
