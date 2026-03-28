@@ -1,7 +1,7 @@
 import { type FC, useEffect, useState } from 'react';
 import {
   Monitor, Server, Shield, BarChart3, Brain,
-  Database, Smartphone, Briefcase, Pen, Box, type LucideIcon,
+  Database, Smartphone, Briefcase, Pen, Box, HelpCircle, type LucideIcon,
 } from 'lucide-react';
 import { getPositions, type PositionDto } from '../../../../api/user';
 import { ROLE_LIST, type RoleCode } from '../../../../constants/skills';
@@ -54,27 +54,45 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
             <div className="w-7 h-7 rounded-full bg-gray-200 mb-2.5" />
             <div className="w-16 h-4 rounded bg-gray-200" />
           </div>
-        )) : positions.map(({ code, name }) => {
-          const Icon = ROLE_ICONS[code as RoleCode] ?? Box;
-          const isSelected = selected === code;
-          return (
+        )) : (
+          <>
+            {positions.map(({ code, name }) => {
+              const Icon = ROLE_ICONS[code as RoleCode] ?? Box;
+              const isSelected = selected === code;
+              return (
+                <button
+                  key={code}
+                  onClick={() => onChange(code)}
+                  className={`flex flex-col items-center justify-center py-6 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2.5 border-2
+                    ${isSelected ? 'border-primary bg-amber-50' : 'border-border bg-white'}`}
+                >
+                  <Icon
+                    size={28}
+                    className={isSelected ? 'text-primary' : 'text-gray-500'}
+                    strokeWidth={1.5}
+                  />
+                  <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
+                    {name}
+                  </span>
+                </button>
+              );
+            })}
             <button
-              key={code}
-              onClick={() => onChange(code)}
-              className={`flex flex-col items-center justify-center py-6 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2.5 border-2
-                ${isSelected ? 'border-primary bg-amber-50' : 'border-border bg-white'}`}
+              onClick={() => onChange('NONE')}
+              className={`col-span-2 flex items-center justify-center py-4 px-3 rounded-2xl transition-all duration-150 cursor-pointer gap-2.5 border-2
+                ${selected === 'NONE' ? 'border-primary bg-amber-50' : 'border-border bg-white'}`}
             >
-              <Icon
-                size={28}
-                className={isSelected ? 'text-primary' : 'text-gray-500'}
+              <HelpCircle
+                size={22}
+                className={selected === 'NONE' ? 'text-primary' : 'text-gray-400'}
                 strokeWidth={1.5}
               />
-              <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
-                {name}
+              <span className={`text-sm ${selected === 'NONE' ? 'font-semibold' : 'font-normal'} text-gray-900`}>
+                상관 없음
               </span>
             </button>
-          );
-        })}
+          </>
+        )}
       </div>
     </div>
   );

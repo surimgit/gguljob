@@ -56,9 +56,11 @@ export const userToFormData = (user: {
 export const buildOnboardingPayload = (
   formData: OnboardingFormData
 ): OnboardingRequest | null => {
-  const mappedRole = formData.position as PositionType | undefined;
+  const mappedRole = (formData.position && formData.position !== 'NONE')
+    ? formData.position as PositionType
+    : undefined;
   const mappedExp = EXPERIENCE_MAP[formData.experience];
-  if (!mappedRole || !mappedExp) return null;
+  if (!mappedExp) return null;
 
   const goalsSummary = formData.goals
     .map((g) => GOAL_MAP[g]?.label ?? g)
@@ -69,7 +71,7 @@ export const buildOnboardingPayload = (
 
   return {
     description: `${goalsSummary}에 관심이 있습니다.`,
-    roles: [mappedRole],
+    roles: mappedRole ? [mappedRole] : [],
     experience: mappedExp,
     skills: formData.skills,
     mbti: formData.mbti,

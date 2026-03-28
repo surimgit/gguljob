@@ -188,13 +188,9 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
       }
 
       // 프로필 정보 수정
-      if (!form.role) {
-        alert('역할을 선택해주세요.');
-        return;
-      }
       const payload: ProfileUpdateRequest = {
         description: form.bio,
-        roles: [form.role],
+        roles: form.role ? [form.role] : [],
         skills: form.techStacks,
         repProjectIds: form.projects.map((p) => Number(p.id)),
       };
@@ -368,7 +364,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                   onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value || null }))}
                   className="px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">선택</option>
+                  <option value="">상관 없음</option>
                   {ROLE_LIST.map((code) => (
                     <option key={code} value={ROLE_TO_API[code]}>{ROLE_DISPLAY_NAMES[code]}</option>
                   ))}
