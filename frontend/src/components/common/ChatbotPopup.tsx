@@ -12,7 +12,7 @@ interface ChatbotPopupProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'agent' | 'troubleshooting';
-  triggerRef?: React.RefObject<HTMLElement>;
+  triggerRef?: React.RefObject<HTMLElement | null>;
   // 트러블슈팅 모드 전용
   mrList?: ChatbotMrItem[];
   selectedMrId?: number | null;
