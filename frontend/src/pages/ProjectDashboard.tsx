@@ -1370,7 +1370,7 @@ const ProjectDashboard = () => {
                     opacity: chatbotOpen ? 0 : 1,
                   }}
                 >
-                  💬 AI 상담하기
+                  💬 AI 채팅하기
                 </div>
                 <div className="relative w-full flex-1 overflow-hidden">
                   <img
