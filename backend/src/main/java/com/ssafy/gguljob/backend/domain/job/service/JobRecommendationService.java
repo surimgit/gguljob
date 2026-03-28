@@ -3,7 +3,6 @@ package com.ssafy.gguljob.backend.domain.job.service;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -12,8 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
@@ -108,15 +105,19 @@ public class JobRecommendationService {
               .build();
         }).collect(Collectors.toList());
 
-    allResults.sort((a, b) -> Integer.compare(a.getTopPercentile(), b.getTopPercentile()));
+    allResults.sort((a, b) -> {
+      int cmp = Integer.compare(a.getTopPercentile(), b.getTopPercentile());
+      if (cmp != 0) return cmp;
+      int cmp2 = Double.compare(b.getMatchPercentage(), a.getMatchPercentage());
+      if (cmp2 != 0) return cmp2;
+      return Long.compare(a.getJobId(), b.getJobId());
+    });
     return allResults;
   }
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
-    List<String> allowedLevels = getAllowedLevels(getUserWorkExperience(userId));
-    // 필터 후에도 3개가 보장되도록 Neo4j에서 넉넉하게 가져온 뒤 자름
-    List<RecommendedJobDto> candidates = getRecommendations(userId, 30, 0, false, allowedLevels);
-    return candidates.size() <= 3 ? candidates : candidates.subList(0, 3);
+    List<RecommendedJobDto> all = getAllJobsWithScoring(userId);
+    return all.size() <= 3 ? all : all.subList(0, 3);
   }
 
   public PagedRecommendationResponse getRegularRecommendations(Long userId, int page, int size,
@@ -127,8 +128,26 @@ public class JobRecommendationService {
     boolean sortByDeadline = "deadline".equalsIgnoreCase(sort);
     List<String> allowedLevels = getAllowedLevels(getUserWorkExperience(userId));
 
-    // 전체 후보를 한번에 조회하여 정확한 totalElements 확보
-    List<RecommendedJobDto> allCandidates = getRecommendations(userId, 200, 0, sortByDeadline, allowedLevels);
+    List<RecommendedJobDto> allCandidates;
+    if (sortByDeadline) {
+      // 전체 스캔 후 RDB deadline 정렬 (getAllJobsWithScoring이 이미 경력 필터 적용)
+      List<RecommendedJobDto> all = getAllJobsWithScoring(userId);
+      List<Long> allIds = all.stream().map(RecommendedJobDto::getJobId).collect(Collectors.toList());
+      Map<Long, RecommendedJobDto> scoreMap = all.stream()
+          .collect(Collectors.toMap(RecommendedJobDto::getJobId, Function.identity()));
+
+      List<JobPosting> deadlineSorted = (allowedLevels != null)
+          ? jobPostingRepository.findByIdInAndExperienceLevelInOrderByDeadline(allIds, allowedLevels)
+          : jobPostingRepository.findByIdInOrderByDeadline(allIds);
+
+      allCandidates = deadlineSorted.stream()
+          .map(j -> scoreMap.get(j.getId()))
+          .filter(dto -> dto != null)
+          .collect(Collectors.toList());
+    } else {
+      // getAllJobsWithScoring이 이미 경력 필터 적용된 결과를 반환
+      allCandidates = getAllJobsWithScoring(userId);
+    }
 
     long totalElements = allCandidates.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);
@@ -138,116 +157,6 @@ public class JobRecommendationService {
     List<RecommendedJobDto> pageContent = allCandidates.subList(fromIndex, toIndex);
 
     return new PagedRecommendationResponse(pageContent, totalPages, totalElements, page, size);
-  }
-
-  private List<RecommendedJobDto> getRecommendations(Long userId, int limit, int skip,
-      boolean sortByDeadline, List<String> allowedLevels) {
-    // deadline 정렬도 적합도 상위 200개 후보 안에서만 수행합니다.
-    int queryLimit = limit;
-    int querySkip = skip;
-    if (sortByDeadline) {
-      // 적합도 상위 200개를 뽑은 뒤 SQL deadline 정렬로 페이지를 자릅니다.
-      querySkip = 0;
-      queryLimit = 200;
-    }
-
-    Collection<JobRecommendationResponse> neo4jResults = jobRecommendationRepository
-        .recommendJobsForUser(userId, queryLimit, querySkip, sortByDeadline);
-
-    List<JobRecommendationResponse> resultList = new java.util.ArrayList<>(neo4jResults);
-
-    if (resultList.isEmpty()) {
-      return List.of();
-    }
-
-    List<Long> jobIds =
-        resultList.stream().map(JobRecommendationResponse::getJobId).collect(Collectors.toList());
-
-    if (jobIds.isEmpty()) {
-      return List.of();
-    }
-
-    if (sortByDeadline) {
-      Map<Long, JobRecommendationResponse> scoreMap =
-          resultList.stream().collect(Collectors.toMap(JobRecommendationResponse::getJobId,
-              Function.identity(), (a, b) -> a, LinkedHashMap::new));
-
-      List<Long> candidateIds = resultList.stream().map(JobRecommendationResponse::getJobId)
-          .distinct().collect(Collectors.toList());
-
-      int page = skip / limit;
-      Pageable pageable = PageRequest.of(page, limit);
-      List<JobPosting> pagedByDeadline = (allowedLevels != null)
-          ? jobPostingRepository.findByIdInAndExperienceLevelInOrderByDeadline(candidateIds, allowedLevels, pageable)
-          : jobPostingRepository.findByIdInOrderByDeadline(candidateIds, pageable);
-
-      return pagedByDeadline.stream().map(dbJob -> {
-        JobRecommendationResponse score = scoreMap.get(dbJob.getId());
-        if (score == null) {
-          return null;
-        }
-
-        String DEFAULT_LOGO_URL = "https://cdn.gguljob.com/uploads/1234abcd_default-logo.png";
-        return RecommendedJobDto.builder().jobId(dbJob.getId())
-            .companyName(dbJob.getCompanyName() != null ? dbJob.getCompanyName() : "회사명 미상")
-            .title(dbJob.getTitle())
-            .region(dbJob.getLocation() != null ? dbJob.getLocation() : "위치 미상")
-            .experience(dbJob.getExperienceLevel() != null ? dbJob.getExperienceLevel() : "경력무관")
-            .contractType(dbJob.getContractType() != null ? dbJob.getContractType() : "정규직")
-            .salary(dbJob.getSalary() != null ? dbJob.getSalary() : "회사내규에 따름")
-            .url(dbJob.getHyperlink())
-            .deadline(dbJob.getDeadline() != null ? dbJob.getDeadline().toString() : null)
-            .matchStatus(score.getMatchStatus()).topPercentile(score.getTopPercentile())
-            .matchPercentage(score.getFinalScore()).cutoffTop(score.getCutoffTop())
-            .cutoffHigh(score.getCutoffHigh()).cutoffMedium(score.getCutoffMedium())
-            .cutoffLow(score.getCutoffLow()).averageScore(score.getAverageScore())
-            .logoUrl(
-                (dbJob.getLogoUrl() != null && !dbJob.getLogoUrl().isBlank()) ? dbJob.getLogoUrl()
-                    : DEFAULT_LOGO_URL)
-            .techStacks(parseTechStacks(dbJob.getTechStacks()))
-            .jobCategory(dbJob.getJobCategory())
-            .build();
-      }).filter(dto -> dto != null).collect(Collectors.toList());
-    } else {
-      List<JobPosting> jobPostings = (allowedLevels != null)
-          ? jobPostingRepository.findByIdInAndExperienceLevelIn(jobIds, allowedLevels)
-          : jobPostingRepository.findByIdIn(jobIds);
-
-      Map<Long, JobPosting> jobMap =
-          jobPostings.stream().collect(Collectors.toMap(JobPosting::getId, Function.identity()));
-
-      List<RecommendedJobDto> dtoList =
-          resultList.stream().filter(neo -> jobMap.containsKey(neo.getJobId())).map(neo -> {
-            JobPosting dbJob = jobMap.get(neo.getJobId());
-
-            String DEFAULT_LOGO_URL = "https://cdn.gguljob.com/uploads/1234abcd_default-logo.png";
-
-            return RecommendedJobDto.builder().jobId(dbJob.getId())
-                .companyName(dbJob.getCompanyName() != null ? dbJob.getCompanyName() : "회사명 미상")
-                .title(dbJob.getTitle())
-                .region(dbJob.getLocation() != null ? dbJob.getLocation() : "위치 미상")
-                .experience(
-                    dbJob.getExperienceLevel() != null ? dbJob.getExperienceLevel() : "경력무관")
-                .contractType(dbJob.getContractType() != null ? dbJob.getContractType() : "정규직")
-                .salary(dbJob.getSalary() != null ? dbJob.getSalary() : "회사내규에 따름")
-                .url(dbJob.getHyperlink())
-                .deadline(dbJob.getDeadline() != null ? dbJob.getDeadline().toString() : null)
-                .matchStatus(neo.getMatchStatus()).topPercentile(neo.getTopPercentile())
-                .matchPercentage(neo.getFinalScore()).cutoffTop(neo.getCutoffTop())
-                .cutoffHigh(neo.getCutoffHigh()).cutoffMedium(neo.getCutoffMedium())
-                .cutoffLow(neo.getCutoffLow()).averageScore(neo.getAverageScore())
-                .logoUrl((dbJob.getLogoUrl() != null && !dbJob.getLogoUrl().isBlank())
-                    ? dbJob.getLogoUrl()
-                    : DEFAULT_LOGO_URL)
-                .techStacks(parseTechStacks(dbJob.getTechStacks()))
-                .jobCategory(dbJob.getJobCategory())
-                .build();
-          }).collect(Collectors.toList());
-
-      // 백분위 정렬 안전 보장
-      dtoList.sort((a, b) -> Integer.compare(a.getTopPercentile(), b.getTopPercentile()));
-      return dtoList;
-    }
   }
 
   private List<String> parseTechStacks(String raw) {

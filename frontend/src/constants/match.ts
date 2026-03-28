@@ -16,7 +16,3 @@ export const MATCH_CONFIG: Record<MatchType, { label: string; color: string; dot
   poor:         { label: '미흡',   color: '#F97316', dots: 2 },
   insufficient: { label: '부족',   color: '#EF4444', dots: 1 },
 };
-
-export const MATCH_RANK: Record<MatchType, number> = {
-  excellent: 5, good: 4, average: 3, poor: 2, insufficient: 1,
-};

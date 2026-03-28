@@ -1,12 +1,12 @@
 import { Search } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, getAllJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
+import { getJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
-import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
+import { type MatchType, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 interface JobListing {
     id: number;
@@ -80,16 +80,14 @@ const SORT_OPTIONS = ['매칭순', '마감순'];
 
 // ── 정렬 함수 ─────────────────────────────────────────────────────────────────
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
-    const copy = [...jobs];
-    if (sort === '매칭순') return copy.sort((a, b) => MATCH_RANK[b.match] - MATCH_RANK[a.match]);
+    if (sort === '매칭순') return jobs; // 백엔드 정렬 순서 그대로
     if (sort === '마감순')
-        return copy.sort((a, b) => {
+        return [...jobs].sort((a, b) => {
             if (!a.deadline) return 1;
             if (!b.deadline) return -1;
             return a.deadline.localeCompare(b.deadline);
         });
-
-    return copy;
+    return jobs;
 };
 
 // ── API 데이터 매핑 ────────────────────────────────────────────────────────────
@@ -335,11 +333,13 @@ const JobCard = ({
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 interface JobListingSectionProps {
+    allJobs: JobItem[];
+    allJobsLoaded: boolean;
     bookmarkedIds: Set<number>;
     onToggleBookmark: (id: number) => void;
 }
 
-const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
+const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
     const sectionRef = useRef<HTMLDivElement>(null);
     const prevPageRef = useRef(1);
     const [searchParams] = useSearchParams();
@@ -350,31 +350,21 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
     const [showBookmarked, setShowBookmarked] = useState(searchParams.get('filter') === 'bookmarked');
     const [currentPage, setCurrentPage] = useState(1);
     const [jobs, setJobs] = useState<JobListing[]>([]);
-    const allJobsLoadedRef = useRef(false);
     const allJobsMapRef = useRef<Map<number, JobListing>>(new Map());
 
-    // 전체 공고 데이터 로딩 (최초 1회)
+    // props로 받은 전체 공고 데이터 반영 + 북마크/일반 전환
     useEffect(() => {
-        getAllJobs()
-            .then(({ data }) => {
-                allJobsLoadedRef.current = true;
-                const mapped = data.map(mapToJobListing);
-                const map = new Map(mapped.map((j) => [j.id, j]));
-                allJobsMapRef.current = map;
-                if (!showBookmarked) {
-                    setJobs(mapped);
-                }
-            })
-            .catch(console.error);
-    }, []);
+        if (allJobsLoaded) {
+            const mapped = allJobs.map(mapToJobListing);
+            const map = new Map(mapped.map((j) => [j.id, j]));
+            allJobsMapRef.current = map;
+        }
 
-    useEffect(() => {
         if (showBookmarked) {
             getBookmarkedJobs()
                 .then(({ data }) => {
                     const paged = data.data;
                     const bookmarks = (paged?.content ?? []).map((item) => {
-                        // allJobs에서 스코어링 데이터 매칭
                         const scored = allJobsMapRef.current.get(item.jobId);
                         if (scored) return scored;
                         return mapBookmarkToJobListing(item);
@@ -382,14 +372,11 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
                     setJobs(bookmarks);
                 })
                 .catch(console.error);
-        } else if (allJobsLoadedRef.current) {
-            // 전체 데이터 이미 있으면 바로 사용
-            setJobs(Array.from(allJobsMapRef.current.values()));
+        } else if (allJobsLoaded) {
+            setJobs(allJobs.map(mapToJobListing));
         } else {
-            // 전체 로딩 전이면 200건 먼저 표시
             getJobs({ page: 1, size: 200 })
                 .then(({ data }) => {
-                    if (allJobsLoadedRef.current) return;
                     if (Array.isArray(data)) {
                         setJobs(data.map(mapToJobListing));
                     } else {
@@ -398,7 +385,7 @@ const JobListingSection = ({ bookmarkedIds, onToggleBookmark }: JobListingSectio
                 })
                 .catch(console.error);
         }
-    }, [showBookmarked]);
+    }, [allJobs, allJobsLoaded, showBookmarked]);
 
     // 페이지 변경 시 섹션 상단으로 스크롤 (초기 마운트 제외)
     useEffect(() => {

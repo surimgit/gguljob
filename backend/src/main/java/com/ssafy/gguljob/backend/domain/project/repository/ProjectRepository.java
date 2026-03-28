@@ -31,4 +31,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p.readme FROM Project p WHERE p.leader.id = :leaderId AND p.status = com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.DONE AND p.readme IS NOT NULL AND p.readme <> '' ORDER BY p.createdAt DESC")
     java.util.List<String> findReadmesByLeaderId(@Param("leaderId") Long leaderId);
+
+    @Query("SELECT p.readme FROM Project p JOIN ProjectMember pm ON p.id = pm.project.id WHERE pm.user.id = :userId AND pm.status = com.ssafy.gguljob.backend.domain.project.type.MemberStatus.ATTEND AND p.status = com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.DONE AND p.readme IS NOT NULL AND p.readme <> '' AND p.leader.id <> :userId ORDER BY p.createdAt DESC")
+    java.util.List<String> findReadmesByMemberId(@Param("userId") Long userId);
 }
