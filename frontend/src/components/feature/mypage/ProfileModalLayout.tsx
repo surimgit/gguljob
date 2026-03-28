@@ -42,7 +42,7 @@ export interface ProfileProject {
 export interface ProfileUser {
   id: string;
   name: string;
-  role: string;
+  role: string | null;
   bio: string;
   avatarUrl?: string;
   techStacks: string[];

@@ -18,8 +18,6 @@ public class ProfileUpdateRequestDto {
     @Size(max = 255, message = "255자를 초과할 수 없습니다.")
     private String description;
 
-    @NotNull(message = "최소 1개 이상의 직무를 선택해주세요.")
-    @Size(min = 1, message = "직무는 비어있을 수 없습니다.")
     private List<PositionType> roles;
 
     @Pattern(regexp = "^[A-Z]{4}$", message = "MBTI는 4자리 대문자여야 합니다.")
