@@ -37,9 +37,9 @@ public class AdminNeo4jController {
 
     @PostMapping("/sync-projects")
     public ResponseEntity<String> syncAllRecruitingProjects() {
-        log.info("관리자 요청: 모집 중 프로젝트 Neo4j 재동기화 시작");
-        int syncedCount = neo4jProjectSyncBatchService.syncRecruitingProjectsToNeo4j();
-        return ResponseEntity.ok("모집 중 프로젝트 Neo4j 재동기화 완료: " + syncedCount + "건");
+        log.info("관리자 요청: 전체 프로젝트 Neo4j 재동기화 시작");
+        int syncedCount = neo4jProjectSyncBatchService.syncAllProjectsToNeo4j();
+        return ResponseEntity.ok("전체 프로젝트 Neo4j 재동기화 완료: " + syncedCount + "건");
     }
 
     @GetMapping("/stats")

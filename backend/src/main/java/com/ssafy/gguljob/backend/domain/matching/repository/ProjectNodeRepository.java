@@ -13,7 +13,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
 
     @Query(
         value = "MATCH (u:User {id: $userId}) " +
-            "MATCH (p:Project) WHERE p.status = 'RECRUITING' " +
+            "MATCH (p:Project) WHERE p.status = 'RECRUITING' AND coalesce(p.hasOpenPosition, true) = true " +
             "AND NOT p.id IN $joinedProjectIds " +
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
             "AND ($domains IS NULL OR p.domain IN $domains) " +
@@ -27,7 +27,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "RETURN p.id AS projectId, p.title AS projectTitle, coalesce(matchedRole, '무관') AS matchedRole, score " +
             "ORDER BY score DESC, p.id DESC SKIP $skip LIMIT $limit",
 
-        countQuery = "MATCH (p:Project) WHERE p.status = 'RECRUITING' AND NOT p.id IN $joinedProjectIds " +
+        countQuery = "MATCH (p:Project) WHERE p.status = 'RECRUITING' AND coalesce(p.hasOpenPosition, true) = true AND NOT p.id IN $joinedProjectIds " +
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
             "AND ($domains IS NULL OR p.domain IN $domains) " +
             "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
@@ -45,7 +45,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
     );
 
     @Query("MERGE (p:Project {id: $projectId}) " +
-        "SET p.title = $title, p.domain = $domain, p.status = $status " +
+        "SET p.title = $title, p.domain = $domain, p.status = $status, p.hasOpenPosition = $hasOpenPosition " +
         "WITH p " +
         "OPTIONAL MATCH (p)-[r:REQUIRES_ROLE|REQUIRES_SKILL]->() " +
         "DELETE r " +
@@ -61,6 +61,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
         @Param("title") String title,
         @Param("domain") String domain,
         @Param("status") String status,
+        @Param("hasOpenPosition") boolean hasOpenPosition,
         @Param("roles") List<String> roles,
         @Param("skills") List<String> skills);
 }
