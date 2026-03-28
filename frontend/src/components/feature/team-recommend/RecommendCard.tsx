@@ -76,7 +76,7 @@ const RecommendCard = ({
           </span>
           <div className="flex flex-wrap items-center gap-1.5 -ml-1">
             <span
-              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -85,7 +85,7 @@ const RecommendCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
               {getExperienceLevelDisplay(level)}
