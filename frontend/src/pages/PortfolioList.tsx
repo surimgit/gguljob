@@ -4,6 +4,7 @@ import { Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-
 import toast from 'react-hot-toast';
 import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, updatePortfolioTitle, type PortfolioSummary } from '../api/portfolio';
 import portfolioImg from '../assets/images/portfolio.png';
+import BaseModal from '../components/common/BaseModal';
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -36,6 +37,8 @@ const PortfolioList = () => {
   const [editTitle, setEditTitle] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  const [deleteTarget, setDeleteTarget] = useState<PortfolioSummary | null>(null);
+
   useEffect(() => {
     getMyPortfolios()
       .then(({ data }) => setPortfolios(data.data ?? []))
@@ -58,14 +61,16 @@ const PortfolioList = () => {
     }
   };
 
-  const handleDelete = async (item: PortfolioSummary) => {
-    if (!window.confirm(`"${item.title}"을(를) 삭제하시겠습니까?`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
     try {
-      await deletePortfolioApi(item.portfolioId);
-      setPortfolios((prev) => prev.filter((p) => p.portfolioId !== item.portfolioId));
+      await deletePortfolioApi(deleteTarget.portfolioId);
+      setPortfolios((prev) => prev.filter((p) => p.portfolioId !== deleteTarget.portfolioId));
       toast.success('포트폴리오가 삭제되었습니다.');
     } catch {
       toast.error('삭제에 실패했습니다.');
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -263,7 +268,7 @@ const PortfolioList = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(item)}
+                      onClick={() => setDeleteTarget(item)}
                       className="flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold border border-red-200 bg-white hover:bg-red-50 transition-colors text-red-500"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -275,6 +280,36 @@ const PortfolioList = () => {
           </div>
         )}
       </div>
+
+      <BaseModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        containerClassName="bg-white rounded-2xl w-[400px] shadow-2xl overflow-hidden"
+      >
+        <div className="px-8 py-6">
+          <h2 className="text-lg font-bold text-text-primary mb-2">포트폴리오 삭제</h2>
+          <p className="text-sm text-text-secondary mb-6">
+            <span className="font-semibold text-text-primary">"{deleteTarget?.title}"</span>을(를) 삭제하시겠습니까?<br />
+            삭제된 포트폴리오는 복구할 수 없습니다.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="flex-1 py-2.5 rounded-xl border-2 border-border text-sm font-semibold text-text-secondary hover:bg-background transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </BaseModal>
     </div>
   );
 };
