@@ -404,7 +404,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                     className={`w-full flex items-center justify-between pl-3 pr-3 py-2 rounded-xl border text-sm bg-white text-text-primary transition-colors ${roleDropdownOpen ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-gray-400'}`}
                   >
                     <span className={form.role ? 'text-text-primary' : 'text-text-tertiary'}>
-                      {form.role ? ROLE_DISPLAY_NAMES[ROLE_LIST.find(c => ROLE_TO_API[c] === form.role) ?? ''] ?? form.role : '상관 없음'}
+                      {form.role ? (ROLE_DISPLAY_NAMES[ROLE_LIST.find(c => ROLE_TO_API[c] === form.role) as keyof typeof ROLE_DISPLAY_NAMES] ?? form.role) : '상관 없음'}
                     </span>
                     <svg className={`w-4 h-4 text-text-tertiary transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
