@@ -47,7 +47,10 @@ const Portfolio = () => {
   useEffect(() => {
     getMyPortfolios()
       .then(({ data }) => {
-        setPortfolios(data.data ?? []);
+        const sorted = [...(data.data ?? [])].sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+        setPortfolios(sorted);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));

@@ -143,6 +143,7 @@ const MyPage = () => {
         teamTendency: payload.teamTendency,
         experience: payload.experience,
         goals: payload.goals,
+        workExperience: payload.workExperience,
       });
       const updatedUser = await getMe();
       setUser(updatedUser);

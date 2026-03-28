@@ -55,6 +55,7 @@ export interface ProfileUpdateRequest {
   skills?: string[];
   goals?: string[];
   repProjectIds?: number[];
+  workExperience?: 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN';
 }
 
 export const updateProfileApi = (data: ProfileUpdateRequest) =>

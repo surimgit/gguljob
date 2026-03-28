@@ -65,7 +65,10 @@ const Troubleshooting = () => {
   useEffect(() => {
     getMyTroubleshootings(0, 20)
       .then(({ data }) => {
-        setItems(data.content ?? []);
+        const sorted = [...(data.content ?? [])].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setItems(sorted);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
