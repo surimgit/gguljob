@@ -1378,10 +1378,6 @@ const ProjectDashboard = () => {
                     alt="AI 챗봇"
                     className="w-full h-full object-cover"
                   />
-                  <span
-                    className="absolute top-1 right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white animate-pulse transition-opacity duration-200"
-                    style={{ opacity: chatbotOpen ? 0 : 1 }}
-                  />
                 </div>
               </button>
 
