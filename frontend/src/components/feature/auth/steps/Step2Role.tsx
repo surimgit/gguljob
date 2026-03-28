@@ -6,6 +6,8 @@ import {
 import { getPositions, type PositionDto } from '../../../../api/user';
 import { ROLE_LIST, type RoleCode } from '../../../../constants/skills';
 
+const ROLE_ORDER = Object.fromEntries(ROLE_LIST.map((code, i) => [code, i]));
+
 const ROLE_ICONS: Record<RoleCode, LucideIcon> = {
   FRONTEND: Monitor,
   BACKEND:  Server,
@@ -31,7 +33,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
     getPositions()
       .then((data) => {
         const sorted = [...data].sort(
-          (a, b) => ROLE_LIST.indexOf(a.code as RoleCode) - ROLE_LIST.indexOf(b.code as RoleCode)
+          (a, b) => (ROLE_ORDER[a.code] ?? 999) - (ROLE_ORDER[b.code] ?? 999)
         );
         setPositions(sorted);
       })
