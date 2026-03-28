@@ -6,7 +6,7 @@ import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
-import { type MatchType, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
+import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
 
 interface JobListing {
     id: number;
@@ -80,7 +80,12 @@ const SORT_OPTIONS = ['매칭순', '마감순'];
 
 // ── 정렬 함수 ─────────────────────────────────────────────────────────────────
 const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
-    if (sort === '매칭순') return jobs; // 백엔드 정렬 순서 그대로
+    if (sort === '매칭순')
+        return [...jobs].sort((a, b) => {
+            const rank = MATCH_RANK[b.match] - MATCH_RANK[a.match];
+            if (rank !== 0) return rank;
+            return (a.topPercentile ?? 99) - (b.topPercentile ?? 99);
+        });
     if (sort === '마감순')
         return [...jobs].sort((a, b) => {
             if (!a.deadline) return 1;
