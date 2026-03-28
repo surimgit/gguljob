@@ -43,7 +43,7 @@ const toNotification = (dto: NotificationDto): Notification => {
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, logout } = useAuthStore();
+    const { isAuthenticated, isAuthLoading, logout } = useAuthStore();
     const headerRef = useRef<HTMLElement>(null);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -418,7 +418,7 @@ const Navbar = () => {
                             </button>
                         </div>
                     ) : (
-                        <GitHubLoginButton />
+                        !isAuthLoading && <GitHubLoginButton />
                     )}
                 </div>
 
@@ -582,9 +582,11 @@ const Navbar = () => {
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex justify-end">
-                                <GitHubLoginButton />
-                            </div>
+                            !isAuthLoading && (
+                                <div className="flex justify-end">
+                                    <GitHubLoginButton />
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
