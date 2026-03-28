@@ -107,10 +107,24 @@ const TechStackInput = ({ value, onChange }: Props) => {
         ))}
       </div>
 
-      <hr className="border-border" />
-
       {/* 추천 칩 */}
       <div className="flex flex-wrap gap-2">
+        {!isLoading && activeSkills.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const allSelected = activeSkills.every((s) => value.includes(s));
+              if (allSelected) {
+                onChange(value.filter((s) => !activeSkills.includes(s)));
+              } else {
+                onChange([...value, ...activeSkills.filter((s) => !value.includes(s))]);
+              }
+            }}
+            className="text-xs font-bold px-3 py-1.5 rounded-full border border-primary text-text-primary bg-primary-soft hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
+          >
+            {activeSkills.every((s) => value.includes(s)) ? '전체 해제' : '전체 선택'}
+          </button>
+        )}
         {activeSkills.map((stack) => {
           const selected = value.includes(stack);
           return (

@@ -89,7 +89,7 @@ const STATUS_OPTIONS: {
     dotColor: "var(--color-primary)",
     selectedBg: "var(--color-primary-soft)",
     selectedBorder: "var(--color-primary)",
-    selectedText: "var(--color-primary-hover)",
+    selectedText: "var(--color-text-primary)",
   },
   {
     key: "done",
@@ -743,7 +743,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                       ? "var(--color-primary)"
                       : "var(--color-border)",
                     color: sel
-                      ? "var(--color-primary-hover)"
+                      ? "var(--color-text-primary)"
                       : "var(--color-text-secondary)",
                     background: sel
                       ? "var(--color-primary-soft)"
@@ -842,31 +842,63 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 </button>
 
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-2 flex flex-wrap gap-2">
-                    {cat.stacks.map((stack) => {
-                      const sel = (techStacks[cat.key] ?? []).includes(stack);
-                      return (
+                  <div className="px-4 pb-4 pt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {isLeader && (
                         <button
-                          key={stack}
-                          onClick={() => isLeader && toggleStack(cat.key, stack)}
-                          disabled={!isLeader}
-                          className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const selected = techStacks[cat.key] ?? [];
+                            const allSelected = cat.stacks.every((s) => selected.includes(s));
+                            setTechStacks((prev) => ({
+                              ...prev,
+                              [cat.key]: allSelected ? [] : [...cat.stacks],
+                            }));
+                          }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full border transition-colors"
                           style={{
-                            borderColor: sel
-                              ? "var(--color-primary)"
-                              : "var(--color-border)",
-                            color: sel
-                              ? "var(--color-primary-hover)"
-                              : "var(--color-text-secondary)",
-                            background: sel
-                              ? "var(--color-primary-soft)"
-                              : "var(--color-surface)",
+                            borderColor: "var(--color-primary)",
+                            color: "var(--color-text-primary)",
+                            backgroundColor: "var(--color-primary-soft)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                            e.currentTarget.style.color = "#fff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
+                            e.currentTarget.style.color = "var(--color-text-primary)";
                           }}
                         >
-                          {stack}
+                          {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
-                      );
-                    })}
+                      )}
+                      {cat.stacks.map((stack) => {
+                        const sel = (techStacks[cat.key] ?? []).includes(stack);
+                        return (
+                          <button
+                            key={stack}
+                            onClick={() => isLeader && toggleStack(cat.key, stack)}
+                            disabled={!isLeader}
+                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                            style={{
+                              borderColor: sel
+                                ? "var(--color-primary)"
+                                : "var(--color-border)",
+                              color: sel
+                                ? "var(--color-text-primary)"
+                                : "var(--color-text-secondary)",
+                              background: sel
+                                ? "var(--color-primary-soft)"
+                                : "var(--color-surface)",
+                            }}
+                          >
+                            {stack}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -890,7 +922,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
                   style={{
                     background: "var(--color-primary-soft)",
-                    color: "var(--color-primary-hover)",
+                    color: "var(--color-text-primary)",
                     border: "1px solid var(--color-primary)",
                   }}
                 >
