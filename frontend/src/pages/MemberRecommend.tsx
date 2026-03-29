@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search } from "lucide-react";
 import Pagination from "../components/common/Pagination";
@@ -9,7 +9,7 @@ import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayou
 import beeImg from "../assets/images/memberfind.png";
 import { getRecommendedMembers, getRecommendedMembersTop, getProjectMembers, getMyProjects } from "../api/projects";
 import type { RecommendedMember } from "../api/projects";
-import { ROLE_DISPLAY_NAMES, ROLE_TO_API, SKILL_NAMES, type RoleCode } from "../constants/skills";
+import { ROLE_DISPLAY_NAMES, ROLE_TO_API, API_TO_ROLE, DISPLAY_TO_ROLE, SKILL_NAMES, type RoleCode } from "../constants/skills";
 
 /* ── 필터 옵션 ── */
 const POSITION_FILTERS = [
@@ -48,6 +48,14 @@ const toCardData = (m: RecommendedMember) => ({
   profileImage: m.profileImageUrl ?? "",
 });
 
+const normalizePosition = (pos: string | null | undefined): string => {
+  if (!pos) return "";
+  if (API_TO_ROLE[pos]) return pos;
+  const byDisplay = DISPLAY_TO_ROLE[pos];
+  if (byDisplay) return ROLE_TO_API[byDisplay];
+  return pos;
+};
+
 const MemberRecommend = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -55,12 +63,11 @@ const MemberRecommend = () => {
   const [positionFilter, setPositionFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
 
   const [topMembers, setTopMembers] = useState<RecommendedMember[]>([]);
-  const [members, setMembers] = useState<RecommendedMember[]>([]);
+  const [allMembers, setAllMembers] = useState<RecommendedMember[]>([]);
   const [teamMemberIds, setTeamMemberIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,31 +108,39 @@ const MemberRecommend = () => {
       .catch(() => {});
   }, [projectId]);
 
-  /* 목록 */
-  const fetchMembers = useCallback(() => {
+  /* 전체 목록 1회 로드 */
+  useEffect(() => {
     if (!projectId) return;
     setLoading(true);
     setError(null);
-    getRecommendedMembers(Number(projectId), {
-      keyword: searchQuery || undefined,
-      position: positionFilter || undefined,
-      experienceLevel: levelFilter || undefined,
-      page: currentPage - 1,
-      size: ITEMS_PER_PAGE,
-    })
+    getRecommendedMembers(Number(projectId), { page: 0, size: 100 })
       .then(({ data }: { data: any }) => {
         const res = data.data ?? data;
         const content = res.content ?? res;
-        setMembers(Array.isArray(content) ? content : []);
-        setTotalPages(res.totalPages ?? (Math.ceil((res.numberOfElements ?? content.length) / ITEMS_PER_PAGE) || 1));
+        setAllMembers(Array.isArray(content) ? content : []);
       })
       .catch(() => setError("팀원 목록을 불러오지 못했습니다."))
       .finally(() => setLoading(false));
-  }, [projectId, searchQuery, positionFilter, levelFilter, currentPage]);
+  }, [projectId]);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+  /* 클라이언트 사이드 필터링 */
+  const filteredMembers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return allMembers.filter((m) => {
+      if (teamMemberIds.has(m.userId)) return false;
+      if (positionFilter) {
+        const memberPos = normalizePosition(m.position);
+        if (memberPos !== positionFilter) return false;
+      }
+      if (levelFilter && m.experienceLevel !== levelFilter) return false;
+      if (q) {
+        const nameMatch = m.userName.toLowerCase().includes(q);
+        const posMatch = (m.position ?? "").toLowerCase().includes(q);
+        if (!nameMatch && !posMatch) return false;
+      }
+      return true;
+    });
+  }, [allMembers, teamMemberIds, positionFilter, levelFilter, searchQuery]);
 
   const handleClickProfile = (card: ReturnType<typeof toCardData>) => {
     setSelectedUser({
@@ -139,8 +154,12 @@ const MemberRecommend = () => {
     });
   };
 
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE) || 1;
+  const paged = filteredMembers
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    .map(toCardData);
+
   const topCards = topMembers.filter(m => !teamMemberIds.has(m.userId)).map(toCardData);
-  const paged = members.filter(m => !teamMemberIds.has(m.userId)).map(toCardData);
 
   return (
     <div
