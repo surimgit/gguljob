@@ -221,7 +221,7 @@ const Navbar = () => {
             if (headerRef.current) headerRef.current.style.transition = '';
         });
         return () => cancelAnimationFrame(raf);
-    }, [location.pathname]);
+    }, [location.pathname, isAuthLoading]);
 
     // paint 후 실행 — 스크롤에 따른 동적 색상 업데이트
     useEffect(() => {
@@ -258,12 +258,13 @@ const Navbar = () => {
             rafId = requestAnimationFrame(sync);
         };
 
+        sync();
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => {
             cancelAnimationFrame(rafId);
             window.removeEventListener('scroll', onScroll);
         };
-    }, [location.pathname]);
+    }, [location.pathname, isAuthLoading]);
 
     return (
         <header
