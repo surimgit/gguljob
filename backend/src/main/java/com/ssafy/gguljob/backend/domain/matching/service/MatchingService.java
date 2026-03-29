@@ -65,7 +65,7 @@ public class MatchingService {
 
         // skillIds → Neo4j Skill 노드의 name으로 변환 (Neo4j Skill 노드에 MySQL id가 없으므로)
         List<String> skillNames = (skillIds != null && !skillIds.isEmpty())
-            ? skillRepository.findAllById(skillIds).stream().map(Skill::getName).toList()
+            ? skillRepository.findAllById(skillIds).stream().map(Skill::getName).filter(Objects::nonNull).toList()
             : null;
 
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
