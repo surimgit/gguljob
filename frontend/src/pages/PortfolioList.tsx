@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, updatePortfolioTitle, downloadPortfolio, type PortfolioSummary } from '../api/portfolio';
 import portfolioImg from '../assets/images/portfolio.png';
 import BaseModal from '../components/common/BaseModal';
@@ -341,7 +342,20 @@ const PortfolioList = () => {
           ) : (
             <div className="text-sm leading-relaxed">
               <Markdown
+                remarkPlugins={[remarkGfm]}
                 components={{
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto mb-3">
+                      <table className="w-full text-sm border-collapse">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => <thead style={{ background: 'var(--color-background)' }}>{children}</thead>,
+                  th: ({ children }) => (
+                    <th className="px-4 py-2 text-left text-xs font-bold border border-border" style={{ color: 'var(--color-text-primary)' }}>{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2 text-xs border border-border" style={{ color: 'var(--color-text-secondary)' }}>{children}</td>
+                  ),
                   h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-3" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
                   h2: ({ children }) => <h2 className="text-xl font-bold mt-4 mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h2>,
                   h3: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5" style={{ color: 'var(--color-text-primary)' }}>{children}</h3>,
