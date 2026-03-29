@@ -136,7 +136,7 @@ S14P21E107/
 [Client Browser]
        |
     [Nginx] ── HTTPS 리버스 프록시
-     /    \
+     /      \
 [React SPA]  [Spring Boot API]
                /     |     \
          [MySQL]  [Neo4j]  [Redis]
