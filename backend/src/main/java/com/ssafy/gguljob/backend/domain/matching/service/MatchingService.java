@@ -11,6 +11,8 @@ import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardD
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
+import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
@@ -38,6 +40,7 @@ public class MatchingService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final UserNodeRepository userNodeRepository;
+    private final SkillRepository skillRepository;
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
@@ -60,13 +63,18 @@ public class MatchingService {
             .map(pm -> String.valueOf(pm.getProject().getId()))
             .toList();
 
+        // skillIds → Neo4j Skill 노드의 name으로 변환 (Neo4j Skill 노드에 MySQL id가 없으므로)
+        List<String> skillNames = (skillIds != null && !skillIds.isEmpty())
+            ? skillRepository.findAllById(skillIds).stream().map(Skill::getName).filter(Objects::nonNull).toList()
+            : null;
+
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
             userId,
             joinedProjectIds,
             keyword,
             normalizedDomains,
             normalizedRoles,
-            skillIds,
+            skillNames,
             allPageable
         );
 
