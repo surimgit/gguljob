@@ -109,7 +109,7 @@ const TroubleshootingList = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="트러블슈팅 검색"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-60 pl-10 pr-4 py-2 rounded-xl border text-base outline-none"

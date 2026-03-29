@@ -183,7 +183,6 @@ const PortfolioCreate = () => {
     setGenerating(true);
     try {
       const { data: result } = await generatePortfolio({ tsIds: selectedTs });
-      console.log('generatePortfolio result:', result);
       const pId = result.data.portfolioId;
       setGeneratedPortfolioId(pId);
       // 생성된 포트폴리오 마크다운 다운로드
