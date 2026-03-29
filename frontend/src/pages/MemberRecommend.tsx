@@ -73,8 +73,8 @@ const MemberRecommend = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
 
-  const [positionFilter, setPositionFilter] = useState("");
-  const [levelFilter, setLevelFilter] = useState("");
+  const [positionFilters, setPositionFilters] = useState<string[]>([]);
+  const [levelFilters, setLevelFilters] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
@@ -136,16 +136,30 @@ const MemberRecommend = () => {
       .finally(() => setLoading(false));
   }, [projectId]);
 
+  const togglePosition = (value: string) => {
+    setPositionFilters((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+    setCurrentPage(1);
+  };
+
+  const toggleLevel = (value: string) => {
+    setLevelFilters((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+    setCurrentPage(1);
+  };
+
   /* 클라이언트 사이드 필터링 */
   const filteredMembers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return allMembers.filter((m) => {
       if (teamMemberIds.has(m.userId)) return false;
-      if (positionFilter) {
+      if (positionFilters.length > 0) {
         const memberPos = normalizePosition(m.position);
-        if (memberPos !== positionFilter) return false;
+        if (!positionFilters.includes(memberPos)) return false;
       }
-      if (levelFilter && normalizeLevel(m.experienceLevel) !== levelFilter) return false;
+      if (levelFilters.length > 0 && !levelFilters.includes(normalizeLevel(m.experienceLevel))) return false;
       if (q) {
         const nameMatch = m.userName.toLowerCase().includes(q);
         const posMatch = (m.position ?? "").toLowerCase().includes(q);
@@ -153,7 +167,7 @@ const MemberRecommend = () => {
       }
       return true;
     });
-  }, [allMembers, teamMemberIds, positionFilter, levelFilter, searchQuery]);
+  }, [allMembers, teamMemberIds, positionFilters, levelFilters, searchQuery]);
 
   const handleClickProfile = (card: ReturnType<typeof toCardData>) => {
     setSelectedUser({
@@ -234,53 +248,82 @@ const MemberRecommend = () => {
             style={{ background: "var(--color-border)", width: "calc(100% + 48px)" }}
           >
           {/* 포지션 필터 */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className="text-sm font-semibold mr-1"
               style={{ color: "var(--color-text-primary)" }}
             >
               포지션
             </span>
-            {POSITION_FILTERS.map((f) => (
-              <button
-                key={f.value || "all-pos"}
-                onClick={() => { setPositionFilter(f.value); setCurrentPage(1); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{
-                  background: positionFilter === f.value ? "var(--color-primary-hover)" : "transparent",
-                  color: positionFilter === f.value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  border: "none",
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
+            {/* 전체: 아무것도 선택 안 됐을 때 활성 */}
+            <button
+              onClick={() => { setPositionFilters([]); setCurrentPage(1); }}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              style={{
+                background: positionFilters.length === 0 ? "var(--color-primary-hover)" : "transparent",
+                color: positionFilters.length === 0 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                border: "none",
+              }}
+            >
+              전체
+            </button>
+            {POSITION_FILTERS.filter((f) => f.value !== "").map((f) => {
+              const active = positionFilters.includes(f.value);
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => togglePosition(f.value)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    background: active ? "var(--color-primary-hover)" : "transparent",
+                    color: active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    border: "none",
+                  }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
           </div>
 
           <hr className="border-t" style={{ borderColor: "var(--color-primary)" }} />
 
           {/* 숙련도 필터 */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className="text-sm font-semibold mr-1"
               style={{ color: "var(--color-text-primary)" }}
             >
               숙련도
             </span>
-            {LEVEL_FILTERS.map((f) => (
-              <button
-                key={f.value || "all-lv"}
-                onClick={() => { setLevelFilter(f.value); setCurrentPage(1); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{
-                  background: levelFilter === f.value ? "var(--color-primary-hover)" : "transparent",
-                  color: levelFilter === f.value ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  border: "none",
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
+            <button
+              onClick={() => { setLevelFilters([]); setCurrentPage(1); }}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              style={{
+                background: levelFilters.length === 0 ? "var(--color-primary-hover)" : "transparent",
+                color: levelFilters.length === 0 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                border: "none",
+              }}
+            >
+              전체
+            </button>
+            {LEVEL_FILTERS.filter((f) => f.value !== "").map((f) => {
+              const active = levelFilters.includes(f.value);
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => toggleLevel(f.value)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    background: active ? "var(--color-primary-hover)" : "transparent",
+                    color: active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    border: "none",
+                  }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
           </div>
           </div>
         </div>
