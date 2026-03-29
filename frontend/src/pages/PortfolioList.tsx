@@ -99,9 +99,10 @@ const PortfolioList = () => {
     setMdLoading(true);
     try {
       const { data } = await downloadPortfolio(item.portfolioId);
-      setMarkdownContent(typeof data === 'string' ? data : '');
-    } catch {
-      toast.error('포트폴리오를 불러오지 못했습니다.');
+      setMarkdownContent(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : null;
+      toast.error(message ?? '포트폴리오를 불러오지 못했습니다.');
       setViewingPortfolio(null);
     } finally {
       setMdLoading(false);
