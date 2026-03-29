@@ -30,14 +30,9 @@ const Footer = () => {
             <Link to="/" className="text-base text-text-brown-2 hover:underline">
               Contact
             </Link>
-            <a
-              href="https://lab.ssafy.com/s14-final/S14P21E107"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-base text-text-brown-2 hover:underline"
-            >
+            <Link to="/" className="text-base text-text-brown-2 hover:underline">
               Github
-            </a>
+            </Link>
           </div>
         </div>
 
