@@ -65,7 +65,7 @@ const HOP_DURATION = NODE_FADE + LINK_FADE; // 한 hop 전체 시간
 
 const Neo4jGraphWhite = () => {
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
-  const [search, setSearch]       = useState('');
+  const search = '';
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
   const [legendHover, setLegendHover] = useState<string | null>(null);
 
