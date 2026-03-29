@@ -21,6 +21,8 @@ import Neo4jGraph from './pages/Neo4jGraph';
 import Neo4jGraphCyber from './pages/Neo4jGraphCyber';
 import Neo4jGraphGalaxy from './pages/Neo4jGraphGalaxy';
 import Neo4jGraphGalaxy2D from './pages/Neo4jGraphGalaxy2D';
+import Neo4jGraphGalaxy4 from './pages/Neo4jGraphGalaxy4';
+import Neo4jGraphGalaxy5 from './pages/Neo4jGraphGalaxy5';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -84,6 +86,8 @@ const AppRoutes = () => {
       <Route path="/graph2" element={<Neo4jGraphCyber />} />
       <Route path="/graph3" element={<Neo4jGraphGalaxy />} />
       <Route path="/graph3-2d" element={<Neo4jGraphGalaxy2D />} />
+      <Route path="/graph4" element={<Neo4jGraphGalaxy4 />} />
+      <Route path="/graph5" element={<Neo4jGraphGalaxy5 />} />
 
       <Route element={<Layout />}>
         {/* 로그인 필요 라우트 */}

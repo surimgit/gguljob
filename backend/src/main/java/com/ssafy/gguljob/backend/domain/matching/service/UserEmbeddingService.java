@@ -12,7 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -37,7 +37,6 @@ public class UserEmbeddingService {
     private static final String EMBEDDING_MODEL = "text-embedding-3-small";
 
 
-    @Transactional(readOnly = true)
     public void updateEmbedding(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
@@ -81,8 +80,10 @@ public class UserEmbeddingService {
             parts.add("자기소개: " + user.getDescription().strip());
         }
 
-        // README: 완료된 프로젝트 전체 (최신순)
-        List<String> readmes = projectRepository.findReadmesByLeaderId(user.getId());
+        // README: 완료된 프로젝트 전체 (리더 + 팀원 참여 프로젝트, 최신순)
+        List<String> readmes = new java.util.ArrayList<>();
+        readmes.addAll(projectRepository.findReadmesByLeaderId(user.getId()));
+        readmes.addAll(projectRepository.findReadmesByMemberId(user.getId()));
         String readmeText = readmes.isEmpty() ? null : String.join("\n\n---\n", readmes);
 
         String profileText = String.join("\n", parts);

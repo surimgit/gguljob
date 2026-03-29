@@ -198,7 +198,6 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           <>
             <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
               <div className="flex items-center gap-[8px]">
-                <span className="text-[18px]">📢</span>
                 <span className="text-[14px] font-bold text-[#111827]">
                   총 <span className="font-black text-primary-hover">{totalOpen}명</span> 모집중
                 </span>

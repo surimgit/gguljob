@@ -40,5 +40,6 @@ public class ProfileResponseDto {
         private String role;
         private String period;
         private List<String> skills;
+        private String imageUrl;
     }
 }

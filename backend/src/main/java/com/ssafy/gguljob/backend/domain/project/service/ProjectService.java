@@ -116,7 +116,7 @@ public class ProjectService {
         projectMemberRepository.save(projectMember);
 
         log.info("Neo4j로 전송 시작");
-        eventPublisher.publishEvent(new ProjectSyncEvent(savedProject.getId()));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(savedProject.getId()));
 
         return ProjectResponse.Id.from(savedProject);
     }
@@ -297,7 +297,7 @@ public class ProjectService {
 
         projectRepository.save(project);
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(project.getId()));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(project.getId()));
 
         return ProjectUpdateResponse.from(project);
     }

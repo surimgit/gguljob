@@ -256,7 +256,7 @@ const CreateProject = () => {
             className="flex items-center gap-2 text-lg font-bold mb-4 sm:mb-5"
             style={{ color: "var(--color-text-primary)" }}
           >
-            📋 기본 정보
+            기본 정보
           </h2>
 
           {/* 프로젝트명 */}
@@ -414,7 +414,7 @@ const CreateProject = () => {
             className="flex items-center gap-2 text-lg font-bold mb-2"
             style={{ color: "var(--color-text-primary)" }}
           >
-            🛠 기술 스택
+            기술 스택
           </h2>
           <p
             className="text-sm mb-4"
@@ -548,7 +548,7 @@ const CreateProject = () => {
             className="flex items-center gap-2 text-lg font-bold mb-2"
             style={{ color: "var(--color-text-primary)" }}
           >
-            👥 팀원 등록
+            팀원 등록
           </h2>
           <p
             className="text-sm mb-4"

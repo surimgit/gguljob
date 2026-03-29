@@ -1,7 +1,6 @@
 package com.ssafy.gguljob.backend.domain.job.repository;
 
 import com.ssafy.gguljob.backend.domain.job.entity.JobPosting;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,7 +27,7 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
               j.deadline ASC,
               j.id ASC
             """)
-    List<JobPosting> findByIdInOrderByDeadline(@Param("ids") List<Long> ids, Pageable pageable);
+    List<JobPosting> findByIdInOrderByDeadline(@Param("ids") List<Long> ids);
 
     @Query("""
             SELECT j FROM JobPosting j
@@ -38,5 +37,5 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
               j.deadline ASC,
               j.id ASC
             """)
-    List<JobPosting> findByIdInAndExperienceLevelInOrderByDeadline(@Param("ids") List<Long> ids, @Param("levels") List<String> levels, Pageable pageable);
+    List<JobPosting> findByIdInAndExperienceLevelInOrderByDeadline(@Param("ids") List<Long> ids, @Param("levels") List<String> levels);
 }

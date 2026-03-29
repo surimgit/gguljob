@@ -7,9 +7,6 @@ import type { UserProfileDto } from '../../../api/user';
 
 export type UserProfileModalUser = ProfileUser;
 
-const PROJECT_EMOJIS = ['🐝', '🚀', '💡', '🎯'];
-const PROJECT_COLORS: ('amber' | 'green' | 'sky' | 'purple')[] = ['amber', 'green', 'sky', 'purple'];
-
 /** API 응답을 ProfileUser로 변환 */
 const toProfileUser = (dto: UserProfileDto): ProfileUser => ({
   id: String(dto.userId),
@@ -18,12 +15,11 @@ const toProfileUser = (dto: UserProfileDto): ProfileUser => ({
   bio: dto.description ?? '',
   avatarUrl: dto.imageUrl || undefined,
   techStacks: (dto.skills ?? []).map(s => s.name),
-  projects: (dto.repProjects ?? []).map((p, i): ProfileProject => ({
+  projects: (dto.repProjects ?? []).map((p): ProfileProject => ({
     id: String(p.projectId),
     name: p.title,
     description: p.description,
-    emoji: PROJECT_EMOJIS[i % PROJECT_EMOJIS.length],
-    bgColor: PROJECT_COLORS[i % PROJECT_COLORS.length],
+    imageUrl: p.imageUrl ?? null,
     myRole: p.role,
     period: p.period,
     techStacks: p.skills ?? [],

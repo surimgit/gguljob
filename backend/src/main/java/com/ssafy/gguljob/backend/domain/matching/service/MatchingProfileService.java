@@ -1,10 +1,16 @@
 package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.matching.entity.*;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
+import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
+import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -17,7 +23,9 @@ import java.util.stream.Collectors;
 public class MatchingProfileService {
 
     private final UserRepository userRepository;
-    private final Neo4jGraphService neo4jGraphService; // 🚀 방금 만든 Neo4j 전담 용병 주입!
+    private final ProjectMemberRepository projectMemberRepository;
+    private final Neo4jGraphService neo4jGraphService;
+    private final Neo4jClient neo4jClient;
 
     // 🚀 여기는 JPA 대장님 구역! (읽기 전용이라 성능도 빠름)
     @Transactional(readOnly = true)
@@ -32,7 +40,7 @@ public class MatchingProfileService {
             .collect(Collectors.toSet());
 
         var roleNodes = user.getRoles().stream()
-            .map(role -> RoleNode.builder().name(role.name()).build())
+            .map(role -> RoleNode.builder().name(MatchingFilterNormalizer.toNeo4jRoleName(role)).build())
             .collect(Collectors.toSet());
 
         var goalNodes = user.getGoals().stream()
@@ -46,6 +54,7 @@ public class MatchingProfileService {
         UserNode userNode = UserNode.builder()
             .id(user.getId())
             .userName(user.getUserName())
+            .experienceLevel(user.getExperience() != null ? user.getExperience().name() : null)
             .skills(skillNodes)
             .roles(roleNodes)
             .goals(goalNodes)
@@ -55,5 +64,41 @@ public class MatchingProfileService {
             .build();
 
         neo4jGraphService.saveUserNode(userNode, userId);
+        syncParticipatedProjects(user);
+    }
+
+    private void syncParticipatedProjects(User user) {
+        List<Long> projectIds = projectMemberRepository
+            .findActiveProjectsByUserId(user.getId(), MemberStatus.ATTEND)
+            .stream()
+            .map(pm -> pm.getProject().getId())
+            .toList();
+
+        // 기존 PARTICIPATED_IN 관계 삭제 후 재생성
+        neo4jClient.query("""
+                MATCH (u:User {id: $userId})-[r:PARTICIPATED_IN]->()
+                DELETE r
+                """)
+            .bind(user.getId()).to("userId")
+            .run();
+
+        if (!projectIds.isEmpty()) {
+            List<String> projectIdStrs = projectIds.stream()
+                .map(String::valueOf)
+                .toList();
+
+            neo4jClient.query("""
+                    MATCH (u:User {id: $userId})
+                    UNWIND $projectIds AS pid
+                    MATCH (p:Project {id: pid})
+                    MERGE (u)-[:PARTICIPATED_IN]->(p)
+                    """)
+                .bind(user.getId()).to("userId")
+                .bind(projectIdStrs).to("projectIds")
+                .run();
+        }
+
+        log.info("유저 프로젝트 참여 이력 동기화 완료: userId={}, 참여 프로젝트 {}건",
+            user.getId(), projectIds.size());
     }
 }
