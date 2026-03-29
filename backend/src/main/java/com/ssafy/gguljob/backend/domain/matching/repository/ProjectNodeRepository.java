@@ -18,7 +18,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
             "AND ($domains IS NULL OR p.domain IN $domains) " +
             "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
-            "AND ($skillIds IS NULL OR size($skillIds) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.id IN $skillIds }) " +
+            "AND ($skillNames IS NULL OR size($skillNames) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.name IN $skillNames }) " +
 
             // 프로젝트가 요구하는 총 스킬 수
             "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(reqSkill:Skill) " +
@@ -62,7 +62,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             "AND ($keyword IS NULL OR p.title CONTAINS $keyword) " +
             "AND ($domains IS NULL OR p.domain IN $domains) " +
             "AND ($roles IS NULL OR EXISTS { MATCH (p)-[:REQUIRES_ROLE]->(r:Role) WHERE r.name IN $roles }) " +
-            "AND ($skillIds IS NULL OR size($skillIds) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.id IN $skillIds }) " +
+            "AND ($skillNames IS NULL OR size($skillNames) = 0 OR EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(s:Skill) WHERE s.name IN $skillNames }) " +
             "RETURN count(p)"
     )
     Page<ProjectMatchResultDto> findRecommendedProjectsForUser(
@@ -71,7 +71,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
         @Param("keyword") String keyword,
         @Param("domains") List<String> domains,
         @Param("roles") List<String> roles,
-        @Param("skillIds") List<Long> skillIds,
+        @Param("skillNames") List<String> skillNames,
         Pageable pageable
     );
 
