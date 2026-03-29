@@ -3,7 +3,6 @@ package com.ssafy.gguljob.backend.domain.matching.event;
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingProfileService;
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingProjectService;
 import com.ssafy.gguljob.backend.domain.matching.service.UserEmbeddingService;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -25,28 +24,18 @@ public class MatchingEventListener {
     public void handleUserProfileSync(UserProfileSyncEvent event) {
         Long userId = event.userId();
 
-        CompletableFuture<Void> graphSync = CompletableFuture.runAsync(() -> {
-            try {
-                matchingProfileService.syncUserProfileToGraph(userId);
-            } catch (Exception e) {
-                log.error("Neo4j 그래프 동기화 실패: userId={}, error={}", userId, e.getMessage());
-            }
-        });
+        try {
+            matchingProfileService.syncUserProfileToGraph(userId);
+            log.info("Neo4j 그래프 동기화 완료: userId={}", userId);
+        } catch (Exception e) {
+            log.error("Neo4j 그래프 동기화 실패: userId={}, error={}", userId, e.getMessage(), e);
+        }
 
-        CompletableFuture<Void> embeddingSync = CompletableFuture.runAsync(() -> {
-            try {
-                userEmbeddingService.updateEmbedding(userId);
-            } catch (Exception e) {
-                log.error("임베딩 업데이트 실패: userId={}, error={}", userId, e.getMessage());
-            }
-        });
-
-        CompletableFuture.allOf(graphSync, embeddingSync)
-            .exceptionally(ex -> {
-                log.error("Neo4j 동기화 최종 오류: userId={}, error={}", userId, ex.getMessage());
-                return null;
-            })
-            .join();
-        log.info("Neo4j 동기화 완료: userId={}", userId);
+        try {
+            userEmbeddingService.updateEmbedding(userId);
+            log.info("임베딩 업데이트 완료: userId={}", userId);
+        } catch (Exception e) {
+            log.error("임베딩 업데이트 실패: userId={}, error={}", userId, e.getMessage(), e);
+        }
     }
 }
