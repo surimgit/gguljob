@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Search } from "lucide-react";
 import Pagination from "../components/common/Pagination";
 import RecommendCard from "../components/feature/team-recommend/RecommendCard";
@@ -7,7 +7,7 @@ import MemberCard from "../components/feature/team-recommend/MemberCard";
 import MemberProfileModal from "../components/feature/team-recommend/MemberProfileModal";
 import type { ProfileUser } from "../components/feature/mypage/ProfileModalLayout";
 import beeImg from "../assets/images/memberfind.png";
-import { getRecommendedMembers, getRecommendedMembersTop, getProjectMembers, getMyProjects } from "../api/projects";
+import { getRecommendedMembers, getRecommendedMembersTop, getProjectMembers } from "../api/projects";
 import type { RecommendedMember } from "../api/projects";
 import { ROLE_DISPLAY_NAMES, ROLE_TO_API, API_TO_ROLE, DISPLAY_TO_ROLE, SKILL_NAMES, type RoleCode } from "../constants/skills";
 
@@ -77,6 +77,8 @@ const normalizePosition = (pos: string | null | undefined): string => {
 const MemberRecommend = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectTitle = (location.state as { projectTitle?: string } | null)?.projectTitle;
 
   const [positionFilters, setPositionFilters] = useState<string[]>([]);
   const [levelFilters, setLevelFilters] = useState<string[]>([]);
@@ -89,18 +91,6 @@ const MemberRecommend = () => {
   const [teamMemberIds, setTeamMemberIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [projectTitle, setProjectTitle] = useState<string | undefined>(undefined);
-
-  /* 프로젝트 이름 조회 */
-  useEffect(() => {
-    if (!projectId) return;
-    getMyProjects()
-      .then(({ data }) => {
-        const found = data.find((p) => p.projectId === Number(projectId));
-        if (found) setProjectTitle(found.title);
-      })
-      .catch((error) => console.error('Failed to fetch project title:', error));
-  }, [projectId]);
 
   /* 현재 팀원 userId 목록 조회 */
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
+import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
@@ -375,16 +375,6 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 .catch(console.error);
         } else if (allJobsLoaded) {
             setJobs(allJobs.map(mapToJobListing));
-        } else {
-            getJobs({ page: 1, size: 200 })
-                .then(({ data }) => {
-                    if (Array.isArray(data)) {
-                        setJobs(data.map(mapToJobListing));
-                    } else {
-                        setJobs((data.content ?? []).map(mapToJobListing));
-                    }
-                })
-                .catch(console.error);
         }
     }, [allJobsMap, allJobsLoaded, showBookmarked]);
 

@@ -700,6 +700,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
    메인 컴포넌트
    ══════════════════════════════════════ */
 const TeamManagement = ({
+  projectName,
   roles: initialRoles,
   members,
   applications: initialApps,
@@ -902,7 +903,7 @@ const TeamManagement = ({
             모집 직무 추가
           </button>
           <button
-            onClick={() => navigate(`/team-recommend/${projectId}`)}
+            onClick={() => navigate(`/team-recommend/${projectId}`, { state: { projectTitle: projectName } })}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
             style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
           >

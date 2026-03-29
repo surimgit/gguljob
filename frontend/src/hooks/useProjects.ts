@@ -48,6 +48,7 @@ export const useProjects = (params?: ProjectListParams) => {
       };
     },
     placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
   });
 };
 
