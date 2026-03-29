@@ -116,7 +116,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
-        <div className="bg-surface rounded-[20px] w-full max-w-[620px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
+        <div className="bg-surface rounded-[20px] w-full max-w-[620px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[min(90vh,720px)]">
           {/* Header */}
           <div className="px-6 pt-3 flex-shrink-0">
             {/* 로고 + X 버튼 */}

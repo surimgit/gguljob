@@ -104,7 +104,7 @@ const BookmarkedJobs = () => {
             <SkeletonCard />
           </div>
         ) : jobs.length > 0 ? (
-          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1">
+          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1 pb-2">
             {jobs.map((job) => (
               <BookmarkJobItem key={job.id} job={job} />
             ))}

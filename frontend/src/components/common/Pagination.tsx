@@ -1,7 +1,7 @@
 const PAGE_WINDOW = 5;
 
 const NAV_BTN =
-  "w-8 h-8 flex items-center justify-center rounded-full text-text-secondary disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent transition-colors";
+  "w-8 h-8 flex items-center justify-center rounded-full text-text-secondary cursor-pointer disabled:opacity-40 disabled:cursor-default hover:bg-gray-100 disabled:hover:bg-transparent transition-colors";
 
 interface PaginationProps {
   current: number;
@@ -61,7 +61,7 @@ const Pagination = ({
         <button
           key={page}
           onClick={() => onChange(page)}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold transition-colors ${
+          className={`w-8 h-8 flex items-center justify-center rounded-full text-[14px] font-bold cursor-pointer transition-colors ${
             page === current
               ? 'bg-primary-hover text-text-primary'
               : 'text-text-secondary hover:bg-gray-100'
