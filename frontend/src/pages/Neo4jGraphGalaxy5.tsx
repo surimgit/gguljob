@@ -445,23 +445,7 @@ const Neo4jGraphGalaxy5 = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* 검색바 */}
-      <div className="absolute top-5 left-5 z-10">
-        <div className="flex items-center bg-[#111] border border-white/10 rounded-md overflow-hidden">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="enter a search term"
-            className="bg-transparent text-white/80 text-xs font-mono px-3 py-2 w-56 outline-none placeholder:text-white/25"
-          />
-          <button className="px-3 py-2 bg-white/10 hover:bg-white/20 transition-colors">
-            <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* 검색바 제거 (시연용) */}
 
       {/* 범례 */}
       <div className="absolute top-5 right-5 z-10 flex flex-col gap-1.5" onMouseLeave={() => setLegendHover(null)}>
