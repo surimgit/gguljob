@@ -230,7 +230,9 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
 
     const top3 = useMemo(() => {
         if (allJobs.length === 0) return [];
-        return allJobs.slice(0, 3);
+        return [...allJobs]
+            .sort((a, b) => (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0))
+            .slice(0, 3);
     }, [allJobs]);
 
     return (
