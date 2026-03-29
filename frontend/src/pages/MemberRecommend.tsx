@@ -48,6 +48,19 @@ const toCardData = (m: RecommendedMember) => ({
   profileImage: m.profileImageUrl ?? "",
 });
 
+/* API 응답 한글 경력값 → enum 코드 */
+const LEVEL_DESC_TO_ENUM: Record<string, string> = {
+  "초급":        "BEGINNER",
+  "중급(주니어)": "JUNIOR",
+  "중급(미들)":   "MID_LEVEL",
+  "고급":        "SENIOR",
+};
+
+const normalizeLevel = (level: string | null | undefined): string => {
+  if (!level) return "";
+  return LEVEL_DESC_TO_ENUM[level] ?? level;
+};
+
 const normalizePosition = (pos: string | null | undefined): string => {
   if (!pos) return "";
   if (API_TO_ROLE[pos]) return pos;
@@ -132,7 +145,7 @@ const MemberRecommend = () => {
         const memberPos = normalizePosition(m.position);
         if (memberPos !== positionFilter) return false;
       }
-      if (levelFilter && m.experienceLevel !== levelFilter) return false;
+      if (levelFilter && normalizeLevel(m.experienceLevel) !== levelFilter) return false;
       if (q) {
         const nameMatch = m.userName.toLowerCase().includes(q);
         const posMatch = (m.position ?? "").toLowerCase().includes(q);
