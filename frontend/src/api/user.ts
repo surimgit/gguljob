@@ -34,13 +34,14 @@ export const getMe = async (): Promise<User> => {
     techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
     goals: (d.goals ?? []) as string[],
     workExperience: d.workExperience ?? null,
-    repProjects: (d.repProjects ?? []).map((p: { projectId: number; title: string; description: string; role: string; period: string; skills: string[] }) => ({
+    repProjects: (d.repProjects ?? []).map((p: { projectId: number; title: string; description: string; role: string; period: string; skills: string[]; imageUrl?: string | null }) => ({
       projectId: p.projectId,
       title: p.title,
       description: p.description ?? '',
       role: p.role ?? '',
       period: p.period ?? '',
       skills: p.skills ?? [],
+      imageUrl: p.imageUrl ?? null,
     })),
     role: firstRole ?? null,
   };

@@ -43,41 +43,16 @@ const getGlowTexture = () => { if (!_glowTex) _glowTex = createGlowTexture(); re
 // ── 1번 유저 ID (로그인 유저) ──
 const MY_USER_ID = 'user-1';
 
-// ── 노드 색상 (유저=흰색, 프로젝트=하늘색, 채용공고=노란색, 1번유저=금색) ──
+// ── 노드 색상 (user-1만 찐한 초록, 나머지 흰색) ──
 const getNodeColor = (node: GraphNode): THREE.Color => {
-  const rand = node.__rand ?? 0;
-  if (node.type === 'project') {
-    // 하늘색 (프로젝트)
-    return new THREE.Color(0.3 + rand * 0.1, 0.7 + rand * 0.1, 1.0);
-  }
-  if (node.type === 'recruitment') {
-    // 노란색 (채용공고) - 기본부터 밝게, 연결 많으면 더 밝게
-    const links = node.__linkCount ?? 0;
-    const brightness = Math.min(0.85 + links * 0.03, 1.0);
-    return new THREE.Color(brightness, brightness * 0.82, 0.08);
-  }
   if (node.type === 'user' && node.id === MY_USER_ID) {
-    // 1번 유저: 밝은 금색으로 눈에 띄게
-    return new THREE.Color(1.0, 0.85, 0.2);
+    return new THREE.Color(0.0, 0.9, 0.2); // 찐한 초록
   }
-  if (node.type === 'skill' || node.type === 'role') {
-    // skill, role: 어둡게
-    const b = 0.35 + rand * 0.1;
-    return new THREE.Color(b, b, b);
-  }
-  // 유저: 중간 밝기
-  const b = 0.55 + rand * 0.1;
-  return new THREE.Color(b, b, b);
+  return new THREE.Color(0.85, 0.85, 0.85); // 흰색
 };
 
-// ── 항상 밝게 유지할 타입 ──
-const isAlwaysBright = (type: string) => type === 'project' || type === 'recruitment';
-
-const defaultOpacity = (links: number, type?: string) => {
-  if (type === 'recruitment') return Math.min(0.75 + links * 0.04, 1);
-  if (type === 'skill' || type === 'role') return Math.min(0.2 + links * 0.03, 0.5);
-  return Math.min(0.45 + links * 0.04, 0.85);
-};
+const DEFAULT_OPACITY = 0.5;
+const defaultOpacity = () => DEFAULT_OPACITY;
 
 // ── Wave 파라미터 ──
 // 각 hop: 노드 fade → 링크 fade → 다음 hop
@@ -85,15 +60,17 @@ const NODE_FADE = 800;       // 노드가 밝아지는 시간
 const LINK_FADE = 800;       // 링크가 자라나는 시간
 const HOP_DURATION = NODE_FADE + LINK_FADE; // 한 hop 전체 시간
 
-const Neo4jGraphGalaxy4 = () => {
+const Neo4jGraphWhite = () => {
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
-  const [search, setSearch]       = useState('');
+  const search = '';
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
   const [legendHover, setLegendHover] = useState<string | null>(null);
 
   const graphRef       = useRef<any>(null);
   const animRef        = useRef<number>(0);
   const waveStartRef   = useRef<number>(0);
+  const angleRef       = useRef<number>(0);
+  const rotateRef      = useRef<number>(0);
 
   const nodeMatMap     = useRef<Map<string, THREE.SpriteMaterial>>(new Map());
   const nodeSpriteMap  = useRef<Map<string, { sprite: THREE.Sprite; baseScale: number }>>(new Map());
@@ -105,13 +82,37 @@ const Neo4jGraphGalaxy4 = () => {
   useEffect(() => {
     api.get('/v1/admin/neo4j/graph')
       .then(({ data }) => {
-        const nodes: GraphNode[] = data.nodes;
-        const links: GraphLink[] = data.links;
+        const allNodes: GraphNode[] = data.nodes;
+        const allLinks: GraphLink[] = data.links;
+
+        // user-1과 연결된 노드들만 BFS로 수집 (다른 유저 노드 경유 차단)
+        const connectedIds = new Set<string>([MY_USER_ID]);
+        const queue = [MY_USER_ID];
+        while (queue.length > 0) {
+          const curr = queue.shift()!;
+          allLinks.forEach((l) => {
+            const s = l.source as string;
+            const t = l.target as string;
+            const tryAdd = (from: string, to: string) => {
+              if (from !== curr || connectedIds.has(to)) return;
+              const toNode = allNodes.find((n) => n.id === to);
+              if (toNode?.type === 'user' && to !== MY_USER_ID) return;
+              connectedIds.add(to);
+              queue.push(to);
+            };
+            tryAdd(s, t);
+            tryAdd(t, s);
+          });
+        }
+
+        const nodes = allNodes.filter((n) => connectedIds.has(n.id));
+        const nodeIdSet = new Set(nodes.map((n) => n.id));
+        const links = allLinks.filter((l) => nodeIdSet.has(l.source as string) && nodeIdSet.has(l.target as string));
 
         const linkCount: Record<string, number> = {};
         links.forEach((l: GraphLink) => {
-          linkCount[l.source] = (linkCount[l.source] || 0) + 1;
-          linkCount[l.target] = (linkCount[l.target] || 0) + 1;
+          linkCount[l.source as string] = (linkCount[l.source as string] || 0) + 1;
+          linkCount[l.target as string] = (linkCount[l.target as string] || 0) + 1;
         });
         nodes.forEach((n: GraphNode) => { n.__linkCount = linkCount[n.id] || 0; n.__rand = Math.random(); });
         setGraphData({ nodes, links });
@@ -119,13 +120,41 @@ const Neo4jGraphGalaxy4 = () => {
       .catch(() => {});
   }, []);
 
-  // graphData 변경 시 캐시 초기화
+  // ── 자동 회전 ──
+  const startRotation = useCallback(() => {
+    const dist = 500;
+    const rotate = () => {
+      if (!graphRef.current) return;
+      angleRef.current += 0.0015;
+      graphRef.current.cameraPosition({
+        x: dist * Math.sin(angleRef.current),
+        y: 50,
+        z: dist * Math.cos(angleRef.current),
+      });
+      rotateRef.current = requestAnimationFrame(rotate);
+    };
+    rotateRef.current = requestAnimationFrame(rotate);
+  }, []);
+
+  useEffect(() => {
+    if (graphData.nodes.length === 0) return;
+    setTimeout(() => startRotation(), 1500);
+    return () => cancelAnimationFrame(rotateRef.current);
+  }, [graphData, startRotation]);
+
+  // graphData 변경 시 캐시 초기화 + d3 force 조정
   useEffect(() => {
     nodeMatMap.current.clear();
     nodeSpriteMap.current.clear();
     nodeTypeMap.current.clear();
     nodeLinkCntMap.current.clear();
     linkEntries.current = [];
+
+    // 노드들이 더 가까이 뭉치도록 force 조정
+    if (graphRef.current) {
+      graphRef.current.d3Force('charge')?.strength(-20);
+      graphRef.current.d3Force('link')?.distance(25);
+    }
   }, [graphData]);
 
   // ── 검색 ──
@@ -140,7 +169,6 @@ const Neo4jGraphGalaxy4 = () => {
   useEffect(() => {
     if (hoverNode) return;
     nodeMatMap.current.forEach((mat, id) => {
-      const links = nodeLinkCntMap.current.get(id) || 0;
       const type = nodeTypeMap.current.get(id) ?? '';
 
       if (legendHover) {
@@ -149,11 +177,11 @@ const Neo4jGraphGalaxy4 = () => {
         const isMatch = legendHover === 'me'
           ? (id === MY_USER_ID)
           : (type === legendType && !(type === 'user' && id === MY_USER_ID));
-        mat.opacity = isMatch ? Math.max(defaultOpacity(links, type), 0.8) : 0.04;
+        mat.opacity = isMatch ? Math.max(defaultOpacity(), 0.8) : 0.04;
       } else if (highlightIds) {
-        mat.opacity = highlightIds.has(id) ? defaultOpacity(links, type) : 0.04;
+        mat.opacity = highlightIds.has(id) ? defaultOpacity() : 0.04;
       } else {
-        mat.opacity = defaultOpacity(links, type);
+        mat.opacity = defaultOpacity();
       }
     });
 
@@ -180,20 +208,15 @@ const Neo4jGraphGalaxy4 = () => {
     nodeLinkCntMap.current.set(node.id, links);
     nodeTypeMap.current.set(node.id, node.type);
 
-    // 1번 유저는 더 크게
     const isMyUser = node.id === MY_USER_ID;
-    const baseScale = isMyUser ? 14
-      : node.type === 'user' ? 8
-      : node.type === 'project' ? 7
-      : node.type === 'recruitment' ? 7
-      : 4;
-    const scale = baseScale + Math.min(links * 0.5, 12);
+    const baseScale = isMyUser ? 24 : 5;
+    const scale = baseScale + Math.min(links * 0.3, 6);
 
     const mat = new THREE.SpriteMaterial({
       map: getGlowTexture(),
       color: getNodeColor(node),
       transparent: true,
-      opacity: isMyUser ? 1.0 : defaultOpacity(links, node.type),
+      opacity: isMyUser ? 1.0 : DEFAULT_OPACITY,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -242,7 +265,6 @@ const Neo4jGraphGalaxy4 = () => {
       // 범례 hover가 활성화되어 있으면 그쪽에서 처리하므로 여기서는 건드리지 않음
       if (legendHover) return;
       nodeMatMap.current.forEach((mat, id) => {
-        const links = nodeLinkCntMap.current.get(id) || 0;
         // scale 복구
         const spriteData = nodeSpriteMap.current.get(id);
         if (spriteData) {
@@ -251,10 +273,9 @@ const Neo4jGraphGalaxy4 = () => {
         }
         // 1번 유저는 항상 밝게
         if (id === MY_USER_ID) { mat.opacity = 1.0; return; }
-        const type = nodeTypeMap.current.get(id) ?? '';
         mat.opacity = highlightIds
-          ? (highlightIds.has(id) ? defaultOpacity(links, type) : 0.04)
-          : defaultOpacity(links, type);
+          ? (highlightIds.has(id) ? defaultOpacity() : 0.04)
+          : defaultOpacity();
       });
       linkEntries.current.forEach(({ mat }) => { mat.opacity = 0.08; });
       return;
@@ -342,16 +363,12 @@ const Neo4jGraphGalaxy4 = () => {
         } else {
           const t      = Math.min((elapsed - nodeArrival) / NODE_FADE, 1);
           const type   = nodeTypeMap.current.get(nodeId) ?? '';
-          const links  = nodeLinkCntMap.current.get(nodeId) || 0;
-          const always = isAlwaysBright(type);
 
           let target: number;
           if (type === 'recruitment') {
             // hover 노드와 공유 링크 많을수록 밝게
             const shared = jobSharedCount.get(nodeId) || 0;
             target = Math.min(0.6 + shared * 0.12, 1.0);
-          } else if (always) {
-            target = defaultOpacity(links, type);
           } else {
             if (type === 'skill' || type === 'role') {
               target = dist === 1 ? 0.3 : dist === 2 ? 0.15 : 0.08;
@@ -415,33 +432,13 @@ const Neo4jGraphGalaxy4 = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* 검색바 */}
-      <div className="absolute top-5 left-5 z-10">
-        <div className="flex items-center bg-[#111] border border-white/10 rounded-md overflow-hidden">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="enter a search term"
-            className="bg-transparent text-white/80 text-xs font-mono px-3 py-2 w-56 outline-none placeholder:text-white/25"
-          />
-          <button className="px-3 py-2 bg-white/10 hover:bg-white/20 transition-colors">
-            <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* 검색바 제거 (시연용) */}
 
       {/* 범례 */}
       <div className="absolute top-5 right-5 z-10 flex flex-col gap-1.5" onMouseLeave={() => setLegendHover(null)}>
         {[
-          { color: '#FFD933', label: 'Me', hoverKey: 'me' },
-          { color: '#DDDDDD', label: 'User', hoverKey: 'user' },
-          { color: '#5BB8FF', label: 'Project', hoverKey: 'project' },
-          { color: '#D4AA00', label: 'Job', hoverKey: 'recruitment' },
-          { color: '#DDDDDD', label: 'Skill', hoverKey: 'skill' },
-          { color: '#DDDDDD', label: 'Role', hoverKey: 'role' },
+          { color: '#00FFE5', label: 'Me', hoverKey: 'me' },
+          { color: '#DDDDDD', label: 'Node', hoverKey: 'node' },
         ].map(({ color, label, hoverKey }) => (
           <div
             key={label}
@@ -472,20 +469,27 @@ const Neo4jGraphGalaxy4 = () => {
         nodeThreeObject={createStarSprite}
         nodeThreeObjectExtend={false}
         nodeLabel={() => ''}
-        onNodeHover={(node: any) => setHoverNode(node || null)}
+        onNodeHover={(node: any) => {
+          setHoverNode(node || null);
+          if (node) {
+            cancelAnimationFrame(rotateRef.current);
+          } else {
+            startRotation();
+          }
+        }}
         onNodeClick={handleNodeClick}
         linkThreeObject={createLinkObject}
         linkPositionUpdate={updateLinkPosition}
         linkThreeObjectExtend={false}
         backgroundColor="#000000"
         showNavInfo={false}
-        warmupTicks={100}
-        cooldownTime={5000}
-        d3AlphaDecay={0.015}
-        d3VelocityDecay={0.25}
+        warmupTicks={200}
+        cooldownTime={8000}
+        d3AlphaDecay={0.01}
+        d3VelocityDecay={0.3}
       />
     </div>
   );
 };
 
-export default Neo4jGraphGalaxy4;
+export default Neo4jGraphWhite;

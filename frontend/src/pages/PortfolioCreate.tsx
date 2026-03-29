@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download, List } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import chatbotImg from '../assets/images/chatbot.png';
 import { getMyProjects } from '../api/projects';
 import { getTroubleshootings } from '../api/troubleshooting';
@@ -181,7 +183,6 @@ const PortfolioCreate = () => {
     setGenerating(true);
     try {
       const { data: result } = await generatePortfolio({ tsIds: selectedTs });
-      console.log('generatePortfolio result:', result);
       const pId = result.data.portfolioId;
       setGeneratedPortfolioId(pId);
       // 생성된 포트폴리오 마크다운 다운로드
@@ -311,8 +312,48 @@ const PortfolioCreate = () => {
                 </button>
               </div>
             </div>
-            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh]">
-              <pre className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed font-mono">{generatedMd}</pre>
+            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh] text-sm leading-relaxed">
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto mb-3">
+                      <table className="w-full text-sm border-collapse">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => <thead style={{ background: 'var(--color-background)' }}>{children}</thead>,
+                  th: ({ children }) => (
+                    <th className="px-4 py-2 text-left text-xs font-bold border border-border" style={{ color: 'var(--color-text-primary)' }}>{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2 text-xs border border-border" style={{ color: 'var(--color-text-secondary)' }}>{children}</td>
+                  ),
+                  h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-3" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-xl font-bold mt-4 mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5" style={{ color: 'var(--color-text-primary)' }}>{children}</h3>,
+                  p: ({ children }) => <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ol>,
+                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  code: ({ children }) => (
+                    <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--color-background)', color: 'var(--color-primary-hover)' }}>
+                      {children}
+                    </code>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="rounded-xl p-4 overflow-x-auto mb-3 text-xs font-mono" style={{ background: 'var(--color-background)' }}>
+                      {children}
+                    </pre>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--color-blue)' }}>{children}</a>
+                  ),
+                  strong: ({ children }) => <strong className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{children}</strong>,
+                  hr: () => <hr className="my-4 border-border" />,
+                }}
+              >
+                {generatedMd}
+              </Markdown>
             </div>
           </div>
         </div>

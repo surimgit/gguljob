@@ -532,7 +532,7 @@ const ProjectDashboard = () => {
                     </div>
                     <div className="flex flex-col items-center px-6 pt-4 pb-4">
                       <span
-                        className="text-lg font-medium"
+                        className="text-lg font-semibold"
                         style={{ color: "var(--color-text-brown)" }}
                       >
                         트러블슈팅

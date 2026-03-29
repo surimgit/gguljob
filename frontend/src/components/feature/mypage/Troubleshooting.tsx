@@ -79,7 +79,7 @@ const Troubleshooting = () => {
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-          <span>트러블슈팅</span>
+          <span>트러블슈팅 현황</span>
         </h2>
         <Link
           to="/mypage/troubleshooting"

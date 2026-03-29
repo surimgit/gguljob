@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs, getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
+import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
 import Pagination from '../../common/Pagination';
@@ -25,6 +25,7 @@ interface JobListing {
     techStacks: string[];
     jobCategory: string;
     topPercentile?: number;
+    matchPercentage?: number;
 }
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
         return [...jobs].sort((a, b) => {
             const rank = MATCH_RANK[b.match] - MATCH_RANK[a.match];
             if (rank !== 0) return rank;
-            return (a.topPercentile ?? 99) - (b.topPercentile ?? 99);
+            return (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0);
         });
     if (sort === '마감순')
         return [...jobs].sort((a, b) => {
@@ -114,6 +115,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
     techStacks: parseTechStacks(item.techStacks),
     jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
     topPercentile: item.topPercentile,
+    matchPercentage: item.matchPercentage,
 });
 
 const mapBookmarkToJobListing = (item: BookmarkItem): JobListing => ({
@@ -135,14 +137,16 @@ const mapBookmarkToJobListing = (item: BookmarkItem): JobListing => ({
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────────────
 const BookmarkBtn = ({ active, onClick }: { active: boolean; onClick: (e: React.MouseEvent) => void }) => (
-    <button onClick={onClick} aria-label="북마크" className="flex-shrink-0">
+    <button onClick={onClick} aria-label="북마크" className="flex-shrink-0 group cursor-pointer">
         <svg
-            className="w-5 h-5"
+            className="w-5 h-5 transition-all duration-200 group-hover:scale-125 group-hover:drop-shadow-[0_0_4px_rgba(242,183,5,0.5)]"
             fill={active ? '#F2B705' : 'none'}
             stroke={active ? '#F2B705' : '#9CA3AF'}
             viewBox="0 0 24 24"
+            style={{ transition: 'fill 0.2s, stroke 0.2s' }}
         >
             <path
+                className={active ? '' : 'group-hover:fill-[#F2B705]/20 group-hover:stroke-[#F2B705]'}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
@@ -364,6 +368,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
     // 북마크/일반 전환
     useEffect(() => {
         if (showBookmarked) {
+            if (!allJobsLoaded) return;
             getBookmarkedJobs()
                 .then(({ data }) => {
                     const paged = data.data;
@@ -375,16 +380,6 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 .catch(console.error);
         } else if (allJobsLoaded) {
             setJobs(allJobs.map(mapToJobListing));
-        } else {
-            getJobs({ page: 1, size: 200 })
-                .then(({ data }) => {
-                    if (Array.isArray(data)) {
-                        setJobs(data.map(mapToJobListing));
-                    } else {
-                        setJobs((data.content ?? []).map(mapToJobListing));
-                    }
-                })
-                .catch(console.error);
         }
     }, [allJobsMap, allJobsLoaded, showBookmarked]);
 

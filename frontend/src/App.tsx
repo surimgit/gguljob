@@ -17,12 +17,9 @@ import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
 import PortfolioList from './pages/PortfolioList';
 import ApplicationList from './pages/ApplicationList';
-import Neo4jGraph from './pages/Neo4jGraph';
-import Neo4jGraphCyber from './pages/Neo4jGraphCyber';
-import Neo4jGraphGalaxy from './pages/Neo4jGraphGalaxy';
-import Neo4jGraphGalaxy2D from './pages/Neo4jGraphGalaxy2D';
-import Neo4jGraphGalaxy4 from './pages/Neo4jGraphGalaxy4';
 import Neo4jGraphGalaxy5 from './pages/Neo4jGraphGalaxy5';
+import Neo4jGraphWhite from './pages/Neo4jGraphWhite';
+import Neo4jGraphWhite2 from './pages/Neo4jGraphWhite2';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -41,10 +38,14 @@ const AppRoutes = () => {
       useAuthStore.getState().setAuthLoading(false);
       return;
     }
+    // 백도어 로그인 중이면 test-login effect가 auth를 처리하므로 스킵
+    if (import.meta.env.VITE_ENABLE_TEST_LOGIN && searchParams.get('login') !== null) {
+      return;
+    }
     getMe()
       .then((user) => setUser(user))
       .catch(() => useAuthStore.getState().setAuthLoading(false));
-  }, [setUser]);
+  }, [setUser, searchParams]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -56,7 +57,7 @@ const AppRoutes = () => {
   }, [logout, navigate]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!import.meta.env.VITE_ENABLE_TEST_LOGIN) return;
     if (searchParams.get('login') === null) return;
 
     const userId = searchParams.get('login') || '1';
@@ -82,12 +83,9 @@ const AppRoutes = () => {
 
       {/* 홈은 자체 Layout(Navbar+Footer) 포함 */}
       <Route path="/" element={<Home />} />
-      <Route path="/graph" element={<Neo4jGraph />} />
-      <Route path="/graph2" element={<Neo4jGraphCyber />} />
-      <Route path="/graph3" element={<Neo4jGraphGalaxy />} />
-      <Route path="/graph3-2d" element={<Neo4jGraphGalaxy2D />} />
-      <Route path="/graph4" element={<Neo4jGraphGalaxy4 />} />
       <Route path="/graph5" element={<Neo4jGraphGalaxy5 />} />
+      <Route path="/graph-white" element={<Neo4jGraphWhite />} />
+      <Route path="/graph-white2" element={<Neo4jGraphWhite2 />} />
 
       <Route element={<Layout />}>
         {/* 로그인 필요 라우트 */}

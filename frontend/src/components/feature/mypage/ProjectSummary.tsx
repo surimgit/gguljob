@@ -76,7 +76,7 @@ const ProjectSummary = ({ projects }: ProjectSummaryProps) => {
       {/* 섹션 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-          <span>프로젝트</span>
+          <span>내 프로젝트</span>
         </h2>
         <Link
           to="/my-projects"

@@ -217,6 +217,32 @@ export default function ProjectFilter({
         )}
 
       </div>
+
+      {/* 선택된 기술스택 태그 */}
+      {techFilter.length > 0 && (
+        <div className="flex flex-wrap items-center gap-[8px]">
+          {techFilter.map((skill) => (
+            <span
+              key={skill}
+              className="inline-flex items-center gap-[4px] px-[12px] py-[6px] rounded-full text-[13px] font-semibold text-[#92400e] border border-[#f2b705] bg-[#fffbeb]"
+            >
+              {skill}
+              <button
+                onClick={() => onTechChange(techFilter.filter((s) => s !== skill))}
+                className="ml-[2px] text-[#d97706] hover:text-[#92400e] transition-colors"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={() => onTechChange([])}
+            className="text-[12px] text-[#9ca3af] hover:text-[#6b7280] transition-colors"
+          >
+            전체 해제
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -43,50 +43,28 @@ const getGlowTexture = () => { if (!_glowTex) _glowTex = createGlowTexture(); re
 // ── 1번 유저 ID (로그인 유저) ──
 const MY_USER_ID = 'user-1';
 
-// ── 노드 색상 (유저=흰색, 프로젝트=하늘색, 채용공고=노란색, 1번유저=금색) ──
-const getNodeColor = (node: GraphNode): THREE.Color => {
-  const rand = node.__rand ?? 0;
-  if (node.type === 'project') {
-    // 하늘색 (프로젝트)
-    return new THREE.Color(0.3 + rand * 0.1, 0.7 + rand * 0.1, 1.0);
-  }
-  if (node.type === 'recruitment') {
-    // 노란색 (채용공고) - 기본부터 밝게, 연결 많으면 더 밝게
-    const links = node.__linkCount ?? 0;
-    const brightness = Math.min(0.85 + links * 0.03, 1.0);
-    return new THREE.Color(brightness, brightness * 0.82, 0.08);
-  }
+// ── 노드 색상 (전부 흰색, user-1만 시안, top10 job 진한 노란색) ──
+const getNodeColor = (node: GraphNode, top10JobIds: Set<string>): THREE.Color => {
   if (node.type === 'user' && node.id === MY_USER_ID) {
-    // 1번 유저: 밝은 금색으로 눈에 띄게
-    return new THREE.Color(1.0, 0.85, 0.2);
+    return new THREE.Color(0.0, 1.0, 0.9); // 시안
   }
-  if (node.type === 'skill' || node.type === 'role') {
-    // skill, role: 어둡게
-    const b = 0.35 + rand * 0.1;
-    return new THREE.Color(b, b, b);
+  if (node.type === 'recruitment' && top10JobIds.has(node.id)) {
+    return new THREE.Color(1.0, 0.75, 0.0); // 진한 노란색 (amber)
   }
-  // 유저: 중간 밝기
-  const b = 0.55 + rand * 0.1;
-  return new THREE.Color(b, b, b);
+  return new THREE.Color(0.85, 0.85, 0.85); // 흰색
 };
 
-// ── 항상 밝게 유지할 타입 ──
-const isAlwaysBright = (type: string) => type === 'project' || type === 'recruitment';
-
-const defaultOpacity = (links: number, type?: string) => {
-  if (type === 'recruitment') return Math.min(0.75 + links * 0.04, 1);
-  if (type === 'skill' || type === 'role') return Math.min(0.2 + links * 0.03, 0.5);
-  return Math.min(0.45 + links * 0.04, 0.85);
-};
+const DEFAULT_OPACITY = 0.5;
+const defaultOpacity = (_links: number, _type?: string) => DEFAULT_OPACITY;
 
 // ── Wave 파라미터 ──
-// 각 hop: 노드 fade → 링크 fade → 다음 hop
-const NODE_FADE = 800;       // 노드가 밝아지는 시간
-const LINK_FADE = 800;       // 링크가 자라나는 시간
-const HOP_DURATION = NODE_FADE + LINK_FADE; // 한 hop 전체 시간
+const NODE_FADE = 800;
+const LINK_FADE = 800;
+const HOP_DURATION = NODE_FADE + LINK_FADE;
 
-const Neo4jGraphGalaxy5 = () => {
+const Neo4jGraphWhite2 = () => {
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
+  const [top10JobIds, setTop10JobIds] = useState<Set<string>>(new Set());
   const search = '';
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
   const [legendHover, setLegendHover] = useState<string | null>(null);
@@ -94,6 +72,8 @@ const Neo4jGraphGalaxy5 = () => {
   const graphRef       = useRef<any>(null);
   const animRef        = useRef<number>(0);
   const waveStartRef   = useRef<number>(0);
+  const angleRef       = useRef<number>(0);
+  const rotateRef      = useRef<number>(0);
 
   const nodeMatMap     = useRef<Map<string, THREE.SpriteMaterial>>(new Map());
   const nodeSpriteMap  = useRef<Map<string, { sprite: THREE.Sprite; baseScale: number }>>(new Map());
@@ -101,49 +81,81 @@ const Neo4jGraphGalaxy5 = () => {
   const nodeLinkCntMap = useRef<Map<string, number>>(new Map());
   const linkEntries    = useRef<Array<{ link: any; mat: THREE.LineBasicMaterial; geo: THREE.BufferGeometry }>>([]);
 
-  // ── API fetch ──
+  // ── 두 API 동시 fetch → 교차 필터링으로 top10 계산 ──
   useEffect(() => {
-    api.get('/v1/admin/neo4j/graph')
-      .then(({ data }) => {
-        const allNodes: GraphNode[] = data.nodes;
-        const allLinks: GraphLink[] = data.links;
+    Promise.all([
+      api.get('/v1/admin/neo4j/graph'),
+      api.get('/v1/jobs/all').catch(() => ({ data: [] })),
+    ]).then(([graphRes, jobsRes]) => {
+      const allNodes: GraphNode[] = graphRes.data.nodes;
+      const allLinks: GraphLink[] = graphRes.data.links;
 
-        // user-1과 연결된 노드들만 BFS로 수집 (다른 유저 노드 경유 차단)
-        const connectedIds = new Set<string>([MY_USER_ID]);
-        const queue = [MY_USER_ID];
-        while (queue.length > 0) {
-          const curr = queue.shift()!;
-          allLinks.forEach((l) => {
-            const s = l.source as string;
-            const t = l.target as string;
-            const tryAdd = (from: string, to: string) => {
-              if (from !== curr || connectedIds.has(to)) return;
-              const toNode = allNodes.find((n) => n.id === to);
-              if (toNode?.type === 'user' && to !== MY_USER_ID) return;
-              connectedIds.add(to);
-              queue.push(to);
-            };
-            tryAdd(s, t);
-            tryAdd(t, s);
-          });
-        }
-
-        const nodes = allNodes.filter((n) => connectedIds.has(n.id));
-        const nodeIdSet = new Set(nodes.map((n) => n.id));
-        const links = allLinks.filter((l) => nodeIdSet.has(l.source as string) && nodeIdSet.has(l.target as string));
-
-        const linkCount: Record<string, number> = {};
-        links.forEach((l: GraphLink) => {
-          linkCount[l.source as string] = (linkCount[l.source as string] || 0) + 1;
-          linkCount[l.target as string] = (linkCount[l.target as string] || 0) + 1;
+      const connectedIds = new Set<string>([MY_USER_ID]);
+      const queue = [MY_USER_ID];
+      while (queue.length > 0) {
+        const curr = queue.shift()!;
+        allLinks.forEach((l) => {
+          const s = l.source as string;
+          const t = l.target as string;
+          const tryAdd = (from: string, to: string) => {
+            if (from !== curr || connectedIds.has(to)) return;
+            const toNode = allNodes.find((n) => n.id === to);
+            if (toNode?.type === 'user' && to !== MY_USER_ID) return;
+            connectedIds.add(to);
+            queue.push(to);
+          };
+          tryAdd(s, t);
+          tryAdd(t, s);
         });
-        nodes.forEach((n: GraphNode) => { n.__linkCount = linkCount[n.id] || 0; n.__rand = Math.random(); });
-        setGraphData({ nodes, links });
-      })
-      .catch(() => {});
+      }
+
+      const nodes = allNodes.filter((n) => connectedIds.has(n.id));
+      const nodeIdSet = new Set(nodes.map((n) => n.id));
+      const links = allLinks.filter((l) => nodeIdSet.has(l.source as string) && nodeIdSet.has(l.target as string));
+
+      const linkCount: Record<string, number> = {};
+      links.forEach((l: GraphLink) => {
+        linkCount[l.source as string] = (linkCount[l.source as string] || 0) + 1;
+        linkCount[l.target as string] = (linkCount[l.target as string] || 0) + 1;
+      });
+      nodes.forEach((n: GraphNode) => { n.__linkCount = linkCount[n.id] || 0; n.__rand = Math.random(); });
+
+      // 그래프에 실제 존재하는 recruitment 노드 중 matchPercentage 높은 순 top10
+      const scoreMap = new Map<string, number>();
+      jobsRes.data.forEach((j: any) => { scoreMap.set(`job-${j.jobId}`, j.matchPercentage ?? 0); });
+
+      const recruitmentNodes = nodes.filter(n => n.type === 'recruitment');
+      const sortedByScore = recruitmentNodes
+        .map(n => ({ id: n.id, score: scoreMap.get(n.id) ?? 0 }))
+        .sort((a, b) => b.score - a.score);
+      setTop10JobIds(new Set<string>(sortedByScore.slice(0, 10).map(x => x.id)));
+
+      setGraphData({ nodes, links });
+    }).catch(() => {});
   }, []);
 
-  // graphData 변경 시 캐시 초기화 + d3 force 조정
+  // ── 자동 회전 ──
+  const startRotation = useCallback(() => {
+    const dist = 500;
+    const rotate = () => {
+      if (!graphRef.current) return;
+      angleRef.current += 0.0015;
+      graphRef.current.cameraPosition({
+        x: dist * Math.sin(angleRef.current),
+        y: 50,
+        z: dist * Math.cos(angleRef.current),
+      });
+      rotateRef.current = requestAnimationFrame(rotate);
+    };
+    rotateRef.current = requestAnimationFrame(rotate);
+  }, []);
+
+  useEffect(() => {
+    if (graphData.nodes.length === 0) return;
+    setTimeout(() => startRotation(), 1500);
+    return () => cancelAnimationFrame(rotateRef.current);
+  }, [graphData, startRotation]);
+
   useEffect(() => {
     nodeMatMap.current.clear();
     nodeSpriteMap.current.clear();
@@ -151,7 +163,6 @@ const Neo4jGraphGalaxy5 = () => {
     nodeLinkCntMap.current.clear();
     linkEntries.current = [];
 
-    // 노드들이 더 가까이 뭉치도록 force 조정
     if (graphRef.current) {
       graphRef.current.d3Force('charge')?.strength(-20);
       graphRef.current.d3Force('link')?.distance(25);
@@ -174,12 +185,13 @@ const Neo4jGraphGalaxy5 = () => {
       const type = nodeTypeMap.current.get(id) ?? '';
 
       if (legendHover) {
-        // 범례 hover: 해당 타입만 밝게, 나머지 어둡게
-        const legendType = legendHover === 'me' ? 'user' : legendHover;
+        const legendType = legendHover === 'me' ? 'user' : legendHover === 'top10' ? 'recruitment' : legendHover;
         const isMatch = legendHover === 'me'
           ? (id === MY_USER_ID)
-          : (type === legendType && !(type === 'user' && id === MY_USER_ID));
-        mat.opacity = isMatch ? Math.max(defaultOpacity(links, type), 0.8) : 0.04;
+          : legendHover === 'top10'
+            ? (type === 'recruitment' && top10JobIds.has(id))
+            : (type === legendType && !(type === 'user' && id === MY_USER_ID));
+        mat.opacity = isMatch ? Math.max(defaultOpacity(links, type), 0.9) : 0.04;
       } else if (highlightIds) {
         mat.opacity = highlightIds.has(id) ? defaultOpacity(links, type) : 0.04;
       } else {
@@ -193,15 +205,19 @@ const Neo4jGraphGalaxy5 = () => {
         const t = typeof link.target === 'object' ? link.target.id : link.target;
         const sType = nodeTypeMap.current.get(s) ?? '';
         const tType = nodeTypeMap.current.get(t) ?? '';
-        const legendType = legendHover === 'me' ? 'user' : legendHover;
-        const sMatch = legendHover === 'me' ? s === MY_USER_ID : (sType === legendType && !(sType === 'user' && s === MY_USER_ID));
-        const tMatch = legendHover === 'me' ? t === MY_USER_ID : (tType === legendType && !(tType === 'user' && t === MY_USER_ID));
+        const legendType = legendHover === 'me' ? 'user' : legendHover === 'top10' ? 'recruitment' : legendHover;
+        const sMatch = legendHover === 'me' ? s === MY_USER_ID
+          : legendHover === 'top10' ? (sType === 'recruitment' && top10JobIds.has(s))
+          : (sType === legendType && !(sType === 'user' && s === MY_USER_ID));
+        const tMatch = legendHover === 'me' ? t === MY_USER_ID
+          : legendHover === 'top10' ? (tType === 'recruitment' && top10JobIds.has(t))
+          : (tType === legendType && !(tType === 'user' && t === MY_USER_ID));
         mat.opacity = (sMatch || tMatch) ? 0.5 : 0.02;
       } else {
         mat.opacity = 0.2;
       }
     });
-  }, [highlightIds, hoverNode, legendHover]);
+  }, [highlightIds, hoverNode, legendHover, top10JobIds]);
 
   // ── Sprite 노드 생성 ──
   const createStarSprite = useCallback((node: any) => {
@@ -210,20 +226,16 @@ const Neo4jGraphGalaxy5 = () => {
     nodeLinkCntMap.current.set(node.id, links);
     nodeTypeMap.current.set(node.id, node.type);
 
-    // 1번 유저는 더 크게
     const isMyUser = node.id === MY_USER_ID;
-    const baseScale = isMyUser ? 14
-      : node.type === 'user' ? 8
-      : node.type === 'project' ? 7
-      : node.type === 'recruitment' ? 7
-      : 4;
-    const scale = baseScale + Math.min(links * 0.5, 12);
+    const isTop10 = node.type === 'recruitment' && top10JobIds.has(node.id);
+    const baseScale = isMyUser ? 14 : isTop10 ? 9 : 5;
+    const scale = baseScale + Math.min(links * 0.3, 6);
 
     const mat = new THREE.SpriteMaterial({
       map: getGlowTexture(),
-      color: getNodeColor(node),
+      color: getNodeColor(node, top10JobIds),
       transparent: true,
-      opacity: isMyUser ? 1.0 : defaultOpacity(links, node.type),
+      opacity: isMyUser ? 1.0 : isTop10 ? 0.95 : DEFAULT_OPACITY,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -233,7 +245,7 @@ const Neo4jGraphGalaxy5 = () => {
     sprite.scale.set(scale, scale, 1);
     nodeSpriteMap.current.set(node.id, { sprite, baseScale: scale });
     return sprite;
-  }, []);
+  }, [top10JobIds]);
 
   // ── Link 객체 생성 ──
   const createLinkObject = useCallback((link: any) => {
@@ -245,7 +257,6 @@ const Neo4jGraphGalaxy5 = () => {
   }, []);
 
   const updateLinkPosition = useCallback((lineObj: any, coords: { start: any; end: any }) => {
-    // wave 애니메이션 중에는 tick에서 geometry를 직접 제어하므로 여기서 건드리지 않음
     if (hoverNode) return true;
     const { start, end } = coords;
     const pos = lineObj.geometry.attributes.position.array as Float32Array;
@@ -264,23 +275,22 @@ const Neo4jGraphGalaxy5 = () => {
     );
   }, []);
 
-  // ── Wave propagation 애니메이션 (수정: 다른 유저 노드로 안 퍼짐) ──
+  // ── Wave propagation 애니메이션 ──
   useEffect(() => {
     cancelAnimationFrame(animRef.current);
 
     if (!hoverNode) {
-      // 범례 hover가 활성화되어 있으면 그쪽에서 처리하므로 여기서는 건드리지 않음
       if (legendHover) return;
       nodeMatMap.current.forEach((mat, id) => {
         const links = nodeLinkCntMap.current.get(id) || 0;
-        // scale 복구
         const spriteData = nodeSpriteMap.current.get(id);
         if (spriteData) {
           const s = spriteData.baseScale;
           spriteData.sprite.scale.set(s, s, 1);
         }
-        // 1번 유저는 항상 밝게
         if (id === MY_USER_ID) { mat.opacity = 1.0; return; }
+        const isTop10 = nodeTypeMap.current.get(id) === 'recruitment' && top10JobIds.has(id);
+        if (isTop10) { mat.opacity = 0.95; return; }
         const type = nodeTypeMap.current.get(id) ?? '';
         mat.opacity = highlightIds
           ? (highlightIds.has(id) ? defaultOpacity(links, type) : 0.04)
@@ -290,13 +300,15 @@ const Neo4jGraphGalaxy5 = () => {
       return;
     }
 
-    // BFS (수정: 다른 유저 노드를 경유하지 않음)
+    // BFS 2단계 제한 (유저 노드 경유 차단)
+    const MAX_DIST = 2;
     const distMap = new Map<string, number>();
     distMap.set(hoverNode.id, 0);
     const queue: string[] = [hoverNode.id];
     while (queue.length > 0) {
       const curr = queue.shift()!;
       const d    = distMap.get(curr)!;
+      if (d >= MAX_DIST) continue; // 2단계 이상 확장 차단
 
       graphData.links.forEach((l) => {
         const s = typeof l.source === 'object' ? l.source.id : l.source;
@@ -305,7 +317,6 @@ const Neo4jGraphGalaxy5 = () => {
         const tryVisit = (from: string, to: string) => {
           if (from !== curr || distMap.has(to)) return;
           const toType = nodeTypeMap.current.get(to) ?? '';
-          // 다른 유저 노드로는 퍼지지 않음 (호버 노드 자체가 유저면 첫 단계만 허용)
           if (toType === 'user' && to !== hoverNode.id) return;
           distMap.set(to, d + 1);
           queue.push(to);
@@ -316,33 +327,7 @@ const Neo4jGraphGalaxy5 = () => {
       });
     }
 
-    // hover 노드와 각 recruitment 노드 사이 공유 중간노드(skill/role) 수 계산
-    const hoverNeighbors = new Set<string>();
-    graphData.links.forEach((l) => {
-      const s = typeof l.source === 'object' ? l.source.id : l.source;
-      const t = typeof l.target === 'object' ? l.target.id : l.target;
-      if (s === hoverNode.id) hoverNeighbors.add(t);
-      if (t === hoverNode.id) hoverNeighbors.add(s);
-    });
-
-    const jobSharedCount = new Map<string, number>();
-    graphData.nodes.forEach((n) => {
-      if (n.type !== 'recruitment') return;
-      let shared = 0;
-      graphData.links.forEach((l) => {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        const neighbor = s === n.id ? t : t === n.id ? s : null;
-        if (neighbor && hoverNeighbors.has(neighbor)) shared++;
-      });
-      jobSharedCount.set(n.id, shared);
-    });
-
     waveStartRef.current = performance.now();
-
-    // 타이밍: hop 0 노드(즉시) → hop 0→1 링크(NODE_FADE 후) → hop 1 노드(HOP_DURATION 후) → hop 1→2 링크 → ...
-    // 노드 dist=d 도착: d * HOP_DURATION
-    // 링크 maxDist=d 도착: (d-1) * HOP_DURATION + NODE_FADE  (즉, 출발 노드 밝아진 후)
 
     const tick = () => {
       const elapsed = performance.now() - waveStartRef.current;
@@ -350,12 +335,15 @@ const Neo4jGraphGalaxy5 = () => {
       nodeMatMap.current.forEach((mat, nodeId) => {
         const dist = distMap.get(nodeId);
         const spriteData = nodeSpriteMap.current.get(nodeId);
+        const isTop10 = nodeTypeMap.current.get(nodeId) === 'recruitment' && top10JobIds.has(nodeId);
 
+        // BFS 범위 밖: 완전히 어둡게
         if (dist === undefined) {
-          mat.opacity = 0;
-          if (spriteData) spriteData.sprite.scale.setScalar(0);
+          mat.opacity = 0.02;
+          if (spriteData) spriteData.sprite.scale.setScalar(spriteData.baseScale * 0.5);
           return;
         }
+        // 호버 노드 자신
         if (dist === 0) {
           mat.opacity = 1.0;
           if (spriteData) {
@@ -370,35 +358,24 @@ const Neo4jGraphGalaxy5 = () => {
           mat.opacity = 0;
           if (spriteData) spriteData.sprite.scale.setScalar(0);
         } else {
-          const t      = Math.min((elapsed - nodeArrival) / NODE_FADE, 1);
-          const type   = nodeTypeMap.current.get(nodeId) ?? '';
-          const links  = nodeLinkCntMap.current.get(nodeId) || 0;
-          const always = isAlwaysBright(type);
+          const t = Math.min((elapsed - nodeArrival) / NODE_FADE, 1);
 
+          // top10 노란 노드: 밝게 / 나머지: 어둡게
           let target: number;
-          if (type === 'recruitment') {
-            // hover 노드와 공유 링크 많을수록 밝게
-            const shared = jobSharedCount.get(nodeId) || 0;
-            target = Math.min(0.6 + shared * 0.12, 1.0);
-          } else if (always) {
-            target = defaultOpacity(links, type);
+          if (isTop10) {
+            target = 1.0; // 노란 노드 팍 밝게
           } else {
-            if (type === 'skill' || type === 'role') {
-              target = dist === 1 ? 0.3 : dist === 2 ? 0.15 : 0.08;
-            } else {
-              target = dist === 1 ? 0.75 : dist === 2 ? 0.4 : 0.2;
-            }
+            // dist 1: skill/role (중간노드), dist 2: 일반 job 등
+            target = dist === 1 ? 0.15 : 0.08;
           }
           mat.opacity = target * t;
 
-          // scale: 0 → baseScale with overshoot (퐁 효과)
           if (spriteData) {
             const s = spriteData.baseScale;
             const eased = t < 0.6
-              ? (t / 0.6) * 1.15    // 0→1.15 (살짝 커짐)
-              : 1.15 - 0.15 * ((t - 0.6) / 0.4); // 1.15→1.0 (원래 크기로)
-            const finalScale = s * eased;
-            spriteData.sprite.scale.set(finalScale, finalScale, 1);
+              ? (t / 0.6) * 1.15
+              : 1.15 - 0.15 * ((t - 0.6) / 0.4);
+            spriteData.sprite.scale.set(s * eased, s * eased, 1);
           }
         }
       });
@@ -408,9 +385,10 @@ const Neo4jGraphGalaxy5 = () => {
         const tId = typeof link.target === 'object' ? link.target.id : link.target;
         const ds = distMap.get(sId);
         const dt = distMap.get(tId);
+
+        // 두 노드 중 하나라도 BFS 범위 밖이면 안 보임
         if (ds === undefined || dt === undefined) { mat.opacity = 0; return; }
 
-        // 출발 노드(dist 작은 쪽)에서 도착 노드로 선이 자라남
         const srcObj = ds <= dt ? link.source : link.target;
         const dstObj = ds <= dt ? link.target : link.source;
         const minDist = Math.min(ds, dt);
@@ -420,10 +398,8 @@ const Neo4jGraphGalaxy5 = () => {
           mat.opacity = 0;
         } else {
           const progress = Math.min((elapsed - linkArrival) / LINK_FADE, 1);
-          const target = 0.08;
-          mat.opacity = target * progress;
+          mat.opacity = 0.08 * progress;
 
-          // 선이 출발점에서 도착점까지 자라남
           const sx = srcObj.x ?? 0, sy = srcObj.y ?? 0, sz = srcObj.z ?? 0;
           const dx = dstObj.x ?? 0, dy = dstObj.y ?? 0, dz = dstObj.z ?? 0;
           const pos = geo.attributes.position.array as Float32Array;
@@ -440,28 +416,24 @@ const Neo4jGraphGalaxy5 = () => {
 
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, [hoverNode, graphData.links, highlightIds, legendHover]);
+  }, [hoverNode, graphData.links, highlightIds, legendHover, top10JobIds]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* 검색바 제거 (시연용) */}
-
       {/* 범례 */}
       <div className="absolute top-5 right-5 z-10 flex flex-col gap-1.5" onMouseLeave={() => setLegendHover(null)}>
         {[
-          { color: '#FFD933', label: 'Me', hoverKey: 'me' },
-          { color: '#5BB8FF', label: 'Project', hoverKey: 'project' },
-          { color: '#D4AA00', label: 'Job', hoverKey: 'recruitment' },
-          { color: '#DDDDDD', label: 'Skill', hoverKey: 'skill' },
-          { color: '#DDDDDD', label: 'Role', hoverKey: 'role' },
+          { color: '#00FFE5', label: 'Me', hoverKey: 'me' },
+          { color: '#FFB800', label: 'Top 10 Job', hoverKey: 'top10' },
+          { color: '#DDDDDD', label: 'Node', hoverKey: 'node' },
         ].map(({ color, label, hoverKey }) => (
           <div
             key={label}
             className="flex items-center gap-2 cursor-pointer px-2 py-0.5 rounded transition-colors hover:bg-white/10"
             onMouseEnter={() => setLegendHover(hoverKey)}
           >
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }} />
             <span className={`font-mono text-[10px] uppercase tracking-wider transition-colors ${legendHover === hoverKey ? 'text-white' : 'text-white/50'}`}>{label}</span>
           </div>
         ))}
@@ -485,7 +457,14 @@ const Neo4jGraphGalaxy5 = () => {
         nodeThreeObject={createStarSprite}
         nodeThreeObjectExtend={false}
         nodeLabel={() => ''}
-        onNodeHover={(node: any) => setHoverNode(node || null)}
+        onNodeHover={(node: any) => {
+          setHoverNode(node || null);
+          if (node) {
+            cancelAnimationFrame(rotateRef.current);
+          } else {
+            startRotation();
+          }
+        }}
         onNodeClick={handleNodeClick}
         linkThreeObject={createLinkObject}
         linkPositionUpdate={updateLinkPosition}
@@ -501,4 +480,4 @@ const Neo4jGraphGalaxy5 = () => {
   );
 };
 
-export default Neo4jGraphGalaxy5;
+export default Neo4jGraphWhite2;
