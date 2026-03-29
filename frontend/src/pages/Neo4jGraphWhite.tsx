@@ -43,19 +43,16 @@ const getGlowTexture = () => { if (!_glowTex) _glowTex = createGlowTexture(); re
 // ── 1번 유저 ID (로그인 유저) ──
 const MY_USER_ID = 'user-1';
 
-// ── 노드 색상 (전부 흰색, user-1만 시안) ──
+// ── 노드 색상 (user-1만 찐한 초록, 나머지 흰색) ──
 const getNodeColor = (node: GraphNode): THREE.Color => {
   if (node.type === 'user' && node.id === MY_USER_ID) {
-    return new THREE.Color(0.0, 1.0, 0.9);
+    return new THREE.Color(0.0, 0.9, 0.2); // 찐한 초록
   }
-  return new THREE.Color(0.85, 0.85, 0.85);
+  return new THREE.Color(0.85, 0.85, 0.85); // 흰색
 };
 
-// ── 항상 밝게 유지할 타입 ──
-const isAlwaysBright = (_type: string) => false;
-
 const DEFAULT_OPACITY = 0.5;
-const defaultOpacity = (_links: number, _type?: string) => DEFAULT_OPACITY;
+const defaultOpacity = () => DEFAULT_OPACITY;
 
 // ── Wave 파라미터 ──
 // 각 hop: 노드 fade → 링크 fade → 다음 hop
@@ -172,7 +169,6 @@ const Neo4jGraphWhite = () => {
   useEffect(() => {
     if (hoverNode) return;
     nodeMatMap.current.forEach((mat, id) => {
-      const links = nodeLinkCntMap.current.get(id) || 0;
       const type = nodeTypeMap.current.get(id) ?? '';
 
       if (legendHover) {
@@ -181,11 +177,11 @@ const Neo4jGraphWhite = () => {
         const isMatch = legendHover === 'me'
           ? (id === MY_USER_ID)
           : (type === legendType && !(type === 'user' && id === MY_USER_ID));
-        mat.opacity = isMatch ? Math.max(defaultOpacity(links, type), 0.8) : 0.04;
+        mat.opacity = isMatch ? Math.max(defaultOpacity(), 0.8) : 0.04;
       } else if (highlightIds) {
-        mat.opacity = highlightIds.has(id) ? defaultOpacity(links, type) : 0.04;
+        mat.opacity = highlightIds.has(id) ? defaultOpacity() : 0.04;
       } else {
-        mat.opacity = defaultOpacity(links, type);
+        mat.opacity = defaultOpacity();
       }
     });
 
@@ -213,7 +209,7 @@ const Neo4jGraphWhite = () => {
     nodeTypeMap.current.set(node.id, node.type);
 
     const isMyUser = node.id === MY_USER_ID;
-    const baseScale = isMyUser ? 14 : 5;
+    const baseScale = isMyUser ? 24 : 5;
     const scale = baseScale + Math.min(links * 0.3, 6);
 
     const mat = new THREE.SpriteMaterial({
@@ -269,7 +265,6 @@ const Neo4jGraphWhite = () => {
       // 범례 hover가 활성화되어 있으면 그쪽에서 처리하므로 여기서는 건드리지 않음
       if (legendHover) return;
       nodeMatMap.current.forEach((mat, id) => {
-        const links = nodeLinkCntMap.current.get(id) || 0;
         // scale 복구
         const spriteData = nodeSpriteMap.current.get(id);
         if (spriteData) {
@@ -278,10 +273,9 @@ const Neo4jGraphWhite = () => {
         }
         // 1번 유저는 항상 밝게
         if (id === MY_USER_ID) { mat.opacity = 1.0; return; }
-        const type = nodeTypeMap.current.get(id) ?? '';
         mat.opacity = highlightIds
-          ? (highlightIds.has(id) ? defaultOpacity(links, type) : 0.04)
-          : defaultOpacity(links, type);
+          ? (highlightIds.has(id) ? defaultOpacity() : 0.04)
+          : defaultOpacity();
       });
       linkEntries.current.forEach(({ mat }) => { mat.opacity = 0.08; });
       return;
@@ -369,16 +363,12 @@ const Neo4jGraphWhite = () => {
         } else {
           const t      = Math.min((elapsed - nodeArrival) / NODE_FADE, 1);
           const type   = nodeTypeMap.current.get(nodeId) ?? '';
-          const links  = nodeLinkCntMap.current.get(nodeId) || 0;
-          const always = isAlwaysBright(type);
 
           let target: number;
           if (type === 'recruitment') {
             // hover 노드와 공유 링크 많을수록 밝게
             const shared = jobSharedCount.get(nodeId) || 0;
             target = Math.min(0.6 + shared * 0.12, 1.0);
-          } else if (always) {
-            target = defaultOpacity(links, type);
           } else {
             if (type === 'skill' || type === 'role') {
               target = dist === 1 ? 0.3 : dist === 2 ? 0.15 : 0.08;
