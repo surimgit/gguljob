@@ -19,6 +19,7 @@ import PortfolioList from './pages/PortfolioList';
 import ApplicationList from './pages/ApplicationList';
 import Neo4jGraphGalaxy5 from './pages/Neo4jGraphGalaxy5';
 import Neo4jGraphWhite from './pages/Neo4jGraphWhite';
+import Neo4jGraphWhite2 from './pages/Neo4jGraphWhite2';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -84,6 +85,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/graph5" element={<Neo4jGraphGalaxy5 />} />
       <Route path="/graph-white" element={<Neo4jGraphWhite />} />
+      <Route path="/graph-white2" element={<Neo4jGraphWhite2 />} />
 
       <Route element={<Layout />}>
         {/* 로그인 필요 라우트 */}
