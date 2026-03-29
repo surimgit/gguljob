@@ -97,7 +97,7 @@ const TroubleshootingList = () => {
               <ArrowLeft className="w-6 h-6" />
             </button>
             <h1
-              className="text-3xl font-bold"
+              className="text-2xl font-bold"
               style={{ color: 'var(--color-text-primary)' }}
             >
               트러블슈팅 현황
