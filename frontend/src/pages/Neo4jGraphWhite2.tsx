@@ -54,9 +54,6 @@ const getNodeColor = (node: GraphNode, top10JobIds: Set<string>): THREE.Color =>
   return new THREE.Color(0.85, 0.85, 0.85); // 흰색
 };
 
-// ── 항상 밝게 유지할 타입 ──
-const isAlwaysBright = (_type: string) => false;
-
 const DEFAULT_OPACITY = 0.5;
 const defaultOpacity = (_links: number, _type?: string) => DEFAULT_OPACITY;
 
