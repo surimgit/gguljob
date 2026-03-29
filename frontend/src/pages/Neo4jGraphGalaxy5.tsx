@@ -297,7 +297,6 @@ const Neo4jGraphGalaxy5 = () => {
     while (queue.length > 0) {
       const curr = queue.shift()!;
       const d    = distMap.get(curr)!;
-      const currType = nodeTypeMap.current.get(curr) ?? '';
 
       graphData.links.forEach((l) => {
         const s = typeof l.source === 'object' ? l.source.id : l.source;
@@ -415,7 +414,6 @@ const Neo4jGraphGalaxy5 = () => {
         const srcObj = ds <= dt ? link.source : link.target;
         const dstObj = ds <= dt ? link.target : link.source;
         const minDist = Math.min(ds, dt);
-        const maxDist = Math.max(ds, dt);
 
         const linkArrival = minDist * HOP_DURATION + NODE_FADE;
         if (elapsed < linkArrival) {
