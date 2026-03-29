@@ -126,18 +126,21 @@ const JobCard = ({
                 )}
                 <button
                     aria-label="북마크"
+                    className="group cursor-pointer"
                     onClick={(e) => {
                         e.stopPropagation();
                         onToggleBookmark(jobId);
                     }}
                 >
                     <svg
-                        className="w-7 h-7"
+                        className="w-7 h-7 transition-all duration-200 group-hover:scale-125 group-hover:drop-shadow-[0_0_4px_rgba(242,183,5,0.5)]"
                         fill={bookmarked ? '#F2B705' : 'none'}
                         stroke={bookmarked ? '#F2B705' : '#9CA3AF'}
                         viewBox="0 0 24 24"
+                        style={{ transition: 'fill 0.2s, stroke 0.2s' }}
                     >
                         <path
+                            className={bookmarked ? '' : 'group-hover:fill-[#F2B705]/20 group-hover:stroke-[#F2B705]'}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
