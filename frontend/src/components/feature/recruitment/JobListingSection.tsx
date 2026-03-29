@@ -25,6 +25,7 @@ interface JobListing {
     techStacks: string[];
     jobCategory: string;
     topPercentile?: number;
+    matchPercentage?: number;
 }
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ const sortJobs = (jobs: JobListing[], sort: string): JobListing[] => {
         return [...jobs].sort((a, b) => {
             const rank = MATCH_RANK[b.match] - MATCH_RANK[a.match];
             if (rank !== 0) return rank;
-            return (a.topPercentile ?? 99) - (b.topPercentile ?? 99);
+            return (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0);
         });
     if (sort === '마감순')
         return [...jobs].sort((a, b) => {
@@ -114,6 +115,7 @@ const mapToJobListing = (item: JobItem): JobListing => ({
     techStacks: parseTechStacks(item.techStacks),
     jobCategory: mapJobCategory(item.jobCategory ?? '') ?? '',
     topPercentile: item.topPercentile,
+    matchPercentage: item.matchPercentage,
 });
 
 const mapBookmarkToJobListing = (item: BookmarkItem): JobListing => ({
