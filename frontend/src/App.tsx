@@ -41,10 +41,14 @@ const AppRoutes = () => {
       useAuthStore.getState().setAuthLoading(false);
       return;
     }
+    // DEV 백도어 로그인 중이면 test-login effect가 auth를 처리하므로 스킵
+    if (import.meta.env.DEV && searchParams.get('login') !== null) {
+      return;
+    }
     getMe()
       .then((user) => setUser(user))
       .catch(() => useAuthStore.getState().setAuthLoading(false));
-  }, [setUser]);
+  }, [setUser, searchParams]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -56,7 +60,6 @@ const AppRoutes = () => {
   }, [logout, navigate]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
     if (searchParams.get('login') === null) return;
 
     const userId = searchParams.get('login') || '1';
