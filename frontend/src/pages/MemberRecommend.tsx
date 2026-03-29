@@ -61,11 +61,16 @@ const normalizeLevel = (level: string | null | undefined): string => {
   return LEVEL_DESC_TO_ENUM[level] ?? level;
 };
 
+/**
+ * API 응답의 position 값을 ROLE_TO_API 형식(예: "BE", "FE")으로 통일
+ * - API enum 값("BE", "FE" 등)은 그대로 반환
+ * - 표시명("Backend", "Frontend" 등)은 DISPLAY_TO_ROLE → ROLE_TO_API 로 변환
+ */
 const normalizePosition = (pos: string | null | undefined): string => {
   if (!pos) return "";
-  if (API_TO_ROLE[pos]) return pos;
+  if (API_TO_ROLE[pos]) return pos;                        // 이미 API enum 값
   const byDisplay = DISPLAY_TO_ROLE[pos];
-  if (byDisplay) return ROLE_TO_API[byDisplay];
+  if (byDisplay) return ROLE_TO_API[byDisplay];            // 표시명 → API enum 값
   return pos;
 };
 
