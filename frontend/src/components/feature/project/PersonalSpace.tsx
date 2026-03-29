@@ -238,7 +238,8 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const NEAR_BOTTOM_THRESHOLD = 80;
   const MR_PER_PAGE = 3;
   const TS_PER_PAGE = 3;
 
@@ -335,7 +336,16 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   }, [projectId, subTab, fetchAllPullRequests]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const latestMessage = chatMessages[chatMessages.length - 1];
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < NEAR_BOTTOM_THRESHOLD;
+    // 사용자 메시지 전송 시 즉시 스크롤, AI 응답은 하단 근처일 때 부드럽게 스크롤
+    if (latestMessage?.role === 'user') {
+      container.scrollTop = container.scrollHeight;
+    } else if (isNearBottom) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   }, [chatMessages]);
 
   const handleChatSend = async () => {
@@ -479,7 +489,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 {/* AI 챗봇 대화 영역 */}
                 <div className="flex flex-col gap-3 mb-5">
                   {chatMessages.length > 0 && (
-                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-xl bg-white border border-border px-4 py-3">
+                    <div ref={chatContainerRef} className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-xl bg-white border border-border px-4 py-3">
                       {chatMessages.map((msg, i) => (
                         <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div
@@ -500,7 +510,6 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                           </div>
                         </div>
                       )}
-                      <div ref={chatEndRef} />
                     </div>
                   )}
                   <div className="flex items-center gap-2">
