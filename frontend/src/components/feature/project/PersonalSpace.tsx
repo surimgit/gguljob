@@ -239,6 +239,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const NEAR_BOTTOM_THRESHOLD = 80;
   const MR_PER_PAGE = 3;
   const TS_PER_PAGE = 3;
 
@@ -337,11 +338,13 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
-    const lastMsg = chatMessages[chatMessages.length - 1];
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-    // 사용자 메시지 전송 시 항상 스크롤, AI 응답은 하단 근처일 때만
-    if (lastMsg?.role === 'user' || isNearBottom) {
+    const latestMessage = chatMessages[chatMessages.length - 1];
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < NEAR_BOTTOM_THRESHOLD;
+    // 사용자 메시지 전송 시 즉시 스크롤, AI 응답은 하단 근처일 때 부드럽게 스크롤
+    if (latestMessage?.role === 'user') {
       container.scrollTop = container.scrollHeight;
+    } else if (isNearBottom) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     }
   }, [chatMessages]);
 
