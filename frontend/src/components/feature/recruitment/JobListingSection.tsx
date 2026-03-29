@@ -366,6 +366,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
     // 북마크/일반 전환
     useEffect(() => {
         if (showBookmarked) {
+            if (!allJobsLoaded) return;
             getBookmarkedJobs()
                 .then(({ data }) => {
                     const paged = data.data;
