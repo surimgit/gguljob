@@ -116,6 +116,7 @@ public class MatchingService {
 
         List<Long> userIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.userId())).toList();
 
+        // roles FETCH JOIN + userSkills는 @BatchSize(100)로 IN절 배치 로딩 자동 처리
         Map<Long, User> userMap = userRepository.findUsersWithRolesByIds(userIds).stream()
             .collect(Collectors.toMap(User::getId, u -> u));
 
