@@ -10,6 +10,12 @@ import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
+    /**
+     * 프로젝트에 적합한 유저를 추천 점수 순으로 조회합니다.
+     * 점수 기준: 역할 일치(40점) + 스킬 일치 비율(60점) + 도메인 경험(+15점) + 스킬 경험(+10점) → graphScore * 0.6
+     *           + 임베딩 유사도(vectorScore) * 0.4
+     * PARTICIPATED_IN 경험 계산은 EXISTS 서브쿼리로 short-circuit 처리합니다.
+     */
     @Query(
         value = "MATCH (p:Project {id: $projectId}) " +
             "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(reqSkill:Skill) " +
