@@ -95,39 +95,36 @@ public class MatchingService {
     @Cacheable(value = "memberRecommend", keyGenerator = "recommendationKeyGenerator")
     @Transactional(readOnly = true)
     public Page<MemberCardDto> getRecommendedMembers(Long projectId, String keyword, String position, String experienceLevel, Pageable pageable) {
-        long t0 = System.currentTimeMillis();
 
-        List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
-            .stream()
-            .map(Long::valueOf)
-            .toList();
-        log.info("[PERF] excludedUserIds 조회: {}ms", System.currentTimeMillis() - t0);
+        List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId);
 
-        long t1 = System.currentTimeMillis();
-        Page<MemberMatchResultDto> neo4jResults = userNodeRepository.findRecommendedMembersForProject(
+        // Neo4j 전체 결과 1회 조회 (countQuery 제거 - 페이지네이션은 Java에서 처리)
+        List<MemberMatchResultDto> allNeo4jResults = userNodeRepository.findRecommendedMembersForProject(
             String.valueOf(projectId),
             excludedUserIds,
             keyword,
             position,
-            experienceLevel,
-            pageable
+            experienceLevel
         );
-        log.info("[PERF] Neo4j 쿼리: {}ms", System.currentTimeMillis() - t1);
 
-        if (neo4jResults.isEmpty()) {
+        if (allNeo4jResults.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        List<Long> userIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.userId())).toList();
+        // Java 페이지네이션
+        int total = allNeo4jResults.size();
+        int start = (int) pageable.getOffset();
+        if (start >= total) return Page.empty(pageable);
+        int end = Math.min(start + pageable.getPageSize(), total);
+        List<MemberMatchResultDto> pageSlice = allNeo4jResults.subList(start, end);
 
-        long t2 = System.currentTimeMillis();
+        List<Long> userIds = pageSlice.stream().map(dto -> Long.valueOf(dto.userId())).toList();
+
         // roles FETCH JOIN + userSkills는 @BatchSize(100)로 IN절 배치 로딩 자동 처리
         Map<Long, User> userMap = userRepository.findUsersWithRolesByIds(userIds).stream()
             .collect(Collectors.toMap(User::getId, u -> u));
-        log.info("[PERF] MySQL 유저 조회: {}ms", System.currentTimeMillis() - t2);
 
-        // 유저 정보 + 적합도 점수
-        List<MemberCardDto> finalContent = neo4jResults.stream()
+        List<MemberCardDto> finalContent = pageSlice.stream()
             .map(neoDto -> {
                 User user = userMap.get(Long.valueOf(neoDto.userId()));
                 if (user == null) {
@@ -139,7 +136,6 @@ public class MatchingService {
             .filter(java.util.Objects::nonNull)
             .toList();
 
-        log.info("[PERF] 팀원 추천 총 소요: {}ms", System.currentTimeMillis() - t0);
-        return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
+        return new PageImpl<>(finalContent, pageable, total);
     }
 }
