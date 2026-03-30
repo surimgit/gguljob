@@ -413,7 +413,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           </h1>
           {!isLeader && (
             <span
-              className="text-xs font-medium px-2.5 py-1 rounded-full"
+              className="text-sm font-medium px-2.5 py-1 rounded-full"
               style={{ background: "var(--color-background)", color: "var(--color-text-tertiary)", border: "1px solid var(--color-border)" }}
             >
               읽기 전용
@@ -450,7 +450,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 key={opt.key}
                 onClick={() => isLeader && setStatus(opt.key)}
                 disabled={!isLeader}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default opacity-80"}`}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-base font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default opacity-80"}`}
                 style={{
                   background: sel ? opt.selectedBg : "transparent",
                   borderColor: sel
@@ -526,7 +526,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                   <button
                     type="button"
                     onClick={() => { imageInputRef.current?.click(); setShowImageMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-primary-soft transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-primary-soft transition-colors"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     {imageUrl ? "사진 변경" : "사진 추가"}
@@ -535,7 +535,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                     <button
                       type="button"
                       onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       사진 삭제
@@ -554,7 +554,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
             {/* 프로젝트명 입력 */}
             <div className="flex-1 min-w-0 flex flex-col gap-2">
               <label
-                className="text-sm font-semibold"
+                className="text-base font-semibold"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
@@ -566,7 +566,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 onChange={(e) => isLeader && setName(e.target.value)}
                 readOnly={!isLeader}
                 placeholder="프로젝트명을 입력하세요"
-                className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
+                className={`w-full px-4 py-3 rounded-xl text-base outline-none ${!isLeader ? "cursor-default" : ""}`}
                 style={{
                   ...inputStyle(!!name),
                   background: "var(--color-surface)",
@@ -587,7 +587,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1.5">
             <label
-              className="text-sm font-semibold"
+              className="text-base font-semibold"
               style={{ color: "var(--color-text-primary)" }}
             >
               프로젝트 설명
@@ -599,7 +599,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
             >
               <button
                 onClick={() => setDescTab("edit")}
-                className="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors"
+                className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
                 style={{
                   background: descTab === "edit" ? "var(--color-primary)" : "transparent",
                   color: descTab === "edit" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -610,7 +610,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
               </button>
               <button
                 onClick={() => setDescTab("preview")}
-                className="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors"
+                className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
                 style={{
                   background: descTab === "preview" ? "var(--color-primary)" : "transparent",
                   color: descTab === "preview" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -660,7 +660,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="마크다운으로 프로젝트를 설명해주세요&#10;&#10;예: ## 개요&#10;이 프로젝트는..."
-                className="w-full px-4 py-3 text-sm outline-none h-48 resize-none font-mono"
+                className="w-full px-4 py-3 text-base outline-none h-48 resize-none font-mono"
                 style={{ background: "var(--color-surface)", color: "var(--color-text-primary)" }}
               />
             </div>
@@ -679,12 +679,12 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                     h1: ({ children }) => <h1 className="text-xl font-bold mt-3 mb-2" style={{ color: "var(--color-text-primary)" }}>{children}</h1>,
                     h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-1.5" style={{ color: "var(--color-text-primary)" }}>{children}</h2>,
                     h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1" style={{ color: "var(--color-text-primary)" }}>{children}</h3>,
-                    p: ({ children }) => <p className="text-sm leading-relaxed mb-2" style={{ color: "var(--color-text-secondary)" }}>{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc pl-5 mb-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>{children}</ol>,
+                    p: ({ children }) => <p className="text-base leading-relaxed mb-2" style={{ color: "var(--color-text-secondary)" }}>{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 mb-2 text-base" style={{ color: "var(--color-text-secondary)" }}>{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 text-base" style={{ color: "var(--color-text-secondary)" }}>{children}</ol>,
                     li: ({ children }) => <li className="mb-0.5">{children}</li>,
                     code: ({ children }) => (
-                      <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: "var(--color-background)", color: "var(--color-primary-hover)" }}>
+                      <code className="px-1.5 py-0.5 rounded text-sm font-mono" style={{ background: "var(--color-background)", color: "var(--color-primary-hover)" }}>
                         {children}
                       </code>
                     ),
@@ -699,7 +699,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                   {description}
                 </Markdown>
               ) : (
-                <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+                <p className="text-base" style={{ color: "var(--color-text-tertiary)" }}>
                   프리뷰할 내용이 없습니다.
                 </p>
               )}
@@ -707,7 +707,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           )}
           {isLeader && (
           <p
-            className="text-xs text-right mt-1"
+            className="text-sm text-right mt-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             {description.length} 자
@@ -718,7 +718,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         {/* 도메인 */}
         <div className="mb-4">
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="text-base font-semibold mb-1.5 block"
             style={{ color: "var(--color-text-primary)" }}
           >
             도메인
@@ -731,7 +731,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                   key={d}
                   onClick={() => isLeader && selectDomain(d)}
                   disabled={!isLeader}
-                  className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                  className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                   style={{
                     borderColor: sel
                       ? "var(--color-primary)"
@@ -773,7 +773,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           기술 스택
         </div>
         <p
-          className="text-sm mb-4"
+          className="text-base mb-4"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           카테고리별로 사용할 기술을 선택하세요
@@ -808,14 +808,14 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                       style={{ color: "var(--color-text-secondary)" }}
                     />
                     <span
-                      className="text-sm font-semibold"
+                      className="text-base font-semibold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       {cat.label}
                     </span>
                     {count > 0 && (
                       <span
-                        className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-white"
+                        className="w-5 h-5 rounded-full text-sm font-bold flex items-center justify-center text-white"
                         style={{ background: "var(--color-primary)" }}
                       >
                         {count}
@@ -850,7 +850,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                               [cat.key]: allSelected ? [] : [...cat.stacks],
                             }));
                           }}
-                          className="text-xs font-bold px-3 py-1.5 rounded-full border transition-colors"
+                          className="text-sm font-bold px-3 py-1.5 rounded-full border transition-colors"
                           style={{
                             borderColor: "var(--color-primary)",
                             color: "var(--color-text-primary)",
@@ -875,7 +875,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                             key={stack}
                             onClick={() => isLeader && toggleStack(cat.key, stack)}
                             disabled={!isLeader}
-                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                            className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                             style={{
                               borderColor: sel
                                 ? "var(--color-primary)"
@@ -904,7 +904,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         {allSelected.length > 0 && (
           <div className="mt-4">
             <p
-              className="text-sm font-semibold mb-2"
+              className="text-base font-semibold mb-2"
               style={{ color: "var(--color-text-secondary)" }}
             >
               선택된 기술 스택
@@ -913,7 +913,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
               {allSelected.map((stack) => (
                 <span
                   key={stack}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
                   style={{
                     background: "var(--color-primary-soft)",
                     color: "var(--color-text-primary)",
@@ -983,18 +983,18 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       >
         <div>
           <p
-            className="text-sm font-bold"
+            className="text-base font-bold"
             style={{ color: "var(--color-error)" }}
           >
             프로젝트 삭제
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
+          <p className="text-sm mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
             이 작업은 되돌릴 수 없습니다
           </p>
         </div>
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"
+          className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors"
           style={{ background: "var(--color-error)" }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.background = "#DC2626")
@@ -1015,7 +1015,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       >
         <div>
           <p
-            className="text-sm font-bold"
+            className="text-base font-bold"
             style={{ color: "var(--color-error)" }}
           >
             팀 나가기
@@ -1023,7 +1023,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         </div>
         <button
           onClick={() => setShowLeaveModal(true)}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer"
+          className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors cursor-pointer"
           style={{ background: "var(--color-error)" }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.background = "#DC2626")
@@ -1053,7 +1053,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           >
             <span className="text-4xl">🚪</span>
             <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>팀에서 나가시겠습니까?</p>
-            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+            <p className="text-base text-center" style={{ color: "var(--color-text-secondary)" }}>
               나가면 다시 합류하려면 신청이 필요합니다.
             </p>
             <div className="flex gap-3 w-full mt-2">
@@ -1101,7 +1101,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           >
             <span className="text-4xl">🗑️</span>
             <p className="text-lg font-bold" style={{ color: "var(--color-error)" }}>프로젝트를 삭제하시겠습니까?</p>
-            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+            <p className="text-base text-center" style={{ color: "var(--color-text-secondary)" }}>
               삭제된 프로젝트는 복구할 수 없습니다.
             </p>
             <div className="flex gap-3 w-full mt-2">

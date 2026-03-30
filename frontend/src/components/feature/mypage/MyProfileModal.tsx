@@ -18,7 +18,7 @@ const MyProfileModal = ({ isOpen, onClose, onEdit, user }: MyProfileModalProps) 
       <button
         type="button"
         onClick={onEdit}
-        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm ml-auto transition-colors"
+        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base ml-auto transition-colors"
       >
         <Settings className="w-4 h-4" />
         개인정보 수정

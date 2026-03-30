@@ -205,7 +205,7 @@ const MemberRecommend = () => {
           </h1>
         </div>
         <p
-          className="text-sm mb-8"
+          className="text-base mb-8"
           style={{ color: "var(--color-text-secondary)" }}
         >
           내 프로젝트에 가장 적합한 팀원을 추천합니다
@@ -225,7 +225,7 @@ const MemberRecommend = () => {
                 >
                   이 팀원들과 잘 맞을 것 같아요 ✨
                 </p>
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
                   프로젝트와 성향에 적합한 맞춤형 팀원을 추천드려요!
                 </p>
               </div>
@@ -245,7 +245,7 @@ const MemberRecommend = () => {
           {/* 포지션 필터 */}
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className="text-sm font-semibold mr-1"
+              className="text-base font-semibold mr-1"
               style={{ color: "var(--color-text-primary)" }}
             >
               포지션
@@ -253,7 +253,7 @@ const MemberRecommend = () => {
             {/* 전체: 아무것도 선택 안 됐을 때 활성 */}
             <button
               onClick={() => { setPositionFilters([]); setCurrentPage(1); }}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
               style={{
                 background: positionFilters.length === 0 ? "var(--color-primary-hover)" : "transparent",
                 color: positionFilters.length === 0 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -268,7 +268,7 @@ const MemberRecommend = () => {
                 <button
                   key={f.value}
                   onClick={() => togglePosition(f.value)}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
                   style={{
                     background: active ? "var(--color-primary-hover)" : "transparent",
                     color: active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -286,14 +286,14 @@ const MemberRecommend = () => {
           {/* 숙련도 필터 */}
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className="text-sm font-semibold mr-1"
+              className="text-base font-semibold mr-1"
               style={{ color: "var(--color-text-primary)" }}
             >
               숙련도
             </span>
             <button
               onClick={() => { setLevelFilters([]); setCurrentPage(1); }}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
               style={{
                 background: levelFilters.length === 0 ? "var(--color-primary-hover)" : "transparent",
                 color: levelFilters.length === 0 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -308,7 +308,7 @@ const MemberRecommend = () => {
                 <button
                   key={f.value}
                   onClick={() => toggleLevel(f.value)}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
                   style={{
                     background: active ? "var(--color-primary-hover)" : "transparent",
                     color: active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -358,7 +358,7 @@ const MemberRecommend = () => {
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="이름, 포지션 검색"
-              className="flex-1 text-sm outline-none bg-transparent"
+              className="flex-1 text-base outline-none bg-transparent"
               style={{ color: "var(--color-text-primary)" }}
             />
           </div>
@@ -366,15 +366,15 @@ const MemberRecommend = () => {
 
         {/* 로딩 / 에러 / 빈 상태 */}
         {loading && (
-          <p className="text-center py-12 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-center py-12 text-base" style={{ color: "var(--color-text-secondary)" }}>
             불러오는 중...
           </p>
         )}
         {error && (
-          <p className="text-center py-12 text-sm text-red-500">{error}</p>
+          <p className="text-center py-12 text-base text-red-500">{error}</p>
         )}
         {!loading && !error && paged.length === 0 && (
-          <p className="text-center py-12 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-center py-12 text-base" style={{ color: "var(--color-text-secondary)" }}>
             조건에 맞는 팀원이 없습니다.
           </p>
         )}

@@ -123,7 +123,7 @@ const ChatbotPopup = ({
               {generatingTitle}
             </span>
             <span
-              className={`text-text-secondary ${isAgent ? 'text-sm' : 'text-base'}`}
+              className={`text-text-secondary ${isAgent ? 'text-base' : 'text-base'}`}
             >
               {generatingSubtitle}
             </span>
@@ -157,7 +157,7 @@ const ChatbotPopup = ({
               <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
             </div>
             <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-4 border border-border">
-              <p className="text-sm text-text-secondary leading-relaxed">
+              <p className="text-base text-text-secondary leading-relaxed">
                 {isAgent ? (
                   <>
                     프로젝트 구현 중 막히는 부분이 있으신가요?
@@ -176,7 +176,7 @@ const ChatbotPopup = ({
           {/* 트러블슈팅 모드: MR 리스트 */}
           {!isAgent && mrList.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-text-primary">MR 리뷰</span>
+              <span className="text-base font-bold text-text-primary">MR 리뷰</span>
               <div
                 className="flex flex-col gap-1.5 overflow-y-auto"
                 style={{ maxHeight: Math.min(mrList.length, 4) * 46 }}
@@ -197,7 +197,7 @@ const ChatbotPopup = ({
                       onChange={() => onMrSelect?.(mr.id)}
                       className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
                     />
-                    <span className="text-sm text-text-secondary truncate">
+                    <span className="text-base text-text-secondary truncate">
                       {mr.title}
                     </span>
                   </label>
@@ -212,7 +212,7 @@ const ChatbotPopup = ({
               <textarea
                 rows={1}
                 placeholder="구현 중 막히는 부분을 입력하세요..."
-                className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors resize-none"
+                className="flex-1 px-4 py-3 rounded-xl text-base border border-border bg-white outline-none focus:border-[#6366f1] transition-colors resize-none"
                 style={{ maxHeight: 120, overflowY: 'auto' }}
                 onInput={(e) => {
                   const el = e.currentTarget;
@@ -242,7 +242,7 @@ const ChatbotPopup = ({
                     ? mrList.find((mr) => mr.id === selectedMrId)?.title ?? ''
                     : ''
                 }
-                className="flex-1 px-4 py-3 rounded-xl text-sm border border-border bg-white outline-none focus:border-[#6366f1] transition-colors truncate"
+                className="flex-1 px-4 py-3 rounded-xl text-base border border-border bg-white outline-none focus:border-[#6366f1] transition-colors truncate"
               />
             )}
             <button

@@ -206,7 +206,7 @@ const ApplicationList = () => {
               <button
                 key={badge.key}
                 onClick={() => setActiveTab(badge.key)}
-                className="px-5 py-2 rounded-full text-sm font-bold transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-full text-base font-bold transition-colors cursor-pointer"
                 style={{
                   backgroundColor: isActive ? style.bg : 'var(--color-surface)',
                   color: isActive ? style.border : 'var(--color-text-primary)',
@@ -230,7 +230,7 @@ const ApplicationList = () => {
               <ApplicationCard key={item.requestId} item={item} onCancelClick={setCancelTarget} />
             ))
           ) : (
-            <p className="text-center py-12 text-sm text-text-tertiary">
+            <p className="text-center py-12 text-base text-text-tertiary">
               {activeTab === 'all' ? '지원 내역이 없습니다.' : '해당하는 내역이 없습니다.'}
             </p>
           )}

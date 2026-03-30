@@ -42,7 +42,7 @@ const RecommendCard = ({
     >
       {/* 적합도 배지 (우상단) */}
       <span
-        className="absolute top-4 right-4 text-xs font-bold px-3 py-1.5 rounded-full"
+        className="absolute top-4 right-4 text-sm font-bold px-3 py-1.5 rounded-full"
         style={{
           background: matchStyle.bg,
           color: matchStyle.color,
@@ -76,7 +76,7 @@ const RecommendCard = ({
           </span>
           <div className="flex flex-wrap items-center gap-1.5 -ml-1">
             <span
-              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              className="text-base font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -85,7 +85,7 @@ const RecommendCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              className="text-base font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
               {getExperienceLevelDisplay(level)}
@@ -96,7 +96,7 @@ const RecommendCard = ({
 
       {/* 한줄 소개 */}
       <p
-        className="text-sm font-medium leading-relaxed mb-8 line-clamp-2 whitespace-pre-line"
+        className="text-base font-medium leading-relaxed mb-8 line-clamp-2 whitespace-pre-line"
         style={{ color: "var(--color-text-secondary)" }}
       >
         {introduction}
@@ -107,7 +107,7 @@ const RecommendCard = ({
         {techStacks.map((stack) => (
           <span
             key={stack}
-            className="text-sm font-semibold px-2.5 py-1 rounded"
+            className="text-base font-semibold px-2.5 py-1 rounded"
             style={{
               background: "var(--color-border)",
               color: "var(--color-text-secondary)",

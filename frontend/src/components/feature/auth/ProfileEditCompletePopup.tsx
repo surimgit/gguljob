@@ -27,7 +27,7 @@ const ProfileEditCompletePopup: FC<Props> = ({ onClose }) => {
           </div>
 
           <p className="text-xl font-bold text-gray-900 mb-2.5">정보 수정 완료!</p>
-          <p className="text-sm text-gray-500 leading-relaxed mb-7">
+          <p className="text-base text-gray-500 leading-relaxed mb-7">
             변경된 정보가 저장되었습니다.
           </p>
 

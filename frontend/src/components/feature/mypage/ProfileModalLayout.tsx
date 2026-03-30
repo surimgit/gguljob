@@ -123,11 +123,11 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
         <div className="flex flex-col gap-1 flex-1">
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{user.name}</span>
-            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(user.role)}1a`, color: getRoleColor(user.role) }}>
+            <span className="px-3 py-1 rounded-full text-base font-bold" style={{ backgroundColor: `${getRoleColor(user.role)}1a`, color: getRoleColor(user.role) }}>
               {getRoleDisplayName(user.role)}
             </span>
           </div>
-          <p className="text-sm text-text-secondary whitespace-pre-line leading-relaxed">{user.bio}</p>
+          <p className="text-base text-text-secondary whitespace-pre-line leading-relaxed">{user.bio}</p>
         </div>
 
         {actionButton}
@@ -147,7 +147,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
               {user.techStacks.map((stack, i) => (
                 <span
                   key={stack}
-                  className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[i % STACK_COLORS.length]}`}
+                  className={`px-4 py-2 rounded-full border-2 bg-white text-base font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[i % STACK_COLORS.length]}`}
                 >
                   {stack}
                 </span>
@@ -173,7 +173,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
                       return (
                         <span
                           key={stack}
-                          className={`px-4 py-2 rounded-full border-2 bg-white text-sm font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[globalIdx % STACK_COLORS.length]}`}
+                          className={`px-4 py-2 rounded-full border-2 bg-white text-base font-medium whitespace-nowrap max-w-[160px] truncate ${STACK_COLORS[globalIdx % STACK_COLORS.length]}`}
                         >
                           {stack}
                         </span>
@@ -194,7 +194,7 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
                 >
                   <ChevronLeft className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-text-tertiary">{stackPage + 1} / {pages.length}</span>
+                <span className="text-sm text-text-tertiary">{stackPage + 1} / {pages.length}</span>
                 <button
                   type="button"
                   onClick={() => dispatch({ type: 'next' })}
@@ -232,8 +232,8 @@ const ProfileModalLayout = ({ isOpen, onClose, user, actionButton, containerClas
                     </div>
                     {/* 카드 내용 */}
                     <div className="p-4 flex flex-col gap-2 bg-white">
-                      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-1">{project.name}</p>
-                      <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">{project.description}</p>
+                      <p className="text-base font-bold text-text-primary leading-snug line-clamp-1">{project.name}</p>
+                      <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed">{project.description}</p>
                       {project.techStacks.length > 0 && (
                         <div className="flex gap-1 flex-wrap mt-1">
                           {project.techStacks.slice(0, 3).map((stack, i) => (

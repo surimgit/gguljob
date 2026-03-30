@@ -102,11 +102,11 @@ const JobCard = ({
             onKeyDown={(e) => {
                 if (e.key === 'Enter' && url) window.open(url, '_blank', 'noopener,noreferrer');
             }}
-            className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[230px] sm:min-h-[250px]"
+            className="relative flex flex-col cursor-pointer border-2 border-[#E5E7EB] rounded-[15px] hover:bg-primary-soft hover:border-primary-hover hover:shadow-lg transition-all duration-200 min-h-[220px] sm:min-h-[240px]"
             style={{
                 boxShadow: '4px 4px 4px rgba(0,0,0,0.25)',
                 background: tint,
-                padding: '20px 20px 20px 20px',
+                padding: '16px 16px 16px 16px',
             }}
         >
             {/* 랭킹 메달 */}
@@ -166,8 +166,8 @@ const JobCard = ({
                 </div>
 
                 {/* 회사명 + 배지 */}
-                <div className="flex items-center gap-1.5">
-                    <p className="font-bold" style={{ fontSize: '22px', color: '#111827', lineHeight: '1.2' }}>
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="font-bold truncate" style={{ fontSize: '22px', color: '#111827', lineHeight: '1.2' }}>
                         {company}
                     </p>
                     {badges.map((b) => (
@@ -183,13 +183,13 @@ const JobCard = ({
 
             {/* 위치 · 경력 */}
             <div className="flex items-center gap-1.5 mt-2">
-                <span className="text-sm" style={{ color: '#6B7280' }}>
+                <span className="text-base" style={{ color: '#6B7280' }}>
                     {location}
                 </span>
-                <span className="text-sm" style={{ color: '#6B7280' }}>
+                <span className="text-base" style={{ color: '#6B7280' }}>
                     ·
                 </span>
-                <span className="text-sm" style={{ color: '#6B7280' }}>
+                <span className="text-base" style={{ color: '#6B7280' }}>
                     {experience}
                 </span>
             </div>
@@ -197,13 +197,13 @@ const JobCard = ({
             {/* 고용형태 · 연봉 + 적합도 */}
             <div className="flex items-end justify-between mt-auto">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-sm" style={{ color: '#6B7280' }}>
+                    <span className="text-base" style={{ color: '#6B7280' }}>
                         {employmentType}
                     </span>
-                    <span className="text-sm" style={{ color: '#6B7280' }}>
+                    <span className="text-base" style={{ color: '#6B7280' }}>
                         ·
                     </span>
-                    <span className="text-sm font-bold text-primary-hover">{formatSalary(salary)}</span>
+                    <span className="text-base font-bold text-primary-hover">{formatSalary(salary)}</span>
                 </div>
                 <span
                     className="text-[15px] font-bold px-3.5 py-1.5 rounded-full"
@@ -296,7 +296,7 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
             {/* ── 맞춤 공고 TOP 3 섹션 (max-w 제한) ── */}
             <div
                 className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8"
-                style={{ paddingTop: '35px', paddingBottom: '40px' }}
+                style={{ paddingTop: '24px', paddingBottom: '28px' }}
             >
                 <h2 className="font-bold text-[22px] sm:text-[26px] lg:text-[30px]">
                     <span style={{ color: '#111827' }}>맞춤 공고 </span>
@@ -304,7 +304,7 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                 </h2>
 
                 <div
-                    className="flex gap-4 lg:gap-[45px] overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20"
+                    className="flex gap-4 lg:gap-6 overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20"
                     style={{ marginTop: '10px' }}
                 >
                     {top3.map((job, idx) => (

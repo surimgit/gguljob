@@ -47,7 +47,7 @@ const StatusBadge = ({ status }: { status: MrStatus }) => {
     Closed: 'bg-[#f3f4f6] text-[#6b7280] border-transparent',
   };
   return (
-    <span className={`text-sm font-bold tracking-wide px-4 py-1.5 rounded-full border flex-shrink-0 ${styles[status]}`}>
+    <span className={`text-base font-bold tracking-wide px-4 py-1.5 rounded-full border flex-shrink-0 ${styles[status]}`}>
       {status}
     </span>
   );
@@ -62,7 +62,7 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
       {/* 좌측: 번호 원 + 세로 라인 + 끝 점 */}
       <div className="flex flex-col items-center w-6 flex-shrink-0 mr-2">
         <span
-          className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
           style={{ background: statusColor }}
         >
           #{mr.prNumber}
@@ -87,11 +87,11 @@ const MrCard = ({ mr }: { mr: MrItem }) => {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-success flex-shrink-0">
             <line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
           </svg>
-          <span className="text-sm text-text-tertiary font-mono">{mr.branch}</span>
-          <span className="text-sm text-text-tertiary">·</span>
-          <span className="text-sm text-text-tertiary">커밋 {mr.commits}개</span>
-          <span className="text-sm text-text-tertiary">·</span>
-          <span className="text-sm text-text-tertiary">{mr.time}</span>
+          <span className="text-base text-text-tertiary font-mono">{mr.branch}</span>
+          <span className="text-base text-text-tertiary">·</span>
+          <span className="text-base text-text-tertiary">커밋 {mr.commits}개</span>
+          <span className="text-base text-text-tertiary">·</span>
+          <span className="text-base text-text-tertiary">{mr.time}</span>
         </div>
       </div>
     </div>
@@ -137,12 +137,12 @@ const TroubleshootingCard = ({ item, onSave }: { item: TroubleshootingItem; onSa
       )}
       {editing ? (
         <div className="flex gap-2 flex-shrink-0">
-          <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-xl text-sm font-bold text-text-secondary border border-border hover:bg-background transition-colors">
+          <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-xl text-base font-bold text-text-secondary border border-border hover:bg-background transition-colors">
             취소
           </button>
           <button
             onClick={() => { onSave?.({ title: item.title, situation: problemDesc, solution: solutionDesc, codeSnippet }); setEditing(false); }}
-            className="px-3 py-1.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            className="px-3 py-1.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
           >
             저장
@@ -160,30 +160,30 @@ const TroubleshootingCard = ({ item, onSave }: { item: TroubleshootingItem; onSa
 
       {/* 문제 상황 */}
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-bold text-text-primary flex items-center gap-1.5">
+        <p className="text-base font-bold text-text-primary flex items-center gap-1.5">
           <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
           문제 상황
         </p>
         {editing ? (
-          <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} className="text-sm text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
+          <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} className="text-base text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
         ) : (
           <div className="rounded-xl border border-border bg-white px-4 py-3">
-            <p className="text-sm text-text-secondary leading-relaxed">{problemDesc}</p>
+            <p className="text-base text-text-secondary leading-relaxed">{problemDesc}</p>
           </div>
         )}
       </div>
 
       {/* 해결 방법 */}
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-bold text-text-primary flex items-center gap-1.5">
+        <p className="text-base font-bold text-text-primary flex items-center gap-1.5">
           <Lightbulb className="w-4 h-4 text-green-400 flex-shrink-0" />
           해결 방법
         </p>
         {editing ? (
-          <textarea value={solutionDesc} onChange={(e) => setSolutionDesc(e.target.value)} className="text-sm text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
+          <textarea value={solutionDesc} onChange={(e) => setSolutionDesc(e.target.value)} className="text-base text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={3} />
         ) : (
           <div className="rounded-xl border border-border bg-white px-4 py-3">
-            <p className="text-sm text-text-secondary leading-relaxed">{solutionDesc}</p>
+            <p className="text-base text-text-secondary leading-relaxed">{solutionDesc}</p>
           </div>
         )}
       </div>
@@ -191,12 +191,12 @@ const TroubleshootingCard = ({ item, onSave }: { item: TroubleshootingItem; onSa
       {/* 주요 코드 */}
       {(codeSnippet || editing) && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-bold text-text-primary flex items-center gap-1.5">
+          <p className="text-base font-bold text-text-primary flex items-center gap-1.5">
             <Code2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
             주요 코드
           </p>
           {editing ? (
-            <textarea value={codeSnippet} onChange={(e) => setCodeSnippet(e.target.value)} className="bg-[#1e1e2e] text-[#a6e3a1] text-sm rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed w-full resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={5} />
+            <textarea value={codeSnippet} onChange={(e) => setCodeSnippet(e.target.value)} className="bg-[#1e1e2e] text-[#a6e3a1] text-base rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed w-full resize-none focus:outline-none focus:ring-2 focus:ring-primary" rows={5} />
           ) : (
             <SyntaxHighlighter
               language={detectLang(codeSnippet)}
@@ -410,12 +410,12 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                   <div className="flex items-center gap-2">
                     <p className="text-base font-bold text-[#6366f1]">트러블슈팅이 생성됐어요!</p>
                     {createdTs.prNumber && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                      <span className="text-sm font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
                         PR #{createdTs.prNumber}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-text-tertiary mt-0.5">AI가 PR 내용을 분석해 자동으로 작성했어요</p>
+                  <p className="text-sm text-text-tertiary mt-0.5">AI가 PR 내용을 분석해 자동으로 작성했어요</p>
                 </div>
               </div>
               <button
@@ -449,18 +449,18 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <span className="text-sm font-bold text-text-primary">문제 상황</span>
+                  <span className="text-base font-bold text-text-primary">문제 상황</span>
                 </div>
                 {tsModalEditing ? (
                   <textarea
                     value={tsModalProblem}
                     onChange={(e) => setTsModalProblem(e.target.value)}
-                    className="text-sm text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="text-base text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                     rows={3}
                   />
                 ) : (
                   <div className="rounded-xl border border-border bg-surface px-4 py-3">
-                    <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{createdTs.problemDesc}</p>
+                    <p className="text-base text-text-secondary leading-relaxed whitespace-pre-wrap">{createdTs.problemDesc}</p>
                   </div>
                 )}
               </div>
@@ -469,18 +469,18 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-sm font-bold text-text-primary">해결 방법</span>
+                  <span className="text-base font-bold text-text-primary">해결 방법</span>
                 </div>
                 {tsModalEditing ? (
                   <textarea
                     value={tsModalSolution}
                     onChange={(e) => setTsModalSolution(e.target.value)}
-                    className="text-sm text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="text-base text-text-secondary leading-relaxed w-full rounded-xl border border-border px-4 py-3 bg-surface resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                     rows={3}
                   />
                 ) : (
                   <div className="rounded-xl px-4 py-3" style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-                    <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{createdTs.solutionDesc}</p>
+                    <p className="text-base text-text-secondary leading-relaxed whitespace-pre-wrap">{createdTs.solutionDesc}</p>
                   </div>
                 )}
               </div>
@@ -490,13 +490,13 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-1.5">
                     <Code2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                    <span className="text-sm font-bold text-text-primary">주요 코드</span>
+                    <span className="text-base font-bold text-text-primary">주요 코드</span>
                   </div>
                   {tsModalEditing ? (
                     <textarea
                       value={tsModalCode}
                       onChange={(e) => setTsModalCode(e.target.value)}
-                      className="bg-[#1e1e2e] text-[#a6e3a1] text-sm rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed w-full resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="bg-[#1e1e2e] text-[#a6e3a1] text-base rounded-xl px-4 py-3 overflow-x-auto font-mono leading-relaxed w-full resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                       rows={5}
                     />
                   ) : (
@@ -520,7 +520,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                 <>
                   <button
                     onClick={() => setTsModalEditing(false)}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-text-secondary border border-border bg-surface hover:bg-background transition-colors"
+                    className="px-5 py-2.5 rounded-xl text-base font-bold text-text-secondary border border-border bg-surface hover:bg-background transition-colors"
                   >
                     취소
                   </button>
@@ -536,7 +536,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       setTsList((prev) => prev.map((t) => t.id === createdTs.id ? { ...t, title: tsModalTitle, problemDesc: tsModalProblem, solutionDesc: tsModalSolution, codeSnippet: tsModalCode } : t));
                       setTsModalEditing(false);
                     }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                    className="px-5 py-2.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
                   >
                     저장
@@ -552,14 +552,14 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       setTsModalCode(createdTs.codeSnippet);
                       setTsModalEditing(true);
                     }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-text-primary border border-border bg-surface hover:bg-background transition-colors flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl text-base font-bold text-text-primary border border-border bg-surface hover:bg-background transition-colors flex items-center gap-1.5"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     수정
                   </button>
                   <button
                     onClick={() => setCreatedTs(null)}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                    className="px-5 py-2.5 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}
                   >
                     확인
@@ -625,19 +625,19 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                     <span className="text-[10px] font-bold tracking-wider bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Beta</span>
                   </div>
                   {lastAnalyzedAt && (
-                    <span className="text-sm text-text-tertiary font-medium">마지막 분석: {timeAgo(lastAnalyzedAt)}</span>
+                    <span className="text-base text-text-tertiary font-medium">마지막 분석: {timeAgo(lastAnalyzedAt)}</span>
                   )}
                 </div>
 
-                <p className="text-sm text-text-secondary leading-relaxed mb-1">
+                <p className="text-base text-text-secondary leading-relaxed mb-1">
                   내 커밋 메시지, PR 설명, 코드 리뷰 내용을 AI가 분석하여 트러블슈팅 문서를 자동으로 초안 작성합니다.
                 </p>
-                <p className="text-sm text-text-secondary leading-relaxed mb-5">
+                <p className="text-base text-text-secondary leading-relaxed mb-5">
                   생성 후 직접 수정·보완하여 포트폴리오로 활용할 수 있습니다.
                 </p>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border border-[#c7d2fe] bg-white text-text-primary">
+                  <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-base font-semibold border border-[#c7d2fe] bg-white text-text-primary">
                     <MessageSquare className="w-3.5 h-3.5 text-[#6366f1]" />
                     PR <span className="text-[#6366f1] font-bold">{aiMrList.filter(mr => !generatedPrIds.has(mr.id)).length}건</span>
                   </span>
@@ -662,7 +662,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                           onChange={() => setSelectedMrId(mr.id)}
                           className="accent-[#6366f1] w-4 h-4 flex-shrink-0"
                         />
-                        <span className="text-sm text-text-secondary truncate">{mr.title}</span>
+                        <span className="text-base text-text-secondary truncate">{mr.title}</span>
                       </label>
                     ))}
                   </div>
@@ -675,7 +675,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       {chatMessages.map((msg, i) => (
                         <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div
-                            className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                            className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-base leading-relaxed whitespace-pre-wrap ${
                               msg.role === 'user'
                                 ? 'bg-[#6366f1] text-white rounded-br-md'
                                 : 'bg-[#f3f4f6] text-text-primary rounded-bl-md'
@@ -687,7 +687,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       ))}
                       {chatLoading && (
                         <div className="flex justify-start">
-                          <div className="bg-[#f3f4f6] text-text-tertiary px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm">
+                          <div className="bg-[#f3f4f6] text-text-tertiary px-3.5 py-2.5 rounded-2xl rounded-bl-md text-base">
                             답변 생성 중...
                           </div>
                         </div>
@@ -701,7 +701,7 @@ const PersonalSpace = ({ projectId, projectTitle, personalData, subTab = 'troubl
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleChatSend(); }}
                       placeholder="트러블슈팅 관련 질문을 입력하세요..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white text-base focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
                       disabled={chatLoading}
                     />
                     <button

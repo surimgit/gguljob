@@ -51,7 +51,7 @@ const FlowCard = ({ step, title, description, link, image }: FlowCardProps) => {
 
       {/* 카드 내용 */}
       <h3 className="text-xl sm:text-3xl font-extrabold text-text-brown text-center">{title}</h3>
-      <p className="text-sm sm:text-xl font-bold text-text-brown-2 text-center leading-relaxed">{description}</p>
+      <p className="text-base sm:text-xl font-bold text-text-brown-2 text-center leading-relaxed">{description}</p>
 
       <button
         onClick={handleClick}

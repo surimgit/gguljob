@@ -68,7 +68,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className="px-2.5 py-1 rounded-full text-sm font-bold whitespace-nowrap shrink-0"
+            className="px-2.5 py-1 rounded-full text-base font-bold whitespace-nowrap shrink-0"
             style={{ backgroundColor: badgeColor.bg, color: badgeColor.text }}
           >
             {item.projectName}
@@ -77,7 +77,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
             {item.title}
           </h3>
         </div>
-        <span className="text-sm text-text-tertiary whitespace-nowrap shrink-0">{item.date}</span>
+        <span className="text-base text-text-tertiary whitespace-nowrap shrink-0">{item.date}</span>
       </div>
 
       {/* 설명 미리보기 + 더 보기 */}
@@ -87,7 +87,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
         </p>
         <button
           onClick={handleToggle}
-          className="flex items-center gap-0.5 text-sm text-text-tertiary hover:text-primary font-semibold whitespace-nowrap shrink-0 transition-colors"
+          className="flex items-center gap-0.5 text-base text-text-tertiary hover:text-primary font-semibold whitespace-nowrap shrink-0 transition-colors"
         >
           {expanded ? '접기' : '더 보기'}
           {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -135,7 +135,7 @@ const TroubleshootingCard = ({ item }: { item: TroubleshootingCardItem }) => {
           {/* 프로젝트에서 보기 링크 */}
           <button
             onClick={handleGoToProject}
-            className="self-end flex items-center gap-1.5 text-sm font-semibold text-text-tertiary hover:text-primary transition-colors"
+            className="self-end flex items-center gap-1.5 text-base font-semibold text-text-tertiary hover:text-primary transition-colors"
           >
             프로젝트에서 보기
             <ExternalLink className="w-3.5 h-3.5" />

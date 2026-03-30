@@ -33,7 +33,7 @@ const FeatureItem = ({ number, badge, title, description, emoji, bg, video }: Fe
           ) : (
             <div className="flex flex-col items-center gap-2 text-text-tertiary">
               <span className="text-5xl">{emoji}</span>
-              <span className="text-sm">미리보기 이미지</span>
+              <span className="text-base">미리보기 이미지</span>
             </div>
           )}
         </div>
