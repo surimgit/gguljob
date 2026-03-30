@@ -14,10 +14,14 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("allJobsScoring");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(
+                "allJobsScoring",
+                "projectRecommend",
+                "memberRecommend"
+        );
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.HOURS)
-                .maximumSize(100));
+                .maximumSize(500));
         return cacheManager;
     }
 }
