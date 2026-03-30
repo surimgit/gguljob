@@ -7,7 +7,6 @@ import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepositor
 import com.ssafy.gguljob.backend.domain.matching.repository.UserNodeRepository;
 import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
-import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
@@ -19,9 +18,9 @@ import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +41,8 @@ public class MatchingService {
     private final UserNodeRepository userNodeRepository;
     private final SkillRepository skillRepository;
 
-    @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
+    @Cacheable(value = "projectRecommend", keyGenerator = "recommendationKeyGenerator")
+    @Transactional(readOnly = true)
     public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
@@ -53,9 +53,6 @@ public class MatchingService {
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             throw new OnboardingRequiredException();
         }
-
-        // Neo4j에서 충분한 후보를 조회한 뒤 MySQL 필터링 → 수동 페이지네이션
-        Pageable allPageable = PageRequest.of(0, 10000);
 
         List<String> joinedProjectIds = projectMemberRepository
             .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
@@ -68,6 +65,7 @@ public class MatchingService {
             ? skillRepository.findAllById(skillIds).stream().map(Skill::getName).filter(Objects::nonNull).toList()
             : null;
 
+        // Neo4j 쿼리에서 SKIP/LIMIT 페이지네이션 직접 처리 (전체 로드 제거)
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
             userId,
             joinedProjectIds,
@@ -75,7 +73,7 @@ public class MatchingService {
             normalizedDomains,
             normalizedRoles,
             skillNames,
-            allPageable
+            pageable
         );
 
         if (neo4jResults.isEmpty()) return Page.empty(pageable);
@@ -83,47 +81,33 @@ public class MatchingService {
         List<Long> projectIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.projectId())).toList();
         Map<Long, ProjectResponse.ProjectCardDto> mysqlDataMap = projectService.getProjectCardsMap(projectIds);
 
-        List<ProjectResponse.ProjectCardDto> allFiltered = neo4jResults.stream()
+        List<ProjectResponse.ProjectCardDto> pageContent = neo4jResults.stream()
             .map(neoDto -> {
                 ProjectResponse.ProjectCardDto card = mysqlDataMap.get(Long.valueOf(neoDto.projectId()));
                 return (card != null) ? card.withScore(neoDto.score()) : null;
             })
             .filter(Objects::nonNull)
-            .filter(card -> card.status() == com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.RECRUITING)
-            .filter(card -> card.positions().stream()
-                .anyMatch(pos -> pos.currentCount() < pos.targetCount()))
             .toList();
 
-        // 수동 페이지네이션
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), allFiltered.size());
-        List<ProjectResponse.ProjectCardDto> pageContent = start >= allFiltered.size()
-            ? List.of()
-            : allFiltered.subList(start, end);
-
-        return new PageImpl<>(pageContent, pageable, allFiltered.size());
+        return new PageImpl<>(pageContent, pageable, neo4jResults.getTotalElements());
     }
 
-    @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
+    @Cacheable(value = "memberRecommend", keyGenerator = "recommendationKeyGenerator")
+    @Transactional(readOnly = true)
     public Page<MemberCardDto> getRecommendedMembers(Long projectId, String keyword, String position, String experienceLevel, Pageable pageable) {
 
-        Pageable unsortedPageable = pageable.isPaged()
-            ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-            : PageRequest.of(0, 10);
-        // 제외할 유저
         List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
             .stream()
             .map(Long::valueOf)
             .toList();
 
-        // Neo4j 쿼리
         Page<MemberMatchResultDto> neo4jResults = userNodeRepository.findRecommendedMembersForProject(
             String.valueOf(projectId),
             excludedUserIds,
             keyword,
             position,
             experienceLevel,
-            unsortedPageable
+            pageable
         );
 
         if (neo4jResults.isEmpty()) {

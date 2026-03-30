@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,12 +29,40 @@ public class AdminNeo4jController {
     private final Neo4jProjectSyncBatchService neo4jProjectSyncBatchService;
     private final Neo4jClient neo4jClient;
     private final UserRepository userRepository;
+    private final CacheManager cacheManager;
 
     @PostMapping("/sync-users")
     public ResponseEntity<String> syncAllUsers() {
         log.info("관리자 요청: 전체 유저 Neo4j 재동기화 시작");
         neo4jUserSyncBatchService.syncAllUsersToNeo4j();
         return ResponseEntity.ok("전체 유저 Neo4j 재동기화 완료");
+    }
+
+    @DeleteMapping("/cache")
+    public ResponseEntity<String> evictAllCaches() {
+        List<String> cacheNames = List.of("projectRecommend", "memberRecommend", "allJobsScoring");
+        cacheNames.forEach(name -> {
+            var cache = cacheManager.getCache(name);
+            if (cache != null) cache.clear();
+        });
+        log.info("관리자 요청: 추천 캐시 전체 초기화 완료");
+        return ResponseEntity.ok("캐시 초기화 완료: " + cacheNames);
+    }
+
+    @PostMapping("/reset-projects")
+    public ResponseEntity<String> resetAndSyncProjects() {
+        log.info("관리자 요청: 전체 프로젝트 노드 초기화 및 재동기화 시작");
+        neo4jClient.query("MATCH (p:Project) DETACH DELETE p").run();
+        log.info("Neo4j 전체 Project 노드 삭제 완료");
+        int syncedCount = neo4jProjectSyncBatchService.syncAllProjectsToNeo4j();
+        neo4jUserSyncBatchService.syncAllUsersToNeo4j();
+        List<String> cacheNames = List.of("projectRecommend", "memberRecommend");
+        cacheNames.forEach(name -> {
+            var cache = cacheManager.getCache(name);
+            if (cache != null) cache.clear();
+        });
+        log.info("관리자 요청: 프로젝트 노드 초기화 및 재동기화 완료 - {}건, 캐시 초기화 완료", syncedCount);
+        return ResponseEntity.ok("프로젝트 노드 초기화 완료: " + syncedCount + "건 재동기화, 유저 PARTICIPATED_IN 재연결, 캐시 초기화");
     }
 
     @PostMapping("/sync-projects")
