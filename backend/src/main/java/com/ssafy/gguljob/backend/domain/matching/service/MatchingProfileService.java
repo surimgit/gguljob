@@ -68,37 +68,28 @@ public class MatchingProfileService {
     }
 
     private void syncParticipatedProjects(User user) {
-        List<Long> projectIds = projectMemberRepository
+        List<String> projectIdStrs = projectMemberRepository
             .findActiveProjectsByUserId(user.getId(), MemberStatus.ATTEND)
             .stream()
-            .map(pm -> pm.getProject().getId())
+            .map(pm -> String.valueOf(pm.getProject().getId()))
             .toList();
 
-        // 기존 PARTICIPATED_IN 관계 삭제 후 재생성
+        // 기존 PARTICIPATED_IN 관계 전체 삭제 후 현재 참여 프로젝트로 재생성 (단일 쿼리)
         neo4jClient.query("""
-                MATCH (u:User {id: $userId})-[r:PARTICIPATED_IN]->()
+                MATCH (u:User {id: $userId})
+                OPTIONAL MATCH (u)-[r:PARTICIPATED_IN]->()
                 DELETE r
+                WITH u
+                UNWIND CASE WHEN size($projectIds) = 0 THEN [null] ELSE $projectIds END AS pid
+                WITH u, pid WHERE pid IS NOT NULL
+                MATCH (p:Project {id: pid})
+                MERGE (u)-[:PARTICIPATED_IN]->(p)
                 """)
             .bind(user.getId()).to("userId")
+            .bind(projectIdStrs).to("projectIds")
             .run();
 
-        if (!projectIds.isEmpty()) {
-            List<String> projectIdStrs = projectIds.stream()
-                .map(String::valueOf)
-                .toList();
-
-            neo4jClient.query("""
-                    MATCH (u:User {id: $userId})
-                    UNWIND $projectIds AS pid
-                    MATCH (p:Project {id: pid})
-                    MERGE (u)-[:PARTICIPATED_IN]->(p)
-                    """)
-                .bind(user.getId()).to("userId")
-                .bind(projectIdStrs).to("projectIds")
-                .run();
-        }
-
         log.info("유저 프로젝트 참여 이력 동기화 완료: userId={}, 참여 프로젝트 {}건",
-            user.getId(), projectIds.size());
+            user.getId(), projectIdStrs.size());
     }
 }

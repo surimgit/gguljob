@@ -240,7 +240,7 @@ const CreateProject = () => {
             새 프로젝트 생성
           </h1>
           <p
-            className="text-xs sm:text-base mt-2"
+            className="text-sm sm:text-base mt-2"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             프로젝트 정보를 입력하고 팀원을 모집하세요
@@ -262,7 +262,7 @@ const CreateProject = () => {
           {/* 프로젝트명 */}
           <div className="mb-4">
             <label
-              className="text-sm font-semibold mb-1.5 block"
+              className="text-base font-semibold mb-1.5 block"
               style={{ color: "var(--color-text-primary)" }}
             >
               프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
@@ -275,7 +275,7 @@ const CreateProject = () => {
                 setForm((prev) => ({ ...prev, name: e.target.value }))
               }
               placeholder="프로젝트 이름을 입력하세요"
-              className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 text-base outline-none transition-colors"
               style={{
                 borderColor: "var(--color-border)",
                 color: "var(--color-text-primary)",
@@ -288,7 +288,7 @@ const CreateProject = () => {
               }
             />
             <p
-              className="text-xs text-right mt-1"
+              className="text-sm text-right mt-1"
               style={{ color: "var(--color-text-tertiary)" }}
             >
               {form.name.length}/90
@@ -298,7 +298,7 @@ const CreateProject = () => {
           {/* 내 직무 선택 */}
           <div className="mb-4">
             <label
-              className="text-sm font-semibold mb-1.5 block"
+              className="text-base font-semibold mb-1.5 block"
               style={{ color: "var(--color-text-primary)" }}
             >
               내 직무 <span style={{ color: "var(--color-error)" }}>*</span>
@@ -313,7 +313,7 @@ const CreateProject = () => {
                     onClick={() =>
                       setForm((prev) => ({ ...prev, leaderRole: role }))
                     }
-                    className="px-4 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition-colors"
+                    className="px-4 py-1.5 rounded-full border text-base font-medium cursor-pointer transition-colors"
                     style={{
                       borderColor: selected
                         ? "var(--color-primary)"
@@ -336,7 +336,7 @@ const CreateProject = () => {
           {/* 프로젝트 설명 */}
           <div className="mb-4">
             <label
-              className="text-sm font-semibold mb-1.5 block"
+              className="text-base font-semibold mb-1.5 block"
               style={{ color: "var(--color-text-primary)" }}
             >
               프로젝트 설명
@@ -348,7 +348,7 @@ const CreateProject = () => {
                 setForm((prev) => ({ ...prev, description: e.target.value }))
               }
               placeholder="프로젝트에 대해 간단히 설명해주세요"
-              className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none h-28 resize-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 text-base outline-none h-28 resize-none transition-colors"
               style={{
                 borderColor: "var(--color-border)",
                 color: "var(--color-text-primary)",
@@ -361,7 +361,7 @@ const CreateProject = () => {
               }
             />
             <p
-              className="text-xs text-right mt-1"
+              className="text-sm text-right mt-1"
               style={{ color: "var(--color-text-tertiary)" }}
             >
               {form.description.length}/500
@@ -371,7 +371,7 @@ const CreateProject = () => {
           {/* 도메인 선택 */}
           <div className="mb-4">
             <label
-              className="text-sm font-semibold mb-1.5 block"
+              className="text-base font-semibold mb-1.5 block"
               style={{ color: "var(--color-text-primary)" }}
             >
               도메인 <span style={{ color: "var(--color-error)" }}>*</span>
@@ -384,7 +384,7 @@ const CreateProject = () => {
                     key={d}
                     type="button"
                     onClick={() => selectDomain(d)}
-                    className="px-4 py-1.5 rounded-full border text-sm font-medium cursor-pointer transition-colors"
+                    className="px-4 py-1.5 rounded-full border text-base font-medium cursor-pointer transition-colors"
                     style={{
                       borderColor: selected
                         ? "var(--color-primary)"
@@ -417,7 +417,7 @@ const CreateProject = () => {
             기술 스택
           </h2>
           <p
-            className="text-sm mb-4"
+            className="text-base mb-4"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             프로젝트에서 사용할 기술을 선택하세요
@@ -445,12 +445,12 @@ const CreateProject = () => {
                       color: "var(--color-text-primary)",
                     }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex items-center gap-2 text-base font-semibold">
                       <Icon className="w-4 h-4" />
                       {label}
                       {selectedStacks.length > 0 && (
                         <span
-                          className="text-xs font-normal px-2 py-0.5 rounded-full"
+                          className="text-sm font-normal px-2 py-0.5 rounded-full"
                           style={{
                             backgroundColor: "var(--color-primary-soft)",
                             color: "var(--color-text-primary)",
@@ -489,7 +489,7 @@ const CreateProject = () => {
                               },
                             }));
                           }}
-                          className="px-3 py-1.5 rounded-full border text-xs font-bold transition-colors"
+                          className="px-3 py-1.5 rounded-full border text-sm font-bold transition-colors"
                           style={{
                             borderColor: "var(--color-primary)",
                             color: "var(--color-text-primary)",
@@ -513,7 +513,7 @@ const CreateProject = () => {
                               key={stack}
                               type="button"
                               onClick={() => toggleStack(key, stack)}
-                              className="px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors"
+                              className="px-3 py-1 rounded-full border text-sm font-medium cursor-pointer transition-colors"
                               style={{
                                 borderColor: selected
                                   ? "var(--color-primary)"
@@ -551,7 +551,7 @@ const CreateProject = () => {
             팀원 등록
           </h2>
           <p
-            className="text-sm mb-4"
+            className="text-base mb-4"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             함께할 팀원을 등록하세요
@@ -579,7 +579,7 @@ const CreateProject = () => {
                   if (e.key === "Enter") handleVerifyEmail();
                 }}
                 placeholder="초대할 팀원의 이메일"
-                className="flex-1 px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors"
+                className="flex-1 px-3 py-2.5 rounded-lg border text-base outline-none transition-colors"
                 style={{
                   backgroundColor: "var(--color-surface)",
                   borderColor: verifiedUser
@@ -600,7 +600,7 @@ const CreateProject = () => {
                 type="button"
                 onClick={handleVerifyEmail}
                 disabled={!memberDraft.email.trim() || verifying}
-                className="px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap"
+                className="px-4 py-2.5 rounded-lg border text-base font-medium transition-colors whitespace-nowrap"
                 style={{
                   backgroundColor: "var(--color-surface)",
                   borderColor: "var(--color-border)",
@@ -632,20 +632,20 @@ const CreateProject = () => {
                   />
                 ) : (
                   <div
-                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold"
+                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
                     {verifiedUser.userName.charAt(0)}
                   </div>
                 )}
                 <span
-                  className="text-sm font-semibold"
+                  className="text-base font-semibold"
                   style={{ color: "var(--color-text-primary)" }}
                 >
                   {verifiedUser.userName}
                 </span>
                 <span
-                  className="text-xs ml-auto"
+                  className="text-sm ml-auto"
                   style={{ color: "var(--color-primary)" }}
                 >
                   확인됨
@@ -654,7 +654,7 @@ const CreateProject = () => {
             )}
             {verifyError && (
               <p
-                className="text-xs mt-2 px-1"
+                className="text-sm mt-2 px-1"
                 style={{ color: "var(--color-error)" }}
               >
                 {verifyError}
@@ -681,7 +681,7 @@ const CreateProject = () => {
                 aria-haspopup="listbox"
                 aria-expanded={positionOpen}
                 aria-controls="position-listbox"
-                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-colors flex items-center justify-between cursor-pointer"
+                className="w-full px-3 py-2.5 rounded-lg border text-base outline-none transition-colors flex items-center justify-between cursor-pointer"
                 style={{
                   backgroundColor: "var(--color-surface)",
                   borderColor: positionOpen
@@ -755,7 +755,7 @@ const CreateProject = () => {
                         setMemberDraft((prev) => ({ ...prev, position: role }));
                         setPositionOpen(false);
                       }}
-                      className="px-4 py-2.5 text-sm cursor-pointer transition-colors"
+                      className="px-4 py-2.5 text-base cursor-pointer transition-colors"
                       style={{
                         backgroundColor:
                           memberDraft.position === role
@@ -789,7 +789,7 @@ const CreateProject = () => {
               type="button"
               onClick={addMember}
               disabled={!canAddMember}
-              className="w-full py-2.5 rounded-lg border text-sm font-medium mt-3 transition-colors"
+              className="w-full py-2.5 rounded-lg border text-base font-medium mt-3 transition-colors"
               style={{
                 backgroundColor: canAddMember
                   ? "var(--color-primary-soft)"
@@ -812,7 +812,7 @@ const CreateProject = () => {
             <div className="flex flex-col items-center gap-2 py-8">
               <span className="text-3xl">👋</span>
               <span
-                className="text-sm"
+                className="text-base"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
                 아직 등록된 팀원이 없어요
@@ -835,19 +835,19 @@ const CreateProject = () => {
                       />
                     ) : (
                       <div
-                        className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold flex-shrink-0"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         {m.userName.charAt(0)}
                       </div>
                     )}
                     <span
-                      className="text-sm font-semibold"
+                      className="text-base font-semibold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       {m.userName}
                       <span
-                        className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full"
+                        className="ml-2 text-sm font-normal px-2 py-0.5 rounded-full"
                         style={{
                           backgroundColor: "var(--color-primary-soft)",
                           color: "var(--color-text-primary)",
@@ -881,7 +881,7 @@ const CreateProject = () => {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="w-full max-w-[1400px] mx-auto block py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-bold transition-colors"
+          className="w-full max-w-[1400px] mx-auto block py-3 sm:py-4 rounded-2xl text-base sm:text-base font-bold transition-colors"
           style={{
             backgroundColor: canSubmit
               ? "var(--color-primary)"

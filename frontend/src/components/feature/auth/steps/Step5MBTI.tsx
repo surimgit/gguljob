@@ -31,7 +31,7 @@ const Step5MBTI: FC<Props> = ({ selected, onChange }) => {
     <div>
       <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">MBTI를 알려주세요</h2>
-        <p className="text-sm text-gray-500">팀 매칭에 참고할게요</p>
+        <p className="text-base text-gray-500">팀 매칭에 참고할게요</p>
       </div>
 
       <div className="flex flex-col gap-2 mb-5">

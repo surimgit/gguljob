@@ -13,7 +13,7 @@ const Step6Leadership: FC<Props> = ({ value, onChange }) => {
     <div>
       <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">팀에서의 성향은?</h2>
-        <p className="text-sm text-gray-500">슬라이더를 움직여 표현해주세요</p>
+        <p className="text-base text-gray-500">슬라이더를 움직여 표현해주세요</p>
       </div>
 
       {/* 타입 카드 */}
@@ -25,8 +25,8 @@ const Step6Leadership: FC<Props> = ({ value, onChange }) => {
       {/* 슬라이더 영역 */}
       <div>
         <div className="flex justify-between mb-2.5">
-          <span className="text-sm text-gray-500">🤝 팔로워</span>
-          <span className="text-sm text-gray-500">리더 👑</span>
+          <span className="text-base text-gray-500">🤝 팔로워</span>
+          <span className="text-base text-gray-500">리더 👑</span>
         </div>
 
         <input

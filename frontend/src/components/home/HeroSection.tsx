@@ -17,7 +17,7 @@ const HeroSection = () => {
       <img src={heroSectionSlogan} alt="개발자를 위한 올인원 꿀 서비스" className="h-27 w-auto -mb-20" />
 
       {/* 메인 콘텐츠 */}
-      <div className="flex items-center gap-16 px-20">
+      <div className="flex items-center gap-16 px-20 origin-top scale-[0.85] xl:scale-100">
         {/* 벌 캐릭터 이미지 + 그라데이션 원 */}
         <div className="relative flex items-center justify-center w-120 h-120">
           {/* 우측 상단 그라데이션 원 */}

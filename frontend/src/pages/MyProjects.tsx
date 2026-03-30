@@ -39,7 +39,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-[5px]">
           <div className="rounded-[3.5px] size-[5px]" style={{ backgroundColor: statusStyle.dot }} />
-          <p className="font-semibold text-xs leading-[18px]" style={{ color: statusStyle.text }}>
+          <p className="font-semibold text-sm leading-[18px]" style={{ color: statusStyle.text }}>
             {STATUS_LABEL[project.status]}
           </p>
         </div>
@@ -55,7 +55,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
               <p className="font-bold text-white text-[11px]">{project.leaderName?.[0] ?? '?'}</p>
             </div>
           )}
-          <p className="font-semibold text-text-secondary text-sm">{project.leaderName}</p>
+          <p className="font-semibold text-text-secondary text-base">{project.leaderName}</p>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       </p>
 
       {/* 설명 */}
-      <p className="font-bold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
+      <p className="font-bold text-text-secondary text-base leading-[20.8px] line-clamp-2 w-full">
         {project.description || project.teamName || "\u00A0"}
       </p>
 
@@ -78,12 +78,12 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       {project.skills.length > 0 && (
         <div className="flex flex-wrap gap-x-[5px] gap-y-[5px] w-full">
           {visibleSkills.map((tech) => (
-            <span key={tech} className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
+            <span key={tech} className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-sm px-[11px] py-[4px] rounded-[16px] mt-2">
               {tech}
             </span>
           ))}
           {extraCount > 0 && (
-            <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
+            <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-sm px-[11px] py-[4px] rounded-[16px] mt-2">
               +{extraCount}
             </span>
           )}
@@ -93,7 +93,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
       {/* 하단: 포지션 슬롯 */}
       <div className="mt-auto border-t border-[#f0ebe3] flex flex-wrap gap-x-[12px] gap-y-[4px] pt-[11px] w-full">
         {roles.map(([role, count]) => (
-          <p key={role} className="font-semibold text-xs whitespace-nowrap" style={{ color: getRoleColor(role) }}>
+          <p key={role} className="font-semibold text-sm whitespace-nowrap" style={{ color: getRoleColor(role) }}>
             {getRoleDisplayName(role)} <span className="font-black">{count}</span>
           </p>
         ))}
@@ -101,7 +101,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
 
       {/* 완료일 */}
       {project.finishedAt && (
-        <p className="text-xs text-[#9ca3af]">
+        <p className="text-sm text-[#9ca3af]">
           완료: {new Date(project.finishedAt).toLocaleDateString()}
         </p>
       )}
@@ -217,7 +217,7 @@ const MyProjects = () => {
                           <img src={latest.imageUrl} alt={latest.title} className="w-full h-full object-cover" />
                         )}
                         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
-                          <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
+                          <p className="font-semibold text-base leading-[15px]" style={{ color: categoryColor }}>
                             최근 프로젝트
                           </p>
                         </div>
@@ -276,7 +276,7 @@ const MyProjects = () => {
             >
               {t.label}
               <span
-                className="text-sm px-2 py-0.5 rounded-full font-semibold"
+                className="text-base px-2 py-0.5 rounded-full font-semibold"
                 style={{
                   backgroundColor:
                     tab === t.key
@@ -305,7 +305,7 @@ const MyProjects = () => {
         {/* 로딩 */}
         {myProjectsLoading && (
           <p
-            className="text-sm py-12 text-center"
+            className="text-base py-12 text-center"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             불러오는 중...

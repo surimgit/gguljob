@@ -28,7 +28,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
         />
         {/* 카테고리 뱃지 */}
         <div className="absolute top-[10px] right-[10px] bg-[rgba(255,255,255,0.7)] rounded-[8px] px-[8px] py-[2px]">
-          <p className="font-semibold text-sm leading-[15px]" style={{ color: categoryColor }}>
+          <p className="font-semibold text-base leading-[15px]" style={{ color: categoryColor }}>
             {domain}
           </p>
         </div>
@@ -43,7 +43,7 @@ const ProjectCarouselCard = ({ project, onClick }: ProjectCarouselCardProps) => 
         </p>
 
         {/* 설명 */}
-        <p className="mt-[10px] font-medium text-text-secondary text-xs leading-[17.5px] line-clamp-2 flex-1">
+        <p className="mt-[10px] font-medium text-text-secondary text-sm leading-[17.5px] line-clamp-2 flex-1">
           {description}
         </p>
       </div>

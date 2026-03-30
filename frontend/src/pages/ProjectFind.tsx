@@ -117,17 +117,17 @@ const ProjectFind = () => {
 
         {/* 로딩 */}
         {isLoading && (
-          <p className="text-center text-[#8a8073] text-sm py-20">프로젝트를 불러오는 중...</p>
+          <p className="text-center text-[#8a8073] text-base py-20">프로젝트를 불러오는 중...</p>
         )}
 
         {/* 에러 */}
         {isError && (
-          <p className="text-center text-red-500 text-sm py-20">프로젝트를 불러오지 못했습니다.</p>
+          <p className="text-center text-red-500 text-base py-20">프로젝트를 불러오지 못했습니다.</p>
         )}
 
         {/* 빈 상태 */}
         {!isLoading && !isError && projects.length === 0 && (
-          <p className="text-center text-[#8a8073] text-sm py-20">검색 결과가 없습니다.</p>
+          <p className="text-center text-[#8a8073] text-base py-20">검색 결과가 없습니다.</p>
         )}
 
         {/* 카드 그리드 */}

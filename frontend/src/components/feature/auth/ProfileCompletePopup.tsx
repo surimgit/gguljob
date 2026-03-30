@@ -67,7 +67,7 @@ const ProfileCompletePopup: FC<Props> = ({ formData, onClose }) => {
           </div>
 
           <p className="text-xl font-bold text-gray-900 mb-2.5">프로필 설정 완료!</p>
-          <p className="text-sm text-gray-500 leading-relaxed mb-6">
+          <p className="text-base text-gray-500 leading-relaxed mb-6">
             입력하신 정보를 바탕으로<br />
             딱 맞는 프로젝트와 팀원을 추천해드릴게요
           </p>

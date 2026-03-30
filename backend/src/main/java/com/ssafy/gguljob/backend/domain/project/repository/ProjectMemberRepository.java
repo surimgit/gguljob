@@ -25,6 +25,12 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         "GROUP BY pm.role")
     List<Object[]> countRolesByProjectId(@Param("projectId") Long projectId);
 
+    // [N+1 개선] 여러 프로젝트의 역할별 인원수 한 번에 조회
+    @Query("SELECT pm.project.id, pm.role, COUNT(pm) FROM ProjectMember pm " +
+        "WHERE pm.project.id IN :projectIds AND pm.status = 'ATTEND' " +
+        "GROUP BY pm.project.id, pm.role")
+    List<Object[]> countRolesByProjectIds(@Param("projectIds") List<Long> projectIds);
+
     // [권한 체크] 특정 유저가 프로젝트 참여 중인지 확인
     boolean existsByProject_IdAndUser_IdAndStatus(Long projectId, Long userId, MemberStatus status);
 
@@ -58,8 +64,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         Long leavingUserId
     );
 
-    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId")
-    List<Long> findUserIdsByProjectId(Long projectId);
+    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.status IN ('ATTEND', 'PENDING')")
+    List<Long> findUserIdsByProjectId(@Param("projectId") Long projectId);
 
     long countByProjectIdAndStatus(Long projectId, MemberStatus status);
 

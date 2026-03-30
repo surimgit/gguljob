@@ -191,7 +191,7 @@ const StatusDropdown = ({
       {/* 뱃지 버튼 */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold cursor-pointer"
         style={getBadgeStyle(currentStatus)}
       >
         <span
@@ -595,7 +595,7 @@ const RecruitModal = ({ isOpen, onClose, onConfirm, addedRoles = [] }: RecruitMo
             {stacks.map((s) => (
               <span
                 key={s}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-sm"
                 style={{
                   background: "var(--color-border)",
                   color: "var(--color-text-secondary)",
@@ -896,7 +896,7 @@ const TeamManagement = ({
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowRecruitModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-base font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
             style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
           >
             <UserPlus className="w-4 h-4" />
@@ -904,7 +904,7 @@ const TeamManagement = ({
           </button>
           <button
             onClick={() => navigate(`/team-recommend/${projectId}`, { state: { projectTitle: projectName } })}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-base font-bold cursor-pointer flex-1 sm:flex-initial justify-center"
             style={{ background: "var(--color-primary-hover)", color: "var(--color-text-primary)" }}
           >
             <Plus className="w-4 h-4" />
@@ -913,7 +913,7 @@ const TeamManagement = ({
         </div>
         <div className="flex items-center gap-3">
           <span
-            className="text-sm font-medium"
+            className="text-base font-medium"
             style={{ color: "var(--color-text-secondary)" }}
           >
             {totalCurrent}/{totalAll}명 충원
@@ -964,7 +964,7 @@ const TeamManagement = ({
                           <Minus className="w-3.5 h-3.5" style={{ color: "var(--color-text-secondary)" }} />
                         </button>
                         <span
-                          className="text-sm font-bold w-6 text-center"
+                          className="text-base font-bold w-6 text-center"
                           style={{ color: "var(--color-text-primary)" }}
                         >
                           {role.total}
@@ -1034,7 +1034,7 @@ const TeamManagement = ({
                         {member.name}
                       </span>
                       {member.isMe && (
-                        <span className="text-sm font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
+                        <span className="text-base font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
                       )}
                     </div>
                     {/* hover 시 관리 버튼 */}
@@ -1070,7 +1070,7 @@ const TeamManagement = ({
                     }}
                   >
                     <UserRound className="w-10 h-10" style={{ color: "var(--color-text-tertiary)", opacity: 0.5 }} />
-                    <span className="text-xs font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
+                    <span className="text-sm font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
                   </div>
                 ))}
               </div>
@@ -1097,7 +1097,7 @@ const TeamManagement = ({
                   style={{ borderColor: "var(--color-border)" }}
                 >
                   <span
-                    className="text-xs font-bold mb-1"
+                    className="text-sm font-bold mb-1"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
                     합류 신청 목록
@@ -1115,7 +1115,7 @@ const TeamManagement = ({
                           <img src={app.profileImageUrl} alt={app.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
                         ) : (
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                             style={{ background: getAvatarColor(app.name) }}
                           >
                             {app.name.charAt(0)}
@@ -1124,7 +1124,7 @@ const TeamManagement = ({
                         {/* 이름 + 뱃지 + 날짜 */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+                            <span className="text-base font-bold" style={{ color: "var(--color-text-primary)" }}>
                               {app.name}
                             </span>
                             <span
@@ -1142,7 +1142,7 @@ const TeamManagement = ({
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <button
                             onClick={() => setConfirmAcceptId(app.id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg text-sm font-bold cursor-pointer"
                             style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-success)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--color-success)"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; e.currentTarget.style.color = "var(--color-text-secondary)"; e.currentTarget.style.borderColor = "var(--color-border)"; }}
@@ -1151,7 +1151,7 @@ const TeamManagement = ({
                           </button>
                           <button
                             onClick={() => setConfirmRejectId(app.id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg text-sm font-bold cursor-pointer"
                             style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-error)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--color-error)"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; e.currentTarget.style.color = "var(--color-text-secondary)"; e.currentTarget.style.borderColor = "var(--color-border)"; }}
@@ -1204,7 +1204,7 @@ const TeamManagement = ({
                 <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
                   {app.name}님 수락
                 </p>
-                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-base mt-1" style={{ color: "var(--color-text-secondary)" }}>
                   팀원으로 수락하시겠습니까?
                 </p>
               </div>
@@ -1213,7 +1213,7 @@ const TeamManagement = ({
               <div className="flex gap-3 w-full mt-1">
                 <button
                   onClick={() => setConfirmAcceptId(null)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  className="flex-1 py-2.5 rounded-xl text-base font-bold"
                   style={{
                     border: "1px solid var(--color-border)",
                     color: "var(--color-text-secondary)",
@@ -1226,7 +1226,7 @@ const TeamManagement = ({
                     handleAccept(confirmAcceptId);
                     setConfirmAcceptId(null);
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  className="flex-1 py-2.5 rounded-xl text-base font-bold text-white"
                   style={{ background: "var(--color-success)" }}
                 >
                   수락하기
@@ -1264,7 +1264,7 @@ const TeamManagement = ({
                 <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
                   {app.name}님 거절
                 </p>
-                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-base mt-1" style={{ color: "var(--color-text-secondary)" }}>
                   참가 신청을 거절하시겠습니까?
                 </p>
               </div>
@@ -1273,7 +1273,7 @@ const TeamManagement = ({
               <div className="flex gap-3 w-full mt-1">
                 <button
                   onClick={() => setConfirmRejectId(null)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  className="flex-1 py-2.5 rounded-xl text-base font-bold"
                   style={{
                     border: "1px solid var(--color-border)",
                     color: "var(--color-text-secondary)",
@@ -1286,7 +1286,7 @@ const TeamManagement = ({
                     handleReject(confirmRejectId);
                     setConfirmRejectId(null);
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  className="flex-1 py-2.5 rounded-xl text-base font-bold text-white"
                   style={{ background: "var(--color-error)" }}
                 >
                   거절하기
@@ -1323,7 +1323,7 @@ const TeamManagement = ({
             <h2 className="text-xl font-bold text-gray-900">
               {kickTarget.name}님 내보내기
             </h2>
-            <p className="text-sm text-gray-500 text-center leading-relaxed">
+            <p className="text-base text-gray-500 text-center leading-relaxed">
               팀에서 내보내시겠습니까?
               <br />
               되돌릴 수 없습니다.
@@ -1398,7 +1398,7 @@ const TeamManagement = ({
             <h2 className="text-xl font-bold text-gray-900">
               팀장 위임
             </h2>
-            <p className="text-sm text-gray-500 text-center leading-relaxed">
+            <p className="text-base text-gray-500 text-center leading-relaxed">
               {delegateTarget.name}님에게
               <br />
               팀장을 위임하시겠습니까?
@@ -1473,7 +1473,7 @@ const GitHubContributorSuggestion = ({ projectId }: { projectId: number }) => {
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
           </svg>
           <span className="text-base font-bold text-text-primary">GitHub 기여자 초대 제안</span>
-          <span className="text-xs text-text-tertiary ml-1">PR을 올렸지만 아직 팀원이 아닌 유저</span>
+          <span className="text-sm text-text-tertiary ml-1">PR을 올렸지만 아직 팀원이 아닌 유저</span>
         </div>
         <div className="px-6 py-4 flex flex-col gap-3">
           {contributors.map((c) => (
@@ -1481,17 +1481,17 @@ const GitHubContributorSuggestion = ({ projectId }: { projectId: number }) => {
               {c.profileImageUrl ? (
                 <img src={c.profileImageUrl} alt={c.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-500">
+                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-base font-bold text-gray-500">
                   {c.userName.charAt(0)}
                 </div>
               )}
               <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-sm font-semibold text-text-primary truncate">{c.userName}</span>
-                <span className="text-xs text-text-tertiary">PR {c.prCount}건</span>
+                <span className="text-base font-semibold text-text-primary truncate">{c.userName}</span>
+                <span className="text-sm text-text-tertiary">PR {c.prCount}건</span>
               </div>
               <button
                 onClick={() => setInviteTarget({ userId: c.userId, userName: c.userName })}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
                 style={{ background: "var(--color-primary-soft)", color: "var(--color-primary-hover)" }}
               >
                 초대하기
@@ -1596,7 +1596,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span
-            className="text-sm font-medium"
+            className="text-base font-medium"
             style={{ color: "var(--color-text-secondary)" }}
           >
             {totalMembers}/{totalTarget}명 충원
@@ -1628,14 +1628,14 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                     {getRoleDisplayName(role.name)}
                   </span>
                   <span
-                    className="text-sm font-bold"
+                    className="text-base font-bold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     {role.current}/{role.total}
                   </span>
                 </div>
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
+                  className="px-3 py-1 rounded-full text-sm font-semibold"
                   style={{
                     background: role.status === "open" ? "rgba(34,197,94,0.1)" : "var(--color-border)",
                     color: role.status === "open" ? "#22c55e" : "var(--color-text-tertiary)",
@@ -1683,7 +1683,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                         {member.name}
                       </span>
                       {member.isMe && (
-                        <span className="text-sm font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
+                        <span className="text-base font-medium flex-shrink-0" style={{ color: "var(--color-text-tertiary)" }}>(나)</span>
                       )}
                     </div>
                   </div>
@@ -1700,7 +1700,7 @@ const MemberView = ({ dashboard, projectId }: { dashboard?: TeamDashboard | null
                     }}
                   >
                     <UserRound className="w-10 h-10" style={{ color: "var(--color-text-tertiary)", opacity: 0.5 }} />
-                    <span className="text-xs font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
+                    <span className="text-sm font-medium" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>팀원 모집 중..</span>
                   </div>
                 ))}
               </div>
@@ -1767,7 +1767,7 @@ const TeamMembers = ({ dashboard, projectId, onLeaderChanged }: { dashboard?: Te
 
   // 로딩 중
   if (isLeader === null) {
-    return <p className="text-center py-12 text-sm" style={{ color: "var(--color-text-secondary)" }}>불러오는 중...</p>;
+    return <p className="text-center py-12 text-base" style={{ color: "var(--color-text-secondary)" }}>불러오는 중...</p>;
   }
 
   // currentCount가 백엔드에서 0으로 오는 문제 → currentMembers에서 해당 role 수를 직접 계산

@@ -18,7 +18,7 @@ const WithdrawModal = ({ isOpen, onClose, onConfirm }: WithdrawModalProps) => {
 
         {/* 텍스트 영역 */}
         <h2 className="text-xl font-bold text-gray-900">꿀잡 탈퇴하기</h2>
-        <p className="text-sm text-gray-500 text-center leading-relaxed">
+        <p className="text-base text-gray-500 text-center leading-relaxed">
           꿀잡에서 탈퇴하시겠습니까?
           <br />
           모든 데이터가 삭제되며 되돌릴 수 없습니다.

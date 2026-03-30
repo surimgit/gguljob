@@ -242,7 +242,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {mode === 'edit' ? '수정을 취소하시겠습니까?' : '프로필 설정을 완료해주세요'}
               </h3>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              <p className="text-base text-gray-500 mb-6 leading-relaxed">
                 {mode === 'edit' ? (
                   '변경사항이 저장되지 않습니다.'
                 ) : (
@@ -252,7 +252,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowExitWarning(false)}
-                  className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 rounded-xl border border-gray-300 text-base font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   {mode === 'edit' ? '계속 수정' : '계속 설정하기'}
                 </button>
@@ -261,7 +261,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                     setShowExitWarning(false);
                     onClose();
                   }}
-                  className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-red-500 text-base font-semibold text-white hover:bg-red-600 transition-colors"
                 >
                   나가기
                 </button>

@@ -1,7 +1,6 @@
 package com.ssafy.gguljob.backend.domain.matching.event;
 
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingProfileService;
-import com.ssafy.gguljob.backend.domain.matching.service.MatchingProjectService;
 import com.ssafy.gguljob.backend.domain.matching.service.UserEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class MatchingEventListener {
 
     private final MatchingProfileService matchingProfileService;
-    private final MatchingProjectService matchingProjectService;
     private final UserEmbeddingService userEmbeddingService;
     private final CacheManager cacheManager;
 

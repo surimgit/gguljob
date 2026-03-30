@@ -70,7 +70,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
             style={{ backgroundColor: statusStyle.dot }}
           />
           <p
-            className="font-semibold text-xs leading-[18px]"
+            className="font-semibold text-sm leading-[18px]"
             style={{ color: statusStyle.text }}
           >
             {STATUS_LABEL[effectiveStatus]}
@@ -91,7 +91,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
               <p className="font-bold text-white text-[11px]">{leaderName?.[0] ?? '?'}</p>
             </div>
           )}
-          <p className="font-semibold text-text-secondary text-sm">{leaderName}</p>
+          <p className="font-semibold text-text-secondary text-base">{leaderName}</p>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       </p>
 
       {/* 설명 */}
-      <p className="font-bold text-text-secondary text-sm leading-[20.8px] line-clamp-2 w-full">
+      <p className="font-bold text-text-secondary text-base leading-[20.8px] line-clamp-2 w-full">
         {description}
       </p>
 
@@ -118,13 +118,13 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
         {visibleTech.map((tech) => (
           <span
             key={tech}
-            className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2"
+            className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-sm px-[11px] py-[4px] rounded-[16px] mt-2"
           >
             {tech}
           </span>
         ))}
         {extraCount > 0 && (
-          <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-xs px-[11px] py-[4px] rounded-[16px] mt-2">
+          <span className="bg-[#e5e7eb] border border-[#e5e7eb] font-semibold text-[#6b7280] text-sm px-[11px] py-[4px] rounded-[16px] mt-2">
             +{extraCount}
           </span>
         )}
@@ -133,7 +133,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       {/* 하단: 포지션 슬롯 */}
       <div className="mt-auto border-t border-[#f0ebe3] flex flex-wrap gap-x-[12px] gap-y-[4px] pt-[11px] w-full">
         {activePositions.map((pos) => (
-          <p key={pos.positionId} className="font-semibold text-xs whitespace-nowrap" style={{ color: getRoleColor(pos.role) }}>
+          <p key={pos.positionId} className="font-semibold text-sm whitespace-nowrap" style={{ color: getRoleColor(pos.role) }}>
             {getRoleDisplayName(pos.role)} <span className="font-black">{pos.currentCount}/{pos.targetCount}</span>
           </p>
         ))}

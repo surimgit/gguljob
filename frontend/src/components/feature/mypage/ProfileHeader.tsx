@@ -45,13 +45,13 @@ const ProfileHeader = ({
           {/* 이름 + 역할 배지 */}
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{name}</span>
-            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
+            <span className="px-3 py-1 rounded-full text-base font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
               {getRoleDisplayName(role)}
             </span>
           </div>
 
           {/* 소개글 */}
-          <p className="text-sm text-text-secondary">{bio}</p>
+          <p className="text-base text-text-secondary">{bio}</p>
 
           {/* 기술 스택 태그 */}
           <div className="flex gap-2 flex-wrap mt-1">
@@ -59,14 +59,14 @@ const ProfileHeader = ({
               HIGHLIGHTED_STACKS.includes(stack) ? (
                 <span
                   key={stack}
-                  className="px-3 py-1 rounded-full border border-primary text-text-brown-2 text-xs font-medium"
+                  className="px-3 py-1 rounded-full border border-primary text-text-brown-2 text-sm font-medium"
                 >
                   {stack}
                 </span>
               ) : (
                 <span
                   key={stack}
-                  className="px-3 py-1 rounded-full border border-border text-text-secondary text-xs font-medium"
+                  className="px-3 py-1 rounded-full border border-border text-text-secondary text-sm font-medium"
                 >
                   {stack}
                 </span>
@@ -80,7 +80,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onEditInfo}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base transition-colors"
           >
             <Settings className="w-4 h-4" />
             정보수정
@@ -88,7 +88,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onWithdraw}
-            className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-sm transition-colors"
+            className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-base transition-colors"
           >
             <UserX className="w-4 h-4" />
             탈퇴

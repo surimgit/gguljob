@@ -25,7 +25,7 @@ const MemberProfileModal = ({ isOpen, onClose, user, fixedProjectId, fixedProjec
           <button
             type="button"
             onClick={() => setIsInviteOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm ml-auto transition-colors"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base ml-auto transition-colors"
           >
             <Mail className="w-4 h-4" />
             팀 초대하기

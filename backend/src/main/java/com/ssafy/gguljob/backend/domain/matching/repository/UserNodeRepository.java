@@ -3,77 +3,58 @@ package com.ssafy.gguljob.backend.domain.matching.repository;
 import com.ssafy.gguljob.backend.domain.matching.dto.MemberMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.entity.UserNode;
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
+    /**
+     * 프로젝트에 적합한 유저를 추천 점수 순으로 전체 조회합니다.
+     * 점수 기준: 역할 일치(40점) + 스킬 일치 비율(60점) + 도메인 경험(+15점) + 스킬 경험(+10점) → graphScore * 0.6
+     *           + 임베딩 유사도(vectorScore) * 0.4
+     * PARTICIPATED_IN 경험 계산은 EXISTS 서브쿼리로 short-circuit 처리합니다.
+     * 페이지네이션은 Java에서 처리합니다. (countQuery 제거로 Neo4j 쿼리 1회)
+     */
     @Query(
-        value = "MATCH (p:Project {id: $projectId}) " +
-            // 프로젝트가 요구하는 총 기술 스택 개수 파악
-            "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(reqSkill:Skill) " +
-            "WITH p, count(reqSkill) AS totalSkills " +
+        "MATCH (p:Project {id: $projectId}) " +
+        "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(reqSkill:Skill) " +
+        "WITH p, count(reqSkill) AS totalSkills " +
 
-            // 이미 팀원이거나 합류 대기 중인 유저 제외
-            "MATCH (u:User) " +
-            "WHERE NOT u.id IN $excludedUserIds " +
+        "MATCH (u:User) " +
+        "WHERE NOT u.id IN $excludedUserIds " +
+        "AND ($keyword IS NULL OR u.userName CONTAINS $keyword OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(kr:Role) WHERE kr.name CONTAINS $keyword }) " +
+        "AND ($position IS NULL OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(r:Role) WHERE r.name = $position }) " +
+        "AND ($experienceLevel IS NULL OR u.experienceLevel = $experienceLevel) " +
 
-            // 동적 필터링 & 검색
-            "AND ($keyword IS NULL OR u.userName CONTAINS $keyword OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(kr:Role) WHERE kr.name CONTAINS $keyword }) " +
-            "AND ($position IS NULL OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(r:Role) WHERE r.name = $position }) " +
-            "AND ($experienceLevel IS NULL OR u.experienceLevel = $experienceLevel) " +
+        "OPTIONAL MATCH (u)-[:WANTS_ROLE]->(mr:Role)<-[:REQUIRES_ROLE]-(p) " +
+        "WITH p, totalSkills, u, count(mr) > 0 AS isRoleMatched " +
+        "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(s:Skill)<-[:HAS_SKILL]-(u) " +
+        "WITH p, totalSkills, u, isRoleMatched, count(s) AS matchedSkills " +
 
-            // 포지션 일치 여부 확인
-            "OPTIONAL MATCH (u)-[:WANTS_ROLE]->(mr:Role)<-[:REQUIRES_ROLE]-(p) " +
-            "WITH p, totalSkills, u, count(mr) > 0 AS isRoleMatched " +
+        "WITH p, u, " +
+        "     (CASE WHEN isRoleMatched THEN 40 ELSE 0 END + " +
+        "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
 
-            // 기술 스택 일치 개수 확인
-            "OPTIONAL MATCH (p)-[:REQUIRES_SKILL]->(s:Skill)<-[:HAS_SKILL]-(u) " +
-            "WITH p, totalSkills, u, isRoleMatched, count(s) AS matchedSkills " +
+        "WITH p, u, graphScore, " +
+        "     EXISTS { MATCH (u)-[:PARTICIPATED_IN]->(past:Project) WHERE past.domain = p.domain AND past.id <> p.id } AS hasDomainExp, " +
+        "     EXISTS { MATCH (u)-[:PARTICIPATED_IN]->(past2:Project)-[:REQUIRES_SKILL]->(ps:Skill)<-[:REQUIRES_SKILL]-(p) WHERE past2.id <> p.id } AS hasSkillExp " +
+        "WITH p, u, " +
+        "     graphScore + (CASE WHEN hasDomainExp THEN 15 ELSE 0 END) + (CASE WHEN hasSkillExp THEN 10 ELSE 0 END) AS graphScore " +
 
-            // 그래프 점수: 직무 40점 + 스킬 비율 60점
-            "WITH p, u, " +
-            "     (CASE WHEN isRoleMatched THEN 40 ELSE 0 END + " +
-            "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
+        "WITH u, graphScore, " +
+        "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
+        "          THEN toInteger(reduce(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * p.embedding[i]) * 100) " +
+        "          ELSE 0 END AS vectorScore " +
 
-            // 프로젝트 경험 가산점: 같은 도메인 프로젝트 참여 경험 15점 + 스킬 겹침 경험 10점
-            "OPTIONAL MATCH (u)-[:PARTICIPATED_IN]->(past:Project) " +
-            "WHERE past.domain = p.domain AND past.id <> p.id " +
-            "WITH p, u, graphScore, count(past) > 0 AS hasDomainExp " +
-            "OPTIONAL MATCH (u)-[:PARTICIPATED_IN]->(past2:Project)-[:REQUIRES_SKILL]->(ps:Skill)<-[:REQUIRES_SKILL]-(p) " +
-            "WHERE past2.id <> p.id " +
-            "WITH p, u, graphScore, hasDomainExp, count(DISTINCT ps) > 0 AS hasSkillExp " +
-            "WITH p, u, " +
-            "     graphScore + (CASE WHEN hasDomainExp THEN 15 ELSE 0 END) + (CASE WHEN hasSkillExp THEN 10 ELSE 0 END) AS graphScore " +
-
-            // 벡터 유사도 점수 (유저 임베딩 ↔ 프로젝트 임베딩, 없으면 0)
-            "WITH u, graphScore, " +
-            "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
-            "          THEN toInteger(reduce(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * p.embedding[i]) * 100) " +
-            "          ELSE 0 END AS vectorScore " +
-
-            // 최종 점수: 그래프 60% + 벡터 40%
-            "WITH u, toInteger(graphScore * 0.6 + vectorScore * 0.4) AS matchScore " +
-
-            "RETURN toString(u.id) AS userId, matchScore " +
-            "ORDER BY matchScore DESC, u.id DESC " +
-            "SKIP $skip LIMIT $limit",
-
-        countQuery = "MATCH (u:User) " +
-            "WHERE NOT u.id IN $excludedUserIds " +
-            "AND ($keyword IS NULL OR u.userName CONTAINS $keyword OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(kr:Role) WHERE kr.name CONTAINS $keyword }) " +
-            "AND ($position IS NULL OR EXISTS { MATCH (u)-[:WANTS_ROLE]->(r:Role) WHERE r.name = $position }) " +
-            "AND ($experienceLevel IS NULL OR u.experienceLevel = $experienceLevel) " +
-            "RETURN count(u)"
+        "WITH u, toInteger(graphScore * 0.6 + vectorScore * 0.4) AS matchScore " +
+        "RETURN toString(u.id) AS userId, matchScore " +
+        "ORDER BY matchScore DESC, u.id DESC"
     )
-    Page<MemberMatchResultDto> findRecommendedMembersForProject(
+    List<MemberMatchResultDto> findRecommendedMembersForProject(
         @Param("projectId") String projectId,
         @Param("excludedUserIds") List<Long> excludedUserIds,
         @Param("keyword") String keyword,
         @Param("position") String position,
-        @Param("experienceLevel") String experienceLevel,
-        Pageable pageable
+        @Param("experienceLevel") String experienceLevel
     );
 }

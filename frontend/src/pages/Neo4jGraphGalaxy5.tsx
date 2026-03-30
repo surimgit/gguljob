@@ -471,7 +471,7 @@ const Neo4jGraphGalaxy5 = () => {
       {hoverNode && (
         <div className="absolute bottom-8 right-8 z-10">
           <div className="text-right">
-            <div className="text-white text-sm font-bold">{hoverNode.label}</div>
+            <div className="text-white text-base font-bold">{hoverNode.label}</div>
             <div className="text-white/30 font-mono text-[10px] uppercase tracking-wider">
               {{ user: hoverNode.id === MY_USER_ID ? 'me' : 'user', project: 'project', recruitment: 'job', skill: 'skill', role: 'role' }[hoverNode.type]} &middot; {hoverNode.__linkCount || 0} links
             </div>
