@@ -4,20 +4,22 @@ import axios from 'axios';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import ProjectFind from './pages/ProjectFind';
 import Recruitment from './pages/Recruitment';
 import MyPage from './pages/MyPage';
-import ProjectDetail from './pages/ProjectDetail';
 import OAuthCallback from './pages/OAuthCallback';
-import UserProfileTest from './pages/UserProfileTest';
 import CreateProject from './pages/CreateProject';
 import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
 import MemberRecommend from './pages/MemberRecommend';
 import TroubleshootingList from './pages/TroubleshootingList';
 import PortfolioCreate from './pages/PortfolioCreate';
+import PortfolioList from './pages/PortfolioList';
+import ApplicationList from './pages/ApplicationList';
+import Neo4jGraphGalaxy5 from './pages/Neo4jGraphGalaxy5';
+import Neo4jGraphWhite from './pages/Neo4jGraphWhite';
+import Neo4jGraphWhite2 from './pages/Neo4jGraphWhite2';
 import ScrollToTop from './components/common/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
@@ -30,6 +32,21 @@ const AppRoutes = () => {
   const logout = useAuthStore((state) => state.logout);
   const setUser = useAuthStore((state) => state.setUser);
 
+  // 새로고침 시 쿠키 기반 인증 복구
+  useEffect(() => {
+    if (useAuthStore.getState().isAuthenticated) {
+      useAuthStore.getState().setAuthLoading(false);
+      return;
+    }
+    // 백도어 로그인 중이면 test-login effect가 auth를 처리하므로 스킵
+    if (import.meta.env.VITE_ENABLE_TEST_LOGIN && searchParams.get('login') !== null) {
+      return;
+    }
+    getMe()
+      .then((user) => setUser(user))
+      .catch(() => useAuthStore.getState().setAuthLoading(false));
+  }, [setUser, searchParams]);
+
   useEffect(() => {
     const handleUnauthorized = () => {
       logout();
@@ -40,7 +57,7 @@ const AppRoutes = () => {
   }, [logout, navigate]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!import.meta.env.VITE_ENABLE_TEST_LOGIN) return;
     if (searchParams.get('login') === null) return;
 
     const userId = searchParams.get('login') || '1';
@@ -66,24 +83,24 @@ const AppRoutes = () => {
 
       {/* 홈은 자체 Layout(Navbar+Footer) 포함 */}
       <Route path="/" element={<Home />} />
+      <Route path="/graph5" element={<Neo4jGraphGalaxy5 />} />
+      <Route path="/graph-white" element={<Neo4jGraphWhite />} />
+      <Route path="/graph-white2" element={<Neo4jGraphWhite2 />} />
 
       <Route element={<Layout />}>
-        {/* 공개 라우트 */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/projects" element={<ProjectFind />} />
-        <Route path="/projects/:id" element={<ProjectDetail />} />
-        <Route path="/recruitment" element={<Recruitment />} />
-        <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
-        <Route path="/user-profile-test" element={<UserProfileTest />} />
-
         {/* 로그인 필요 라우트 */}
         <Route element={<PrivateRoute />}>
+          <Route path="/projects" element={<ProjectFind />} />
+          <Route path="/recruitment" element={<Recruitment />} />
+          <Route path="/team-recommend/:projectId" element={<MemberRecommend />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/projects/new" element={<CreateProject />} />
           <Route path="/my-projects/:id" element={<ProjectDashboard />} />
           <Route path="/mypage/troubleshooting" element={<TroubleshootingList />} />
+          <Route path="/mypage/portfolio" element={<PortfolioList />} />
           <Route path="/mypage/portfolio/new" element={<PortfolioCreate />} />
+          <Route path="/mypage/applications" element={<ApplicationList />} />
         </Route>
       </Route>
 

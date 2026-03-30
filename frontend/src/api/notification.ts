@@ -1,7 +1,11 @@
 import api from './index';
 
 // 백엔드 NotificationCategory enum
-export type NotificationCategory = 'TEAM' | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING';
+export type NotificationCategory =
+  | 'TEAM_INVITE' | 'TEAM_APPLY' | 'TEAM_ACCEPTED' | 'TEAM_REJECTED'
+  | 'MEMBER' | 'TROUBLESHOOTING' | 'JOB_POSTING' | 'GITHUB';
+
+export type ActionStatus = 'NONE' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
 export interface NotificationDto {
   notificationId: number;
@@ -10,6 +14,7 @@ export interface NotificationDto {
   referenceId: number | null;
   referenceUrl: string | null;
   isRead: boolean;
+  actionStatus: ActionStatus;
   createdAt: string;
 }
 
@@ -45,3 +50,6 @@ export const deleteNotification = (notificationId: number) =>
 /** DELETE /v1/notifications/all — 전체 알림 삭제 */
 export const deleteAllNotifications = () =>
   api.delete('/v1/notifications/all');
+
+/** SSE 구독 URL (EventSource에서 직접 사용) */
+export const SSE_SUBSCRIBE_URL = '/api/v1/notifications/subscribe';

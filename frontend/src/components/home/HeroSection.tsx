@@ -1,10 +1,18 @@
+import { useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import heroSectionSlogan from '../../assets/images/herosection_slogan.png';
 import heroSectionBee from '../../assets/images/herosection_bee.png';
 
 const HeroSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const handleScrollDown = () => {
+    const next = sectionRef.current?.nextElementSibling;
+    if (next) next.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <section data-navbar-hero className="min-h-[520px] flex flex-col items-center justify-start relative overflow-hidden pt-14 pb-16" style={{ backgroundColor: '#FFFAEB' }}>
+    <section ref={sectionRef} data-navbar-hero className="min-h-[520px] flex flex-col items-center justify-start relative overflow-hidden pt-14 pb-16" style={{ backgroundColor: '#FFFAEB' }}>
       {/* 슬로건 이미지 - 중앙 상단 */}
       <img src={heroSectionSlogan} alt="개발자를 위한 올인원 꿀 서비스" className="h-27 w-auto -mb-20" />
 
@@ -33,9 +41,14 @@ const HeroSection = () => {
       </div>
 
       {/* 아래 화살표 */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+      <button
+        type="button"
+        onClick={handleScrollDown}
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 cursor-pointer hover:opacity-70 transition-opacity"
+        aria-label="아래로 스크롤"
+      >
         <ChevronDown className="w-12 h-12 text-primary-hover" />
-      </div>
+      </button>
     </section>
   );
 };

@@ -1,10 +1,13 @@
 package com.ssafy.gguljob.backend.domain.user.controller;
 
+import com.ssafy.gguljob.backend.domain.join.dto.MyApplicationDto;
+import com.ssafy.gguljob.backend.domain.join.service.JoinRequestService;
 import com.ssafy.gguljob.backend.domain.matching.service.MatchingService;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.troubleshooting.service.TroubleshootingService;
 import com.ssafy.gguljob.backend.domain.troubleshooting.dto.TroubleshootingResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.OnboardingRequestDto;
+import com.ssafy.gguljob.backend.domain.user.dto.PositionResponse;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileResponseDto;
 import com.ssafy.gguljob.backend.domain.user.dto.ProfileUpdateRequestDto;
 import com.ssafy.gguljob.backend.domain.user.dto.UserResponse;
@@ -47,6 +50,15 @@ public class UserController {
     private final ProjectService projectService;
     private final TroubleshootingService troubleshootingService;
     private final MatchingService matchingService;
+    private final JoinRequestService joinRequestService;
+
+    @Operation(summary = "직무 전체 목록 조회")
+    @GetMapping("/positions")
+    public ResponseEntity<ApiResponseDto<List<PositionResponse.PositionDto>>> getAllPositions() {
+        return ResponseEntity.ok(
+            new ApiResponseDto<>(200, "직무 목록 조회 성공", PositionResponse.allPositions())
+        );
+    }
 
     @Operation(summary = "초기 프로필 설정 (온보딩)", description = "최초 로그인 시 필수 추가 정보를 입력받아 저장합니다.")
     @PostMapping("/onboarding")
@@ -139,6 +151,16 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로필 이미지 업로드 성공", imageUrl));
     }
 
+    @Operation(summary = "내 지원/초대 내역 조회", description = "로그인한 유저의 프로젝트 지원 및 초대 내역을 최신순으로 조회합니다.")
+    @GetMapping("/me/applications")
+    public ResponseEntity<ApiResponseDto<List<MyApplicationDto>>> getMyApplications(
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        List<MyApplicationDto> applications = joinRequestService.getMyApplications(userDetails.getId());
+
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "지원/초대 내역 조회 성공", applications));
+    }
+
     @Operation(summary = "타 사용자 프로필 조회", description = "사용자 ID를 기반으로 다른 사용자의 공개 프로필을 조회합니다.")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponseDto<ProfileResponseDto>> getOtherProfile(
@@ -159,6 +181,17 @@ public class UserController {
 //        UserResponse.UserPageResponse response = userService.getUsers(pageable);
 //        return ResponseEntity.ok(response);
 //    }
+
+    @Operation(summary = "이메일로 사용자 검색", description = "팀원 초대 시 이메일로 가입 여부를 확인하고 기본 프로필을 반환합니다. 존재하지 않으면 404를 반환합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponseDto<UserResponse.UserSummary>> searchByEmail(
+        @RequestParam String email) {
+
+        log.info("이메일 사용자 검색 API 호출 - 이메일: {}", email);
+
+        UserResponse.UserSummary result = userService.searchByEmail(email);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "사용자 검색 성공", result));
+    }
 
     @Operation(summary = "팀원(유저) 검색 필터 옵션(메뉴판) 조회", description = "팀원 찾기 페이지의 포지션 및 숙련도 필터 목록(value, label)을 제공합니다.")
     @GetMapping("/filters")

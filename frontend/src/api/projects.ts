@@ -52,6 +52,8 @@ export interface ProjectFilters {
   /** label → API value 매핑 (도메인: "웹기술" → "WEB_TECH", 포지션: "FE 모집중" → "FRONTEND") */
   domainValueMap: Record<string, string>;
   roleValueMap: Record<string, string>;
+  /** 스킬 이름 → 스킬 ID 매핑 ("React" → 1) */
+  skillNameToIdMap: Record<string, number>;
 }
 
 export const getProjectFilters = () =>
@@ -81,20 +83,6 @@ export const getGitLog = (projectId: number) =>
 export const getTeamManagement = (projectId: number) =>
   api.get<{ data: TeamManagement }>(`/v1/projects/${projectId}/members/detail`);
 
-/* ── 포지션(모집 직무) 관리 ── */
-
-export const addPosition = (projectId: number, data: { role: string; targetCount: number; requireSkills?: string[] }) =>
-  api.post(`/v1/projects/${projectId}/recruitments`, data);
-
-export const deletePosition = (projectId: number, positionId: number) =>
-  api.delete(`/v1/projects/${projectId}/recruitments/${positionId}`);
-
-export const updatePositionTargetCount = (projectId: number, positionId: number, targetCount: number) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
-
-export const updatePositionStatus = (projectId: number, positionId: number, status: string) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
-
 /* ── 합류 요청 ── */
 
 export const applyToPosition = (projectId: number, positionId: number, appealContent?: string) =>
@@ -108,19 +96,39 @@ export const getProjectEditForm = (projectId: number) =>
 export const updateProject = (projectId: number, data: ProjectUpdateRequest) =>
   api.patch<{ data: ProjectUpdateResponse }>(`/v1/projects/${projectId}`, data);
 
+export const uploadProjectImage = (projectId: number, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.patch<{ data: string }>(`/v1/projects/${projectId}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+export const deleteProject = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}`);
+
+export const deleteProjectImage = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/image`);
+
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
+
+export const disconnectGitRepo = (projectId: number) =>
+  api.delete(`/v1/projects/${projectId}/git-repo`);
 
 /* ── 모집 공고 ── */
 
 export const createRecruitment = (projectId: number, body: { role: string; targetCount: number; requireSkills: string[] }) =>
   api.post(`/v1/projects/${projectId}/recruitments`, body);
 
-export const updateRecruitmentStatus = (projectId: number, positionId: number, status: string) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/status`, { status });
+export const deleteRecruitment = (projectId: number, recruitmentId: number) =>
+  api.delete(`/v1/projects/${projectId}/recruitments/${recruitmentId}`);
 
-export const updateRecruitmentTargetCount = (projectId: number, positionId: number, targetCount: number) =>
-  api.patch(`/v1/projects/${projectId}/recruitments/${positionId}/target-count`, { targetCount });
+export const updateRecruitmentStatus = (projectId: number, recruitmentId: number, status: string) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${recruitmentId}/status`, { status });
+
+export const updateRecruitmentTargetCount = (projectId: number, recruitmentId: number, targetCount: number) =>
+  api.patch(`/v1/projects/${projectId}/recruitments/${recruitmentId}/target-count`, { targetCount });
 
 /* ── 프로젝트 참여 수락/거절 ── */
 
@@ -129,6 +137,9 @@ export const acceptRequest = (requestId: number) =>
 
 export const rejectRequest = (requestId: number) =>
   api.post(`/v1/projects/requests/${requestId}/reject`);
+
+export const cancelRequest = (requestId: number) =>
+  api.delete(`/v1/projects/requests/${requestId}/cancel`);
 
 /* ── 팀원 목록 (일반) ── */
 
@@ -158,6 +169,7 @@ export interface PullRequestListItem {
   prNumber: number;
   title: string;
   status: string;
+  diff_url: string | null;
   githubCreatedAt: string;
   githubClosedAt: string | null;
 }
@@ -183,18 +195,24 @@ export const getPullRequests = (projectId: number, page = 0, size = 10) =>
 export const recommendTopics = (projectId: number, isRefresh: boolean, keyword?: string) =>
   api.post<{ projectId: number; domain: string; recommendedTopics: string[] }>(`/v1/ai/projects/${projectId}/topics/recommend`, { isRefresh, keyword }, { timeout: 60000 });
 
+/* 프로젝트 명 수정 */
+
+export const updateProjectTitle = (projectId: number, title: string) =>
+  api.patch(`/v1/projects/${projectId}/title`, { title });
+
 /* AI 추천 주제 적용 */
 
-export const updateProjectTitle = (projectId: number, selectedTopic: string) =>
-  api.patch(`/v1/projects/${projectId}/title`, { selectedTopic });
+export const updateProjectTopic = (projectId: number, selectedTopic: string) =>
+  api.patch(`/v1/projects/${projectId}/topic`, { selectedTopic });
 
 /* 추천 팀원 */
 
 export interface RecommendedMember {
   userId: number;
   userName: string;
-  position: string;
-  experienceLevel: string;
+  profileImageUrl: string | null;
+  position: string | null;
+  experienceLevel: string | null;
   bio: string;
   skills: string[];
   matchScore: number;
@@ -213,3 +231,15 @@ export const getRecommendedMembersTop = (projectId: number) =>
 
 export const getRecommendedMembers = (projectId: number, params?: RecommendedMembersParams) =>
   api.get(`/v1/projects/${projectId}/recommended-members`, { params: { ...params, page: params?.page ?? 0, size: params?.size ?? 6 }, timeout: 60000 });
+
+/* ── GitHub 기여자 중 비멤버 ── */
+
+export interface GitHubContributor {
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
+  prCount: number;
+}
+
+export const getGitHubContributors = (projectId: number) =>
+  api.get<{ data: GitHubContributor[] }>(`/v1/projects/${projectId}/github-contributors`);

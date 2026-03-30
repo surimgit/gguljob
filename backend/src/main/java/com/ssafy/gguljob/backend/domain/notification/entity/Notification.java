@@ -1,5 +1,6 @@
 package com.ssafy.gguljob.backend.domain.notification.entity;
 
+import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.entity.BaseTimeEntity;
@@ -49,18 +50,27 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT")
     private Boolean isRead = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "action_status", length = 20)
+    private ActionStatus actionStatus = ActionStatus.NONE;
+
     @Builder
-    public Notification(User user, NotificationCategory category, String content, Long referenceId, String referenceUrl) {
+    public Notification(User user, NotificationCategory category, String content,
+                        Long referenceId, String referenceUrl, ActionStatus actionStatus) {
         this.user = user;
         this.category = category;
         this.content = content;
         this.referenceId = referenceId;
         this.referenceUrl = referenceUrl;
         this.isRead = false;
+        this.actionStatus = actionStatus != null ? actionStatus : ActionStatus.NONE;
     }
 
-    // 읽음 처리용
     public void markAsRead() {
         this.isRead = true;
+    }
+
+    public void updateActionStatus(ActionStatus actionStatus) {
+        this.actionStatus = actionStatus;
     }
 }

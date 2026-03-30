@@ -3,12 +3,13 @@ import type { User, PositionType } from '../types/user';
 
 export interface OnboardingRequest {
   description: string;
-  roles: PositionType[];
+  roles?: PositionType[];
   experience: 'BEGINNER' | 'JUNIOR' | 'MID_LEVEL' | 'SENIOR';
   skills: string[];
   mbti: string;
   teamTendency: 'LEADER' | 'FOLLOWER';
   goals: string[];
+  workExperience?: 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN';
 }
 
 export const onboardApi = (data: OnboardingRequest) =>
@@ -32,18 +33,30 @@ export const getMe = async (): Promise<User> => {
     skills: d.skills ?? [],
     techStacks: (d.skills ?? []).map((s: { name: string }) => s.name),
     goals: (d.goals ?? []) as string[],
+    workExperience: d.workExperience ?? null,
+    repProjects: (d.repProjects ?? []).map((p: { projectId: number; title: string; description: string; role: string; period: string; skills: string[]; imageUrl?: string | null }) => ({
+      projectId: p.projectId,
+      title: p.title,
+      description: p.description ?? '',
+      role: p.role ?? '',
+      period: p.period ?? '',
+      skills: p.skills ?? [],
+      imageUrl: p.imageUrl ?? null,
+    })),
     role: firstRole ?? null,
   };
 };
 
 export interface ProfileUpdateRequest {
   description?: string;
-  roles: string[];
+  roles?: PositionType[];
   mbti?: string;
   teamTendency?: string;
   experience?: string;
   skills?: string[];
   goals?: string[];
+  repProjectIds?: number[];
+  workExperience?: 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN';
 }
 
 export const updateProfileApi = (data: ProfileUpdateRequest) =>
@@ -87,9 +100,52 @@ export interface UserProfileDto {
     role: string;
     period: string;
     skills: string[];
+    imageUrl?: string | null;
   }[];
   goals: string[];
 }
 
 export const getUserProfile = (userId: number) =>
   api.get<{ data: UserProfileDto }>(`/v1/user/${userId}`);
+
+/** GET /v1/user/search?email={email} → 이메일로 사용자 검색 (팀원 초대용) */
+export interface UserSearchResult {
+  userId: number;
+  userName: string;
+  profileImageUrl: string | null;
+  roles: string[];
+  experience: string | null;
+  description: string | null;
+}
+
+export const searchUserByEmail = async (email: string): Promise<UserSearchResult> => {
+  const res = await api.get('/v1/user/search', { params: { email } });
+  return res.data.data;
+};
+
+/** GET /v1/user/positions → 직무 전체 목록 조회 */
+export interface PositionDto {
+  code: string;
+  name: string;
+}
+
+export const getPositions = async (): Promise<PositionDto[]> => {
+  const res = await api.get('/v1/user/positions');
+  return res.data.data;
+};
+
+/** 내 지원/초대 내역 */
+export interface MyApplicationDto {
+  requestId: number;
+  projectId: number;
+  projectTitle: string;
+  positionName: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED';
+  requestType: 'APPLY' | 'INVITE';
+  createdAt: string;
+}
+
+export const getMyApplications = async (): Promise<MyApplicationDto[]> => {
+  const res = await api.get('/v1/user/me/applications');
+  return res.data.data;
+};

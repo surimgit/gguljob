@@ -5,6 +5,9 @@ import com.ssafy.gguljob.backend.domain.notification.dto.NotificationResponseDto
 import com.ssafy.gguljob.backend.domain.notification.dto.UnreadCountResponseDto;
 import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
 import com.ssafy.gguljob.backend.domain.notification.repository.NotificationRepository;
+import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
+import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
+import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.global.exception.NotificationAccessDeniedException;
 import com.ssafy.gguljob.backend.global.exception.NotificationNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +20,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final SseEmitterService sseEmitterService;
 
     @Transactional(readOnly = true)
     public Page<NotificationResponseDto> getMyNotifications(Long userId, Pageable pageable) {
-        return notificationRepository.findAllByUserIdOrderByIsReadAscCreatedAtDesc(userId, pageable)
+        return notificationRepository.findAllByUserIdOrdered(userId, pageable)
             .map(NotificationResponseDto::from);
+    }
+
+    // 수락/거절 시 기존 PENDING 알림 상태 업데이트
+    @Transactional
+    public void updateActionStatus(Long referenceId, ActionStatus newStatus) {
+        notificationRepository.findByReferenceIdAndActionStatus(referenceId, ActionStatus.PENDING)
+            .forEach(n -> n.updateActionStatus(newStatus));
     }
 
     // 특정 알림 읽음 처리
@@ -79,5 +90,24 @@ public class NotificationService {
     public UnreadCountResponseDto getUnreadCount(Long userId) {
         long count = notificationRepository.countByUserIdAndIsReadFalse(userId);
         return new UnreadCountResponseDto(count);
+    }
+
+    @Transactional
+    public void createNotification(User user, NotificationCategory category,
+        String content, Long referenceId, String referenceUrl) {
+        Notification notification = Notification.builder()
+            .user(user)
+            .category(category)
+            .content(content)
+            .referenceId(referenceId)
+            .referenceUrl(referenceUrl)
+            .build();
+
+        notificationRepository.save(notification);
+
+        // SSE 실시간 알림 발송
+        long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(user.getId());
+        sseEmitterService.notifyUser(user.getId(), notification.getId(),
+            category.name(), content, unreadCount);
     }
 }

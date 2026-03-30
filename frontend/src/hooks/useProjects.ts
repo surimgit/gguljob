@@ -48,6 +48,7 @@ export const useProjects = (params?: ProjectListParams) => {
       };
     },
     placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
   });
 };
 
@@ -79,13 +80,13 @@ export const useProjectFilters = () => {
       const CATEGORY_LABELS: Record<string, string> = {
         FRONTEND: 'Frontend',
         BACKEND: 'Backend',
+        DATABASE: 'Database',
         MOBILE: 'Mobile',
         DEVOPS: 'DevOps',
-        DATABASE: 'Database',
         DATA: 'Data',
         AI: 'AI',
         PM: 'PM',
-        TOOLS: 'Tools',
+        DESIGN: 'Design',
       };
       const rawSkillGroups: SkillGroup[] = (raw?.skillCategories ?? []).map((cat: any) => ({
         category: cat.category,
@@ -123,7 +124,17 @@ export const useProjectFilters = () => {
         roleValueMap[r.label ?? r.value] = r.value;
       }
 
-      return { domains, skillGroups, roles, domainValueMap, roleValueMap };
+      // 스킬 이름 → 스킬 ID 매핑
+      const skillNameToIdMap: Record<string, number> = {};
+      for (const cat of (raw?.skillCategories ?? [])) {
+        for (const s of (cat?.skills ?? [])) {
+          if (s?.name && s?.skillId) {
+            skillNameToIdMap[s.name] = s.skillId;
+          }
+        }
+      }
+
+      return { domains, skillGroups, roles, domainValueMap, roleValueMap, skillNameToIdMap };
     },
     staleTime: 10 * 60 * 1000,
   });

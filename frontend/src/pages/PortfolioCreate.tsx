@@ -1,112 +1,34 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download, List } from 'lucide-react';
+import toast from 'react-hot-toast';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import chatbotImg from '../assets/images/chatbot.png';
-
-// ── 더미 마크다운 결과 ────────────────────────────────────────────────────────
-const MOCK_PORTFOLIO_MD = `# 프론트엔드 개발자 포트폴리오
-
-## 프로젝트 개요
-
-### DevLog 트러블슈팅 플랫폼
-- **기간**: 2026.01 ~ 진행중
-- **역할**: Frontend Developer
-- **기술 스택**: React, TypeScript, Spring Boot
-
----
-
-## 트러블슈팅 경험
-
-### 1. SSR 환경 마크다운 렌더링 window 오류
-
-**문제 상황**
-react-markdown과 rehype-highlight를 적용하는 과정에서 SSR 환경에서 \`window is not defined\` 오류가 발생했습니다.
-
-**해결 과정**
-- SSR에서 브라우저 전용 API를 사용하는 라이브러리의 동작 방식을 분석
-- \`next/dynamic\`의 \`ssr: false\` 옵션을 활용하여 클라이언트 사이드에서만 렌더링되도록 처리
-
-\`\`\`typescript
-const ReactMarkdown = dynamic(
-  () => import('react-markdown'),
-  { ssr: false }
-)
-\`\`\`
-
-**성과**: SSR 빌드 에러 해결 및 마크다운 렌더링 안정화
-
-### 2. 무한 스크롤 Race Condition 해결
-
-**문제 상황**
-Intersection Observer 기반 무한 스크롤에서 중복 호출로 인한 Race Condition이 발생하여 동일한 데이터가 두 번 렌더링되는 문제가 있었습니다.
-
-**해결 과정**
-- \`useRef\`로 \`isFetching\` 플래그를 관리하여 중복 요청을 방지
-- Observer 콜백 내에서 플래그 체크 로직 추가
-
-\`\`\`typescript
-const isFetching = useRef(false)
-if (!isFetching.current) {
-  isFetching.current = true
-  await fetchNextPage()
-  isFetching.current = false
-}
-\`\`\`
-
-**성과**: 중복 API 호출 제거 및 안정적인 무한 스크롤 구현
-
----
-
-## 핵심 역량
-- **문제 해결**: SSR/CSR 환경 차이를 이해하고 적절한 해결책 적용
-- **성능 최적화**: Race Condition 분석 및 효율적인 상태 관리 구현
-- **기술 학습**: 새로운 라이브러리 도입 시 발생하는 이슈를 체계적으로 분석하고 문서화
-`;
+import { getMyProjects } from '../api/projects';
+import { getTroubleshootings } from '../api/troubleshooting';
+import { generatePortfolio, downloadPortfolio, savePortfolioAsFile } from '../api/portfolio';
+import type { ProjectSimple } from '../types/project';
+import type { TroubleshootingListItem } from '../api/troubleshooting';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
-interface ProjectItem {
-  id: number;
-  title: string;
-  teamName: string;
-  domain: string;
-  status: 'PROCEEDING' | 'RECRUITING' | 'DONE';
-  skills: string[];
-}
-
-interface TroubleshootingItem {
-  id: number;
+interface TsItemWithProject extends TroubleshootingListItem {
   projectId: number;
-  title: string;
-  problemDesc: string;
-  solutionDesc: string;
 }
-
-// ── 더미 데이터 ───────────────────────────────────────────────────────────────
-const MOCK_PROJECTS: ProjectItem[] = [
-  { id: 1, title: 'DevLog 트러블슈팅 플랫폼', teamName: 'S14P21E107', domain: '웹 풀스택', status: 'PROCEEDING', skills: ['React', 'TypeScript', 'Spring Boot'] },
-  { id: 2, title: '실시간 협업 화이트보드', teamName: 'S14P11A203', domain: '웹 풀스택', status: 'RECRUITING', skills: ['Vue.js', 'WebSocket', 'Spring Boot'] },
-  { id: 3, title: 'AI 코드 리뷰 어시스턴트', teamName: 'S13P31B102', domain: 'AI/ML', status: 'DONE', skills: ['Next.js', 'Python', 'FastAPI'] },
-];
-
-const MOCK_TROUBLESHOOTINGS: TroubleshootingItem[] = [
-  { id: 1, projectId: 1, title: 'SSR 환경 마크다운 렌더링 window 오류', problemDesc: 'react-markdown + rehype-highlight 적용 시 SSR에서 window is not defined 오류 발생.', solutionDesc: 'next/dynamic으로 SSR 비활성화' },
-  { id: 2, projectId: 1, title: '무한 스크롤 Race Condition 해결', problemDesc: 'Intersection Observer 중복 호출로 Race Condition 발생.', solutionDesc: 'useRef로 isFetching 플래그 관리' },
-  { id: 3, projectId: 2, title: 'WebSocket 재연결 로직 구현', problemDesc: '네트워크 불안정 시 WebSocket 연결이 끊어지면 자동 재연결되지 않음.', solutionDesc: 'exponential backoff 재연결 로직 구현' },
-  { id: 4, projectId: 3, title: 'OpenAI API Rate Limit 처리', problemDesc: '동시 요청 시 429 Too Many Requests 에러 발생.', solutionDesc: 'Queue 기반 요청 제한 및 retry 로직 추가' },
-];
 
 const CIRCLE_COLORS = ['#E11D48', '#2563EB', '#16A34A', '#E8B931', '#9333EA', '#F97316', '#0EA5E9', '#6D28D9'];
 
 // ── 프로젝트 카드 ─────────────────────────────────────────────────────────────
-const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: ProjectItem; active: boolean; hasSelectedTs: boolean; onToggle: () => void }) => {
+const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: ProjectSimple; active: boolean; hasSelectedTs: boolean; onToggle: () => void }) => {
   const isActive = project.status !== 'DONE';
+  const isSelected = active || hasSelectedTs;
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-pressed={hasSelectedTs}
+      aria-pressed={isSelected}
       className={`rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all text-left w-full ${
-        hasSelectedTs
+        isSelected
           ? 'border-2 border-primary-hover bg-primary-soft shadow-md'
           : active
             ? 'border-2 border-primary-hover bg-surface shadow-sm'
@@ -123,7 +45,7 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? 'var(--color-success-dark)' : 'var(--color-text-tertiary)' }} />
             {project.status === 'RECRUITING' ? '모집중' : project.status === 'PROCEEDING' ? '진행중' : '완료'}
           </span>
-          {hasSelectedTs && <CheckCircle2 className="w-5 h-5 text-primary-hover" />}
+          {isSelected && <CheckCircle2 className="w-5 h-5 text-primary-hover" />}
         </div>
       </div>
 
@@ -150,32 +72,30 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
 };
 
 // ── 트러블슈팅 카드 ──────────────────────────────────────────────────────────
-const TsCard = ({ item, selected, onToggle }: { item: TroubleshootingItem; selected: boolean; onToggle: () => void }) => (
+const TsCard = ({ item, selected, onToggle }: { item: TsItemWithProject; selected: boolean; onToggle: () => void }) => (
   <button
     type="button"
     onClick={onToggle}
     aria-pressed={selected}
-    className={`flex flex-col border-2 rounded-2xl overflow-hidden cursor-pointer transition-all text-left w-full ${
+    className={`flex flex-col border-2 rounded-xl overflow-hidden cursor-pointer transition-all text-left w-full min-h-[125px] ${
       selected
         ? 'border-primary-hover bg-primary-soft shadow-md'
         : 'border-border bg-surface hover:shadow-md'
     }`}
   >
-    <div className="flex items-center gap-3 px-4 py-4 w-full">
+    <div className="flex items-center gap-3 px-4 py-3 w-full">
       <span
-        className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: CIRCLE_COLORS[(item.id - 1) % CIRCLE_COLORS.length] }}
+        className="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: CIRCLE_COLORS[(item.tsId - 1) % CIRCLE_COLORS.length] }}
       >
-        {item.id}
+        {item.tsId}
       </span>
-      <h4 className="text-sm font-bold text-text-primary leading-snug flex-1">{item.title}</h4>
+      <h4 className="text-sm font-bold text-text-primary leading-snug flex-1 truncate">{item.title}</h4>
       {selected && <CheckCircle2 className="w-5 h-5 text-primary-hover flex-shrink-0" />}
     </div>
-    <div className="flex flex-col gap-1 px-4 pb-4 border-t border-border pt-3 w-full" style={{ background: '#FAF9F6' }}>
-      <p className="text-xs font-bold text-text-primary">문제 상황</p>
-      <p className="text-xs text-text-secondary leading-relaxed">{item.problemDesc}</p>
-      <p className="text-xs font-bold text-text-primary mt-2">해결 방법</p>
-      <p className="text-xs text-text-secondary leading-relaxed">{item.solutionDesc}</p>
+    <div className="flex flex-col gap-0.5 px-4 pb-3 border-t border-border pt-2 w-full" style={{ background: '#FAF9F6' }}>
+      <p className="text-[11px] font-bold text-text-primary">문제 상황</p>
+      <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{item.situation}</p>
     </div>
   </button>
 );
@@ -183,48 +103,97 @@ const TsCard = ({ item, selected, onToggle }: { item: TroubleshootingItem; selec
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 const PortfolioCreate = () => {
   const navigate = useNavigate();
+
+  // 데이터 상태
+  const [projects, setProjects] = useState<ProjectSimple[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [tsMap, setTsMap] = useState<Record<number, TsItemWithProject[]>>({});
+  const [tsLoading, setTsLoading] = useState(false);
+
+  // 선택 상태
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
   const [activeProject, setActiveProject] = useState<number | null>(null);
   const [selectedTs, setSelectedTs] = useState<number[]>([]);
+
+  // 생성 상태
   const [generating, setGenerating] = useState(false);
   const [generatedMd, setGeneratedMd] = useState<string | null>(null);
+  const [generatedPortfolioId, setGeneratedPortfolioId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
-  const generateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (generateTimerRef.current) clearTimeout(generateTimerRef.current);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
 
-  const toggleProject = (id: number) => {
-    // 항상 해당 프로젝트의 트러블슈팅 목록을 보여줌
-    setActiveProject(id);
-    if (!selectedProjects.includes(id)) {
-      setSelectedProjects((prev) => [...prev, id]);
+  // Step 1: 내 프로젝트 목록 로드
+  useEffect(() => {
+    getMyProjects()
+      .then(({ data }) => setProjects(data))
+      .catch(() => toast.error('프로젝트 목록을 불러오지 못했습니다.'))
+      .finally(() => setProjectsLoading(false));
+  }, []);
+
+  // Step 2: 프로젝트 선택 시 트러블슈팅 로드
+  const fetchTs = useCallback(async (projectId: number) => {
+    if (tsMap[projectId]) return; // 이미 로드됨
+    setTsLoading(true);
+    try {
+      const { data } = await getTroubleshootings(projectId, 0, 100);
+      const items: TsItemWithProject[] = data.content.map((ts) => ({ ...ts, projectId }));
+      setTsMap((prev) => ({ ...prev, [projectId]: items }));
+    } catch {
+      toast.error('트러블슈팅 목록을 불러오지 못했습니다.');
+    } finally {
+      setTsLoading(false);
     }
+  }, [tsMap]);
+
+  const toggleProject = (projectId: number) => {
+    if (activeProject === projectId) {
+      setActiveProject(null);
+      setSelectedProjects([]);
+      setSelectedTs([]);
+      return;
+    }
+
+    setActiveProject(projectId);
+    setSelectedProjects([projectId]);
+    setSelectedTs([]);
+    fetchTs(projectId);
   };
 
-  const toggleTs = (id: number) => {
+  const toggleTs = (tsId: number) => {
     setSelectedTs((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      prev.includes(tsId) ? prev.filter((v) => v !== tsId) : [...prev, tsId]
     );
   };
 
-  // 현재 활성 프로젝트의 트러블슈팅만 표시
-  const filteredTs = MOCK_TROUBLESHOOTINGS.filter((ts) =>
-    ts.projectId === activeProject
-  );
+  // 현재 활성 프로젝트의 트러블슈팅
+  const filteredTs = activeProject ? (tsMap[activeProject] ?? []) : [];
 
-  const handleGenerate = () => {
+  // 전체 선택된 트러블슈팅 (모든 프로젝트에서)
+  const allTsItems = Object.values(tsMap).flat();
+  const selectedTsItems = allTsItems.filter((ts) => selectedTs.includes(ts.tsId));
+
+  // Step 3: AI 포트폴리오 생성
+  const handleGenerate = async () => {
     setGenerating(true);
-    // TODO: 실제 API 연결 시 이 setTimeout을 교체
-    generateTimerRef.current = setTimeout(() => {
+    try {
+      const { data: result } = await generatePortfolio({ tsIds: selectedTs });
+      const pId = result.data.portfolioId;
+      setGeneratedPortfolioId(pId);
+      // 생성된 포트폴리오 마크다운 다운로드
+      const { data: md } = await downloadPortfolio(pId);
+      setGeneratedMd(typeof md === 'string' ? md : new TextDecoder().decode(md as unknown as ArrayBuffer));
+    } catch (err) {
+      console.error('포트폴리오 생성 실패:', err);
+      toast.error('포트폴리오 생성에 실패했습니다.');
+    } finally {
       setGenerating(false);
-      setGeneratedMd(MOCK_PORTFOLIO_MD);
-    }, 2000);
+    }
   };
 
   const handleCopy = () => {
@@ -242,14 +211,23 @@ const PortfolioCreate = () => {
   return (
     <div className="max-w-[1400px] mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col gap-8">
       {/* 헤더 */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-text-tertiary hover:text-text-primary transition-colors"
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
+        </div>
+        <Link
+          to="/mypage/portfolio"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-border bg-surface hover:bg-background transition-colors text-text-secondary"
         >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-2xl font-bold text-text-primary">포트폴리오 생성</h1>
+          <List className="w-4 h-4" />
+          내 포트폴리오
+        </Link>
       </div>
 
       {generatedMd ? (
@@ -275,28 +253,24 @@ const PortfolioCreate = () => {
             </div>
 
             {/* 선택된 트러블슈팅 목록 */}
-            {selectedTs.length > 0 && (
+            {selectedTsItems.length > 0 && (
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-bold text-text-primary">포함된 트러블슈팅</span>
                 <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
-                  {selectedTs.map((tsId) => {
-                    const ts = MOCK_TROUBLESHOOTINGS.find((t) => t.id === tsId);
-                    if (!ts) return null;
-                    return (
-                      <div
-                        key={ts.id}
-                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#eef2ff] border border-[#c7d2fe]"
+                  {selectedTsItems.map((ts) => (
+                    <div
+                      key={ts.tsId}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#eef2ff] border border-[#c7d2fe]"
+                    >
+                      <span
+                        className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: CIRCLE_COLORS[(ts.tsId - 1) % CIRCLE_COLORS.length] }}
                       >
-                        <span
-                          className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: CIRCLE_COLORS[(ts.id - 1) % CIRCLE_COLORS.length] }}
-                        >
-                          {ts.id}
-                        </span>
-                        <span className="text-xs text-text-secondary truncate">{ts.title}</span>
-                      </div>
-                    );
-                  })}
+                        {ts.tsId}
+                      </span>
+                      <span className="text-xs text-text-secondary truncate">{ts.title}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -319,17 +293,67 @@ const PortfolioCreate = () => {
                 <span className="text-base font-bold text-[#6366f1]">Result.</span>
                 <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 결과</h2>
               </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                {copied ? '복사됨' : '복사'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => generatedPortfolioId && savePortfolioAsFile(generatedPortfolioId).catch(() => toast.error('다운로드에 실패했습니다.'))}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                >
+                  <Download className="w-4 h-4" />
+                  다운로드
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? '복사됨' : '복사'}
+                </button>
+              </div>
             </div>
-            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh]">
-              <pre className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed font-mono">{generatedMd}</pre>
+            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh] text-sm leading-relaxed">
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto mb-3">
+                      <table className="w-full text-sm border-collapse">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => <thead style={{ background: 'var(--color-background)' }}>{children}</thead>,
+                  th: ({ children }) => (
+                    <th className="px-4 py-2 text-left text-xs font-bold border border-border" style={{ color: 'var(--color-text-primary)' }}>{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2 text-xs border border-border" style={{ color: 'var(--color-text-secondary)' }}>{children}</td>
+                  ),
+                  h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-3" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-xl font-bold mt-4 mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5" style={{ color: 'var(--color-text-primary)' }}>{children}</h3>,
+                  p: ({ children }) => <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ol>,
+                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  code: ({ children }) => (
+                    <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--color-background)', color: 'var(--color-primary-hover)' }}>
+                      {children}
+                    </code>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="rounded-xl p-4 overflow-x-auto mb-3 text-xs font-mono" style={{ background: 'var(--color-background)' }}>
+                      {children}
+                    </pre>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--color-blue)' }}>{children}</a>
+                  ),
+                  strong: ({ children }) => <strong className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{children}</strong>,
+                  hr: () => <hr className="my-4 border-border" />,
+                }}
+              >
+                {generatedMd}
+              </Markdown>
             </div>
           </div>
         </div>
@@ -342,17 +366,28 @@ const PortfolioCreate = () => {
             <h2 className="text-lg font-bold text-text-primary">프로젝트 선택</h2>
           </div>
           <p className="text-sm text-text-secondary -mt-2">포트폴리오에 포함할 프로젝트를 선택하세요</p>
-          <div className="flex flex-col gap-3">
-            {MOCK_PROJECTS.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                active={activeProject === project.id}
-                hasSelectedTs={MOCK_TROUBLESHOOTINGS.some((ts) => ts.projectId === project.id && selectedTs.includes(ts.id))}
-                onToggle={() => toggleProject(project.id)}
-              />
-            ))}
-          </div>
+          {projectsLoading ? (
+            <div className="flex items-center justify-center py-16 text-text-tertiary">
+              <p className="text-sm font-medium">불러오는 중...</p>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
+              <FolderOpen className="w-10 h-10 mb-3 opacity-40" />
+              <p className="text-sm font-medium">참여 중인 프로젝트가 없습니다</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.projectId}
+                  project={project}
+                  active={activeProject === project.projectId}
+                  hasSelectedTs={allTsItems.some((ts) => ts.projectId === project.projectId && selectedTs.includes(ts.tsId))}
+                  onToggle={() => toggleProject(project.projectId)}
+                />
+              ))}
+            </div>
+          )}
           {selectedProjects.length > 0 && (
             <p className="text-xs font-bold text-text-secondary text-center">{selectedProjects.length}개 프로젝트 선택됨</p>
           )}
@@ -371,18 +406,22 @@ const PortfolioCreate = () => {
               <FolderOpen className="w-10 h-10 mb-3 opacity-40" />
               <p className="text-sm font-medium">프로젝트를 먼저 선택해주세요</p>
             </div>
+          ) : tsLoading ? (
+            <div className="flex items-center justify-center py-16 text-text-tertiary">
+              <p className="text-sm font-medium">불러오는 중...</p>
+            </div>
           ) : filteredTs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
               <p className="text-sm font-medium">선택한 프로젝트에 트러블슈팅이 없습니다</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
               {filteredTs.map((ts) => (
                 <TsCard
-                  key={ts.id}
+                  key={ts.tsId}
                   item={ts}
-                  selected={selectedTs.includes(ts.id)}
-                  onToggle={() => toggleTs(ts.id)}
+                  selected={selectedTs.includes(ts.tsId)}
+                  onToggle={() => toggleTs(ts.tsId)}
                 />
               ))}
             </div>
@@ -430,28 +469,24 @@ const PortfolioCreate = () => {
               </div>
 
               {/* 선택된 트러블슈팅 목록 */}
-              {selectedTs.length > 0 && (
+              {selectedTsItems.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-sm font-bold text-text-primary">포함될 트러블슈팅</span>
                   <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
-                    {selectedTs.map((tsId) => {
-                      const ts = MOCK_TROUBLESHOOTINGS.find((t) => t.id === tsId);
-                      if (!ts) return null;
-                      return (
-                        <div
-                          key={ts.id}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#eef2ff] border border-[#c7d2fe]"
+                    {selectedTsItems.map((ts) => (
+                      <div
+                        key={ts.tsId}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#eef2ff] border border-[#c7d2fe]"
+                      >
+                        <span
+                          className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: CIRCLE_COLORS[(ts.tsId - 1) % CIRCLE_COLORS.length] }}
                         >
-                          <span
-                            className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: CIRCLE_COLORS[(ts.id - 1) % CIRCLE_COLORS.length] }}
-                          >
-                            {ts.id}
-                          </span>
-                          <span className="text-xs text-text-secondary truncate">{ts.title}</span>
-                        </div>
-                      );
-                    })}
+                          {ts.tsId}
+                        </span>
+                        <span className="text-xs text-text-secondary truncate">{ts.title}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

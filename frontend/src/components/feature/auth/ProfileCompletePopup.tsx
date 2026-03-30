@@ -9,6 +9,7 @@ interface FormData {
   skills: string[];
   mbti: string;
   leaderScore: number;
+  workExperience: string;
 }
 
 interface Props {

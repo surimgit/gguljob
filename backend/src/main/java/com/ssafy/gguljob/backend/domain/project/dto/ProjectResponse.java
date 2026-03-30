@@ -59,10 +59,12 @@ public class ProjectResponse {
 
     public record ProjectOverviewDto(
         String title,
+        String topic,
         String teamName,
         Domain domain,
         String description,
-        List<String> skills
+        List<String> skills,
+        ProjectStatus status
     ) {}
 
     public record TeamStatsDto(
@@ -108,7 +110,8 @@ public class ProjectResponse {
         String description,
         Domain domain,
         List<Long> skillIds,
-        List<MemberDto> members
+        List<MemberDto> members,
+        String imageUrl
     ) {
         public record MemberDto(
             Long userId,
@@ -144,11 +147,12 @@ public class ProjectResponse {
         List<PositionStatusDto> positions,
         String leaderName,
         String leaderProfileImageUrl,
+        String imageUrl,
         Long score // Neo4j 매칭 스코어
     ) {
         // Neo4j에서 계산된 점수를 덮어씌우기 위한 메서드
         public ProjectCardDto withScore(Long score) {
-            return new ProjectCardDto(projectId, domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl, score);
+            return new ProjectCardDto(projectId, domain, status, title, description, skills, positions, leaderName, leaderProfileImageUrl, imageUrl, score);
         }
     }
 
@@ -157,5 +161,17 @@ public class ProjectResponse {
         String role,
         int currentCount,
         int targetCount
+    ) {}
+
+    public record GitRepoRegistered(
+        String webhookSecret
+    ) {}
+
+    public record ProjectMemberDto(
+        Long memberId,
+        Long userId,
+        String role,
+        String userName,
+        String profileImageUrl
     ) {}
 }

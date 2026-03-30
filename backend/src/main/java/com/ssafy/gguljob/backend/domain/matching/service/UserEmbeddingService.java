@@ -2,6 +2,7 @@ package com.ssafy.gguljob.backend.domain.matching.service;
 
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
+import com.ssafy.gguljob.backend.domain.user.type.WorkExperienceYear;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -35,25 +36,7 @@ public class UserEmbeddingService {
         "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings";
     private static final String EMBEDDING_MODEL = "text-embedding-3-small";
 
-    private static final Map<String, String> EXPERIENCE_MAP = Map.of(
-        "BEGINNER", "신입",
-        "JUNIOR", "주니어",
-        "SENIOR", "시니어"
-    );
-    private static final Map<String, String> GOAL_MAP = Map.of(
-        "SIDE_PROJECT", "사이드 프로젝트",
-        "STARTUP", "창업",
-        "EMPLOYMENT", "취업",
-        "FREELANCER", "프리랜서"
-    );
-    private static final Map<String, String> TENDENCY_MAP = Map.of(
-        "LEADER", "리더형",
-        "FOLLOWER", "팔로워형",
-        "PLANNER", "기획형",
-        "EXECUTOR", "실행형"
-    );
 
-    @Transactional(readOnly = true)
     public void updateEmbedding(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
@@ -84,8 +67,8 @@ public class UserEmbeddingService {
             String roles = user.getRoles().stream().map(Enum::name).collect(Collectors.joining(", "));
             parts.add("직무: " + roles);
         }
-        if (user.getExperience() != null) {
-            parts.add("경험 수준: " + EXPERIENCE_MAP.getOrDefault(user.getExperience().name(), user.getExperience().name()));
+        if (user.getWorkExperience() != null && user.getWorkExperience() != WorkExperienceYear.NEWCOMER) {
+            parts.add("실무 경험: " + user.getWorkExperience().getDescription());
         }
         if (user.getUserSkills() != null && !user.getUserSkills().isEmpty()) {
             String skills = user.getUserSkills().stream()
@@ -93,30 +76,20 @@ public class UserEmbeddingService {
                 .collect(Collectors.joining(", "));
             parts.add("보유 스킬: " + skills);
         }
-        if (user.getGoals() != null && !user.getGoals().isEmpty()) {
-            String goals = user.getGoals().stream()
-                .map(g -> GOAL_MAP.getOrDefault(g.getGoal().name(), g.getGoal().name()))
-                .collect(Collectors.joining(", "));
-            parts.add("목표: " + goals);
-        }
-        if (user.getTeamTendency() != null) {
-            parts.add("팀 성향: " + TENDENCY_MAP.getOrDefault(user.getTeamTendency().name(), user.getTeamTendency().name()));
-        }
-        if (user.getMbti() != null && !user.getMbti().isBlank()) {
-            parts.add("MBTI: " + user.getMbti());
-        }
         if (user.getDescription() != null && !user.getDescription().isBlank()) {
             parts.add("자기소개: " + user.getDescription().strip());
         }
 
-        // README: 완료된 프로젝트 중 가장 최근 것
-        List<String> readmes = projectRepository.findReadmesByLeaderId(user.getId());
-        String readme = readmes.isEmpty() ? null : readmes.get(0);
+        // README: 완료된 프로젝트 전체 (리더 + 팀원 참여 프로젝트, 최신순)
+        List<String> readmes = new java.util.ArrayList<>();
+        readmes.addAll(projectRepository.findReadmesByLeaderId(user.getId()));
+        readmes.addAll(projectRepository.findReadmesByMemberId(user.getId()));
+        String readmeText = readmes.isEmpty() ? null : String.join("\n\n---\n", readmes);
 
         String profileText = String.join("\n", parts);
 
-        if (readme != null) {
-            return profileText.isBlank() ? readme : readme + "\n\n---\n" + profileText;
+        if (readmeText != null) {
+            return profileText.isBlank() ? readmeText : readmeText + "\n\n---\n" + profileText;
         }
         return profileText.isBlank() ? null : profileText;
     }

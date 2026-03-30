@@ -8,9 +8,11 @@ interface MemberProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: ProfileUser;
+  fixedProjectId?: number;
+  fixedProjectTitle?: string;
 }
 
-const MemberProfileModal = ({ isOpen, onClose, user }: MemberProfileModalProps) => {
+const MemberProfileModal = ({ isOpen, onClose, user, fixedProjectId, fixedProjectTitle }: MemberProfileModalProps) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   return (
@@ -35,6 +37,8 @@ const MemberProfileModal = ({ isOpen, onClose, user }: MemberProfileModalProps) 
         onClose={() => setIsInviteOpen(false)}
         memberName={user.name}
         userId={Number(user.id)}
+        fixedProjectId={fixedProjectId}
+        fixedProjectTitle={fixedProjectTitle}
       />
     </>
   );

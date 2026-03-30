@@ -1,99 +1,120 @@
-import { Bookmark, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SectionEmptyState } from '../../common';
+import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
+import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
-type DeadlineVariant = 'urgent' | 'normal' | 'open';
-
 interface BookmarkedJob {
   id: number;
   title: string;
   company: string;
-  deadline: string;       // 표시 텍스트 (예: 'D-3', '상시채용')
-  deadlineVariant: DeadlineVariant;
+  deadline: string;
+  deadlineColor: string;
+  url: string | null;
 }
 
-// ── 더미 데이터 ───────────────────────────────────────────────────────────────
-const MOCK_BOOKMARKS: BookmarkedJob[] = [
-  {
-    id: 1,
-    title: '프론트엔드 개발자 (React)',
-    company: '토스 (Toss)',
-    deadline: 'D-3',
-    deadlineVariant: 'urgent',
-  },
-  {
-    id: 2,
-    title: '웹 프론트엔드 엔지니어',
-    company: '네이버 (NAVER)',
-    deadline: '상시채용',
-    deadlineVariant: 'open',
-  },
-  {
-    id: 3,
-    title: '프론트엔드 개발자',
-    company: '카카오 (Kakao)',
-    deadline: 'D-14',
-    deadlineVariant: 'normal',
-  },
-];
-
-// ── 마감 배지 색상 ─────────────────────────────────────────────────────────────
-const DEADLINE_CLASSES: Record<DeadlineVariant, string> = {
-  urgent: 'bg-[#fef2f2] text-[#ef4444]',
-  normal: 'bg-[#fefce8] text-[#ca8a04]',
-  open:   'bg-[#f3f4f6] text-[#4b5563]',
-};
-
 // ── 북마크 아이템 카드 ─────────────────────────────────────────────────────────
-const BookmarkItem = ({ job }: { job: BookmarkedJob }) => (
-  <Link
-    to={`/recruitment/${job.id}`}
-    className="flex flex-col gap-2 border-2 border-border rounded-2xl px-4 py-4 hover:shadow-md transition-shadow"
-  >
-    <h3 className="text-[14px] font-bold text-text-primary leading-snug">
-      {job.title}
-    </h3>
-    <p className="text-[12px] text-text-secondary">{job.company}</p>
-    <span
-      className={`self-start px-2 py-0.5 rounded-md text-[10px] font-bold ${DEADLINE_CLASSES[job.deadlineVariant]}`}
+const BookmarkJobItem = ({ job }: { job: BookmarkedJob }) => {
+  const handleClick = () => {
+    if (job.url) window.open(job.url, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
+      className="flex flex-col gap-2 border-2 border-border rounded-2xl px-4 py-4 hover:shadow-md transition-shadow cursor-pointer"
     >
-      {job.deadline}
-    </span>
-  </Link>
-);
-
-// ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
-const BookmarkedJobs = () => (
-  <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
-    {/* 섹션 헤더 */}
-    <div className="flex items-center justify-between mb-6">
-      <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
-        <Bookmark className="w-5 h-5 text-text-primary" />
-        <span>북마크한 채용공고</span>
-      </h2>
-      <Link
-        to="/recruitment?filter=bookmarked"
-        className="text-text-tertiary hover:text-text-primary transition-colors"
-        aria-label="북마크 채용공고 전체보기"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </Link>
-    </div>
-
-    {/* 북마크 목록 */}
-    <div className="flex-1">
-      {MOCK_BOOKMARKS.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {MOCK_BOOKMARKS.slice(0, 2).map((job) => (
-            <BookmarkItem key={job.id} job={job} />
-          ))}
-        </div>
-      ) : (
-        <SectionEmptyState message="북마크한 채용공고가 없습니다." />
+      <h3 className="text-[14px] font-bold text-text-primary leading-snug">
+        {job.title}
+      </h3>
+      <p className="text-[12px] text-text-secondary">{job.company}</p>
+      {job.deadline && (
+        <span
+          className="self-start px-2 py-0.5 rounded-md text-[10px] font-bold"
+          style={{ background: `${job.deadlineColor}18`, color: job.deadlineColor }}
+        >
+          {calcDday(job.deadline)}
+        </span>
       )}
     </div>
+  );
+};
+
+// ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="flex flex-col gap-2 border-2 border-border rounded-2xl px-4 py-4 animate-pulse">
+    <div className="h-4 bg-gray-200 rounded w-3/4" />
+    <div className="h-3 bg-gray-200 rounded w-1/2" />
+    <div className="h-4 bg-gray-200 rounded w-16" />
   </div>
 );
+
+const BookmarkedJobs = () => {
+  const [jobs, setJobs] = useState<BookmarkedJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getBookmarkedJobs()
+      .then(({ data }) => {
+        const items: BookmarkItem[] = data.data?.content ?? [];
+        const sorted = [...items].sort((a, b) => {
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return a.deadline.localeCompare(b.deadline);
+        });
+        setJobs(sorted.map((item) => ({
+          id: item.jobId,
+          title: item.title,
+          company: item.companyName,
+          deadline: item.deadline ?? '',
+          deadlineColor: getDdayColor(calcDday(item.deadline ?? '')),
+          url: item.url,
+        })));
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return (
+    <div className="bg-surface border-2 border-border rounded-3xl shadow-[2px_2px_2px_0px_rgba(0,0,0,0.05)] p-8 w-full h-full flex flex-col">
+      {/* 섹션 헤더 */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[20px] font-bold text-text-primary flex items-center gap-2">
+          <span>북마크한 채용공고</span>
+        </h2>
+        <Link
+          to="/recruitment?filter=bookmarked"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
+          aria-label="북마크 채용공고 전체보기"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Link>
+      </div>
+
+      {/* 북마크 목록 */}
+      <div className="flex-1 min-h-0">
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : jobs.length > 0 ? (
+          <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto scrollbar-hide pr-1 pb-2">
+            {jobs.map((job) => (
+              <BookmarkJobItem key={job.id} job={job} />
+            ))}
+          </div>
+        ) : (
+          <SectionEmptyState message="북마크한 채용공고가 없습니다." />
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default BookmarkedJobs;

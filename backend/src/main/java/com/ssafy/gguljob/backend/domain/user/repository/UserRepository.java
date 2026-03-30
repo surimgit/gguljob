@@ -14,6 +14,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByEmailIn(Collection<String> emails);
 
+    Optional<User> findByGithubNickname(String githubNickname);
+
+    List<User> findByGithubNicknameIn(Collection<String> githubNicknames);
+
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :userIds")
     List<User> findUsersWithRolesByIds(@org.springframework.data.repository.query.Param("userIds") List<Long> userIds);
+
+    @Query("SELECT u.id FROM User u WHERE SIZE(u.roles) > 0")
+    List<Long> findAllOnboardedUserIds();
 }

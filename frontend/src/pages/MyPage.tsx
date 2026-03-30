@@ -6,12 +6,13 @@ import {
   BookmarkedJobs,
   Troubleshooting,
   Portfolio,
+  MyApplications,
   MyProfileModal,
   ProfileEditModal,
 } from '../components/feature/mypage';
 import { WithdrawModal, WithdrawCompleteModal } from '../components/feature/auth';
 import ProfileSetupModal from '../components/feature/auth/ProfileSetupModal';
-import { buildOnboardingPayload, userToFormData } from '../components/feature/auth/utils/onboardingMappers';
+import { buildOnboardingPayload, userToFormData, type OnboardingFormData } from '../components/feature/auth/utils/onboardingMappers';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { getMe, withdrawApi, updateProfileApi } from '../api/user';
@@ -20,8 +21,7 @@ interface Project {
   id: string;
   name: string;
   description: string;
-  emoji: string;
-  bgColor: 'amber' | 'green' | 'sky' | 'purple';
+  domain?: string;
   myRole: string;
   period: string;
   techStacks: string[];
@@ -59,6 +59,29 @@ const MyPage = () => {
   // auth store의 유저 정보로 프로필 초기화
   useEffect(() => {
     if (!user) return;
+    const repProjects = (user.repProjects ?? []).map((p) => ({
+      id: String(p.projectId),
+      name: p.title,
+      description: p.description ?? '',
+      imageUrl: p.imageUrl ?? null,
+      myRole: p.role ?? '',
+      period: p.period ?? '',
+      techStacks: p.skills ?? [],
+    }));
+    // localStorage에서 저장된 대표 프로젝트 복원 (백엔드 미지원 시 폴백)
+    const savedProjects: Project[] = (() => {
+      try {
+        const raw = localStorage.getItem(`repProjects_${user.id}`);
+        return raw ? JSON.parse(raw) : [];
+      } catch { return []; }
+    })();
+
+    const projects = repProjects.length > 0
+      ? repProjects
+      : savedProjects.length > 0
+        ? savedProjects
+        : [];
+
     setProfile((prev) => ({
       ...prev,
       name: user.name,
@@ -66,6 +89,7 @@ const MyPage = () => {
       bio: user.description ?? '',
       avatarUrl: user.profileImage ?? undefined,
       techStacks: user.techStacks ?? [],
+      projects,
     }));
   }, [user]);
 
@@ -94,17 +118,14 @@ const MyPage = () => {
   const handleSave = (data: ProfileData) => {
     // API 호출은 ProfileEditModal에서 이미 완료, 여기서는 최신 데이터 반영
     setProfile((prev) => ({ ...prev, projects: data.projects }));
-    getMe().then((u) => setUser(u)).catch(() => {});
+    // localStorage에 대표 프로젝트 백업
+    if (user?.id) {
+      try { localStorage.setItem(`repProjects_${user.id}`, JSON.stringify(data.projects)); } catch (e) { console.error('MyPage: Failed to save projects to localStorage:', e); }
+    }
+    getMe().then((u) => setUser(u)).catch((err) => console.error('MyPage: Failed to fetch user data:', err));
   };
 
-  const handleOnboardingComplete = async (formData: {
-    goals: string[];
-    position: string;
-    experience: string;
-    skills: string[];
-    mbti: string;
-    leaderScore: number;
-  }) => {
+  const handleOnboardingComplete = async (formData: OnboardingFormData) => {
     try {
       const payload = buildOnboardingPayload(formData);
       if (!payload) {
@@ -119,6 +140,7 @@ const MyPage = () => {
         teamTendency: payload.teamTendency,
         experience: payload.experience,
         goals: payload.goals,
+        workExperience: payload.workExperience,
       });
       const updatedUser = await getMe();
       setUser(updatedUser);
@@ -149,6 +171,9 @@ const MyPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           <Troubleshooting />
           <Portfolio />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <MyApplications />
         </div>
 
       <MyProfileModal

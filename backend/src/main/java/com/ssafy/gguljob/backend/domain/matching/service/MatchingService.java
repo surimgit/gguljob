@@ -5,11 +5,14 @@ import com.ssafy.gguljob.backend.domain.matching.dto.MemberMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.dto.ProjectMatchResultDto;
 import com.ssafy.gguljob.backend.domain.matching.repository.ProjectNodeRepository;
 import com.ssafy.gguljob.backend.domain.matching.repository.UserNodeRepository;
+import com.ssafy.gguljob.backend.domain.matching.util.MatchingFilterNormalizer;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectCardDto;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectMemberRepository;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
+import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.global.exception.OnboardingRequiredException;
@@ -37,17 +40,22 @@ public class MatchingService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final UserNodeRepository userNodeRepository;
+    private final SkillRepository skillRepository;
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+        List<String> normalizedDomains = MatchingFilterNormalizer.normalizeDomainCandidates(domain);
+        List<String> normalizedRoles = MatchingFilterNormalizer.normalizeRoleCandidates(role);
+
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             throw new OnboardingRequiredException();
         }
 
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        // Neo4j에서 충분한 후보를 조회한 뒤 MySQL 필터링 → 수동 페이지네이션
+        Pageable allPageable = PageRequest.of(0, 10000);
 
         List<String> joinedProjectIds = projectMemberRepository
             .findActiveProjectsByUserId(userId, MemberStatus.ATTEND)
@@ -55,14 +63,19 @@ public class MatchingService {
             .map(pm -> String.valueOf(pm.getProject().getId()))
             .toList();
 
+        // skillIds → Neo4j Skill 노드의 name으로 변환 (Neo4j Skill 노드에 MySQL id가 없으므로)
+        List<String> skillNames = (skillIds != null && !skillIds.isEmpty())
+            ? skillRepository.findAllById(skillIds).stream().map(Skill::getName).filter(Objects::nonNull).toList()
+            : null;
+
         Page<ProjectMatchResultDto> neo4jResults = projectNodeRepository.findRecommendedProjectsForUser(
-            String.valueOf(userId),
+            userId,
             joinedProjectIds,
             keyword,
-            domain,
-            role,
-            skillIds,
-            unsortedPageable
+            normalizedDomains,
+            normalizedRoles,
+            skillNames,
+            allPageable
         );
 
         if (neo4jResults.isEmpty()) return Page.empty(pageable);
@@ -70,15 +83,25 @@ public class MatchingService {
         List<Long> projectIds = neo4jResults.stream().map(dto -> Long.valueOf(dto.projectId())).toList();
         Map<Long, ProjectResponse.ProjectCardDto> mysqlDataMap = projectService.getProjectCardsMap(projectIds);
 
-        List<ProjectResponse.ProjectCardDto> finalContent = neo4jResults.stream()
+        List<ProjectResponse.ProjectCardDto> allFiltered = neo4jResults.stream()
             .map(neoDto -> {
                 ProjectResponse.ProjectCardDto card = mysqlDataMap.get(Long.valueOf(neoDto.projectId()));
                 return (card != null) ? card.withScore(neoDto.score()) : null;
             })
             .filter(Objects::nonNull)
+            .filter(card -> card.status() == com.ssafy.gguljob.backend.domain.project.type.ProjectStatus.RECRUITING)
+            .filter(card -> card.positions().stream()
+                .anyMatch(pos -> pos.currentCount() < pos.targetCount()))
             .toList();
 
-        return new PageImpl<>(finalContent, pageable, neo4jResults.getTotalElements());
+        // 수동 페이지네이션
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allFiltered.size());
+        List<ProjectResponse.ProjectCardDto> pageContent = start >= allFiltered.size()
+            ? List.of()
+            : allFiltered.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, allFiltered.size());
     }
 
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
@@ -88,9 +111,9 @@ public class MatchingService {
             ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
             : PageRequest.of(0, 10);
         // 제외할 유저
-        List<String> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
+        List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId)
             .stream()
-            .map(String::valueOf)
+            .map(Long::valueOf)
             .toList();
 
         // Neo4j 쿼리

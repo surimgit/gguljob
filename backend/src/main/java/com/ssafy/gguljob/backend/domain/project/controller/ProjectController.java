@@ -12,6 +12,7 @@ import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.ProjectUpdat
 import com.ssafy.gguljob.backend.domain.project.dto.ProjectResponse.Simple;
 import com.ssafy.gguljob.backend.domain.project.dto.TeamManagementResponseDto;
 import com.ssafy.gguljob.backend.domain.project.dto.TroubleshootingItem;
+import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectDashboardService;
 import com.ssafy.gguljob.backend.domain.project.service.ProjectService;
 import com.ssafy.gguljob.backend.global.auth.CustomUserDetails;
@@ -40,7 +41,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -118,14 +122,35 @@ public class ProjectController {
 
     @Operation(summary = "팀프로젝트 상세 페이지 (깃 레포 등록하기)", description = "깃 레포 등록하기")
     @PutMapping("/{projectId}/git-repo")
-    public ResponseEntity<Void> registerGitRepository(
+    public ResponseEntity<ProjectResponse.GitRepoRegistered> registerGitRepository(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long projectId,
         @Valid @RequestBody ProjectRequest.RegisterGitRepo request) {
 
-        projectService.registerGitRepository(userDetails.getId(), projectId, request);
+        ProjectResponse.GitRepoRegistered response =
+            projectService.registerGitRepository(userDetails.getId(), projectId, request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Git 레포지토리 연동 해제", description = "프로젝트에 연결된 Git 레포지토리와 관련 PR/리뷰 데이터를 모두 삭제합니다.")
+    @DeleteMapping("/{projectId}/git-repo")
+    public ResponseEntity<Void> disconnectGitRepository(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        projectService.disconnectGitRepository(userDetails.getId(), projectId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "프로젝트 팀원 목록 조회", description = "프로젝트에 소속된 팀원 목록을 조회합니다. 프로젝트 멤버만 조회 가능합니다.")
+    @GetMapping("/{projectId}/members")
+    public ResponseEntity<ApiResponseDto<List<ProjectResponse.ProjectMemberDto>>> getProjectMembers(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        List<ProjectResponse.ProjectMemberDto> members = projectService.getProjectMembers(userDetails.getId(), projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "팀원 목록 조회가 완료되었습니다.", members));
     }
 
     // 팀원 관리 (모집 현황, 현재 팀원, 참가 신청 현황)
@@ -218,8 +243,8 @@ public class ProjectController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 제목(Title)으로 덮어씁니다.")
-    @PatchMapping("/{projectId}/title")
+    @Operation(summary = "AI 추천 주제 적용", description = "AI가 추천한 주제 중 하나를 선택하여 프로젝트의 주제(topic)로 설정합니다.")
+    @PatchMapping("/{projectId}/topic")
     public ResponseEntity<Void> applyRecommendedTopic(
         @PathVariable Long projectId,
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -256,6 +281,27 @@ public class ProjectController {
         return ResponseEntity.ok(result.getContent());
     }
 
+    @Operation(summary = "프로젝트 대표 이미지 등록/수정", description = "프로젝트 썸네일 이미지를 업로드합니다. 팀장만 가능합니다.")
+    @PatchMapping(value = "/{projectId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseDto<String>> uploadProjectImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId,
+        @RequestPart(value = "file") MultipartFile file) {
+
+        String imageUrl = projectService.uploadProjectImage(projectId, userDetails.getId(), file);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트 이미지 업로드 성공", imageUrl));
+    }
+
+    @Operation(summary = "프로젝트 대표 이미지 삭제", description = "프로젝트 썸네일 이미지를 삭제합니다. 팀장만 가능합니다.")
+    @DeleteMapping("/{projectId}/image")
+    public ResponseEntity<ApiResponseDto<Void>> deleteProjectImage(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        projectService.deleteProjectImage(projectId, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트 이미지가 삭제되었습니다.", null));
+    }
+
     @Operation(summary = "프로젝트 삭제", description = "프로젝트를 삭제합니다. 팀장만 가능합니다.")
     @DeleteMapping("/{projectId}")
     public ResponseEntity<ApiResponseDto<Void>> deleteProject(
@@ -265,4 +311,14 @@ public class ProjectController {
         projectService.deleteProject(projectId, userDetails.getId());
         return ResponseEntity.ok(new ApiResponseDto<>(200, "프로젝트가 삭제되었습니다.", null));
     }
+
+    @Operation(summary = "GitHub 기여자 중 비멤버 조회", description = "프로젝트 GitHub repo에 PR을 올렸지만 팀원이 아닌 유저 목록을 조회합니다.")
+    @GetMapping("/{projectId}/github-contributors")
+    public ResponseEntity<ApiResponseDto<List<PullRequestRepository.NonMemberContributorProjection>>> getNonMemberContributors(
+        @PathVariable Long projectId) {
+
+        var contributors = dashboardService.getNonMemberContributors(projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "비멤버 기여자 조회 성공", contributors));
+    }
 }
+

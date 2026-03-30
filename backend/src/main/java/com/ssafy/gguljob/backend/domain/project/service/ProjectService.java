@@ -2,8 +2,12 @@ package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.ai.repository.ChatLogRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.service.GithubSyncService;
+import com.ssafy.gguljob.backend.domain.project.entity.ProjectPosition;
+import com.ssafy.gguljob.backend.domain.skill.entity.Skill;
 import com.ssafy.gguljob.backend.domain.troubleshooting.repository.TroubleshootingRepository;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
@@ -33,7 +37,10 @@ import com.ssafy.gguljob.backend.domain.skill.entity.ProjectSkill;
 import com.ssafy.gguljob.backend.domain.skill.repository.SkillRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.global.exception.BadRequestException;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,8 +51,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import com.ssafy.gguljob.backend.global.exception.ForbiddenException;
+import com.ssafy.gguljob.backend.global.infra.s3.S3ImageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -66,6 +75,10 @@ public class ProjectService {
     private final UserRepProjectRepository userRepProjectRepository;
     private final TroubleshootingRepository troubleshootingRepository;
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
+    private final ChatLogRepository chatLogRepository;
+    private final S3ImageService s3ImageService;
+    private final ProjectDeletionService projectDeletionService;
 
     @Transactional
     public ProjectResponse.Id createProject(Long userId, ProjectRequest.Create request) {
@@ -83,16 +96,27 @@ public class ProjectService {
             .build();
 
         Project savedProject = projectRepository.save(project);
+
+        // 팀장 역할에 대한 모집 포지션 생성 (FE에서 인원 조정/상태 변경 가능하도록)
+        ProjectPosition leaderPosition = ProjectPosition.builder()
+            .project(savedProject)
+            .role(request.leaderRole())
+            .targetCount(1)
+            .build();
+        leaderPosition.changeCurrentCount(1); // 팀장이 즉시 합류하므로 currentCount = 1
+        ProjectPosition savedLeaderPosition = projectPositionRepository.save(leaderPosition);
+
         ProjectMember projectMember = ProjectMember.builder()
             .project(savedProject)
             .user(leader)
             .role(request.leaderRole())
+            .projectPosition(savedLeaderPosition)
             .build();
 
         projectMemberRepository.save(projectMember);
 
         log.info("Neo4j로 전송 시작");
-        eventPublisher.publishEvent(new ProjectSyncEvent(savedProject.getId()));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(savedProject.getId()));
 
         return ProjectResponse.Id.from(savedProject);
     }
@@ -169,59 +193,88 @@ public class ProjectService {
             project.getDescription(),
             project.getDomain(),
             skillIds,
-            members
+            members,
+            project.getImageUrl()
         );
 
     }
 
     @Transactional
-    public void registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request){
+    public ProjectResponse.GitRepoRegistered registerGitRepository(Long userId, Long projectId, ProjectRequest.RegisterGitRepo request) {
 
         Project project = projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
             .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
 
-        // 중복 등록 방지
+        // repoUrl이 다른 프로젝트에 이미 등록되어 있는지 검사
+        gitRepositoryRepository.findByRepoUrl(request.repoUrl()).ifPresent(existing -> {
+            if (existing.getProject().getId().equals(projectId)) {
+                throw new IllegalArgumentException("이미 동일한 레포지토리가 등록되어 있습니다.");
+            }
+            throw new IllegalArgumentException("이미 다른 프로젝트에 등록된 레포지토리입니다.");
+        });
+
+        // 기존 레포가 있고 URL이 변경되면 연관 데이터 삭제 (FK 의존 순서)
         Optional<GitRepository> existingRepoOpt = gitRepositoryRepository.findByProject_Id(projectId);
-        if (existingRepoOpt.isPresent() && existingRepoOpt.get().getRepoUrl().equals(request.repoUrl())) {
-            throw new IllegalArgumentException("이미 동일한 깃허브 레포지토리가 등록되어 있습니다.");
+        if (existingRepoOpt.isPresent()) {
+            GitRepository existingRepo = existingRepoOpt.get();
+            if (!existingRepo.getRepoUrl().equals(request.repoUrl())) {
+                log.info("🔄 레포 변경 감지 (기존: {} → 신규: {}). 기존 데이터를 삭제합니다.", existingRepo.getRepoUrl(), request.repoUrl());
+                chatLogRepository.deleteAllByProject_Id(projectId);
+                troubleshootingRepository.deleteAllByProjectId(projectId);
+                prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
+                pullRequestRepository.deleteAllByProjectId(projectId);
+            }
         }
 
+        // GitHub 토큰 및 레포 접근 권한 사전 검증 (실패 시 등록 중단)
+        String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
+        if (urlParts.length < 2) {
+            throw new BadRequestException("올바른 GitHub 레포지토리 URL 형식이 아닙니다.");
+        }
+        String owner = urlParts[0];
+        String repo = urlParts[1].replace(".git", "");
+        githubSyncService.validateGitHubAccess(owner, repo, request.githubToken());
+
+        // README 동기화 (실패해도 등록은 계속 진행)
         try {
-            String[] urlParts = request.repoUrl().replace("https://github.com/", "").split("/");
-            if (urlParts.length >= 2) {
-                String owner = urlParts[0];
-                String repo = urlParts[1].replace(".git", "");
-
-                // 리드미 텍스트 긁어오기
-                String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
-
-                if (readme != null && !readme.isBlank()) {
-                    project.updateReadme(readme);
-                    log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
-                    eventPublisher.publishEvent(new UserProfileSyncEvent(userId));
-                }
+            String readme = githubSyncService.fetchReadmeFromGithub(owner, repo, request.githubToken());
+            if (readme != null && !readme.isBlank()) {
+                project.updateReadme(readme);
+                log.info("🚀 프로젝트 ID {}에 README 업데이트 완료", projectId);
+                eventPublisher.publishEvent(new UserProfileSyncEvent(userId));
             }
         } catch (Exception e) {
             log.warn("❌ README 가져오기 실패 (등록은 계속 진행): {}", e.getMessage());
         }
 
-        // 서버 시크릿 키 생성
+        // 기존 엔티티 업데이트 또는 신규 생성
         String webhookSecret = UUID.randomUUID().toString().replace("-", "");
-
-        GitRepository gitRepository = gitRepositoryRepository.findByProject_Id(projectId)
+        GitRepository gitRepository = existingRepoOpt
             .orElseGet(() -> GitRepository.builder().project(project).build());
 
         gitRepository.updateRepoInfo(request.repoUrl(), webhookSecret);
         gitRepositoryRepository.save(gitRepository);
 
-        // 트랜잭션을 물고 있지 않도록 이벤트를 던지고 즉시 응답
         eventPublisher.publishEvent(new InitialPrSyncEvent(
-            gitRepository.getId(),
-            projectId,
-            request.repoUrl(),
-            request.githubToken(),
-            webhookSecret
+            gitRepository.getId(), projectId, request.repoUrl(), request.githubToken(), webhookSecret
         ));
+
+        return new ProjectResponse.GitRepoRegistered(webhookSecret);
+    }
+
+    @Transactional
+    public void disconnectGitRepository(Long userId, Long projectId) {
+        projectRepository.findByIdAndMemberUserId(projectId, userId, MemberStatus.ATTEND)
+            .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없거나 접근 권한이 없습니다."));
+
+        // FK 의존 순서대로 삭제: ChatLog → Troubleshooting → PrReview → PullRequest → GitRepository
+        chatLogRepository.deleteAllByProject_Id(projectId);
+        troubleshootingRepository.deleteAllByProjectId(projectId);
+        prReviewRepository.deleteAllByPullRequest_Project_Id(projectId);
+        pullRequestRepository.deleteAllByProjectId(projectId);
+        gitRepositoryRepository.deleteAllByProjectId(projectId);
+
+        log.info("✅ 프로젝트 ID {} 의 Git 레포지토리 연동이 해제되었습니다.", projectId);
     }
 
     // 프로젝트 업데이트
@@ -244,7 +297,7 @@ public class ProjectService {
 
         projectRepository.save(project);
 
-        eventPublisher.publishEvent(new ProjectSyncEvent(project.getId()));
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(project.getId()));
 
         return ProjectUpdateResponse.from(project);
     }
@@ -309,13 +362,35 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
 
-        if (!project.getLeader().getId().equals(loginUserId)) {
-            throw new IllegalArgumentException("프로젝트 리더만 팀원 관리 페이지를 조회할 수 있습니다.");
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_IdAndStatus(
+            projectId, loginUserId, MemberStatus.ATTEND
+        );
+        if (!isMember) {
+            throw new IllegalArgumentException("프로젝트 멤버만 팀원 정보를 조회할 수 있습니다.");
         }
 
+        boolean isLeader = project.getLeader().getId().equals(loginUserId);
+
+        List<ProjectPosition> positions = projectPositionRepository.findAllByProjectId(projectId);
+
+        Map<Long, String> positionMap = positions.stream()
+            .collect(Collectors.toMap(ProjectPosition::getId, p -> p.getRole().name()));
+
         // 팀원 모집 현황 리스트
-        List<RecruitmentStatusDto> recruitments = projectPositionRepository.findAllByProjectId(projectId).stream()
-            .map(RecruitmentStatusDto::from)
+        List<RecruitmentStatusDto> recruitments = positions.stream()
+            .map(position -> {
+                List<String> skillNames = List.of();
+                if (position.getRequireSkills() != null && !position.getRequireSkills().isEmpty()) {
+                    List<Long> skillIds = Arrays.stream(position.getRequireSkills().split(","))
+                        .map(String::trim)
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                    skillNames = skillRepository.findAllById(skillIds).stream()
+                        .map(Skill::getName)
+                        .collect(Collectors.toList());
+                }
+                return RecruitmentStatusDto.of(position, skillNames);
+            })
             .collect(Collectors.toList());
 
         // 현재 팀원 리스트
@@ -323,24 +398,25 @@ public class ProjectService {
             .map(CurrentMemberDto::from)
             .collect(Collectors.toList());
 
-        //참가 신청 현황
+        // 참가 신청 현황
         List<JoinRequest> pendingRequestsEntities = joinRequestRepository.findPendingRequestsByProjectId(projectId);
-        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream().map(request -> {
-            String positionName = "미지정";
-            if (request.getPositionId() != null) {
-                positionName = projectPositionRepository.findById(request.getPositionId())
-                    .map(pos -> pos.getRole().name())
-                    .orElse("UNKNOWN");
-            }
+        List<PendingJoinRequestDto> pendingRequests = pendingRequestsEntities.stream()
+            .map(request -> {
+                String positionName = request.getPositionId() != null
+                    ? positionMap.getOrDefault(request.getPositionId(), "UNKNOWN")
+                    : "미지정";
 
-            List<String> techStacks = request.getUser().getUserSkills().stream()
-                .map(userSkill -> userSkill.getSkill().getName())
-                .collect(Collectors.toList());
+                List<String> techStacks = request.getUser().getUserSkills().stream()
+                    .map(userSkill -> userSkill.getSkill().getName())
+                    .collect(Collectors.toList());
 
-            return PendingJoinRequestDto.of(request, positionName, techStacks);
-        }).collect(Collectors.toList());
+                return PendingJoinRequestDto.of(request, positionName, techStacks);
+            })
+            .collect(Collectors.toList());
 
         return TeamManagementResponseDto.builder()
+            .isLeader(isLeader)
+            .leaderId(project.getLeader().getId())
             .recruitments(recruitments)
             .currentMembers(currentMembers)
             .pendingRequests(pendingRequests)
@@ -376,6 +452,7 @@ public class ProjectService {
                 skillMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
                 positionMap.getOrDefault(p.getId(), java.util.Collections.emptyList()),
                 p.getLeader().getUserName(), p.getLeader().getProfileImageUrl(),
+                p.getImageUrl(),
                 0L // 점수는 MatchingService에서 나중에 채움
             )
         ));
@@ -410,6 +487,9 @@ public class ProjectService {
         return topProjects.stream()
             .map(p -> cardMap.get(p.getId()))
             .filter(java.util.Objects::nonNull)
+            .filter(card -> card.status() == ProjectStatus.RECRUITING)
+            .filter(card -> card.positions().stream()
+                .anyMatch(pos -> pos.currentCount() < pos.targetCount()))
             .toList();
     }
 
@@ -420,9 +500,12 @@ public class ProjectService {
             .map(domain -> new ProjectFilterResponseDto.FilterOptionDto(domain.name(), domain.getDescription()))
             .toList();
 
-        // 직무
-        List<ProjectFilterResponseDto.FilterOptionDto> roles = java.util.Arrays.stream(com.ssafy.gguljob.backend.domain.project.type.Role.values())
-            .map(role -> new ProjectFilterResponseDto.FilterOptionDto(role.name(), role.getDescription()))
+        // 직무 (PositionType 9개 기준)
+        List<ProjectFilterResponseDto.FilterOptionDto> roles = java.util.Arrays.stream(PositionType.values())
+            .map(positionType -> new ProjectFilterResponseDto.FilterOptionDto(
+                positionType.name(),
+                toProjectFilterRoleLabel(positionType)
+            ))
             .toList();
 
         List<ProjectFilterResponseDto.SkillCategoryDto> skillCategories = skillRepository.findAll().stream()
@@ -440,6 +523,17 @@ public class ProjectService {
         return new ProjectFilterResponseDto(domains, roles, skillCategories);
     }
 
+    private String toProjectFilterRoleLabel(PositionType positionType) {
+        if (positionType == null) {
+            return "";
+        }
+        return switch (positionType) {
+            case FE -> "FE 모집중";
+            case BE -> "BE 모집중";
+            default -> positionType.getDescription() + " 모집중";
+        };
+    }
+
     @Transactional
     public void applyRecommendedTopic(Long projectId, Long userId, String selectedTopic) {
 
@@ -450,7 +544,7 @@ public class ProjectService {
             throw new IllegalStateException("프로젝트 팀장만 주제를 변경할 수 있습니다.");
         }
 
-        project.updateTitle(selectedTopic);
+        project.updateTopic(selectedTopic);
     }
 
     @Transactional
@@ -461,19 +555,90 @@ public class ProjectService {
         if (!project.getLeader().getId().equals(userId)) {
             throw new ForbiddenException("프로젝트 삭제는 팀장만 가능합니다.");
         }
+        projectDeletionService.deleteProjectWithRelations(project, userId);
+    }
 
-        // FK 연관 데이터 삭제 (순서 중요)
-        userRepProjectRepository.deleteAllByProjectId(projectId);
-        joinRequestRepository.deleteAllByProjectId(projectId);
-        troubleshootingRepository.deleteAllByProjectId(projectId);
-        pullRequestRepository.deleteAllByProjectId(projectId);
-        gitRepositoryRepository.deleteAllByProjectId(projectId);
-        projectPositionRepository.deleteAllByProjectId(projectId);
-        projectMemberRepository.deleteAllByProjectId(projectId);
-        projectSkillRepository.deleteAllByProjectId(projectId);
+    @Transactional
+    public String uploadProjectImage(Long projectId, Long userId, MultipartFile file) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
 
-        projectRepository.delete(project);
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 이미지 수정은 팀장만 가능합니다.");
+        }
 
-        log.info("프로젝트 삭제 완료 - projectId: {}, userId: {}", projectId, userId);
+        // 기존 이미지 S3 키 보관 (트랜잭션 커밋 후 삭제 위해)
+        String oldS3Key = null;
+        if (project.getImageUrl() != null) {
+            oldS3Key = s3ImageService.extractS3Key(project.getImageUrl());
+        }
+
+        // S3 업로드 → CDN URL 생성 → DB 업데이트 (먼저 커밋)
+        String s3Key = s3ImageService.uploadImage(file);
+        String fullImageUrl = s3ImageService.getImageUrl(s3Key);
+        project.updateImageUrl(fullImageUrl);
+        projectRepository.flush();
+
+        // DB 커밋 성공 후 기존 이미지 S3 삭제 (실패해도 고아 파일만 남음)
+        if (oldS3Key != null) {
+            try {
+                s3ImageService.deleteObject(oldS3Key);
+                log.info("프로젝트 ID {} 기존 이미지 S3 삭제 완료: {}", projectId, oldS3Key);
+            } catch (Exception e) {
+                log.warn("프로젝트 ID {} 기존 이미지 S3 삭제 실패 (고아 파일): {}", projectId, oldS3Key, e);
+            }
+        }
+
+        return fullImageUrl;
+    }
+
+    @Transactional
+    public void deleteProjectImage(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        if (!project.getLeader().getId().equals(userId)) {
+            throw new ForbiddenException("프로젝트 이미지 삭제는 팀장만 가능합니다.");
+        }
+
+        if (project.getImageUrl() != null) {
+            String s3Key = s3ImageService.extractS3Key(project.getImageUrl());
+
+            // DB 먼저 null 처리 (트랜잭션 보장)
+            project.updateImageUrl(null);
+            projectRepository.flush();
+
+            // DB 커밋 성공 후 S3 삭제 (실패해도 고아 파일만 남음)
+            try {
+                s3ImageService.deleteObject(s3Key);
+                log.info("프로젝트 ID {} 이미지 S3 삭제 완료: {}", projectId, s3Key);
+            } catch (Exception e) {
+                log.warn("프로젝트 ID {} 이미지 S3 삭제 실패 (고아 파일): {}", projectId, s3Key, e);
+            }
+        }
+    }
+
+    // 프로젝트 팀원 목록 조회
+    @Transactional(readOnly = true)
+    public List<ProjectResponse.ProjectMemberDto> getProjectMembers(Long loginUserId, Long projectId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_IdAndStatus(
+            projectId, loginUserId, MemberStatus.ATTEND
+        );
+        if (!isMember) {
+            throw new ForbiddenException("프로젝트 멤버만 팀원 목록을 조회할 수 있습니다.");
+        }
+
+        return projectMemberRepository.findAllByProjectIdAndStatus(projectId, MemberStatus.ATTEND).stream()
+            .map(pm -> new ProjectResponse.ProjectMemberDto(
+                pm.getId(),
+                pm.getUser().getId(),
+                pm.getRole().name(),
+                pm.getUser().getUserName(),
+                pm.getUser().getProfileImageUrl()
+            ))
+            .collect(Collectors.toList());
     }
 }

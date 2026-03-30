@@ -17,6 +17,7 @@ export interface ProjectCardDto {
   status: BackendProjectStatus;
   title: string;
   description: string;
+  imageUrl: string | null;
   skills: string[];
   positions: ProjectPositionDto[];
   leaderName: string;
@@ -29,8 +30,8 @@ export interface ProjectListParams {
   size?: number;
   keyword?: string;
   domain?: string;
-  skill?: string;
-  position?: string;
+  skillIds?: number[];
+  role?: string;
   sort?: string;
   excludeTop?: boolean;
 }
@@ -87,6 +88,7 @@ export interface ProjectEditForm {
   teamName: string;
   description: string;
   domain: string;
+  imageUrl: string | null;
   skillIds: number[];
   members: ProjectEditMember[];
 }
@@ -120,10 +122,12 @@ export interface RegisterGitRepoRequest {
 export interface TeamDashboard {
   projectInfo: {
     title: string;
+    topic: string | null;
     teamName: string;
     domain: string;
     description: string;
     skills: string[];
+    status: string;
   };
   teamStats: {
     totalMembers: number;
@@ -170,6 +174,8 @@ export interface PendingJoinRequest {
 }
 
 export interface TeamManagement {
+  leader: boolean;
+  leaderId: number;
   recruitments: RecruitmentStatus[];
   currentMembers: CurrentMember[];
   pendingRequests: PendingJoinRequest[];
@@ -216,8 +222,10 @@ export interface PersonalSpaceData {
   }[];
   myReviews: {
     reviewId: number;
+    reviewerName: string;
+    prTitle: string;
+    prNumber: number;
     contentSnippet: string;
-    createdAt: string;
   }[];
   myTroubleshootings: {
     tsId: number;

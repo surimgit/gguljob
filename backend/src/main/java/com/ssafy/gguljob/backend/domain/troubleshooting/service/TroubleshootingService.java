@@ -46,6 +46,13 @@ public class TroubleshootingService {
     private static final int MAX_DIFF_LENGTH = 3000;
     private static final int TOP_K = 5;
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<TroubleshootingResponse.ListItem> getMyTroubleshootings(
+            Long userId, org.springframework.data.domain.Pageable pageable) {
+        return troubleshootingRepository.findAllByUserIdWithProject(userId, pageable)
+            .map(TroubleshootingResponse.ListItem::from);
+    }
+
     public List<TroubleshootingResponse.Widget> getMyWidgetList(Long userId) {
         return troubleshootingRepository.findTop2ByUser_IdOrderByCreatedAtDesc(userId)
             .stream()

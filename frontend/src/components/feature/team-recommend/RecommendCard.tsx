@@ -1,10 +1,10 @@
 import { ChevronRight } from "lucide-react";
-import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
+import { getRoleDisplayName, getRoleColor, getExperienceLevelDisplay, getExperienceLevelStyle } from "../../../constants/skills";
 
 interface RecommendCardProps {
   name: string;
-  position: string;
-  level: string;
+  position: string | null;
+  level: string | null;
   matchRate: number;
   introduction: string;
   techStacks: string[];
@@ -26,10 +26,12 @@ const RecommendCard = ({
   matchRate,
   introduction,
   techStacks,
+  profileImage,
   onClickProfile,
 }: RecommendCardProps) => {
   const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
+  const lvStyle = getExperienceLevelStyle(level);
 
   return (
     <div
@@ -51,12 +53,20 @@ const RecommendCard = ({
 
       {/* 프로필 아바타/이름/포지션 */}
       <div className="flex items-center gap-3 mt-3 mb-5 pr-24">
-        <div
-          className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
-          style={{ background: "var(--color-primary-hover)" }}
-        >
-          {name.charAt(0)}
-        </div>
+        {profileImage ? (
+          <img
+            src={profileImage}
+            alt={name}
+            className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
+            style={{ background: "var(--color-primary-hover)" }}
+          >
+            {name.charAt(0)}
+          </div>
+        )}
         <div className="flex flex-col flex-1 min-w-0">
           <span
             className="text-lg font-bold truncate"
@@ -66,7 +76,7 @@ const RecommendCard = ({
           </span>
           <div className="flex flex-wrap items-center gap-1.5 -ml-1">
             <span
-              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -75,10 +85,10 @@ const RecommendCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-xs font-bold whitespace-nowrap"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
-              {level}
+              {getExperienceLevelDisplay(level)}
             </span>
           </div>
         </div>

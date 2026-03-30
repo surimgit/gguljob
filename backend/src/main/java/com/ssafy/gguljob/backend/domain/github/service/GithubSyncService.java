@@ -1,8 +1,10 @@
 package com.ssafy.gguljob.backend.domain.github.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
+import com.ssafy.gguljob.backend.domain.github.entity.PrReview;
 import com.ssafy.gguljob.backend.domain.github.entity.PullRequest;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.github.type.PrStatus;
 import com.ssafy.gguljob.backend.domain.project.dto.InitialPrSyncEvent;
@@ -10,6 +12,8 @@ import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
+import com.ssafy.gguljob.backend.global.exception.BadRequestException;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -20,8 +24,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
@@ -30,6 +36,7 @@ import org.springframework.web.client.RestClient;
 public class GithubSyncService {
 
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
     private final ProjectRepository projectRepository;
     private final GitRepositoryRepository gitRepositoryRepository;
     private final UserRepository userRepository;
@@ -52,14 +59,89 @@ public class GithubSyncService {
         }
     }
 
+    /**
+     * 특정 PR에 달린 모든 Issue Comments(Reviews)를 수집하여 DB에 저장
+     */
+    @Transactional
+    public void syncPrReviews(String owner, String repo, String token,
+        Long repoId, Integer prNumber) {
+
+        PullRequest pullRequest = pullRequestRepository
+            .findByGitRepository_IdAndPrNumber(repoId, prNumber)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "리뷰를 저장할 PR을 찾을 수 없습니다. (PR: " + prNumber + ")"));
+
+        // issue_comment API로 교체
+        // GET /repos/{owner}/{repo}/issues/{prNumber}/comments
+        List<Map<String, Object>> comments =
+            fetchAllIssueComments(owner, repo, token, prNumber);
+
+        Set<String> targetNicknames = comments.stream()
+            .map(c -> extractLogin(c, "user"))
+            .collect(Collectors.toSet());
+
+        Map<String, User> userMapByNickname = userRepository.findByGithubNicknameIn(targetNicknames)
+            .stream().collect(Collectors.toMap(User::getGithubNickname, u -> u));
+
+        List<PrReview> reviewEntities = new ArrayList<>();
+
+        for (Map<String, Object> comment : comments) {
+            User commenter = userMapByNickname.get(extractLogin(comment, "user"));
+            if (commenter == null) {
+                log.warn("DB에 없는 댓글 작성자. Skip (login: {})", extractLogin(comment, "user"));
+                continue;
+            }
+            reviewEntities.add(PrReview.builder()
+                .pullRequest(pullRequest)
+                .user(commenter)
+                .comment((String) comment.get("body"))
+                .build());
+        }
+
+        if (!reviewEntities.isEmpty()) {
+            prReviewRepository.saveAll(reviewEntities);
+            log.info("✅ PR #{} 댓글 {}건 저장 완료", prNumber, reviewEntities.size());
+        } else {
+            log.info("PR #{} 에 저장할 댓글이 없습니다.", prNumber);
+        }
+    }
+
+    private List<Map<String, Object>> fetchAllIssueComments(String owner, String repo,
+        String token, Integer prNumber) {
+        List<Map<String, Object>> all = new ArrayList<>();
+        int page = 1;
+        final int PER_PAGE = 100;
+
+        while (true) {
+            List<Map<String, Object>> pageData = restClient.get()
+                .uri("/repos/{owner}/{repo}/issues/{prNumber}/comments?per_page={perPage}&page={page}",
+                    owner, repo, prNumber, PER_PAGE, page)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+            if (pageData == null || pageData.isEmpty()) break;
+            all.addAll(pageData);
+            page++;
+        }
+        log.info("PR #{} 댓글 {}건 수집 완료", prNumber, all.size());
+        return all;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractLogin(Map<String, Object> map, String userKey) {
+        Map<String, Object> userMap = (Map<String, Object>) map.get(userKey);
+        return userMap != null ? (String) userMap.get("login") : "unknown";
+    }
+
     private List<Map<String, Object>> fetchAllPullRequests(String owner, String repo, String token) {
         List<Map<String, Object>> allPrs = new ArrayList<>();
         int page = 1;
-        int perPage = 100;
+        final int PER_PAGE = 100;
 
         while (true) {
             List<Map<String, Object>> prs = restClient.get()
-                .uri("/repos/{owner}/{repo}/pulls?state=all&per_page={perPage}&page={page}", owner, repo, perPage, page)
+                .uri("/repos/{owner}/{repo}/pulls?state=all&per_page={perPage}&page={page}", owner, repo, PER_PAGE, page)
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
@@ -85,19 +167,16 @@ public class GithubSyncService {
             .map(PullRequest::getPrNumber)
             .collect(Collectors.toSet());
 
-        // 이메일 <-> MR 유저 매칭을 위한 Map 만들기
-        Set<String> targetEmails = prList.stream()
-            .map(pr -> {
-                Map<String, Object> userMap = (Map<String, Object>) pr.get("user");
-                return userMap != null ? userMap.get("login") + "@github.com" : "@github.com";
-            })
+        // 닉네임 <-> MR 유저 매칭을 위한 Map 만들기
+        Set<String> targetNicknames = prList.stream()
+            .map(pr -> extractLogin(pr, "user"))
             .collect(Collectors.toSet());
 
-        List<User> users = userRepository.findByEmailIn(targetEmails);
+        List<User> users = userRepository.findByGithubNicknameIn(targetNicknames);
 
-        // Key: 이메일, Value: 유저 객체
-        Map<String, User> userMapByEmail = users.stream()
-            .collect(Collectors.toMap(User::getEmail, user -> user));
+        // Key: 깃허브 닉네임, Value: 유저 객체
+        Map<String, User> userMapByNickname = users.stream()
+            .collect(Collectors.toMap(User::getGithubNickname, user -> user));
 
         List<PullRequest> pullRequestEntities = new ArrayList<>();
 
@@ -111,12 +190,10 @@ public class GithubSyncService {
                 continue;
             }
 
-            // 작성자 이메일 매칭
-            Map<String, Object> userMap = (Map<String, Object>) pr.get("user");
-            String githubUsername = userMap != null ? (String) userMap.get("login") : "";
-            String targetEmail = githubUsername + "@github.com";
+            // 작성자 닉네임 매칭
+            String githubUsername = extractLogin(pr, "user");
 
-            User author = userMapByEmail.get(targetEmail);
+            User author = userMapByNickname.get(githubUsername);
 
             if (author == null) {
                 log.warn("DB에 없는 유저의 PR입니다. Skip (github username: {})", githubUsername);
@@ -177,6 +254,32 @@ public class GithubSyncService {
         } catch (Exception e) {
             log.error("❌ Github API 호출 실패 (주소 문제 가능성): {} | 주소: {}", e.getMessage(), apiUrl);
             return null;
+        }
+    }
+
+    /**
+     * GitHub 토큰과 레포 접근 권한을 검증합니다.
+     * @throws BadRequestException 토큰이 유효하지 않은 경우 (401)
+     * @throws ResourceNotFoundException 레포지토리를 찾을 수 없는 경우 (404)
+     */
+    public void validateGitHubAccess(String owner, String repo, String token) {
+        try {
+            restClient.get()
+                .uri("/repos/{owner}/{repo}", owner, repo)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .toBodilessEntity();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                log.warn("GitHub 토큰 인증 실패 (401): owner={}, repo={}", owner, repo, e);
+                throw new BadRequestException("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해 주세요.");
+            }
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.warn("GitHub 레포지토리를 찾을 수 없음 (404): owner={}, repo={}", owner, repo, e);
+                throw new ResourceNotFoundException("레포지토리를 찾을 수 없습니다. URL과 접근 권한을 확인해 주세요.", e);
+            }
+            log.error("GitHub 연동 중 예상치 못한 HTTP 오류 발생: owner={}, repo={}", owner, repo, e);
+            throw new BadRequestException("GitHub 연동에 실패했습니다.", e);
         }
     }
 

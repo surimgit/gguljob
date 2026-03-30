@@ -24,26 +24,15 @@ const Footer = () => {
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-2xl font-bold text-text-brown mb-1">Project</span>
-            <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-base text-text-brown-2 hover:underline"
-            >
+            <Link to="/" className="text-base text-text-brown-2 hover:underline">
               About
-            </a>
-            <a
-              href="#"
-              className="text-base text-text-brown-2 hover:underline"
-            >
+            </Link>
+            <Link to="/" className="text-base text-text-brown-2 hover:underline">
               Contact
-            </a>
-            <a
-              href="#"
-              className="text-base text-text-brown-2 hover:underline"
-            >
+            </Link>
+            <Link to="/" className="text-base text-text-brown-2 hover:underline">
               Github
-            </a>
+            </Link>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 package com.ssafy.gguljob.backend.domain.notification.dto;
 
 import com.ssafy.gguljob.backend.domain.notification.entity.Notification;
+import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
 import com.ssafy.gguljob.backend.domain.notification.type.NotificationCategory;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,11 +12,12 @@ import java.time.LocalDateTime;
 @Builder
 public class NotificationResponseDto {
     private Long notificationId;
-    private NotificationCategory category; // 프론트 아이콘 렌더링용
+    private NotificationCategory category;
     private String content;
     private Long referenceId;
     private String referenceUrl;
     private Boolean isRead;
+    private ActionStatus actionStatus;
     private LocalDateTime createdAt;
 
     public static NotificationResponseDto from(Notification notification) {
@@ -26,6 +28,7 @@ public class NotificationResponseDto {
             .referenceId(notification.getReferenceId())
             .referenceUrl(notification.getReferenceUrl())
             .isRead(notification.getIsRead())
+            .actionStatus(notification.getActionStatus())
             .createdAt(notification.getCreatedAt())
             .build();
     }

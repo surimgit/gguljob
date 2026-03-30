@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  BarChart2,
   Info,
   Monitor,
   Server,
-  Database,
   Cloud,
   Bot,
   Smartphone,
@@ -20,15 +19,18 @@ import {
   Link,
   Eye,
   Pencil,
-  Wrench,
+  Pen,
   Briefcase,
   PieChart,
+  Database,
+  Camera,
+  Trash2,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
-import { getProjectEditForm, updateProject } from "../../../api/projects";
+import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject, deleteProject } from "../../../api/projects";
 import {
   SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
   SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
@@ -42,6 +44,8 @@ type ProjectStatus = "active" | "recruiting" | "done" | "paused";
 interface ProjectSettingsProps {
   dashboard?: TeamDashboard | null;
   projectId?: number;
+  isLeader?: boolean;
+  onSaved?: () => void;
 }
 
 /* ── 상태 매핑 ── */
@@ -84,7 +88,7 @@ const STATUS_OPTIONS: {
     dotColor: "var(--color-primary)",
     selectedBg: "var(--color-primary-soft)",
     selectedBorder: "var(--color-primary)",
-    selectedText: "var(--color-primary-hover)",
+    selectedText: "var(--color-text-primary)",
   },
   {
     key: "done",
@@ -118,8 +122,8 @@ const DOMAINS = [
 ];
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  FRONTEND: Monitor, BACKEND: Server, DEVOPS: Cloud, DATA: PieChart,
-  AI: Bot, DATABASE: Database, MOBILE: Smartphone, TOOLS: Wrench, PM: Briefcase,
+  FRONTEND: Monitor, BACKEND: Server, DATABASE: Database, DEVOPS: Cloud, DATA: PieChart,
+  AI: Bot, MOBILE: Smartphone, PM: Briefcase, DESIGN: Pen,
 };
 
 const TECH_CATEGORIES = SKILL_CATEGORY_META.map((meta) => ({
@@ -148,16 +152,18 @@ const skillsToTechStacks = (skills: string[]): Record<string, string[]> => {
 };
 
 /* ── 컴포넌트 ── */
-const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
+const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved }: ProjectSettingsProps) => {
+  const navigate = useNavigate();
   const info = dashboard?.projectInfo;
-  const gitRepo = dashboard?.gitRepoInfo;
-
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isLeader, setIsLeader] = useState(true);
+  const isLeader = isLeaderProp ?? false;
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
+  const [originalTitle, setOriginalTitle] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [descTab, setDescTab] = useState<"edit" | "preview">("edit");
@@ -180,8 +186,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     });
   }, [description]);
 
-  const [domains, setDomains] = useState<string[]>([]);
-  const [gitUrl, setGitUrl] = useState(gitRepo?.repoUrl ?? "");
+  const [domain, setDomain] = useState<string>("");
   const [techStacks, setTechStacks] = useState<Record<string, string[]>>({});
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
@@ -192,17 +197,86 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
 
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
 
-  // GET /edit → 폼 초기화
-  useEffect(() => {
+  // 프로젝트 이미지
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [showImageMenu, setShowImageMenu] = useState(false);
+  const imageMenuRef = useRef<HTMLDivElement>(null);
+
+  const compressImage = (file: File, maxWidth = 800, quality = 0.85): Promise<File> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob!], file.name, { type: "image/jpeg" })),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !projectId) return;
+    setImageUploading(true);
+    try {
+      const compressed = await compressImage(file);
+      const { data } = await uploadProjectImage(projectId, compressed);
+      setImageUrl(data.data);
+      toast.success("프로젝트 이미지가 변경되었습니다.");
+    } catch {
+      toast.error("이미지 업로드에 실패했습니다.");
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleImageDelete = async () => {
     if (!projectId) return;
+    try {
+      await deleteProjectImage(projectId);
+      setImageUrl(null);
+      toast.success("프로젝트 이미지가 삭제되었습니다.");
+    } catch {
+      toast.error("이미지 삭제에 실패했습니다.");
+    }
+  };
+
+  // 이미지 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showImageMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (imageMenuRef.current && !imageMenuRef.current.contains(e.target as Node)) {
+        setShowImageMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showImageMenu]);
+
+  // GET /edit → 폼 초기화 (팀장만 호출)
+  useEffect(() => {
+    if (!projectId || !isLeaderProp) return;
     setLoading(true);
     getProjectEditForm(projectId)
       .then(({ data: form }) => {
         const mappedStatus = BACKEND_TO_STATUS[form.status] ?? "active";
         setStatus(mappedStatus);
-        setName(form.title ?? "");
+        setOriginalTitle(form.title ?? "");
+        setName(form.teamName ?? form.title ?? "");
         setDescription(form.description ?? "");
-        setDomains(form.domain ? [form.domain] : []);
+        setDomain(form.domain ?? "");
+        setImageUrl(form.imageUrl ?? null);
         setEditMembers(form.members.map(m => ({ userId: m.userId, role: m.role })));
 
         // skillIds → 이름 → 카테고리별 분류
@@ -214,45 +288,52 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
         // 초기 스냅샷 저장
         setInitialSnapshot(JSON.stringify({
           status: mappedStatus,
-          name: form.title ?? "",
+          name: form.teamName ?? form.title ?? "",
           description: form.description ?? "",
-          domains: form.domain ? [form.domain] : [],
+          domain: form.domain ?? "",
           techStacks: skillsToTechStacks(skillNames),
         }));
       })
       .catch((err) => {
         console.error("프로젝트 설정 로드 실패:", err);
-        setIsLeader(false);
         // 폴백: dashboard 데이터 사용
         if (info) {
-          setName(info.title ?? "");
+          setName(info.teamName ?? info.title ?? "");
           setDescription(info.description ?? "");
-          setDomains(info.domain ? [info.domain] : []);
+          setDomain(info.domain ?? "");
           if (info.skills?.length) {
             setTechStacks(skillsToTechStacks(info.skills));
           }
         }
         setInitialSnapshot(JSON.stringify({
           status: "active",
-          name: info?.title ?? "",
+          name: info?.teamName ?? info?.title ?? "",
           description: info?.description ?? "",
-          domains: info?.domain ? [info.domain] : [],
+          domain: info?.domain ?? "",
           techStacks: skillsToTechStacks(info?.skills ?? []),
         }));
       })
       .finally(() => setLoading(false));
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId, isLeaderProp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasChanges = useMemo(() => {
     if (!initialSnapshot) return false;
-    const current = JSON.stringify({ status, name, description, domains, techStacks });
+    const current = JSON.stringify({ status, name, description, domain, techStacks });
     return current !== initialSnapshot;
-  }, [status, name, description, domains, techStacks, initialSnapshot]);
+  }, [status, name, description, domain, techStacks, initialSnapshot]);
 
-  const toggleDomain = (d: string) =>
-    setDomains((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
+  // 미저장 변경사항 있을 때 페이지 이탈 경고
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
+
+  const selectDomain = (d: string) =>
+    setDomain((prev) => (prev === d ? "" : d));
 
   const toggleStack = (category: string, stack: string) => {
     setTechStacks((prev) => {
@@ -286,16 +367,17 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
     try {
       await updateProject(projectId, {
         status: STATUS_TO_BACKEND[status],
-        title: name,
-        teamName: info?.teamName,
+        title: originalTitle,
+        teamName: name,
         description,
-        domain: domains[0] ?? "",
+        domain,
         skillIds,
         members: editMembers,
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
+      onSaved?.();
       // 스냅샷 갱신
-      setInitialSnapshot(JSON.stringify({ status, name, description, domains, techStacks }));
+      setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
     } catch (err) {
       console.error("프로젝트 설정 저장 실패:", err);
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
@@ -323,7 +405,6 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       {/* 페이지 타이틀 */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{isLeader ? "✏️" : "📋"}</span>
           <h1
             className="text-2xl font-bold"
             style={{ color: "var(--color-text-primary)" }}
@@ -359,10 +440,6 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
-          <BarChart2
-            className="w-4 h-4"
-            style={{ color: "var(--color-primary)" }}
-          />
           프로젝트 상태
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -405,42 +482,105 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           className="flex items-center gap-2 text-lg font-bold mb-5"
           style={{ color: "var(--color-text-primary)" }}
         >
-          📋 기본 정보
+          기본 정보
         </div>
 
-        {/* 프로젝트명 */}
-        <div className="mb-4">
-          <label
-            className="text-sm font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
+        {/* 프로젝트 이미지 + 프로젝트명 */}
+        <div className="mb-5">
+          <div
+            className="flex items-center gap-5 rounded-2xl p-4"
+            style={{ background: "var(--color-background)" }}
           >
-            프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
-          </label>
-          <input
-            type="text"
-            maxLength={50}
-            value={name}
-            onChange={(e) => isLeader && setName(e.target.value)}
-            readOnly={!isLeader}
-            placeholder="프로젝트명을 입력하세요"
-            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
-            style={inputStyle(!!name)}
-            onFocus={(e) => {
-              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
-            }}
-            onBlur={(e) => {
-              if (!name)
-                e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          />
-          {isLeader && (
-          <p
-            className="text-xs text-right mt-1"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {name.length}/50
-          </p>
-          )}
+            {/* 프로젝트 이미지 */}
+            <div className="flex flex-col items-center flex-shrink-0 relative" ref={imageMenuRef}>
+              <button
+                type="button"
+                onClick={() => isLeader && setShowImageMenu((prev) => !prev)}
+                className="relative w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group"
+                style={{
+                  background: imageUrl ? "transparent" : "linear-gradient(135deg, var(--color-primary-soft), var(--color-surface))",
+                  border: "2px solid var(--color-border)",
+                  cursor: isLeader ? "pointer" : "default",
+                }}
+              >
+                {imageUrl ? (
+                  <img src={imageUrl} alt="프로젝트 이미지" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <Camera className="w-6 h-6" style={{ color: "var(--color-primary)", opacity: 0.5 }} />
+                    <span className="text-[10px] font-medium" style={{ color: "var(--color-text-tertiary)" }}>대표 이미지</span>
+                  </div>
+                )}
+                {isLeader && (
+                  <div className="absolute inset-0 rounded-2xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {imageUploading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </div>
+                )}
+              </button>
+              {showImageMenu && (
+                <div className="absolute left-[96px] top-2 bg-white border border-border rounded-xl shadow-lg py-1 z-10 w-28">
+                  <button
+                    type="button"
+                    onClick={() => { imageInputRef.current?.click(); setShowImageMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-primary-soft transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    {imageUrl ? "사진 변경" : "사진 추가"}
+                  </button>
+                  {imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      사진 삭제
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {/* 프로젝트명 입력 */}
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
+              <label
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
+              </label>
+              <input
+                type="text"
+                maxLength={50}
+                value={name}
+                onChange={(e) => isLeader && setName(e.target.value)}
+                readOnly={!isLeader}
+                placeholder="프로젝트명을 입력하세요"
+                className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
+                style={{
+                  ...inputStyle(!!name),
+                  background: "var(--color-surface)",
+                }}
+                onFocus={(e) => {
+                  if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
+                }}
+                onBlur={(e) => {
+                  if (!name)
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* 프로젝트 설명 (마크다운 에디터) */}
@@ -585,11 +725,11 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           </label>
           <div className="flex flex-wrap gap-2 mt-2">
             {DOMAINS.map((d) => {
-              const sel = domains.includes(d);
+              const sel = domain === d;
               return (
                 <button
                   key={d}
-                  onClick={() => isLeader && toggleDomain(d)}
+                  onClick={() => isLeader && selectDomain(d)}
                   disabled={!isLeader}
                   className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
                   style={{
@@ -597,7 +737,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                       ? "var(--color-primary)"
                       : "var(--color-border)",
                     color: sel
-                      ? "var(--color-primary-hover)"
+                      ? "var(--color-text-primary)"
                       : "var(--color-text-secondary)",
                     background: sel
                       ? "var(--color-primary-soft)"
@@ -611,41 +751,6 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           </div>
         </div>
 
-        {/* Git URL */}
-        <div>
-          <label
-            className="text-sm font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Git 저장소 URL
-          </label>
-          <input
-            type="text"
-            value={gitUrl}
-            onChange={(e) => isLeader && setGitUrl(e.target.value)}
-            readOnly={!isLeader}
-            placeholder="https://github.com/..."
-            className={`w-full px-4 py-3 rounded-xl text-sm outline-none ${!isLeader ? "cursor-default" : ""}`}
-            style={inputStyle(!!gitUrl)}
-            onFocus={(e) => {
-              if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
-            }}
-            onBlur={(e) => {
-              if (!gitUrl)
-                e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          />
-          <div
-            className="flex items-center gap-2 mt-2 px-4 py-2.5 rounded-xl text-xs"
-            style={{
-              background: "var(--color-primary-soft)",
-              color: "var(--color-primary-hover)",
-            }}
-          >
-            <Info className="w-3.5 h-3.5 flex-shrink-0" />
-            저장소 URL을 입력하면 커밋, MR 등의 활동이 자동으로 동기화됩니다
-          </div>
-        </div>
       </section>
 
       </div>{/* 좌측 컬럼 끝 */}
@@ -665,7 +770,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           className="flex items-center gap-2 text-lg font-bold mb-1"
           style={{ color: "var(--color-text-primary)" }}
         >
-          ⚙️ 기술 스택
+          기술 스택
         </div>
         <p
           className="text-sm mb-4"
@@ -731,31 +836,63 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                 </button>
 
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-2 flex flex-wrap gap-2">
-                    {cat.stacks.map((stack) => {
-                      const sel = (techStacks[cat.key] ?? []).includes(stack);
-                      return (
+                  <div className="px-4 pb-4 pt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {isLeader && (
                         <button
-                          key={stack}
-                          onClick={() => isLeader && toggleStack(cat.key, stack)}
-                          disabled={!isLeader}
-                          className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const selected = techStacks[cat.key] ?? [];
+                            const allSelected = cat.stacks.every((s) => selected.includes(s));
+                            setTechStacks((prev) => ({
+                              ...prev,
+                              [cat.key]: allSelected ? [] : [...cat.stacks],
+                            }));
+                          }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full border transition-colors"
                           style={{
-                            borderColor: sel
-                              ? "var(--color-primary)"
-                              : "var(--color-border)",
-                            color: sel
-                              ? "var(--color-primary-hover)"
-                              : "var(--color-text-secondary)",
-                            background: sel
-                              ? "var(--color-primary-soft)"
-                              : "var(--color-surface)",
+                            borderColor: "var(--color-primary)",
+                            color: "var(--color-text-primary)",
+                            backgroundColor: "var(--color-primary-soft)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                            e.currentTarget.style.color = "#fff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
+                            e.currentTarget.style.color = "var(--color-text-primary)";
                           }}
                         >
-                          {stack}
+                          {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
                         </button>
-                      );
-                    })}
+                      )}
+                      {cat.stacks.map((stack) => {
+                        const sel = (techStacks[cat.key] ?? []).includes(stack);
+                        return (
+                          <button
+                            key={stack}
+                            onClick={() => isLeader && toggleStack(cat.key, stack)}
+                            disabled={!isLeader}
+                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                            style={{
+                              borderColor: sel
+                                ? "var(--color-primary)"
+                                : "var(--color-border)",
+                              color: sel
+                                ? "var(--color-text-primary)"
+                                : "var(--color-text-secondary)",
+                              background: sel
+                                ? "var(--color-primary-soft)"
+                                : "var(--color-surface)",
+                            }}
+                          >
+                            {stack}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -779,7 +916,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
                   style={{
                     background: "var(--color-primary-soft)",
-                    color: "var(--color-primary-hover)",
+                    color: "var(--color-text-primary)",
                     border: "1px solid var(--color-primary)",
                   }}
                 >
@@ -856,6 +993,7 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
           </p>
         </div>
         <button
+          onClick={() => setShowDeleteModal(true)}
           className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"
           style={{ background: "var(--color-error)" }}
           onMouseEnter={(e) =>
@@ -870,8 +1008,132 @@ const ProjectSettings = ({ dashboard, projectId }: ProjectSettingsProps) => {
       </div>
       )}
 
+      {/* ── 팀 나가기 ── */}
+      <div
+        className="rounded-2xl px-5 py-4 flex items-center justify-between"
+        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
+      >
+        <div>
+          <p
+            className="text-sm font-bold"
+            style={{ color: "var(--color-error)" }}
+          >
+            팀 나가기
+          </p>
+        </div>
+        <button
+          onClick={() => setShowLeaveModal(true)}
+          className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer"
+          style={{ background: "var(--color-error)" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "#DC2626")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "var(--color-error)")
+          }
+        >
+          나가기
+        </button>
+      </div>
+
       </div>{/* 우측 컬럼 끝 */}
       </div>{/* 그리드 끝 */}
+
+      {/* ── 팀 나가기 확인 모달 ── */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowLeaveModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-4xl">🚪</span>
+            <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>팀에서 나가시겠습니까?</p>
+            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+              나가면 다시 합류하려면 신청이 필요합니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
+                style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (!projectId) return;
+                  leaveProject(projectId)
+                    .then(() => {
+                      toast.success("팀에서 나갔습니다.");
+                      setShowLeaveModal(false);
+                      navigate("/my-projects");
+                    })
+                    .catch(() => toast.error("팀 나가기에 실패했습니다. 다시 시도해주세요."));
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "var(--color-error)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#DC2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 프로젝트 삭제 확인 모달 ── */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="rounded-2xl px-12 py-10 flex flex-col items-center gap-4 w-[400px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-4xl">🗑️</span>
+            <p className="text-lg font-bold" style={{ color: "var(--color-error)" }}>프로젝트를 삭제하시겠습니까?</p>
+            <p className="text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
+              삭제된 프로젝트는 복구할 수 없습니다.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
+                style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (!projectId) return;
+                  deleteProject(projectId)
+                    .then(() => {
+                      toast.success("프로젝트가 삭제되었습니다.");
+                      setShowDeleteModal(false);
+                      navigate("/my-projects");
+                    })
+                    .catch(() => toast.error("프로젝트 삭제에 실패했습니다. 다시 시도해주세요."));
+                }}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base transition-colors cursor-pointer"
+                style={{ background: "var(--color-error)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#DC2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
+              >
+                삭제하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

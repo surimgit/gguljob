@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { NotificationCategory } from '../../../api/notification';
+import { useNavigate } from 'react-router-dom';
+import type { NotificationCategory, ActionStatus } from '../../../api/notification';
 import { acceptRequest, rejectRequest } from '../../../api/projects';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -11,18 +12,56 @@ export interface Notification {
   message: string;
   time: string;
   isRead: boolean;
+  actionStatus: ActionStatus;
   referenceId: number | null;
+  referenceUrl: string | null;
 }
 
 // ── 알림 아이콘 ───────────────────────────────────────────────────────────────
-const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }> = {
-  TEAM: {
+const ICON_CONFIG: Partial<Record<NotifType, { wrapperClass: string; iconEl: React.ReactNode }>> = {
+  // 초대 / 지원 요청 — 사람 + 플러스
+  TEAM_INVITE: {
     wrapperClass: 'bg-[#e8e8f5]',
     iconEl: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  TEAM_APPLY: {
+    wrapperClass: 'bg-[#e8e8f5]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  // 수락됨 — 사람 + 체크
+  TEAM_ACCEPTED: {
+    wrapperClass: 'bg-[#dcfce7]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <polyline points="17 11 19 13 23 9" />
+      </svg>
+    ),
+  },
+  // 거절됨 — 사람 + X
+  TEAM_REJECTED: {
+    wrapperClass: 'bg-[#fee2e2]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="17" y1="9" x2="23" y2="15" />
+        <line x1="23" y1="9" x2="17" y2="15" />
       </svg>
     ),
   },
@@ -54,10 +93,29 @@ const ICON_CONFIG: Record<NotifType, { wrapperClass: string; iconEl: React.React
       </svg>
     ),
   },
+  GITHUB: {
+    wrapperClass: 'bg-[#f0f0f0]',
+    iconEl: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24292f" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+      </svg>
+    ),
+  },
+};
+
+const FALLBACK_ICON = {
+  wrapperClass: 'bg-[#e5e7eb]',
+  iconEl: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
 };
 
 const NotifIcon = ({ type }: { type: NotifType }) => {
-  const { wrapperClass, iconEl } = ICON_CONFIG[type];
+  const { wrapperClass, iconEl } = ICON_CONFIG[type] ?? FALLBACK_ICON;
   return (
     <div className={`flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ${wrapperClass}`}>
       {iconEl}
@@ -70,23 +128,41 @@ const NotificationItem = ({
   notif,
   onDelete,
   onMarkRead,
+  onClose,
 }: {
   notif: Notification;
   onDelete: (id: number) => void;
   onMarkRead: (id: number) => void;
+  onClose: () => void;
 }) => {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
-  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(() => {
-    const saved = localStorage.getItem(`notif-action-${notif.id}`);
-    return saved as 'accepted' | 'rejected' | null;
-  });
+  const [actionDone, setActionDone] = useState<'accepted' | 'rejected' | null>(
+    notif.actionStatus === 'ACCEPTED' ? 'accepted'
+      : notif.actionStatus === 'REJECTED' ? 'rejected'
+      : null
+  );
   const [loading, setLoading] = useState(false);
 
-  const isInvite = notif.type === 'TEAM' && notif.referenceId !== null && notif.message.includes('초대되었습니다');
+  const isInvite = (notif.type === 'TEAM_INVITE' || notif.type === 'TEAM_APPLY')
+    && notif.referenceId !== null;
+  const isPending = isInvite && notif.actionStatus === 'PENDING' && !actionDone;
 
   const handleClick = () => {
-    if (!notif.isRead) onMarkRead(notif.id);
-    if (isInvite && !actionDone) setExpanded(prev => !prev);
+    if (!notif.isRead && !isPending) onMarkRead(notif.id);
+    if (isPending) {
+      setExpanded(prev => !prev);
+      return;
+    }
+    // referenceUrl이 있으면 해당 페이지로 이동
+    if (notif.referenceUrl) {
+      onClose();
+      if (notif.referenceUrl.startsWith('http')) {
+        window.open(notif.referenceUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(notif.referenceUrl);
+      }
+    }
   };
 
   const handleAccept = async (e: React.MouseEvent) => {
@@ -95,9 +171,9 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await acceptRequest(notif.referenceId);
-      localStorage.setItem(`notif-action-${notif.id}`, 'accepted');
       setActionDone('accepted');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 수락 실패:', err);
     } finally {
@@ -111,9 +187,9 @@ const NotificationItem = ({
     setLoading(true);
     try {
       await rejectRequest(notif.referenceId);
-      localStorage.setItem(`notif-action-${notif.id}`, 'rejected');
       setActionDone('rejected');
       setExpanded(false);
+      if (!notif.isRead) onMarkRead(notif.id);
     } catch (err) {
       console.error('초대 거절 실패:', err);
     } finally {
@@ -126,7 +202,7 @@ const NotificationItem = ({
       onClick={handleClick}
       className={`group flex flex-col rounded-xl px-5 pt-4 pb-4 transition-shadow duration-200 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${
         notif.isRead
-          ? 'bg-[#f9fafb] shadow-none cursor-default'
+          ? `bg-[#f9fafb] shadow-none ${notif.referenceUrl ? 'cursor-pointer' : 'cursor-default'}`
           : 'bg-surface shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)] cursor-pointer'
       }`}
     >
@@ -151,7 +227,7 @@ const NotificationItem = ({
             <span className="w-2 h-2 rounded-full bg-blue group-hover:hidden" />
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); localStorage.removeItem(`notif-action-${notif.id}`); onDelete(notif.id); }}
+            onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
             aria-label="알림 삭제"
             className={`w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:bg-gray-100 hover:text-text-primary transition-all duration-150 ${
               notif.isRead ? 'opacity-0 group-hover:opacity-100' : 'hidden group-hover:flex'
@@ -214,7 +290,6 @@ interface NotificationPanelProps {
 
 const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, onClose }: NotificationPanelProps) => {
   const handleClearAll = () => {
-    notifications.forEach(n => localStorage.removeItem(`notif-action-${n.id}`));
     onClearAll();
   };
 
@@ -256,14 +331,12 @@ const NotificationPanel = ({ notifications, onDelete, onMarkRead, onClearAll, on
       </div>
     </div>
 
-    {/* 알림 목록 or 빈 상태 (안 읽은 알림 먼저) */}
+    {/* 알림 목록 or 빈 상태 (백엔드 정렬: PENDING 최우선 → 안 읽은 것 → 최신순) */}
     <div className="flex flex-col gap-1.5 p-3 overflow-y-auto max-h-[420px]">
       {notifications.length > 0 ? (
-        [...notifications]
-          .sort((a, b) => Number(a.isRead) - Number(b.isRead))
-          .map(notif => (
-            <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} />
-          ))
+        notifications.map(notif => (
+          <NotificationItem key={notif.id} notif={notif} onDelete={onDelete} onMarkRead={onMarkRead} onClose={onClose} />
+        ))
       ) : (
         <EmptyState />
       )}

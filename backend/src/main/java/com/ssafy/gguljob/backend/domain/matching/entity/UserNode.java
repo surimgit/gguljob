@@ -15,9 +15,11 @@ import java.util.Set;
 public class UserNode {
 
     @Id
-    private String id; // MySQL의 users.user_id
+    private Long id; // MySQL의 users.user_id
 
     private String userName; // MySQL의 user_name
+
+    private String experienceLevel; // ExperienceLevel enum name (BEGINNER, JUNIOR, MID_LEVEL, SENIOR)
 
     // 유저 -> (HAS_SKILL) -> 스킬
     @Relationship(type = "HAS_SKILL", direction = Relationship.Direction.OUTGOING)
@@ -48,6 +50,7 @@ public class UserNode {
 
     public void updateFrom(UserNode newData) {
         this.userName = newData.getUserName();
+        this.experienceLevel = newData.getExperienceLevel();
         this.skills = newData.getSkills();
         this.roles = newData.getRoles();
         this.mbti = newData.getMbti();

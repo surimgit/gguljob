@@ -1,9 +1,11 @@
 package com.ssafy.gguljob.backend.domain.join.service;
 
+import com.ssafy.gguljob.backend.domain.join.dto.MyApplicationDto;
 import com.ssafy.gguljob.backend.domain.join.dto.PendingJoinRequestDto;
 import com.ssafy.gguljob.backend.domain.join.entity.JoinRequest;
 import com.ssafy.gguljob.backend.domain.join.event.JoinRequestEvent;
 import com.ssafy.gguljob.backend.domain.join.repository.JoinRequestRepository;
+import com.ssafy.gguljob.backend.domain.join.type.JoinRequestStatus;
 import com.ssafy.gguljob.backend.domain.join.type.JoinRequestType;
 import com.ssafy.gguljob.backend.domain.project.entity.Project;
 import com.ssafy.gguljob.backend.domain.project.entity.ProjectMember;
@@ -15,7 +17,13 @@ import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.domain.user.entity.User;
 import com.ssafy.gguljob.backend.domain.user.repository.UserRepository;
 import com.ssafy.gguljob.backend.domain.user.type.PositionType;
+import com.ssafy.gguljob.backend.domain.matching.event.ProjectSyncEvent;
+import com.ssafy.gguljob.backend.domain.notification.service.NotificationService;
+import com.ssafy.gguljob.backend.domain.notification.type.ActionStatus;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,12 +39,44 @@ public class JoinRequestService {
 
     private final ProjectPositionRepository projectPositionRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+
+    // 내 지원/초대 내역 조회
+    @Transactional(readOnly = true)
+    public List<MyApplicationDto> getMyApplications(Long userId) {
+        List<JoinRequest> requests = joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        // N+1 방지: positionId 일괄 조회 후 Map으로 캐싱
+        List<Long> positionIds = requests.stream()
+            .map(JoinRequest::getPositionId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, ProjectPosition> positionMap = positionIds.isEmpty()
+            ? Collections.emptyMap()
+            : projectPositionRepository.findAllById(positionIds).stream()
+                .collect(Collectors.toMap(ProjectPosition::getId, pp -> pp));
+
+        return requests.stream()
+            .map(request -> {
+                String positionName = null;
+                if (request.getPositionId() != null) {
+                    ProjectPosition pp = positionMap.get(request.getPositionId());
+                    if (pp != null) positionName = pp.getRole().name();
+                } else if (request.getRole() != null) {
+                    positionName = request.getRole().name();
+                }
+                return MyApplicationDto.of(request, positionName);
+            })
+            .collect(Collectors.toList());
+    }
 
     // 유저 -> 프로젝트 지원
     @Transactional
     public void applyProject(Long userId, Long projectId, Long positionId, String appealContent) {
-        if (joinRequestRepository.existsByProjectIdAndUserId(projectId, userId)) {
+        if (joinRequestRepository.existsByProjectIdAndUserIdAndStatus(projectId, userId, JoinRequestStatus.PENDING)) {
             throw new IllegalArgumentException("이미 해당 프로젝트에 지원했거나 초대받은 상태입니다.");
         }
 
@@ -72,7 +112,7 @@ public class JoinRequestService {
             throw new IllegalArgumentException("프로젝트 리더만 팀원을 초대할 수 있습니다.");
         }
 
-        if (joinRequestRepository.existsByProjectIdAndUserId(projectId, targetUserId)) {
+        if (joinRequestRepository.existsByProjectIdAndUserIdAndStatus(projectId, targetUserId, JoinRequestStatus.PENDING)) {
             throw new IllegalArgumentException("이미 초대했거나 지원한 유저입니다.");
         }
 
@@ -135,6 +175,9 @@ public class JoinRequestService {
 
         projectMemberRepository.save(newMember);
 
+        // Neo4j 동기화 (멤버 추가로 포지션 현황 변경)
+        eventPublisher.publishEvent(ProjectSyncEvent.sync(joinRequest.getProject().getId()));
+
         Long targetNotifyUserId = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? joinRequest.getUser().getId()
             : joinRequest.getProject().getLeader().getId();
@@ -142,6 +185,8 @@ public class JoinRequestService {
         String message = (joinRequest.getRequestType() == JoinRequestType.APPLY)
             ? "축하합니다! 프로젝트 합류가 수락되었습니다."
             : joinRequest.getUser().getUserName() + "님이 초대를 수락했습니다.";
+
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.ACCEPTED);
 
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_ACCEPT"
@@ -177,8 +222,32 @@ public class JoinRequestService {
             ? "프로젝트 합류가 거절되었습니다."
             : joinRequest.getUser().getUserName() + "님이 초대를 거절했습니다.";
 
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.REJECTED);
+
         eventPublisher.publishEvent(new JoinRequestEvent(
             targetNotifyUserId, joinRequest.getProject().getId(), joinRequest.getId(), message, "JOIN_REJECT"
         ));
+    }
+
+    // 프로젝트 지원/초대 취소 로직
+    @Transactional
+    public void cancelRequest(Long loginUserId, Long requestId) {
+        JoinRequest joinRequest = joinRequestRepository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 요청입니다."));
+
+        // 권한 검증: 지원은 본인만, 초대는 리더만 취소 가능
+        if (joinRequest.getRequestType() == JoinRequestType.APPLY) {
+            if (!joinRequest.getUser().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("본인의 지원만 취소할 수 있습니다.");
+            }
+        } else if (joinRequest.getRequestType() == JoinRequestType.INVITE) {
+            if (!joinRequest.getProject().getLeader().getId().equals(loginUserId)) {
+                throw new IllegalArgumentException("프로젝트 리더만 초대를 취소할 수 있습니다.");
+            }
+        }
+
+        joinRequest.cancel();
+
+        notificationService.updateActionStatus(joinRequest.getId(), ActionStatus.CANCELED);
     }
 }

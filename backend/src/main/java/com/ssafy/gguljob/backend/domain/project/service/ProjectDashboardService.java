@@ -1,7 +1,9 @@
 package com.ssafy.gguljob.backend.domain.project.service;
 
 import com.ssafy.gguljob.backend.domain.github.entity.GitRepository;
+import com.ssafy.gguljob.backend.domain.github.entity.PrReview;
 import com.ssafy.gguljob.backend.domain.github.repository.GitRepositoryRepository;
+import com.ssafy.gguljob.backend.domain.github.repository.PrReviewRepository;
 import com.ssafy.gguljob.backend.domain.github.repository.PullRequestRepository;
 import com.ssafy.gguljob.backend.domain.project.dto.PersonalSpaceResponse;
 import com.ssafy.gguljob.backend.domain.project.dto.PrItem;
@@ -15,9 +17,9 @@ import com.ssafy.gguljob.backend.domain.project.repository.ProjectRepository;
 import com.ssafy.gguljob.backend.domain.project.repository.ProjectSkillRepository;
 import com.ssafy.gguljob.backend.domain.project.type.MemberStatus;
 import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +38,7 @@ public class ProjectDashboardService {
     private final ProjectSkillRepository projectSkillRepository;
     private final TroubleshootingRepository troubleshootingRepository;
     private final PullRequestRepository pullRequestRepository;
+    private final PrReviewRepository prReviewRepository;
     private final GitRepositoryRepository gitRepositoryRepository;
 
     private void validateAccess(Project project, Long userId){
@@ -67,7 +70,7 @@ public class ProjectDashboardService {
         // 스킬 조회
         List<String> skillNames = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
         ProjectResponse.ProjectOverviewDto projectInfo = new ProjectResponse.ProjectOverviewDto(
-            project.getTitle(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames
+            project.getTitle(), project.getTopic(), project.getTeamName(), project.getDomain(), project.getDescription(), skillNames, project.getStatus()
         );
 
         // 팀원 통계
@@ -125,14 +128,14 @@ public class ProjectDashboardService {
 
         // 최근 활동 내역
         List<ProjectResponse.ActivityLogDto> top5Activities = pullRequestRepository
-            .findTop5ByProject_IdOrderByCreatedAtDesc(projectId)
+            .findTop5ByProject_IdOrderByGithubCreatedAtDesc(projectId)
             .stream()
             .map(pr -> new ProjectResponse.ActivityLogDto(
                 pr.getUser().getUserName(),
                 pr.getUser().getProfileImageUrl(),
                 pr.getTitle(),
                 pr.getBranchName(),
-                pr.getCreatedAt(),
+                pr.getGithubCreatedAt(),
                 "PR"
             ))
             .toList();
@@ -146,7 +149,7 @@ public class ProjectDashboardService {
         // 상단 통계 조회
         long prCount = pullRequestRepository.countByProject_IdAndUser_Id(projectId, userId);
         long tsCount = troubleshootingRepository.countByProject_IdAndUser_Id(projectId, userId);
-        long reviewCount = 0;
+        long reviewCount = prReviewRepository.countByPullRequest_User_IdAndPullRequest_Project_Id(userId, projectId);
 
         PersonalSpaceResponse.Stats stats = new PersonalSpaceResponse.Stats(prCount, reviewCount, tsCount);
 
@@ -171,16 +174,28 @@ public class ProjectDashboardService {
             ))
             .toList();
 
-        List<PersonalSpaceResponse.ReviewItem> reviewItems = Collections.emptyList();
+        List<PersonalSpaceResponse.ReviewItem> reviewItems = prReviewRepository
+            .findByPullRequest_User_IdAndPullRequest_Project_IdOrderByIdDesc(userId, projectId, top5)
+            .stream()
+            .map(r -> new PersonalSpaceResponse.ReviewItem(
+                r.getId(),
+                r.getUser().getUserName(),
+                r.getPullRequest().getTitle(),
+                r.getPullRequest().getPrNumber(),
+                r.getComment() != null && r.getComment().length() > 100
+                    ? r.getComment().substring(0, 100) + "..."
+                    : r.getComment()
+            ))
+            .toList();
 
         return new PersonalSpaceResponse.Dashboard(stats, prItems, reviewItems, tsItems);
     }
 
-    public org.springframework.data.domain.Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
+    public Page<PrItem> getPagedMyPullRequests(Long projectId, Long userId, Pageable pageable) {
         return pullRequestRepository.findPagedMyPrItems(projectId, userId, pageable);
     }
 
-    public org.springframework.data.domain.Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
+    public Page<TroubleshootingItem> getPagedMyTroubleshootings(Long projectId, Long userId, Pageable pageable) {
         return troubleshootingRepository.findPagedMyTsItems(projectId, userId, pageable)
             .map(ts -> new TroubleshootingItem(
                 ts.getId(),
@@ -193,5 +208,11 @@ public class ProjectDashboardService {
                 ts.getPullRequest().getTitle(),                     // prTitle
                 ts.getCreatedAt()
             ));
+    }
+
+    /** GitHub PR 기여자 중 프로젝트 팀원이 아닌 유저 목록 */
+    @Transactional(readOnly = true)
+    public List<PullRequestRepository.NonMemberContributorProjection> getNonMemberContributors(Long projectId) {
+        return pullRequestRepository.findNonMemberContributors(projectId);
     }
 }

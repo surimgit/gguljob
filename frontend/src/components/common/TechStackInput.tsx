@@ -1,16 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
-import { SKILLS_BY_CATEGORY, SKILL_NAMES, ROLE_LIST, ROLE_DISPLAY_NAMES, type RoleCode } from '../../constants/skills';
+import { getSkills, type SkillDto } from '../../api/skill';
+import { SKILL_CATEGORY_META, SKILLS } from '../../constants/skills';
 
-/** skills.ts 카테고리 중 스킬이 있는 것만 탭으로 표시 */
-const CATEGORY_TABS: { code: RoleCode; label: string; skills: string[] }[] =
-  ROLE_LIST
-    .filter((code) => (SKILLS_BY_CATEGORY[code] ?? []).length > 0)
-    .map((code) => ({
-      code,
-      label: ROLE_DISPLAY_NAMES[code],
-      skills: SKILLS_BY_CATEGORY[code],
-    }));
+const CATEGORY_ORDER = Object.fromEntries(SKILL_CATEGORY_META.map((m, i) => [m.key, i]));
+const SKILL_ORDER = Object.fromEntries(SKILLS.map((s, i) => [s.name, i]));
 
 interface Props {
   value: string[];
@@ -18,16 +12,46 @@ interface Props {
 }
 
 const TechStackInput = ({ value, onChange }: Props) => {
-  const [activeCategory, setActiveCategory] = useState<RoleCode>(CATEGORY_TABS[0].code);
+  const [skillsByCategory, setSkillsByCategory] = useState<Record<string, SkillDto[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string>('');
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const activeSkills = SKILLS_BY_CATEGORY[activeCategory] ?? [];
+  useEffect(() => {
+    getSkills()
+      .then((data) => {
+        setSkillsByCategory(data.categories);
+        const firstCategory = Object.keys(data.categories)[0] ?? '';
+        setActiveCategory(firstCategory);
+      })
+      .catch((e) => console.error('Failed to fetch skills:', e))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const categoryTabs = useMemo(
+    () => Object.keys(skillsByCategory).sort(
+      (a, b) => (CATEGORY_ORDER[a] ?? 999) - (CATEGORY_ORDER[b] ?? 999)
+    ),
+    [skillsByCategory],
+  );
+
+  const activeSkills = useMemo(
+    () => [...(skillsByCategory[activeCategory] ?? [])].sort(
+      (a, b) => (SKILL_ORDER[a.name] ?? 999) - (SKILL_ORDER[b.name] ?? 999)
+    ).map((s) => s.name),
+    [skillsByCategory, activeCategory],
+  );
+
+  const allSkillNames = useMemo(
+    () => Object.values(skillsByCategory).flat().map((s) => s.name),
+    [skillsByCategory],
+  );
 
   const suggestions = input.trim()
-    ? SKILL_NAMES.filter(
+    ? allSkillNames.filter(
         (s) => s.toLowerCase().includes(input.toLowerCase()) && !value.includes(s)
       )
     : [];
@@ -65,26 +89,42 @@ const TechStackInput = ({ value, onChange }: Props) => {
 
       {/* 카테고리 탭 */}
       <div className="flex gap-1 flex-wrap">
-        {CATEGORY_TABS.map(({ code, label }) => (
+        {isLoading ? Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="w-16 h-7 rounded-full bg-gray-200 animate-pulse" />
+        )) : categoryTabs.map((category) => (
           <button
-            key={code}
+            key={category}
             type="button"
-            onClick={() => setActiveCategory(code)}
+            onClick={() => setActiveCategory(category)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-              activeCategory === code
+              activeCategory === category
                 ? 'bg-primary text-text-primary'
                 : 'bg-background text-text-secondary hover:bg-primary-soft'
             }`}
           >
-            {label}
+            {category}
           </button>
         ))}
       </div>
 
-      <hr className="border-border" />
-
       {/* 추천 칩 */}
       <div className="flex flex-wrap gap-2">
+        {!isLoading && activeSkills.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const allSelected = activeSkills.every((s) => value.includes(s));
+              if (allSelected) {
+                onChange(value.filter((s) => !activeSkills.includes(s)));
+              } else {
+                onChange([...value, ...activeSkills.filter((s) => !value.includes(s))]);
+              }
+            }}
+            className="text-xs font-bold px-3 py-1.5 rounded-full border border-primary text-text-primary bg-primary-soft hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
+          >
+            {activeSkills.every((s) => value.includes(s)) ? '전체 해제' : '전체 선택'}
+          </button>
+        )}
         {activeSkills.map((stack) => {
           const selected = value.includes(stack);
           return (

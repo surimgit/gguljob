@@ -7,6 +7,7 @@ import type { ProjectCardDto, ProjectPositionDto } from '../../../types/project'
 import { applyToPosition } from '../../../api/projects';
 import { getRoleDisplayName, getRoleColor } from '../../../constants/skills';
 import { getCategoryColorPair } from '../../../constants/domains';
+import { STATUS_LABEL, getStatusStyle, getEffectiveStatus } from './ProjectCard';
 
 interface ProjectApplyModalProps {
   project: ProjectCardDto;
@@ -15,12 +16,6 @@ interface ProjectApplyModalProps {
 }
 
 
-
-const STATUS_LABEL: Record<string, string> = {
-  RECRUITING: '모집중',
-  PROCEEDING: '진행중',
-  DONE: '마감',
-};
 
 function PositionCard({
   label, color, position, selected, onSelect,
@@ -87,6 +82,21 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
 
   const openPositions = project.positions.filter((p) => p.currentCount < p.targetCount);
   const totalOpen = openPositions.reduce((sum, p) => sum + (p.targetCount - p.currentCount), 0);
+  const effectiveStatus = getEffectiveStatus(project.status, project.positions);
+  const statusStyle = getStatusStyle(effectiveStatus);
+
+  const handleConfirmDismiss = () => {
+    setShowConfirm(false);
+    onApplied?.();
+    onClose();
+  };
+
+  const handleClose = () => {
+    setSelectedRole(null);
+    setIntro('');
+    setShowConfirm(false);
+    onClose();
+  };
 
   const handleApply = async () => {
     if (!selectedRole) return;
@@ -96,10 +106,12 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
     setSubmitting(true);
     try {
       await applyToPosition(project.projectId, position.positionId, intro || undefined);
-      onApplied?.();
       setShowConfirm(true);
-    } catch {
-      toast.error('지원에 실패했습니다. 다시 시도해주세요.');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        '지원에 실패했습니다. 다시 시도해주세요.';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -108,14 +120,14 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
   return (
     <BaseModal
       isOpen
-      onClose={onClose}
+      onClose={handleClose}
       containerClassName="bg-white rounded-[24px] w-[520px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
     >
       {/* 상단 바 */}
-      <div className="h-11 bg-primary w-full relative flex items-center justify-end px-5">
+      <div className="h-11 shrink-0 bg-primary w-full relative flex items-center justify-end px-5">
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
         >
           <X className="w-4 h-4 text-gray-600" />
@@ -134,9 +146,15 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
             {project.domain}
           </span>
           <div className="flex items-center gap-[5px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#22c55e]" />
-            <span className="text-[#22c55e] font-bold text-[13px]">
-              {STATUS_LABEL[project.status] ?? project.status}
+            <div
+              className="w-[8px] h-[8px] rounded-full"
+              style={{ backgroundColor: statusStyle.dot }}
+            />
+            <span
+              className="font-bold text-[13px]"
+              style={{ color: statusStyle.text }}
+            >
+              {STATUS_LABEL[effectiveStatus]}
             </span>
           </div>
         </div>
@@ -168,63 +186,74 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
         {/* 팀원 모집 */}
         <h3 className="font-extrabold text-[#111827] text-[16px] mb-[16px]">팀원 모집</h3>
 
-        <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
-          <div className="flex items-center gap-[8px]">
-            <span className="text-[18px]">📢</span>
-            <span className="text-[14px] font-bold text-[#111827]">
-              총 <span className="font-black text-primary-hover">{totalOpen}명</span> 모집중
-            </span>
+        {project.status === 'DONE' ? (
+          <div className="flex flex-col items-center justify-center py-[40px] text-center">
+            <p className="text-[#9ca3af] font-bold text-[15px]">완료된 프로젝트에는 지원할 수 없습니다.</p>
           </div>
-          <span className="text-[13px] text-[#9ca3af] font-bold">
-            {selectedRole ? '직무가 선택되었습니다' : '직무를 선택하세요'}
-          </span>
-        </div>
+        ) : totalOpen === 0 ? (
+          <div className="flex flex-col items-center justify-center py-[40px] text-center">
+            <p className="text-[#9ca3af] font-bold text-[15px]">현재 모든 포지션의 모집이 마감되었습니다.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between bg-primary-soft rounded-[12px] px-[16px] py-[12px] mb-[16px]">
+              <div className="flex items-center gap-[8px]">
+                <span className="text-[14px] font-bold text-[#111827]">
+                  총 <span className="font-black text-primary-hover">{totalOpen}명</span> 모집중
+                </span>
+              </div>
+              <span className="text-[13px] text-[#9ca3af] font-bold">
+                {selectedRole ? '직무가 선택되었습니다' : '직무를 선택하세요'}
+              </span>
+            </div>
 
-        {/* 포지션 카드 */}
-        <div className="flex flex-col gap-[16px]">
-          {openPositions.map((pos) => (
-            <PositionCard
-              key={pos.role}
-              label={getRoleDisplayName(pos.role)}
-              color={getRoleColor(pos.role)}
-              position={pos}
-              selected={selectedRole === pos.role}
-              onSelect={() => setSelectedRole(pos.role)}
-            />
-          ))}
-        </div>
+            {/* 포지션 카드 */}
+            <div className="flex flex-col gap-[16px]">
+              {openPositions.map((pos) => (
+                <PositionCard
+                  key={pos.role}
+                  label={getRoleDisplayName(pos.role)}
+                  color={getRoleColor(pos.role)}
+                  position={pos}
+                  selected={selectedRole === pos.role}
+                  onSelect={() => setSelectedRole(pos.role)}
+                />
+              ))}
+            </div>
 
-        {/* 자기소개 */}
-        <div className="mt-[20px]">
-          <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
-            자기소개
-          </label>
-          <textarea
-            value={intro}
-            onChange={(e) => {
-              if (e.target.value.length <= MAX_INTRO_LENGTH) setIntro(e.target.value);
-            }}
-            placeholder="본인을 간략하게 소개해 주세요"
-            rows={3}
-            className="w-full rounded-[12px] border-2 border-[#e5e7eb] bg-white px-[16px] py-[12px] text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-primary focus:outline-none resize-none transition-colors"
-          />
-          <p className="text-[12px] text-[#9ca3af] text-right mt-[4px]">
-            {intro.length}/{MAX_INTRO_LENGTH}
-          </p>
-        </div>
+            {/* 자기소개 */}
+            <div className="mt-[20px]">
+              <label className="block text-[16px] font-extrabold text-[#111827] mb-[8px]">
+                자기소개
+              </label>
+              <textarea
+                value={intro}
+                onChange={(e) => {
+                  if (e.target.value.length <= MAX_INTRO_LENGTH) setIntro(e.target.value);
+                }}
+                placeholder="본인을 간략하게 소개해 주세요"
+                rows={3}
+                className="w-full rounded-[12px] border-2 border-[#e5e7eb] bg-white px-[16px] py-[12px] text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-primary focus:outline-none resize-none transition-colors"
+              />
+              <p className="text-[12px] text-[#9ca3af] text-right mt-[4px]">
+                {intro.length}/{MAX_INTRO_LENGTH}
+              </p>
+            </div>
 
-        {/* 지원 버튼 */}
-        <button
-          disabled={!selectedRole || submitting}
-          onClick={handleApply}
-          className={`w-full mt-[24px] py-[16px] rounded-[14px] font-black text-[15px] transition-all ${
-            selectedRole && !submitting
-              ? 'bg-primary text-[#111827] hover:bg-primary-hover shadow-[0px_4px_12px_0px_rgba(247,201,72,0.4)]'
-              : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
-          }`}
-        >
-          {submitting ? '지원 중...' : selectedRole ? '지원하기' : '직무를 선택해 주세요'}
-        </button>
+            {/* 지원 버튼 */}
+            <button
+              disabled={!selectedRole || submitting}
+              onClick={handleApply}
+              className={`w-full mt-[24px] py-[16px] rounded-[14px] font-black text-[15px] transition-all ${
+                selectedRole && !submitting
+                  ? 'bg-primary text-[#111827] hover:bg-primary-hover shadow-[0px_4px_12px_0px_rgba(247,201,72,0.4)]'
+                  : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+              }`}
+            >
+              {submitting ? '지원 중...' : selectedRole ? '지원하기' : '직무를 선택해 주세요'}
+            </button>
+          </>
+        )}
       </div>
 
       {showConfirm && (
@@ -232,14 +261,8 @@ const ProjectApplyModal = ({ project, onClose, onApplied }: ProjectApplyModalPro
           title="지원 완료"
           subtitle="프로젝트에 지원이 완료되었습니다."
           confirmText="확인"
-          onConfirm={() => {
-            setShowConfirm(false);
-            onClose();
-          }}
-          onClose={() => {
-            setShowConfirm(false);
-            onClose();
-          }}
+          onConfirm={handleConfirmDismiss}
+          onClose={handleConfirmDismiss}
         />
       )}
     </BaseModal>

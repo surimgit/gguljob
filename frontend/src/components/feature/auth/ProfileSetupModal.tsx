@@ -7,6 +7,7 @@ import Step3Experience from "./steps/Step3Experience";
 import Step4Languages from "./steps/Step4Languages";
 import Step5MBTI from "./steps/Step5MBTI";
 import Step6Leadership from "./steps/Step6Leadership";
+import Step7WorkExperience from "./steps/Step7WorkExperience";
 import ProfileCompletePopup from "./ProfileCompletePopup";
 import ProfileEditCompletePopup from "./ProfileEditCompletePopup";
 
@@ -17,6 +18,7 @@ interface FormData {
   skills: string[];
   mbti: string;
   leaderScore: number;
+  workExperience: string;
 }
 
 interface Props {
@@ -28,7 +30,8 @@ interface Props {
   mode?: 'onboarding' | 'edit';
 }
 
-const SHOW_PROGRESS = [true, true, true, true, true, true];
+const TOTAL_STEPS = 7;
+const SHOW_PROGRESS = [true, true, true, true, true, true, true];
 
 const isStepValid = (step: number, formData: FormData): boolean => {
   switch (step) {
@@ -39,10 +42,12 @@ const isStepValid = (step: number, formData: FormData): boolean => {
     case 3:
       return formData.experience !== "";
     case 4:
-      return formData.skills.length > 0;
+      return formData.workExperience !== "";
     case 5:
-      return formData.mbti !== "";
+      return formData.skills.length > 0;
     case 6:
+      return formData.mbti !== "";
+    case 7:
       return true;
     default:
       return false;
@@ -56,6 +61,7 @@ const DEFAULT_FORM: FormData = {
   skills: [],
   mbti: "",
   leaderScore: 30,
+  workExperience: "",
 };
 
 const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData, mode = 'onboarding' }) => {
@@ -83,7 +89,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
   const handleNext = () => {
     if (!canNext) return;
-    if (step < 6) {
+    if (step < TOTAL_STEPS) {
       setStep((s) => s + 1);
     } else {
       setShowComplete(true);
@@ -110,7 +116,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
-        <div className="bg-surface rounded-[20px] w-full max-w-[620px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[620px]">
+        <div className="bg-surface rounded-[20px] w-full max-w-[620px] shadow-2xl pointer-events-auto overflow-hidden flex flex-col h-[min(90vh,720px)]">
           {/* Header */}
           <div className="px-6 pt-3 flex-shrink-0">
             {/* 로고 + X 버튼 */}
@@ -135,13 +141,13 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                   프로필 설정
                 </span>
                 <span className="text-[13px] text-primary font-bold">
-                  {step}/6
+                  {step}/{TOTAL_STEPS}
                 </span>
               </div>
               <div className="h-[5px] rounded-full bg-gray-200 mb-6 overflow-hidden">
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-300"
-                  style={{ width: `${(step / 6) * 100}%` }}
+                  style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
                 />
               </div>
             </div>
@@ -168,18 +174,24 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               />
             )}
             {step === 4 && (
+              <Step7WorkExperience
+                selected={formData.workExperience}
+                onChange={(v) => update("workExperience", v)}
+              />
+            )}
+            {step === 5 && (
               <Step4Languages
                 selected={formData.skills}
                 onChange={(v) => update("skills", v)}
               />
             )}
-            {step === 5 && (
+            {step === 6 && (
               <Step5MBTI
                 selected={formData.mbti}
                 onChange={(v) => update("mbti", v)}
               />
             )}
-            {step === 6 && (
+            {step === 7 && (
               <Step6Leadership
                 value={formData.leaderScore}
                 onChange={(v) => update("leaderScore", v)}
@@ -208,7 +220,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
             >
-              {step === 6 ? "완료" : "다음"}
+              {step === TOTAL_STEPS ? "완료" : "다음"}
             </button>
           </div>
         </div>
@@ -226,20 +238,23 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           <div className="fixed inset-0 bg-black/50 z-[60]" />
           <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 pointer-events-none">
             <div className="bg-white rounded-2xl w-full max-w-[380px] p-6 shadow-2xl pointer-events-auto text-center">
-              <div className="text-4xl mb-3">⚠️</div>
+              <div className="text-4xl mb-3">{mode === 'edit' ? '✏️' : '⚠️'}</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                프로필 설정을 완료해주세요
+                {mode === 'edit' ? '수정을 취소하시겠습니까?' : '프로필 설정을 완료해주세요'}
               </h3>
               <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                프로필 설정을 완료하지 않으면 서비스를 이용할 수 없습니다.<br />
-                지금 나가시면 로그아웃됩니다.
+                {mode === 'edit' ? (
+                  '변경사항이 저장되지 않습니다.'
+                ) : (
+                  <>프로필 설정을 완료하지 않으면 서비스를 이용할 수 없습니다.<br />지금 나가시면 로그아웃됩니다.</>
+                )}
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowExitWarning(false)}
                   className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  계속 설정하기
+                  {mode === 'edit' ? '계속 수정' : '계속 설정하기'}
                 </button>
                 <button
                   onClick={() => {

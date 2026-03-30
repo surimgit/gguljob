@@ -80,4 +80,9 @@ public class S3ImageService {
     public S3Object getObject(String s3Key) {
         return amazonS3.getObject(bucket, s3Key);
     }
+
+    // S3 객체 삭제
+    public void deleteObject(String s3Key) {
+        amazonS3.deleteObject(bucket, s3Key);
+    }
 }

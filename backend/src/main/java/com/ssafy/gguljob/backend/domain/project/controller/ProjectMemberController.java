@@ -62,6 +62,18 @@ public class ProjectMemberController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "팀원 모집 공고 삭제", description = "팀장은 팀원 모집 공고를 삭제할 수 있습니다.")
+    @DeleteMapping("/recruitments/{recruitmentId}")
+    public ResponseEntity<Void> deleteRecruitment(
+        @PathVariable("projectId") Long projectId,
+        @PathVariable("recruitmentId") Long recruitmentId,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        projectMemberService.deleteRecruitment(projectId, recruitmentId, userDetails.getId());
+
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "모집 상태 수정", description = "공고의 상태를 진행(RECRUITING) 또는 마감(DONE)으로 변경합니다.")
     @PatchMapping("/recruitments/{positionId}/status")
     public ResponseEntity<ProjectRecruitmentDto.UpdateResponse> updateStatus(

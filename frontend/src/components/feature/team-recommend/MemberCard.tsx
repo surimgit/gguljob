@@ -1,10 +1,10 @@
 import { ChevronRight } from "lucide-react";
-import { getRoleDisplayName, getRoleColor } from "../../../constants/skills";
+import { getRoleDisplayName, getRoleColor, getExperienceLevelDisplay, getExperienceLevelStyle } from "../../../constants/skills";
 
 interface MemberCardProps {
   name: string;
-  position: string;
-  level: string;
+  position: string | null;
+  level: string | null;
   matchRate: number;
   introduction: string;
   techStacks: string[];
@@ -26,10 +26,12 @@ const MemberCard = ({
   matchRate,
   introduction,
   techStacks,
+  profileImage,
   onClickProfile,
 }: MemberCardProps) => {
   const posColor = getRoleColor(position);
   const matchStyle = getMatchStyle(matchRate);
+  const lvStyle = getExperienceLevelStyle(level);
 
   return (
     <button
@@ -38,12 +40,20 @@ const MemberCard = ({
     >
       {/* 1행: 프로필 이미지 + 이름/포지션/숙련도 + 적합도 배지 */}
       <div className="flex items-center gap-3 mb-3">
-        <div
-          className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
-          style={{ background: "var(--color-primary-hover)" }}
-        >
-          {name.charAt(0)}
-        </div>
+        {profileImage ? (
+          <img
+            src={profileImage}
+            alt={name}
+            className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
+            style={{ background: "var(--color-primary-hover)" }}
+          >
+            {name.charAt(0)}
+          </div>
+        )}
         <div className="flex flex-col flex-1">
           <span
             className="text-lg font-bold"
@@ -53,7 +63,7 @@ const MemberCard = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className="text-sm font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -62,10 +72,10 @@ const MemberCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-sm font-bold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
-              {level}
+              {getExperienceLevelDisplay(level)}
             </span>
           </div>
         </div>

@@ -34,6 +34,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ssafy.gguljob.backend.domain.skill.service.SkillService;
+import com.ssafy.gguljob.backend.global.exception.ResourceNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -55,13 +56,14 @@ public class UserService {
 
         private final ApplicationEventPublisher eventPublisher;
 
+        @Transactional
         public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
                 user.updateOnboarding(requestDto.getDescription(), requestDto.getRoles(),
                                 requestDto.getExperience(), requestDto.getMbti(),
-                                requestDto.getTeamTendency());
+                                requestDto.getTeamTendency(), requestDto.getWorkExperience());
 
                 skillService.saveUserSkills(user, requestDto.getSkills());
 
@@ -78,6 +80,7 @@ public class UserService {
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
         }
 
+        @Transactional
         public void updateMyProfile(Long userId, ProfileUpdateRequestDto requestDto) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
@@ -161,6 +164,56 @@ public class UserService {
 
                 List<GoalType> goalList = user.getGoals().stream().map(UserGoal::getGoal).toList();
 
+                List<UserRepProject> repProjectEntities = userRepProjectRepository
+                                .findByUserIdWithProject(userId).stream().limit(2).toList();
+
+                List<ProfileResponseDto.RepProjectDto> repProjectDtoList = Collections.emptyList();
+
+                if (!repProjectEntities.isEmpty()) {
+                        List<Long> projectIds = repProjectEntities.stream()
+                                        .map(rep -> rep.getProject().getId()).toList();
+
+                        Map<Long, String> roleMap = projectMemberRepository
+                                        .findByUserIdAndProjectIdIn(userId, projectIds)
+                                        .stream()
+                                        .collect(Collectors.toMap(pm -> pm.getProject().getId(),
+                                                        pm -> pm.getRole().name()));
+
+                        Map<Long, List<String>> skillMap = projectSkillRepository
+                                        .findByProjectIdIn(projectIds).stream()
+                                        .collect(Collectors.groupingBy(
+                                                        ps -> ps.getProject().getId(),
+                                                        Collectors.mapping(
+                                                                        ps -> ps.getSkill()
+                                                                                        .getName(),
+                                                                        Collectors.toList())));
+
+                        java.time.format.DateTimeFormatter formatter =
+                                        java.time.format.DateTimeFormatter.ofPattern("yyyy.MM");
+
+                        repProjectDtoList = repProjectEntities.stream().map(rep -> {
+                                Project project = rep.getProject();
+                                Long pId = project.getId();
+
+                                String startStr = project.getCreatedAt() != null
+                                                ? project.getCreatedAt().format(formatter)
+                                                : "미상";
+                                String endStr = project.getFinishedAt() != null
+                                                ? project.getFinishedAt().format(formatter)
+                                                : "진행중";
+                                String period = startStr + " ~ " + endStr;
+
+                                return ProfileResponseDto.RepProjectDto.builder().projectId(pId)
+                                                .title(project.getTitle())
+                                                .description(project.getDescription())
+                                                .role(roleMap.getOrDefault(pId, "참여자"))
+                                                .period(period).skills(skillMap.getOrDefault(pId,
+                                                                Collections.emptyList()))
+                                                .imageUrl(project.getImageUrl())
+                                                .build();
+                        }).toList();
+                }
+
                 return ProfileResponseDto.builder().userId(user.getId()).email(user.getEmail())
                                 .userName(user.getUserName()).imageUrl(user.getProfileImageUrl())
                                 .description(user.getDescription())
@@ -170,11 +223,13 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
                                                 : null)
-                                .skills(skillDtoList).goals(goalList).build();
+                                .skills(skillDtoList).goals(goalList)
+                                .repProjects(repProjectDtoList).build();
         }
 
         @Transactional
@@ -262,6 +317,7 @@ public class UserService {
                                                 .role(roleMap.getOrDefault(pId, "참여자"))
                                                 .period(period).skills(skillMap.getOrDefault(pId,
                                                                 Collections.emptyList()))
+                                                .imageUrl(project.getImageUrl())
                                                 .build();
                         }).toList();
                 }
@@ -275,6 +331,7 @@ public class UserService {
                                 .experience(user.getExperience() != null
                                                 ? user.getExperience().name()
                                                 : null)
+                                .workExperience(user.getWorkExperience())
                                 .mbti(user.getMbti())
                                 .teamTendency(user.getTeamTendency() != null
                                                 ? user.getTeamTendency().name()
@@ -294,6 +351,13 @@ public class UserService {
                 Page<UserSummary> userSummaries = users.map(UserResponse.UserSummary::from);
 
                 return UserResponse.UserPageResponse.of(userSummaries);
+        }
+
+        @Transactional(readOnly = true)
+        public UserResponse.UserSummary searchByEmail(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("해당 이메일로 가입된 사용자가 없습니다."));
+                return UserResponse.UserSummary.from(user);
         }
 
         public MemberFilterResponseDto getMemberFilters() {

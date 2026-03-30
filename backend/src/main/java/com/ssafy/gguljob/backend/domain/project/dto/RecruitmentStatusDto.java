@@ -18,14 +18,8 @@ public class RecruitmentStatusDto {
     private PositionStatus status;
     private Integer currentCount;
     private Integer targetCount;
-    private List<String> requireSkills;
 
     public static RecruitmentStatusDto from(ProjectPosition position) {
-        List<String> skills = (position.getRequireSkills() != null && !position.getRequireSkills().isEmpty())
-            ? Arrays.stream(position.getRequireSkills().split(","))
-            .map(String::trim)
-            .collect(Collectors.toList())
-            : List.of();
 
         return RecruitmentStatusDto.builder()
             .positionId(position.getId())
@@ -33,7 +27,16 @@ public class RecruitmentStatusDto {
             .status(position.getStatus())
             .currentCount(position.getCurrentCount())
             .targetCount(position.getTargetCount())
-            .requireSkills(skills)
+            .build();
+    }
+
+    public static RecruitmentStatusDto of(ProjectPosition position, List<String> skillNames) {
+        return RecruitmentStatusDto.builder()
+            .positionId(position.getId())
+            .role(position.getRole())
+            .status(position.getStatus())
+            .currentCount(position.getCurrentCount())
+            .targetCount(position.getTargetCount())
             .build();
     }
 }

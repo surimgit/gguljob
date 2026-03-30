@@ -45,11 +45,9 @@ const ProfileHeader = ({
           {/* 이름 + 역할 배지 */}
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-text-primary">{name}</span>
-            {role && (
-              <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
-                {getRoleDisplayName(role)}
-              </span>
-            )}
+            <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: `${getRoleColor(role)}1a`, color: getRoleColor(role) }}>
+              {getRoleDisplayName(role)}
+            </span>
           </div>
 
           {/* 소개글 */}
@@ -82,7 +80,7 @@ const ProfileHeader = ({
           <button
             type="button"
             onClick={onEditInfo}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
             정보수정
