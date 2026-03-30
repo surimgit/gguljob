@@ -21,6 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :userIds")
     List<User> findUsersWithRolesByIds(@org.springframework.data.repository.query.Param("userIds") List<Long> userIds);
 
-    @Query("SELECT u.id FROM User u WHERE SIZE(u.roles) > 0")
+@Query("SELECT u.id FROM User u WHERE SIZE(u.roles) > 0")
     List<Long> findAllOnboardedUserIds();
 }

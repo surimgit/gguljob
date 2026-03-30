@@ -64,8 +64,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
         Long leavingUserId
     );
 
-    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId")
-    List<Long> findUserIdsByProjectId(Long projectId);
+    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.status IN ('ATTEND', 'PENDING')")
+    List<Long> findUserIdsByProjectId(@Param("projectId") Long projectId);
 
     long countByProjectIdAndStatus(Long projectId, MemberStatus status);
 
