@@ -43,7 +43,7 @@ public class MatchingService {
     private final UserNodeRepository userNodeRepository;
     private final SkillRepository skillRepository;
 
-    @Cacheable(value = "projectRecommend", key = "#userId + '_' + #keyword + '_' + #domain + '_' + #role + '_' + #skillIds + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Cacheable(value = "projectRecommend", keyGenerator = "recommendationKeyGenerator")
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<ProjectResponse.ProjectCardDto> getRecommendedProjects(Long userId, String keyword, String domain, String role, List<Long> skillIds, Pageable pageable) {
         User user = userRepository.findById(userId)
@@ -106,7 +106,7 @@ public class MatchingService {
         return new PageImpl<>(pageContent, pageable, allFiltered.size());
     }
 
-    @Cacheable(value = "memberRecommend", key = "#projectId + '_' + #keyword + '_' + #position + '_' + #experienceLevel + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Cacheable(value = "memberRecommend", keyGenerator = "recommendationKeyGenerator")
     @Transactional(readOnly = true, transactionManager = "neo4jTransactionManager")
     public Page<MemberCardDto> getRecommendedMembers(Long projectId, String keyword, String position, String experienceLevel, Pageable pageable) {
 
