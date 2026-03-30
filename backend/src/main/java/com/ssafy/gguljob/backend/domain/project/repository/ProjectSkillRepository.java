@@ -13,6 +13,10 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Long
     @Query("SELECT s.name FROM ProjectSkill ps JOIN ps.skill s WHERE ps.project.id = :projectId")
     List<String> findAllSkillNamesByProjectId(@Param("projectId") Long projectId);
 
+    // [N+1 개선] 여러 프로젝트의 스킬 이름 한 번에 조회
+    @Query("SELECT ps.project.id, s.name FROM ProjectSkill ps JOIN ps.skill s WHERE ps.project.id IN :projectIds")
+    List<Object[]> findSkillNamesByProjectIds(@Param("projectIds") List<Long> projectIds);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ProjectSkill ps WHERE ps.project.id = :projectId")
     void deleteAllByProjectId(@Param("projectId") Long projectId);

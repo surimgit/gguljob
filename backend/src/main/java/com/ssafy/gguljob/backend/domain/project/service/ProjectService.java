@@ -126,21 +126,31 @@ public class ProjectService {
         List<ProjectMember> memberships = projectMemberRepository.findActiveProjectsByUserId(userId,
             MemberStatus.ATTEND);
 
+        if (memberships.isEmpty()) return List.of();
+
+        List<Long> projectIds = memberships.stream()
+            .map(pm -> pm.getProject().getId())
+            .toList();
+
+        // IN 쿼리로 한 번에 조회 (N+1 제거)
+        Map<Long, Map<String, Long>> roleCountsMap = projectMemberRepository.countRolesByProjectIds(projectIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                row -> (Long) row[0],
+                Collectors.toMap(row -> row[1].toString(), row -> (Long) row[2])
+            ));
+
+        Map<Long, List<String>> skillsMap = projectSkillRepository.findSkillNamesByProjectIds(projectIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                row -> (Long) row[0],
+                Collectors.mapping(row -> (String) row[1], Collectors.toList())
+            ));
+
         return memberships.stream().map(membership -> {
             Project project = membership.getProject();
-
-            // 역할별 인원수 계산
-            Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(
-                    project.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                    row -> row[0].toString(),
-                    row -> (Long) row[1]
-                ));
-
-            // 스킬 이름 전체 조회 (프론트에서 표시 개수 제어)
-            List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
-
+            Map<String, Long> roleCounts = roleCountsMap.getOrDefault(project.getId(), Map.of());
+            List<String> skills = skillsMap.getOrDefault(project.getId(), List.of());
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());
     }
