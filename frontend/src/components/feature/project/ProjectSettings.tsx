@@ -26,7 +26,7 @@ import {
   Camera,
   Trash2,
 } from "lucide-react";
-import Markdown from "react-markdown";
+import { MarkdownRenderer } from "../../common";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
@@ -674,30 +674,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
               }}
             >
               {description ? (
-                <Markdown
-                  components={{
-                    h1: ({ children }) => <h1 className="text-xl font-bold mt-3 mb-2" style={{ color: "var(--color-text-primary)" }}>{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-1.5" style={{ color: "var(--color-text-primary)" }}>{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1" style={{ color: "var(--color-text-primary)" }}>{children}</h3>,
-                    p: ({ children }) => <p className="text-base leading-relaxed mb-2" style={{ color: "var(--color-text-secondary)" }}>{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc pl-5 mb-2 text-base" style={{ color: "var(--color-text-secondary)" }}>{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 text-base" style={{ color: "var(--color-text-secondary)" }}>{children}</ol>,
-                    li: ({ children }) => <li className="mb-0.5">{children}</li>,
-                    code: ({ children }) => (
-                      <code className="px-1.5 py-0.5 rounded text-sm font-mono" style={{ background: "var(--color-background)", color: "var(--color-primary-hover)" }}>
-                        {children}
-                      </code>
-                    ),
-                    a: ({ href, children }) => (
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "var(--color-blue)" }}>
-                        {children}
-                      </a>
-                    ),
-                    strong: ({ children }) => <strong className="font-bold" style={{ color: "var(--color-text-primary)" }}>{children}</strong>,
-                  }}
-                >
-                  {description}
-                </Markdown>
+                <MarkdownRenderer>{description}</MarkdownRenderer>
               ) : (
                 <p className="text-base" style={{ color: "var(--color-text-tertiary)" }}>
                   프리뷰할 내용이 없습니다.

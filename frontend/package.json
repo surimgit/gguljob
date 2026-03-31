@@ -14,6 +14,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.13.6",
     "lucide-react": "^0.577.0",
+    "mermaid": "^11.13.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-easy-crop": "^5.5.6",
