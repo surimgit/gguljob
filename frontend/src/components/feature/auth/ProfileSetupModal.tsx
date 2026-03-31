@@ -154,12 +154,11 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               <div
                 role="tablist"
                 aria-label="프로필 설정 단계"
-                className="flex gap-1.5 mb-4 p-1 rounded-xl overflow-x-auto"
+                className="flex mb-4 rounded-xl overflow-x-auto"
                 style={{ background: 'var(--color-background, #F7F8FA)', border: '1px solid var(--color-border, #E5E7EB)' }}
               >
                 {STEP_TABS.map(({ step: s, label }) => {
                   const active = step === s;
-                  const filled = isStepValid(s, formData);
                   return (
                     <button
                       key={s}
@@ -168,12 +167,10 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                       aria-selected={active}
                       aria-controls={`step-panel-${s}`}
                       onClick={() => setStep(s)}
-                      className={`px-4 py-2 rounded-xl text-[13px] cursor-pointer transition-colors whitespace-nowrap ${
+                      className={`flex-1 py-2.5 text-[13px] cursor-pointer transition-colors ${
                         active
                           ? 'bg-primary font-bold text-gray-900'
-                          : filled
-                            ? 'font-medium text-green-600 hover:bg-white'
-                            : 'font-medium text-gray-400 hover:bg-white'
+                          : 'font-medium text-[#9CA3AF] hover:bg-white'
                       }`}
                     >
                       {label}
