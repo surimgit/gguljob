@@ -423,13 +423,14 @@ const JobCard = ({
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 interface JobListingSectionProps {
+    initialJobs: JobItem[];
     allJobs: JobItem[];
     allJobsLoaded: boolean;
     bookmarkedIds: Set<number>;
     onToggleBookmark: (id: number) => void;
 }
 
-const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
+const JobListingSection = ({ initialJobs, allJobs, allJobsLoaded, bookmarkedIds, onToggleBookmark }: JobListingSectionProps) => {
     const sectionRef = useRef<HTMLDivElement>(null);
     const prevPageRef = useRef(1);
     const [searchParams] = useSearchParams();
@@ -461,9 +462,16 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 })
                 .catch(console.error);
         } else if (allJobsLoaded) {
+<<<<<<< HEAD
             setJobs(Array.from(allJobsMap.values()));
+=======
+            setJobs(allJobs.map(mapToJobListing));
+        } else {
+            // 전체 로드 전: 첫 페이지 데이터로 즉시 표시
+            setJobs(initialJobs.map(mapToJobListing));
+>>>>>>> a3d9ae62fac2c8a5232f92a56a9861f2778e1460
         }
-    }, [allJobsMap, allJobsLoaded, showBookmarked]);
+    }, [allJobsMap, allJobsLoaded, showBookmarked, initialJobs]);
 
     // 페이지 변경 시 섹션 상단으로 스크롤 (초기 마운트 제외)
     useEffect(() => {
@@ -600,9 +608,17 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 </div>
             </div>
 
+            {/* 전체 로드 중 안내 */}
+            {!allJobsLoaded && initialJobs.length > 0 && (
+                <div className="flex items-center gap-2 pb-1 text-[13px] text-text-tertiary">
+                    <div className="w-3.5 h-3.5 border-2 border-[#F2B705] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                    <span>전체 공고 로딩 중... 필터/정렬은 완료 후 적용됩니다</span>
+                </div>
+            )}
+
             {/* 공고 카드 목록 */}
             <div className="flex flex-col gap-4 pb-2">
-                {!allJobsLoaded ? (
+                {!allJobsLoaded && initialJobs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                         <div className="w-8 h-8 border-3 border-[#F2B705] border-t-transparent rounded-full animate-spin" />
                         <p className="text-[15px] font-bold text-text-secondary">적합도 계산 중입니다...</p>

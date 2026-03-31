@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
@@ -219,14 +219,14 @@ const JobCard = ({
 };
 
 interface JobRecommendHeroProps {
-    allJobs: JobItem[];
+    top3Jobs: JobItem[];
     bookmarkedIds: Set<number>;
     onToggleBookmark: (id: number) => void;
 }
 
 const VISIBLE_SKILL_COUNT = 8;
 
-const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
+const JobRecommendHero = ({ top3Jobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
     const user = useAuthStore((s) => s.user);
     const userSkills = useUserSkills();
     const [showAllSkills, setShowAllSkills] = useState(false);
@@ -235,13 +235,6 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
     const hasMore = userSkills.length > VISIBLE_SKILL_COUNT;
     const visibleSkills = showAllSkills ? userSkills : userSkills.slice(0, VISIBLE_SKILL_COUNT);
     const hiddenCount = userSkills.length - VISIBLE_SKILL_COUNT;
-
-    const top3 = useMemo(() => {
-        if (allJobs.length === 0) return [];
-        return [...allJobs]
-            .sort((a, b) => (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0))
-            .slice(0, 3);
-    }, [allJobs]);
 
     return (
         <>
@@ -331,12 +324,12 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                     className="flex gap-4 lg:gap-6 overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20"
                     style={{ marginTop: '10px' }}
                 >
-                    {top3.length === 0 ? (
+                    {top3Jobs.length === 0 ? (
                         <div className="col-span-3 flex flex-col items-center justify-center py-16 gap-3">
                             <div className="w-8 h-8 border-3 border-[#F2B705] border-t-transparent rounded-full animate-spin" />
                             <p className="text-[15px] font-bold text-text-secondary">맞춤 공고를 분석 중입니다...</p>
                         </div>
-                    ) : top3.map((job, idx) => (
+                    ) : top3Jobs.map((job: JobItem, idx: number) => (
                         <div
                             key={job.jobId}
                             className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start"
