@@ -31,7 +31,7 @@ import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
 import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject, deleteProject, getSuggestedSkills } from "../../../api/projects";
-import { updateProfileApi } from "../../../api/user";
+import { updateProfileApi, getMe } from "../../../api/user";
 import { useAuthStore } from "../../../stores/authStore";
 import { ROLE_STACKS, API_TO_ROLE } from "../../../constants/skills";
 import {
@@ -167,6 +167,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
 
   // 스킬 추가 제안 모달
   const currentUser = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
   const [selectedSuggestedSkills, setSelectedSuggestedSkills] = useState<Set<string>>(new Set());
   const [showSkillSuggestModal, setShowSkillSuggestModal] = useState(false);
@@ -367,6 +368,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
 
   // PATCH 저장
   const handleSave = async () => {
+    console.log("[handleSave] status:", status, "→", STATUS_TO_BACKEND[status]);
     if (!projectId || saving) return;
     const allSkillNames = Object.values(techStacks).flat();
     const skillIds = allSkillNames
@@ -430,6 +432,8 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         : (currentUser.skills?.map((s) => s.name) ?? []);
       const merged = Array.from(new Set([...currentSkills, ...selectedSuggestedSkills]));
       await updateProfileApi({ skills: merged });
+      const updatedUser = await getMe();
+      setUser(updatedUser);
       toast.success(`스킬 ${selectedSuggestedSkills.size}개가 추가되었습니다.`);
       setShowSkillSuggestModal(false);
       onSaved?.();
