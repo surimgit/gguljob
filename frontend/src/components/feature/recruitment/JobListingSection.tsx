@@ -461,7 +461,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                 })
                 .catch(console.error);
         } else if (allJobsLoaded) {
-            setJobs(allJobs.map(mapToJobListing));
+            setJobs(Array.from(allJobsMap.values()));
         }
     }, [allJobsMap, allJobsLoaded, showBookmarked]);
 
