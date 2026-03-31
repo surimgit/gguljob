@@ -21,6 +21,7 @@ import {
   getRoleDisplayName,
   SKILLS_BY_CATEGORY,
   SKILL_CATEGORY_META,
+  SKILL_NAME_TO_ID,
   type RoleCode,
 } from "../constants/skills";
 import { searchUserByEmail } from "../api/user";
@@ -202,11 +203,16 @@ const CreateProject = () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
+      const skillIds = Object.values(form.techStacks).flat()
+        .map((n) => SKILL_NAME_TO_ID[n])
+        .filter((id): id is number => id != null);
+
       const projectId = await createProject({
         title: form.name,
         domain: form.domain,
         description: form.description,
         leaderRole: form.leaderRole,
+        skillIds,
       });
       if (form.members.length > 0) {
         await Promise.allSettled(
