@@ -152,7 +152,7 @@ public class JobRecommendationService {
           .collect(Collectors.toList());
     } else {
       // getAllJobsWithScoring이 이미 경력 필터 적용된 결과를 반환
-      allCandidates = getAllJobsWithScoring(userId);
+      allCandidates = self.getAllJobsWithScoring(userId);
     }
 
     long totalElements = allCandidates.size();

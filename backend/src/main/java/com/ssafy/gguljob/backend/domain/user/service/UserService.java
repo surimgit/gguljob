@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,6 +56,7 @@ public class UserService {
         private final UserGoalRepository userGoalRepository;
 
         private final ApplicationEventPublisher eventPublisher;
+        private final CacheManager cacheManager;
 
         @Transactional
         public void onboardUser(Long userId, OnboardingRequestDto requestDto) {
@@ -76,6 +78,10 @@ public class UserService {
                 }
 
                 log.info("유저(ID:{}) 온보딩 기본 정보 업데이트 완료", userId);
+
+                // 즉시 캐시 무효화: 비동기 처리 전에 응답 반환 시점과 동기화
+                var cache = cacheManager.getCache("allJobsScoring");
+                if (cache != null) cache.evict(userId);
 
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
         }
@@ -132,6 +138,10 @@ public class UserService {
                                 userRepProjectRepository.saveAll(repProjects);
                         }
                 }
+
+                // 즉시 캐시 무효화
+                var cache = cacheManager.getCache("allJobsScoring");
+                if (cache != null) cache.evict(userId);
 
                 eventPublisher.publishEvent(new UserProfileSyncEvent(user.getId()));
         }
