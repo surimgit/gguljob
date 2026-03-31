@@ -4,7 +4,6 @@ import com.ssafy.gguljob.backend.domain.matching.service.MatchingProfileService;
 import com.ssafy.gguljob.backend.domain.matching.service.UserEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -17,7 +16,6 @@ public class MatchingEventListener {
 
     private final MatchingProfileService matchingProfileService;
     private final UserEmbeddingService userEmbeddingService;
-    private final CacheManager cacheManager;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -36,16 +34,6 @@ public class MatchingEventListener {
             log.info("임베딩 업데이트 완료: userId={}", userId);
         } catch (Exception e) {
             log.error("임베딩 업데이트 실패: userId={}, error={}", userId, e.getMessage(), e);
-        }
-
-        try {
-            var cache = cacheManager.getCache("allJobsScoring");
-            if (cache != null) {
-                cache.evict(userId);
-                log.info("추천 캐시 evict 완료: userId={}", userId);
-            }
-        } catch (Exception e) {
-            log.error("추천 캐시 evict 실패: userId={}, error={}", userId, e.getMessage(), e);
         }
     }
 }

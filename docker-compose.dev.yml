@@ -192,6 +192,25 @@ services:
       - gguljob-network-dev
     restart: always
 
+  # =======================================================
+  # [AI Batch] - cutoff 계산 배치 (매일 새벽 2시)
+  # =======================================================
+  batch-dev:
+    build:
+      context: ./ai/batch
+      dockerfile: Dockerfile
+    container_name: gguljob-batch-dev
+    env_file: ./.env
+    environment:
+      - NEO4J_URI=bolt://gguljob-neo4j-dev:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    depends_on:
+      - neo4j-dev
+    networks:
+      - gguljob-network-dev
+    restart: always
+
 networks:
   gguljob-network-dev:
     external: true
