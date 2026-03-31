@@ -462,14 +462,10 @@ const JobListingSection = ({ initialJobs, allJobs, allJobsLoaded, bookmarkedIds,
                 })
                 .catch(console.error);
         } else if (allJobsLoaded) {
-<<<<<<< HEAD
-            setJobs(Array.from(allJobsMap.values()));
-=======
             setJobs(allJobs.map(mapToJobListing));
         } else {
             // 전체 로드 전: 첫 페이지 데이터로 즉시 표시
             setJobs(initialJobs.map(mapToJobListing));
->>>>>>> a3d9ae62fac2c8a5232f92a56a9861f2778e1460
         }
     }, [allJobsMap, allJobsLoaded, showBookmarked, initialJobs]);
 
