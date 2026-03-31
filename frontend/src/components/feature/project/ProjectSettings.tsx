@@ -385,17 +385,14 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         members: editMembers,
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
-      onSaved?.();
       setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
 
-      // 완료 상태로 변경된 경우 스킬 추가 제안
+      // 완료 상태로 변경된 경우 스킬 추가 제안 (onSaved는 모달 이후 호출)
       if (STATUS_TO_BACKEND[status] === "DONE") {
         try {
           const res = await getSuggestedSkills(projectId);
           const allSuggested: string[] = res.data.data ?? [];
-          console.log("[SkillSuggest] allSuggested:", allSuggested, "user:", currentUser?.position);
 
-          // 내 직무 카테고리에 해당하는 스킬만 필터링
           const myRole = currentUser?.position
             ? API_TO_ROLE[currentUser.position] ?? null
             : null;
@@ -403,17 +400,19 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           const filtered = roleSkillSet
             ? allSuggested.filter((s) => roleSkillSet.has(s))
             : allSuggested;
-          console.log("[SkillSuggest] myRole:", myRole, "filtered:", filtered);
 
           if (filtered.length > 0) {
             setSuggestedSkills(filtered);
             setSelectedSuggestedSkills(new Set(filtered));
             setShowSkillSuggestModal(true);
+            return; // onSaved는 모달 닫힐 때 호출
           }
         } catch (e) {
           console.error("[SkillSuggest] error:", e);
         }
       }
+
+      onSaved?.();
     } catch (err) {
       console.error("프로젝트 설정 저장 실패:", err);
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
@@ -433,6 +432,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       await updateProfileApi({ skills: merged });
       toast.success(`스킬 ${selectedSuggestedSkills.size}개가 추가되었습니다.`);
       setShowSkillSuggestModal(false);
+      onSaved?.();
     } catch {
       toast.error("스킬 추가에 실패했습니다.");
     } finally {
@@ -1213,7 +1213,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
             </div>
             <div className="flex gap-3 mt-1">
               <button
-                onClick={() => setShowSkillSuggestModal(false)}
+                onClick={() => { setShowSkillSuggestModal(false); onSaved?.(); }}
                 className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
                 style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
               >
