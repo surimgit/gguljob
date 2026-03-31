@@ -602,7 +602,13 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
 
             {/* 공고 카드 목록 */}
             <div className="flex flex-col gap-4 pb-2">
-                {paginatedJobs.length > 0 ? (
+                {!allJobsLoaded ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3">
+                        <div className="w-8 h-8 border-3 border-[#F2B705] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-[15px] font-bold text-text-secondary">적합도 계산 중입니다...</p>
+                        <p className="text-[13px] text-text-tertiary">맞춤 채용 정보를 준비하고 있어요</p>
+                    </div>
+                ) : paginatedJobs.length > 0 ? (
                     paginatedJobs.map((job) => (
                         <JobCard
                             key={job.id}
