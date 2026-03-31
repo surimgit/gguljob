@@ -115,6 +115,8 @@ public class ProjectService {
 
         projectMemberRepository.save(projectMember);
 
+        syncProjectSkills(savedProject, request.skillIds());
+
         log.info("Neo4j로 전송 시작");
         eventPublisher.publishEvent(ProjectSyncEvent.sync(savedProject.getId()));
 
