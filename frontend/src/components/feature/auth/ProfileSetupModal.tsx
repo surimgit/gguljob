@@ -43,7 +43,7 @@ const STEP_TABS = [
   { step: 7, label: '성향' },
 ];
 
-const isStepValid = (step: number, formData: FormData): boolean => {
+const isStepValid = (step: number, formData: FormData, mode: 'onboarding' | 'edit' = 'onboarding'): boolean => {
   switch (step) {
     case 1:
       return formData.goals.length > 0;
@@ -52,7 +52,8 @@ const isStepValid = (step: number, formData: FormData): boolean => {
     case 3:
       return formData.experience !== "";
     case 4:
-      return formData.workExperience !== "";
+      // edit 모드에서는 workExperience가 없어도 통과
+      return mode === 'edit' ? true : formData.workExperience !== "";
     case 5:
       return formData.skills.length > 0;
     case 6:
@@ -91,15 +92,15 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   }, [isOpen, initialData]);
 
   const allStepsValid = useMemo(
-    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData)).every(Boolean),
-    [formData],
+    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData, mode)).every(Boolean),
+    [formData, mode],
   );
 
   if (!isOpen) return null;
 
   const handleExit = () => setShowExitWarning(true);
 
-  const canNext = isStepValid(step, formData);
+  const canNext = isStepValid(step, formData, mode);
   const showProgress = SHOW_PROGRESS[step - 1];
 
   const handleNext = () => {

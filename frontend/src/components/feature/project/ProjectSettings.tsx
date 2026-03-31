@@ -394,12 +394,14 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       if (STATUS_TO_BACKEND[status] === "DONE") {
         try {
           const res = await getSuggestedSkills(projectId);
-          const allSuggested: string[] = res.data.data ?? [];
+          const result = res.data.data as { skills: string[]; myProjectRole: string | null } | null;
+          const allSuggested: string[] = result?.skills ?? [];
 
-          const myRole = currentUser?.position
-            ? API_TO_ROLE[currentUser.position] ?? null
+          // 온보딩 직무가 아닌 이 프로젝트에서 내가 맡은 역할로 필터링
+          const projectRole = result?.myProjectRole
+            ? API_TO_ROLE[result.myProjectRole] ?? null
             : null;
-          const roleSkillSet = myRole ? new Set(ROLE_STACKS[myRole] ?? []) : null;
+          const roleSkillSet = projectRole ? new Set(ROLE_STACKS[projectRole] ?? []) : null;
           const filtered = roleSkillSet
             ? allSuggested.filter((s) => roleSkillSet.has(s))
             : allSuggested;
