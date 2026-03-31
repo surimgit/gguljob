@@ -630,9 +630,11 @@ public class ProjectService {
         }
     }
 
-    // 프로젝트 스킬 중 내 온보딩 스킬에 없는 것 반환 (스킬 추가 제안용)
+    public record SuggestedSkillsResult(List<String> skills, String myProjectRole) {}
+
+    // 프로젝트 스킬 중 내 온보딩 스킬에 없는 것 반환 + 내 프로젝트 역할 (스킬 추가 제안용)
     @Transactional(readOnly = true)
-    public List<String> getSuggestedSkills(Long userId, Long projectId) {
+    public SuggestedSkillsResult getSuggestedSkills(Long userId, Long projectId) {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
 
@@ -645,9 +647,16 @@ public class ProjectService {
 
         List<String> projectSkills = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
 
-        return projectSkills.stream()
+        List<String> suggested = projectSkills.stream()
             .filter(skill -> !mySkills.contains(skill))
             .collect(Collectors.toList());
+
+        // 내 프로젝트 역할 조회 (없으면 null)
+        String myProjectRole = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
+            .map(pm -> pm.getRole().name())
+            .orElse(null);
+
+        return new SuggestedSkillsResult(suggested, myProjectRole);
     }
 
     // 프로젝트 팀원 목록 조회
