@@ -102,7 +102,7 @@ public class MatchingService {
 
         List<Long> excludedUserIds = projectMemberRepository.findUserIdsByProjectId(projectId);
 
-        // Neo4j: graphScore만 반환 (벡터 dot product는 Java에서 계산)
+        // Neo4j: graphScore(중간값)만 반환 → Java에서 vectorScore 합산 후 최종 matchScore 계산
         List<MemberMatchResultDto> allNeo4jResults = userNodeRepository.findRecommendedMembersForProject(
             String.valueOf(projectId),
             excludedUserIds,
@@ -145,10 +145,10 @@ public class MatchingService {
                         vectorScore = dotProduct(userEmb, projectEmbedding) * 100;
                     }
                 }
-                int matchScore = (int) (dto.graphScore() * 0.6 + vectorScore * 0.4);
+                int matchScore = (int) (dto.matchScore() * 0.6 + vectorScore * 0.4);
                 return new MemberMatchResultDto(dto.userId(), matchScore);
             })
-            .sorted(Comparator.comparingInt(MemberMatchResultDto::graphScore).reversed()
+            .sorted(Comparator.comparingInt(MemberMatchResultDto::matchScore).reversed()
                 .thenComparing(Comparator.comparingLong((MemberMatchResultDto d) -> Long.parseLong(d.userId())).reversed()))
             .toList();
 
@@ -172,7 +172,7 @@ public class MatchingService {
                     log.warn("데이터 불일치 감지: Neo4j에는 존재하나 MySQL에 없는 유저 ID [{}]", dto.userId());
                     return null;
                 }
-                return MemberCardDto.of(user, dto.graphScore());
+                return MemberCardDto.of(user, dto.matchScore());
             })
             .filter(Objects::nonNull)
             .toList();

@@ -42,8 +42,8 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
         "WITH p, u, " +
         "     graphScore + (CASE WHEN hasDomainExp THEN 15 ELSE 0 END) + (CASE WHEN hasSkillExp THEN 10 ELSE 0 END) AS graphScore " +
 
-        "RETURN toString(u.id) AS userId, graphScore " +
-        "ORDER BY graphScore DESC, u.id DESC"
+        "RETURN toString(u.id) AS userId, graphScore AS matchScore " +
+        "ORDER BY matchScore DESC, u.id DESC"
     )
     List<MemberMatchResultDto> findRecommendedMembersForProject(
         @Param("projectId") String projectId,
