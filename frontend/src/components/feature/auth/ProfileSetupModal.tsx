@@ -82,26 +82,49 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [initialFormData, setInitialFormData] = useState<FormData>({ ...DEFAULT_FORM });
   const [isDirty, setIsDirty] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  // 모달이 열릴 때마다 initialData로 동기화
+  // 모달이 열릴 때만 initialData로 동기화 (한 번만)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasInitialized) {
       const initial = { ...DEFAULT_FORM, ...initialData };
+      console.log('[ProfileSetupModal] Initializing with:', initial);
       setInitialFormData(initial);
       setFormData(initial);
       setIsDirty(false);
       setStep(1);
       setShowComplete(false);
       setShowExitWarning(false);
+      setHasInitialized(true);
+    } else if (!isOpen) {
+      setHasInitialized(false);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, hasInitialized]);
 
   // formData 변경 감지
   useEffect(() => {
-    if (!isOpen) return;
-    const hasChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    if (!isOpen || !hasInitialized) return;
+    
+    // 배열은 정렬해서 비교 (순서 무관)
+    const normalizeForComparison = (data: FormData) => ({
+      ...data,
+      goals: [...data.goals].sort(),
+      skills: [...data.skills].sort(),
+    });
+    
+    const current = normalizeForComparison(formData);
+    const initial = normalizeForComparison(initialFormData);
+    
+    const hasChanged = JSON.stringify(current) !== JSON.stringify(initial);
+    
+    console.log('[ProfileSetupModal] isDirty check:', {
+      hasChanged,
+      currentJSON: JSON.stringify(current),
+      initialJSON: JSON.stringify(initial),
+    });
+    
     setIsDirty(hasChanged);
-  }, [formData, initialFormData, isOpen]);
+  }, [formData, initialFormData, isOpen, hasInitialized]);
 
   const allStepsValid = useMemo(
     () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData, mode)).every(Boolean),
@@ -134,7 +157,12 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   };
 
   const update = <K extends keyof FormData>(key: K, value: FormData[K]) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    console.log('[ProfileSetupModal] update called:', key, value);
+    setFormData((prev) => {
+      const next = { ...prev, [key]: value };
+      console.log('[ProfileSetupModal] formData updated:', next);
+      return next;
+    });
   };
 
   return (
@@ -262,17 +290,23 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 flex-shrink-0">
             {mode === 'edit' ? (
               /* 수정 모드: 저장 버튼 */
-              <button
-                onClick={() => setShowComplete(true)}
-                disabled={!allStepsValid || !isDirty}
-                className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
-                  allStepsValid && isDirty
-                    ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                저장
-              </button>
+              <>
+                {/* 디버깅 정보 */}
+                <div className="text-xs text-gray-500 w-full text-center">
+                  Debug: isDirty={String(isDirty)}, allStepsValid={String(allStepsValid)}
+                </div>
+                <button
+                  onClick={() => setShowComplete(true)}
+                  disabled={!allStepsValid || !isDirty}
+                  className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
+                    allStepsValid && isDirty
+                      ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  저장
+                </button>
+              </>
             ) : (
               /* 온보딩 모드: 이전/다음 */
               <>
