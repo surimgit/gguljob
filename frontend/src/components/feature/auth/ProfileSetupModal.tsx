@@ -157,6 +157,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                   return (
                     <button
                       key={s}
+                      id={`step-tab-${s}`}
                       role="tab"
                       aria-selected={active}
                       aria-controls={`step-panel-${s}`}
@@ -197,7 +198,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           </div>
 
           {/* Step Content */}
-          <div className="pl-5 pr-4 pb-6 flex-1 overflow-y-auto">
+          <div id={`step-panel-${step}`} role={mode === 'edit' ? 'tabpanel' : undefined} aria-labelledby={mode === 'edit' ? `step-tab-${step}` : undefined} className="pl-5 pr-4 pb-6 flex-1 overflow-y-auto">
             {step === 1 && (
               <Step1Goals
                 selected={formData.goals}
