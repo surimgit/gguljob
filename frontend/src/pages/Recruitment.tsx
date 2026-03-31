@@ -33,15 +33,13 @@ const Recruitment = () => {
       .catch(console.error);
   }, []);
 
-  // TOP 3: 전체 로드 전엔 첫 페이지 상위 3개, 완료 후 실제 top3
+  // TOP 3: 전체 로드 완료 후에만 실제 match 기준 top3 표시 (flicker 방지)
   const top3Jobs = useMemo(() => {
-    if (allJobsLoaded) {
-      return [...allJobs]
-        .sort((a, b) => (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0))
-        .slice(0, 3);
-    }
-    return initialJobs.slice(0, 3);
-  }, [allJobs, allJobsLoaded, initialJobs]);
+    if (!allJobsLoaded) return [];
+    return [...allJobs]
+      .sort((a, b) => (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0))
+      .slice(0, 3);
+  }, [allJobs, allJobsLoaded]);
 
   const toggleBookmark = useCallback((id: number) => {
     toggleBookmarkApi(id).catch(() => {});
