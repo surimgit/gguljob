@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, type FC } from "react";
-import { X, Target, Monitor, TrendingUp, Briefcase, Code2, Brain, Users } from "lucide-react";
+import { X } from "lucide-react";
 import gguljobLogo from "../../../assets/images/gguljob_logo.png";
 import Step1Goals from "./steps/Step1Goals";
 import Step2Role from "./steps/Step2Role";
@@ -34,13 +34,13 @@ const TOTAL_STEPS = 7;
 const SHOW_PROGRESS = [true, true, true, true, true, true, true];
 
 const STEP_TABS = [
-  { step: 1, label: '목표', icon: Target },
-  { step: 2, label: '직무', icon: Monitor },
-  { step: 3, label: '경험', icon: TrendingUp },
-  { step: 4, label: '경력', icon: Briefcase },
-  { step: 5, label: '기술', icon: Code2 },
-  { step: 6, label: 'MBTI', icon: Brain },
-  { step: 7, label: '성향', icon: Users },
+  { step: 1, label: '목표' },
+  { step: 2, label: '직무' },
+  { step: 3, label: '경험' },
+  { step: 4, label: '경력' },
+  { step: 5, label: '기술' },
+  { step: 6, label: 'MBTI' },
+  { step: 7, label: '성향' },
 ];
 
 const isStepValid = (step: number, formData: FormData): boolean => {
@@ -151,8 +151,13 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
             {mode === 'edit' ? (
               /* 수정 모드: 상단 탭 네비게이션 */
-              <div role="tablist" aria-label="프로필 설정 단계" className="flex gap-1 mb-4 overflow-x-auto pb-1">
-                {STEP_TABS.map(({ step: s, label, icon: Icon }) => {
+              <div
+                role="tablist"
+                aria-label="프로필 설정 단계"
+                className="flex gap-1.5 mb-4 p-1 rounded-xl overflow-x-auto"
+                style={{ background: 'var(--color-background, #F7F8FA)', border: '1px solid var(--color-border, #E5E7EB)' }}
+              >
+                {STEP_TABS.map(({ step: s, label }) => {
                   const active = step === s;
                   const filled = isStepValid(s, formData);
                   return (
@@ -163,16 +168,15 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                       aria-selected={active}
                       aria-controls={`step-panel-${s}`}
                       onClick={() => setStep(s)}
-                      className={`flex flex-col items-center gap-1 px-2.5 py-2 rounded-xl text-[11px] font-semibold transition-all duration-150 cursor-pointer flex-1 min-w-0 border-2 ${
+                      className={`px-4 py-2 rounded-xl text-[13px] cursor-pointer transition-colors whitespace-nowrap ${
                         active
-                          ? 'border-primary bg-amber-50 text-gray-900'
+                          ? 'bg-primary font-bold text-gray-900'
                           : filled
-                            ? 'border-transparent bg-green-50 text-green-700 hover:bg-green-100'
-                            : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'
+                            ? 'font-medium text-green-600 hover:bg-white'
+                            : 'font-medium text-gray-400 hover:bg-white'
                       }`}
                     >
-                      <Icon size={16} />
-                      <span className="truncate w-full text-center">{label}</span>
+                      {label}
                     </button>
                   );
                 })}
