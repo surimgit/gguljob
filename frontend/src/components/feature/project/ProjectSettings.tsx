@@ -394,7 +394,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       if (STATUS_TO_BACKEND[status] === "DONE") {
         try {
           const res = await getSuggestedSkills(projectId);
-          const result = res.data.data as { skills: string[]; myProjectRole: string | null } | null;
+          const result = res.data.data;
           const allSuggested: string[] = result?.skills ?? [];
 
           // 온보딩 직무가 아닌 이 프로젝트에서 내가 맡은 역할로 필터링
