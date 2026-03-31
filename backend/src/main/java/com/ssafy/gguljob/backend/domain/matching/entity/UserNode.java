@@ -6,7 +6,9 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Node("User")
@@ -20,6 +22,13 @@ public class UserNode {
     private String userName; // MySQL의 user_name
 
     private String experienceLevel; // ExperienceLevel enum name (BEGINNER, JUNIOR, MID_LEVEL, SENIOR)
+
+    // 참여 프로젝트에서 미리 계산한 경험 도메인/스킬 목록 (2-hop 쿼리 제거용 사전 계산값)
+    @Builder.Default
+    private List<String> experiencedDomains = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> experiencedSkills = new ArrayList<>();
 
     // 유저 -> (HAS_SKILL) -> 스킬
     @Relationship(type = "HAS_SKILL", direction = Relationship.Direction.OUTGOING)

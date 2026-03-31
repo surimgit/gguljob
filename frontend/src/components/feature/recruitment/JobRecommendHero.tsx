@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
 import { useAuthStore } from '../../../stores/authStore';
+import { useUserSkills } from '../../../hooks/useUserSkills';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 import { type MatchStatus, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
@@ -222,11 +224,17 @@ interface JobRecommendHeroProps {
     onToggleBookmark: (id: number) => void;
 }
 
+const VISIBLE_SKILL_COUNT = 8;
+
 const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
     const user = useAuthStore((s) => s.user);
+    const userSkills = useUserSkills();
+    const [showAllSkills, setShowAllSkills] = useState(false);
 
     const userName = user?.name ?? '사용자';
-    const userSkills = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
+    const hasMore = userSkills.length > VISIBLE_SKILL_COUNT;
+    const visibleSkills = showAllSkills ? userSkills : userSkills.slice(0, VISIBLE_SKILL_COUNT);
+    const hiddenCount = userSkills.length - VISIBLE_SKILL_COUNT;
 
     const top3 = useMemo(() => {
         if (allJobs.length === 0) return [];
@@ -260,10 +268,10 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                             포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
                         </p>
 
-                        {/* 기술스택 태그 */}
+                        {/* 기술스택 태그 — 접기/펼치기 */}
                         {userSkills.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap mt-5 max-w-full lg:max-w-[50%]">
-                                {userSkills.slice(0, 8).map((stack) => (
+                                {visibleSkills.map((stack) => (
                                     <span
                                         key={stack}
                                         className="font-semibold"
@@ -279,6 +287,22 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                                         {stack}
                                     </span>
                                 ))}
+                                {hasMore && (
+                                    <button
+                                        onClick={() => setShowAllSkills((prev) => !prev)}
+                                        className={`flex items-center gap-1 font-semibold text-sm px-3.5 py-1.5 rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15)] cursor-pointer hover:opacity-80 transition-opacity ${
+                                            showAllSkills
+                                                ? 'bg-indigo-100 text-indigo-700'
+                                                : 'bg-[#F2B705] text-white'
+                                        }`}
+                                    >
+                                        {showAllSkills ? (
+                                            <>접기 <ChevronUp className="w-4 h-4" /></>
+                                        ) : (
+                                            <>+{hiddenCount}개 더 <ChevronDown className="w-4 h-4" /></>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -307,7 +331,12 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                     className="flex gap-4 lg:gap-6 overflow-x-auto overflow-y-visible snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:overflow-visible pt-14 -mt-20"
                     style={{ marginTop: '10px' }}
                 >
-                    {top3.map((job, idx) => (
+                    {top3.length === 0 ? (
+                        <div className="col-span-3 flex flex-col items-center justify-center py-16 gap-3">
+                            <div className="w-8 h-8 border-3 border-[#F2B705] border-t-transparent rounded-full animate-spin" />
+                            <p className="text-[15px] font-bold text-text-secondary">맞춤 공고를 분석 중입니다...</p>
+                        </div>
+                    ) : top3.map((job, idx) => (
                         <div
                             key={job.jobId}
                             className="min-w-[300px] w-[75vw] sm:w-[45vw] shrink-0 lg:w-auto lg:min-w-0 lg:shrink snap-start"
@@ -338,5 +367,7 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
         </>
     );
 };
+
+
 
 export default JobRecommendHero;

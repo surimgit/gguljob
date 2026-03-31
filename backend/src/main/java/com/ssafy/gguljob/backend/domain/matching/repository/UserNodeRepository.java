@@ -12,7 +12,8 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
      * 프로젝트에 적합한 유저를 추천 점수 순으로 전체 조회합니다.
      * 점수 기준: 역할 일치(40점) + 스킬 일치 비율(60점) + 도메인 경험(+15점) + 스킬 경험(+10점) → graphScore * 0.6
      *           + 임베딩 유사도(vectorScore) * 0.4
-     * PARTICIPATED_IN 경험 계산은 EXISTS 서브쿼리로 short-circuit 처리합니다.
+     * 도메인/스킬 경험 계산은 UserNode 프로퍼티(experiencedDomains, experiencedSkills) 조회로 처리합니다.
+     * (기존 2-hop PARTICIPATED_IN EXISTS 서브쿼리 대비 대폭 성능 개선)
      * 페이지네이션은 Java에서 처리합니다. (countQuery 제거로 Neo4j 쿼리 1회)
      */
     @Query(
@@ -36,18 +37,12 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
         "      CASE WHEN totalSkills = 0 THEN 0 ELSE toInteger((toFloat(matchedSkills) / totalSkills) * 60) END) AS graphScore " +
 
         "WITH p, u, graphScore, " +
-        "     EXISTS { MATCH (u)-[:PARTICIPATED_IN]->(past:Project) WHERE past.domain = p.domain AND past.id <> p.id } AS hasDomainExp, " +
-        "     EXISTS { MATCH (u)-[:PARTICIPATED_IN]->(past2:Project)-[:REQUIRES_SKILL]->(ps:Skill)<-[:REQUIRES_SKILL]-(p) WHERE past2.id <> p.id } AS hasSkillExp " +
+        "     p.domain IN coalesce(u.experiencedDomains, []) AS hasDomainExp, " +
+        "     EXISTS { MATCH (p)-[:REQUIRES_SKILL]->(ps:Skill) WHERE ps.name IN coalesce(u.experiencedSkills, []) } AS hasSkillExp " +
         "WITH p, u, " +
         "     graphScore + (CASE WHEN hasDomainExp THEN 15 ELSE 0 END) + (CASE WHEN hasSkillExp THEN 10 ELSE 0 END) AS graphScore " +
 
-        "WITH u, graphScore, " +
-        "     CASE WHEN u.embedding IS NOT NULL AND p.embedding IS NOT NULL " +
-        "          THEN toInteger(reduce(dot = 0.0, i IN range(0, size(u.embedding)-1) | dot + u.embedding[i] * p.embedding[i]) * 100) " +
-        "          ELSE 0 END AS vectorScore " +
-
-        "WITH u, toInteger(graphScore * 0.6 + vectorScore * 0.4) AS matchScore " +
-        "RETURN toString(u.id) AS userId, matchScore " +
+        "RETURN toString(u.id) AS userId, graphScore AS matchScore " +
         "ORDER BY matchScore DESC, u.id DESC"
     )
     List<MemberMatchResultDto> findRecommendedMembersForProject(
