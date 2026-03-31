@@ -388,6 +388,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
       setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
+      console.log("[handleSave] saved, checking DONE:", STATUS_TO_BACKEND[status]);
 
       // 완료 상태로 변경된 경우 스킬 추가 제안 (onSaved는 모달 이후 호출)
       if (STATUS_TO_BACKEND[status] === "DONE") {
