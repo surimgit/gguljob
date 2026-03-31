@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useMemo, type FC } from "react";
 import { X, Target, Monitor, TrendingUp, Briefcase, Code2, Brain, Users } from "lucide-react";
 import gguljobLogo from "../../../assets/images/gguljob_logo.png";
 import Step1Goals from "./steps/Step1Goals";
@@ -96,7 +96,10 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
   const canNext = isStepValid(step, formData);
   const showProgress = SHOW_PROGRESS[step - 1];
-  const allStepsValid = Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData)).every(Boolean);
+  const allStepsValid = useMemo(
+    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData)).every(Boolean),
+    [formData],
+  );
 
   const handleNext = () => {
     if (!canNext) return;
@@ -147,13 +150,16 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
             {mode === 'edit' ? (
               /* 수정 모드: 상단 탭 네비게이션 */
-              <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+              <div role="tablist" aria-label="프로필 설정 단계" className="flex gap-1 mb-4 overflow-x-auto pb-1">
                 {STEP_TABS.map(({ step: s, label, icon: Icon }) => {
                   const active = step === s;
                   const filled = isStepValid(s, formData);
                   return (
                     <button
                       key={s}
+                      role="tab"
+                      aria-selected={active}
+                      aria-controls={`step-panel-${s}`}
                       onClick={() => setStep(s)}
                       className={`flex flex-col items-center gap-1 px-2.5 py-2 rounded-xl text-[11px] font-semibold transition-all duration-150 cursor-pointer flex-1 min-w-0 border-2 ${
                         active
