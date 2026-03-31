@@ -80,16 +80,28 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   const [formData, setFormData] = useState<FormData>({ ...DEFAULT_FORM, ...initialData });
   const [showComplete, setShowComplete] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<FormData>({ ...DEFAULT_FORM });
+  const [isDirty, setIsDirty] = useState(false);
 
   // 모달이 열릴 때마다 initialData로 동기화
   useEffect(() => {
     if (isOpen) {
-      setFormData({ ...DEFAULT_FORM, ...initialData });
+      const initial = { ...DEFAULT_FORM, ...initialData };
+      setInitialFormData(initial);
+      setFormData(initial);
+      setIsDirty(false);
       setStep(1);
       setShowComplete(false);
       setShowExitWarning(false);
     }
   }, [isOpen, initialData]);
+
+  // formData 변경 감지
+  useEffect(() => {
+    if (!isOpen) return;
+    const hasChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setIsDirty(hasChanged);
+  }, [formData, initialFormData, isOpen]);
 
   const allStepsValid = useMemo(
     () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData, mode)).every(Boolean),
@@ -252,9 +264,9 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               /* 수정 모드: 저장 버튼 */
               <button
                 onClick={() => setShowComplete(true)}
-                disabled={!allStepsValid}
+                disabled={!allStepsValid || !isDirty}
                 className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
-                  allStepsValid
+                  allStepsValid && isDirty
                     ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
