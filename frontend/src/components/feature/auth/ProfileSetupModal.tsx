@@ -44,6 +44,29 @@ const STEP_TABS = [
 ];
 
 const isStepValid = (step: number, formData: FormData, mode: 'onboarding' | 'edit' = 'onboarding'): boolean => {
+  // edit 모드에서는 이미 데이터가 있으므로 덜 엄격하게 검증
+  if (mode === 'edit') {
+    switch (step) {
+      case 1:
+        return formData.goals.length > 0;
+      case 2:
+        return formData.position !== "";
+      case 3:
+        return formData.experience !== "";
+      case 4:
+        return true; // workExperience는 선택사항
+      case 5:
+        return formData.skills.length > 0;
+      case 6:
+        return formData.mbti !== "";
+      case 7:
+        return true; // leaderScore는 항상 값이 있음
+      default:
+        return false;
+    }
+  }
+  
+  // onboarding 모드: 엄격한 검증
   switch (step) {
     case 1:
       return formData.goals.length > 0;
@@ -52,8 +75,7 @@ const isStepValid = (step: number, formData: FormData, mode: 'onboarding' | 'edi
     case 3:
       return formData.experience !== "";
     case 4:
-      // edit 모드에서는 workExperience가 없어도 통과
-      return mode === 'edit' ? true : formData.workExperience !== "";
+      return formData.workExperience !== "";
     case 5:
       return formData.skills.length > 0;
     case 6:
@@ -126,10 +148,26 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
     setIsDirty(hasChanged);
   }, [formData, initialFormData, isOpen, hasInitialized]);
 
-  const allStepsValid = useMemo(
-    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData, mode)).every(Boolean),
-    [formData, mode],
-  );
+  const allStepsValid = useMemo(() => {
+    const validations = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+      const stepNum = i + 1;
+      const valid = isStepValid(stepNum, formData, mode);
+      console.log(`[Step ${stepNum} Validation]:`, valid, {
+        step: stepNum,
+        formData: stepNum === 1 ? formData.goals :
+                 stepNum === 2 ? formData.position :
+                 stepNum === 3 ? formData.experience :
+                 stepNum === 4 ? formData.workExperience :
+                 stepNum === 5 ? formData.skills :
+                 stepNum === 6 ? formData.mbti :
+                 formData.leaderScore
+      });
+      return valid;
+    });
+    const allValid = validations.every(Boolean);
+    console.log('[ProfileSetupModal] allStepsValid:', allValid, validations);
+    return allValid;
+  }, [formData, mode]);
 
   if (!isOpen) return null;
 
