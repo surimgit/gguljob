@@ -83,7 +83,7 @@ const ProfileHeader = ({
             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base transition-colors"
           >
             <Settings className="w-4 h-4" />
-            정보수정
+            정보 수정
           </button>
           <button
             type="button"
