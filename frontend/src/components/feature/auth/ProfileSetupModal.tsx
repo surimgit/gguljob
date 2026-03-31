@@ -90,16 +90,17 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
     }
   }, [isOpen, initialData]);
 
+  const allStepsValid = useMemo(
+    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData)).every(Boolean),
+    [formData],
+  );
+
   if (!isOpen) return null;
 
   const handleExit = () => setShowExitWarning(true);
 
   const canNext = isStepValid(step, formData);
   const showProgress = SHOW_PROGRESS[step - 1];
-  const allStepsValid = useMemo(
-    () => Array.from({ length: TOTAL_STEPS }, (_, i) => isStepValid(i + 1, formData)).every(Boolean),
-    [formData],
-  );
 
   const handleNext = () => {
     if (!canNext) return;
