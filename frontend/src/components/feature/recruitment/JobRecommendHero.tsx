@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import goldMedalImg from '../../../assets/images/goldMedal.png';
 import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
@@ -222,11 +223,17 @@ interface JobRecommendHeroProps {
     onToggleBookmark: (id: number) => void;
 }
 
+const VISIBLE_SKILL_COUNT = 8;
+
 const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
     const user = useAuthStore((s) => s.user);
+    const [showAllSkills, setShowAllSkills] = useState(false);
 
     const userName = user?.name ?? '사용자';
     const userSkills = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
+    const hasMore = userSkills.length > VISIBLE_SKILL_COUNT;
+    const visibleSkills = showAllSkills ? userSkills : userSkills.slice(0, VISIBLE_SKILL_COUNT);
+    const hiddenCount = userSkills.length - VISIBLE_SKILL_COUNT;
 
     const top3 = useMemo(() => {
         if (allJobs.length === 0) return [];
@@ -260,10 +267,10 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                             포트폴리오 키워드와 기술 스택 유사도를 분석하여 추천합니다
                         </p>
 
-                        {/* 기술스택 태그 */}
+                        {/* 기술스택 태그 — 접기/펼치기 */}
                         {userSkills.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap mt-5 max-w-full lg:max-w-[50%]">
-                                {userSkills.slice(0, 8).map((stack) => (
+                                {visibleSkills.map((stack) => (
                                     <span
                                         key={stack}
                                         className="font-semibold"
@@ -279,6 +286,26 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                                         {stack}
                                     </span>
                                 ))}
+                                {hasMore && (
+                                    <button
+                                        onClick={() => setShowAllSkills((prev) => !prev)}
+                                        className="flex items-center gap-1 font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                                        style={{
+                                            background: showAllSkills ? '#E0E7FF' : '#F2B705',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            color: showAllSkills ? '#4338CA' : '#fff',
+                                            padding: '6px 14px',
+                                            boxShadow: '2px 2px 4px rgba(0,0,0,0.15)',
+                                        }}
+                                    >
+                                        {showAllSkills ? (
+                                            <>접기 <ChevronUp className="w-4 h-4" /></>
+                                        ) : (
+                                            <>+{hiddenCount}개 더 <ChevronDown className="w-4 h-4" /></>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

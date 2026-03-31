@@ -1,9 +1,10 @@
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
+import { useAuthStore } from '../../../stores/authStore';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
@@ -172,6 +173,8 @@ function FilterButton({ text, selected, onClick }: { text: string; selected: boo
     );
 }
 
+const DEFAULT_VISIBLE_SKILLS = 5;
+
 const SkillCategoryFilter = ({
     activeCategory,
     activeSkill,
@@ -183,7 +186,25 @@ const SkillCategoryFilter = ({
     onCategoryChange: (category: RoleCode | null) => void;
     onSkillChange: (skill: string) => void;
 }) => {
-    const subSkills = activeCategory ? (SKILLS_BY_CATEGORY[activeCategory] ?? []) : [];
+    const user = useAuthStore((s) => s.user);
+    const [expanded, setExpanded] = useState(false);
+    const userSkillNames = useMemo(() => {
+        const stacks = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
+        return new Set(stacks);
+    }, [user]);
+
+    const allSubSkills = activeCategory ? (SKILLS_BY_CATEGORY[activeCategory] ?? []) : [];
+
+    // 내 스킬을 상단에, 나머지를 뒤에 배치
+    const sortedSubSkills = useMemo(() => {
+        if (userSkillNames.size === 0) return allSubSkills;
+        const mine = allSubSkills.filter((s) => userSkillNames.has(s));
+        const others = allSubSkills.filter((s) => !userSkillNames.has(s));
+        return [...mine, ...others];
+    }, [allSubSkills, userSkillNames]);
+
+    const hasMore = sortedSubSkills.length > DEFAULT_VISIBLE_SKILLS;
+    const visibleSkills = expanded ? sortedSubSkills : sortedSubSkills.slice(0, DEFAULT_VISIBLE_SKILLS);
     const activeLabel = activeCategory ? ROLE_DISPLAY_NAMES[activeCategory] : null;
 
     return (
@@ -211,9 +232,11 @@ const SkillCategoryFilter = ({
                                 if (activeCategory === role) {
                                     onCategoryChange(null);
                                     onSkillChange('전체');
+                                    setExpanded(false);
                                 } else {
                                     onCategoryChange(role);
                                     onSkillChange('전체');
+                                    setExpanded(false);
                                 }
                             }}
                         />
@@ -221,31 +244,90 @@ const SkillCategoryFilter = ({
                 </div>
             </div>
 
-            {/* 선택된 카테고리의 스킬 목록 */}
-            {activeCategory && subSkills.length > 0 && (
+            {/* 선택된 카테고리의 스킬 목록 (내 스킬 우선 + 접기/펼치기) */}
+            {activeCategory && sortedSubSkills.length > 0 && (
                 <>
-                    <div className="ml-[68px] border-t border-dashed border-[#e0d3b8]" />
-                    <div className="flex items-start min-h-[32px] relative w-full">
-                        <span className="font-bold text-[#b8a88a] text-[12px] leading-[31.5px] w-[56px] shrink-0 text-right pr-[4px]">
+                    <div className="ml-0 sm:ml-[68px] border-t border-dashed border-[#e0d3b8]" />
+                    <div className="flex flex-col sm:flex-row sm:items-start min-h-[32px] relative w-full gap-1 sm:gap-0">
+                        <span className="font-bold text-[#b8a88a] text-[12px] leading-[31.5px] sm:w-[56px] shrink-0 sm:text-right pr-[4px]">
                             {activeLabel}
                         </span>
-                        <div className="flex items-center ml-[12px] flex-wrap gap-x-[8px] gap-y-[4px]">
+                        <div className="flex items-center sm:ml-[12px] flex-wrap gap-x-[8px] gap-y-[4px]">
                             <FilterButton
                                 text="전체"
                                 selected={activeSkill === '전체'}
                                 onClick={() => onSkillChange('전체')}
                             />
-                            {subSkills.map((skill) => (
-                                <FilterButton
-                                    key={skill}
-                                    text={skill}
-                                    selected={activeSkill === skill}
-                                    onClick={() => onSkillChange(skill)}
-                                />
-                            ))}
+                            {visibleSkills.map((skill) => {
+                                const isMine = userSkillNames.has(skill);
+                                return (
+                                    <button
+                                        key={skill}
+                                        onClick={() => onSkillChange(skill)}
+                                        className={
+                                            activeSkill === skill
+                                                ? 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[#111827] text-[13px] shadow-[0px_2px_8px_0px_rgba(245,200,66,0.3)] whitespace-nowrap transition-all'
+                                                : 'h-[31.5px] px-[16px] rounded-[20px] font-bold text-[13px] whitespace-nowrap hover:text-[#111827] transition-all'
+                                        }
+                                        style={
+                                            activeSkill === skill
+                                                ? { backgroundImage: 'linear-gradient(150.6deg, #F7C948 0%, #F2B705 100%)' }
+                                                : { color: isMine ? '#2563EB' : '#9ca3af' }
+                                        }
+                                    >
+                                        {isMine && activeSkill !== skill ? `★ ${skill}` : skill}
+                                    </button>
+                                );
+                            })}
+                            {hasMore && (
+                                <button
+                                    onClick={() => setExpanded((prev) => !prev)}
+                                    className="h-[31.5px] px-[12px] rounded-[20px] font-bold text-[12px] text-[#6B7280] hover:text-[#111827] transition-all flex items-center gap-0.5 whitespace-nowrap"
+                                >
+                                    {expanded ? (
+                                        <>접기 <ChevronUp className="w-3.5 h-3.5" /></>
+                                    ) : (
+                                        <>+{sortedSubSkills.length - DEFAULT_VISIBLE_SKILLS}개 더 <ChevronDown className="w-3.5 h-3.5" /></>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </>
+            )}
+        </div>
+    );
+};
+
+const MAX_VISIBLE_STACKS = 3;
+
+const TechStackBadges = ({ stacks, userSkillNames }: { stacks: string[]; userSkillNames: Set<string> }) => {
+    if (stacks.length === 0) return null;
+    const visible = stacks.slice(0, MAX_VISIBLE_STACKS);
+    const remaining = stacks.length - MAX_VISIBLE_STACKS;
+
+    return (
+        <div className="flex items-center gap-1 flex-wrap mt-1.5">
+            {visible.map((stack) => {
+                const isMine = userSkillNames.has(stack);
+                return (
+                    <span
+                        key={stack}
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+                        style={
+                            isMine
+                                ? { background: '#EFF6FF', borderColor: '#93C5FD', color: '#2563EB' }
+                                : { background: '#F9FAFB', borderColor: '#E5E7EB', color: '#6B7280' }
+                        }
+                    >
+                        {stack}
+                    </span>
+                );
+            })}
+            {remaining > 0 && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full text-[#9CA3AF]">
+                    +{remaining}
+                </span>
             )}
         </div>
     );
@@ -255,10 +337,12 @@ const JobCard = ({
     job,
     bookmarked,
     onToggleBookmark,
+    userSkillNames,
 }: {
     job: JobListing;
     bookmarked: boolean;
     onToggleBookmark: (id: number) => void;
+    userSkillNames: Set<string>;
 }) => {
     const match = MATCH_CONFIG[job.match];
     const dday = calcDday(job.deadline);
@@ -317,6 +401,7 @@ const JobCard = ({
                         <span>·</span>
                         <span className="font-bold text-primary-hover">{job.salary}</span>
                     </div>
+                    <TechStackBadges stacks={job.techStacks} userSkillNames={userSkillNames} />
                 </div>
             </div>
 
@@ -352,6 +437,11 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
     const sectionRef = useRef<HTMLDivElement>(null);
     const prevPageRef = useRef(1);
     const [searchParams] = useSearchParams();
+    const user = useAuthStore((s) => s.user);
+    const userSkillNames = useMemo(() => {
+        const stacks = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
+        return new Set(stacks);
+    }, [user]);
     const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSkill, setActiveSkill] = useState('전체');
@@ -528,6 +618,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
                             job={job}
                             bookmarked={bookmarkedIds.has(job.id)}
                             onToggleBookmark={onToggleBookmark}
+                            userSkillNames={userSkillNames}
                         />
                     ))
                 ) : showBookmarked ? (
