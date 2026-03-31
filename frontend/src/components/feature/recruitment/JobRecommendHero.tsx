@@ -5,6 +5,7 @@ import silverMedalImg from '../../../assets/images/silverMedal.png';
 import bronzeMedalImg from '../../../assets/images/medal.png';
 import jobMatchingImg from '../../../assets/images/jobmatching.png';
 import { useAuthStore } from '../../../stores/authStore';
+import { useUserSkills } from '../../../hooks/useUserSkills';
 import type { JobItem } from '../../../types/recruitment';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 import { type MatchStatus, MATCH_CONFIG, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
@@ -227,10 +228,10 @@ const VISIBLE_SKILL_COUNT = 8;
 
 const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecommendHeroProps) => {
     const user = useAuthStore((s) => s.user);
+    const userSkills = useUserSkills();
     const [showAllSkills, setShowAllSkills] = useState(false);
 
     const userName = user?.name ?? '사용자';
-    const userSkills = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
     const hasMore = userSkills.length > VISIBLE_SKILL_COUNT;
     const visibleSkills = showAllSkills ? userSkills : userSkills.slice(0, VISIBLE_SKILL_COUNT);
     const hiddenCount = userSkills.length - VISIBLE_SKILL_COUNT;
@@ -289,15 +290,11 @@ const JobRecommendHero = ({ allJobs, bookmarkedIds, onToggleBookmark }: JobRecom
                                 {hasMore && (
                                     <button
                                         onClick={() => setShowAllSkills((prev) => !prev)}
-                                        className="flex items-center gap-1 font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-                                        style={{
-                                            background: showAllSkills ? '#E0E7FF' : '#F2B705',
-                                            borderRadius: '8px',
-                                            fontSize: '14px',
-                                            color: showAllSkills ? '#4338CA' : '#fff',
-                                            padding: '6px 14px',
-                                            boxShadow: '2px 2px 4px rgba(0,0,0,0.15)',
-                                        }}
+                                        className={`flex items-center gap-1 font-semibold text-sm px-3.5 py-1.5 rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15)] cursor-pointer hover:opacity-80 transition-opacity ${
+                                            showAllSkills
+                                                ? 'bg-indigo-100 text-indigo-700'
+                                                : 'bg-[#F2B705] text-white'
+                                        }`}
                                     >
                                         {showAllSkills ? (
                                             <>접기 <ChevronUp className="w-4 h-4" /></>

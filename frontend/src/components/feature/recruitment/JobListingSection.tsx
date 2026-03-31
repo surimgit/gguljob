@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getBookmarkedJobs, type BookmarkItem } from '../../../api/jobs';
 import type { JobItem } from '../../../types/recruitment';
 import { ROLE_LIST, ROLE_DISPLAY_NAMES, SKILLS_BY_CATEGORY, type RoleCode } from '../../../constants/skills';
-import { useAuthStore } from '../../../stores/authStore';
+import { useUserSkillSet } from '../../../hooks/useUserSkills';
 import Pagination from '../../common/Pagination';
 import { calcDday, getDdayColor } from '../../../utils/dateUtils';
 import { type MatchType, MATCH_CONFIG, MATCH_RANK, MATCH_STATUS_TO_TYPE } from '../../../constants/match';
@@ -186,12 +186,8 @@ const SkillCategoryFilter = ({
     onCategoryChange: (category: RoleCode | null) => void;
     onSkillChange: (skill: string) => void;
 }) => {
-    const user = useAuthStore((s) => s.user);
+    const userSkillNames = useUserSkillSet();
     const [expanded, setExpanded] = useState(false);
-    const userSkillNames = useMemo(() => {
-        const stacks = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
-        return new Set(stacks);
-    }, [user]);
 
     const allSubSkills = activeCategory ? (SKILLS_BY_CATEGORY[activeCategory] ?? []) : [];
 
@@ -437,11 +433,7 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
     const sectionRef = useRef<HTMLDivElement>(null);
     const prevPageRef = useRef(1);
     const [searchParams] = useSearchParams();
-    const user = useAuthStore((s) => s.user);
-    const userSkillNames = useMemo(() => {
-        const stacks = user?.techStacks?.length ? user.techStacks : (user?.skills?.map((s) => s.name) ?? []);
-        return new Set(stacks);
-    }, [user]);
+    const userSkillNames = useUserSkillSet();
     const [activeCategory, setActiveCategory] = useState<RoleCode | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSkill, setActiveSkill] = useState('전체');
