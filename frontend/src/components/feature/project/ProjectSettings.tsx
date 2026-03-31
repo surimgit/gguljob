@@ -393,6 +393,7 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         try {
           const res = await getSuggestedSkills(projectId);
           const allSuggested: string[] = res.data.data ?? [];
+          console.log("[SkillSuggest] allSuggested:", allSuggested, "user:", currentUser?.position);
 
           // 내 직무 카테고리에 해당하는 스킬만 필터링
           const myRole = currentUser?.position
@@ -402,14 +403,15 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
           const filtered = roleSkillSet
             ? allSuggested.filter((s) => roleSkillSet.has(s))
             : allSuggested;
+          console.log("[SkillSuggest] myRole:", myRole, "filtered:", filtered);
 
           if (filtered.length > 0) {
             setSuggestedSkills(filtered);
             setSelectedSuggestedSkills(new Set(filtered));
             setShowSkillSuggestModal(true);
           }
-        } catch {
-          // 제안 실패는 조용히 무시
+        } catch (e) {
+          console.error("[SkillSuggest] error:", e);
         }
       }
     } catch (err) {
