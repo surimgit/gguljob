@@ -77,39 +77,39 @@ const STATUS_OPTIONS: {
   selectedBorder: string;
   selectedText: string;
 }[] = [
-  {
-    key: "active",
-    label: "진행중",
-    dotColor: "var(--color-success)",
-    selectedBg: "rgba(34,197,94,0.1)",
-    selectedBorder: "var(--color-success)",
-    selectedText: "var(--color-success)",
-  },
-  {
-    key: "recruiting",
-    label: "모집중",
-    dotColor: "var(--color-primary)",
-    selectedBg: "var(--color-primary-soft)",
-    selectedBorder: "var(--color-primary)",
-    selectedText: "var(--color-text-primary)",
-  },
-  {
-    key: "done",
-    label: "완료",
-    dotColor: "var(--color-text-tertiary)",
-    selectedBg: "var(--color-background)",
-    selectedBorder: "var(--color-text-tertiary)",
-    selectedText: "var(--color-text-secondary)",
-  },
-  {
-    key: "paused",
-    label: "중단",
-    dotColor: "var(--color-error)",
-    selectedBg: "rgba(239,68,68,0.1)",
-    selectedBorder: "var(--color-error)",
-    selectedText: "var(--color-error)",
-  },
-];
+    {
+      key: "active",
+      label: "진행중",
+      dotColor: "var(--color-success)",
+      selectedBg: "rgba(34,197,94,0.1)",
+      selectedBorder: "var(--color-success)",
+      selectedText: "var(--color-success)",
+    },
+    {
+      key: "recruiting",
+      label: "모집중",
+      dotColor: "var(--color-primary)",
+      selectedBg: "var(--color-primary-soft)",
+      selectedBorder: "var(--color-primary)",
+      selectedText: "var(--color-text-primary)",
+    },
+    {
+      key: "done",
+      label: "완료",
+      dotColor: "var(--color-text-tertiary)",
+      selectedBg: "var(--color-background)",
+      selectedBorder: "var(--color-text-tertiary)",
+      selectedText: "var(--color-text-secondary)",
+    },
+    {
+      key: "paused",
+      label: "중단",
+      dotColor: "var(--color-error)",
+      selectedBg: "rgba(239,68,68,0.1)",
+      selectedBorder: "var(--color-error)",
+      selectedText: "var(--color-error)",
+    },
+  ];
 
 const DOMAINS = [
   "웹기술",
@@ -434,7 +434,20 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
         ? currentUser.techStacks
         : (currentUser.skills?.map((s) => s.name) ?? []);
       const merged = Array.from(new Set([...currentSkills, ...selectedSuggestedSkills]));
-      await updateProfileApi({ skills: merged });
+
+      // ⚠️ 기존 사용자 정보를 모두 포함해서 업데이트 (MBTI 등이 날아가지 않도록)
+      await updateProfileApi({
+        skills: merged,
+        description: currentUser.description ?? undefined,
+        // position을 사용 (role은 deprecated)
+        roles: currentUser.position ? [currentUser.position] : undefined,
+        experience: currentUser.experience ?? undefined,
+        mbti: currentUser.mbti ?? undefined,
+        teamTendency: currentUser.teamTendency ?? undefined,
+        workExperience: currentUser.workExperience as 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN' | undefined,
+        goals: currentUser.goals ?? undefined,
+      });
+
       const updatedUser = await getMe();
       setUser(updatedUser);
       toast.success(`스킬 ${selectedSuggestedSkills.size}개가 추가되었습니다.`);
@@ -486,595 +499,595 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       {/* ── 2컬럼 그리드 (데스크톱) / 1컬럼 (모바일) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5">
 
-      {/* ── 좌측 컬럼 ── */}
-      <div className="flex flex-col gap-5">
+        {/* ── 좌측 컬럼 ── */}
+        <div className="flex flex-col gap-5">
 
-      {/* ── 섹션 1: 프로젝트 상태 ── */}
-      <section
-        className="rounded-2xl p-6 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          className="flex items-center gap-2 text-lg font-bold mb-5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          프로젝트 상태
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {STATUS_OPTIONS.map((opt) => {
-            const sel = status === opt.key;
-            return (
-              <button
-                key={opt.key}
-                onClick={() => isLeader && setStatus(opt.key)}
-                disabled={!isLeader}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-base font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default opacity-80"}`}
-                style={{
-                  background: sel ? opt.selectedBg : "transparent",
-                  borderColor: sel
-                    ? opt.selectedBorder
-                    : "var(--color-border)",
-                  color: sel ? opt.selectedText : "var(--color-text-secondary)",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: opt.dotColor }}
-                />
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── 섹션 2: 기본 정보 ── */}
-      <section
-        className="rounded-2xl p-6 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          className="flex items-center gap-2 text-lg font-bold mb-5"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          기본 정보
-        </div>
-
-        {/* 프로젝트 이미지 + 프로젝트명 */}
-        <div className="mb-5">
-          <div
-            className="flex items-center gap-5 rounded-2xl p-4"
-            style={{ background: "var(--color-background)" }}
+          {/* ── 섹션 1: 프로젝트 상태 ── */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+            }}
           >
-            {/* 프로젝트 이미지 */}
-            <div className="flex flex-col items-center flex-shrink-0 relative" ref={imageMenuRef}>
-              <button
-                type="button"
-                onClick={() => isLeader && setShowImageMenu((prev) => !prev)}
-                className="relative w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group"
-                style={{
-                  background: imageUrl ? "transparent" : "linear-gradient(135deg, var(--color-primary-soft), var(--color-surface))",
-                  border: "2px solid var(--color-border)",
-                  cursor: isLeader ? "pointer" : "default",
-                }}
+            <div
+              className="flex items-center gap-2 text-lg font-bold mb-5"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              프로젝트 상태
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {STATUS_OPTIONS.map((opt) => {
+                const sel = status === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => isLeader && setStatus(opt.key)}
+                    disabled={!isLeader}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-base font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default opacity-80"}`}
+                    style={{
+                      background: sel ? opt.selectedBg : "transparent",
+                      borderColor: sel
+                        ? opt.selectedBorder
+                        : "var(--color-border)",
+                      color: sel ? opt.selectedText : "var(--color-text-secondary)",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: opt.dotColor }}
+                    />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* ── 섹션 2: 기본 정보 ── */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <div
+              className="flex items-center gap-2 text-lg font-bold mb-5"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              기본 정보
+            </div>
+
+            {/* 프로젝트 이미지 + 프로젝트명 */}
+            <div className="mb-5">
+              <div
+                className="flex items-center gap-5 rounded-2xl p-4"
+                style={{ background: "var(--color-background)" }}
               >
-                {imageUrl ? (
-                  <img src={imageUrl} alt="프로젝트 이미지" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="flex flex-col items-center gap-1.5">
-                    <Camera className="w-6 h-6" style={{ color: "var(--color-primary)", opacity: 0.5 }} />
-                    <span className="text-[10px] font-medium" style={{ color: "var(--color-text-tertiary)" }}>대표 이미지</span>
-                  </div>
-                )}
-                {isLeader && (
-                  <div className="absolute inset-0 rounded-2xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    {imageUploading ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Camera className="w-6 h-6 text-white" />
-                    )}
-                  </div>
-                )}
-              </button>
-              {showImageMenu && (
-                <div className="absolute left-[96px] top-2 bg-white border border-border rounded-xl shadow-lg py-1 z-10 w-28">
+                {/* 프로젝트 이미지 */}
+                <div className="flex flex-col items-center flex-shrink-0 relative" ref={imageMenuRef}>
                   <button
                     type="button"
-                    onClick={() => { imageInputRef.current?.click(); setShowImageMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-primary-soft transition-colors"
+                    onClick={() => isLeader && setShowImageMenu((prev) => !prev)}
+                    className="relative w-[88px] h-[88px] rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group"
+                    style={{
+                      background: imageUrl ? "transparent" : "linear-gradient(135deg, var(--color-primary-soft), var(--color-surface))",
+                      border: "2px solid var(--color-border)",
+                      cursor: isLeader ? "pointer" : "default",
+                    }}
                   >
-                    <Camera className="w-3.5 h-3.5" />
-                    {imageUrl ? "사진 변경" : "사진 추가"}
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="프로젝트 이미지" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5">
+                        <Camera className="w-6 h-6" style={{ color: "var(--color-primary)", opacity: 0.5 }} />
+                        <span className="text-[10px] font-medium" style={{ color: "var(--color-text-tertiary)" }}>대표 이미지</span>
+                      </div>
+                    )}
+                    {isLeader && (
+                      <div className="absolute inset-0 rounded-2xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        {imageUploading ? (
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Camera className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                    )}
                   </button>
-                  {imageUrl && (
+                  {showImageMenu && (
+                    <div className="absolute left-[96px] top-2 bg-white border border-border rounded-xl shadow-lg py-1 z-10 w-28">
+                      <button
+                        type="button"
+                        onClick={() => { imageInputRef.current?.click(); setShowImageMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-primary-soft transition-colors"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        {imageUrl ? "사진 변경" : "사진 추가"}
+                      </button>
+                      {imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          사진 삭제
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                {/* 프로젝트명 입력 */}
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <label
+                    className="text-base font-semibold"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={name}
+                    onChange={(e) => isLeader && setName(e.target.value)}
+                    readOnly={!isLeader}
+                    placeholder="프로젝트명을 입력하세요"
+                    className={`w-full px-4 py-3 rounded-xl text-base outline-none ${!isLeader ? "cursor-default" : ""}`}
+                    style={{
+                      ...inputStyle(!!name),
+                      background: "var(--color-surface)",
+                    }}
+                    onFocus={(e) => {
+                      if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
+                    }}
+                    onBlur={(e) => {
+                      if (!name)
+                        e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 프로젝트 설명 (마크다운 에디터) */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  className="text-base font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  프로젝트 설명
+                </label>
+                {isLeader && (
+                  <div
+                    className="flex rounded-lg overflow-hidden"
+                    style={{ border: "1px solid var(--color-border)" }}
+                  >
                     <button
-                      type="button"
-                      onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                      onClick={() => setDescTab("edit")}
+                      className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
+                      style={{
+                        background: descTab === "edit" ? "var(--color-primary)" : "transparent",
+                        color: descTab === "edit" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                      }}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      사진 삭제
+                      <Pencil className="w-3 h-3" />
+                      편집
                     </button>
+                    <button
+                      onClick={() => setDescTab("preview")}
+                      className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
+                      style={{
+                        background: descTab === "preview" ? "var(--color-primary)" : "transparent",
+                        color: descTab === "preview" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                      }}
+                    >
+                      <Eye className="w-3 h-3" />
+                      프리뷰
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {descTab === "edit" && isLeader ? (
+                <div
+                  className="rounded-xl overflow-hidden"
+                  style={{ border: "1px solid var(--color-border)" }}
+                >
+                  {/* 툴바 */}
+                  <div
+                    className="flex items-center gap-0.5 px-2 py-1.5 border-b"
+                    style={{ background: "var(--color-background)", borderColor: "var(--color-border)" }}
+                  >
+                    {[
+                      { icon: Heading2, action: () => insertMd("## "), title: "제목" },
+                      { icon: Bold, action: () => insertMd("**", "**"), title: "굵게" },
+                      { icon: Italic, action: () => insertMd("*", "*"), title: "기울임" },
+                      { icon: Code, action: () => insertMd("`", "`"), title: "인라인 코드" },
+                      { icon: List, action: () => insertMd("- "), title: "목록" },
+                      { icon: ListOrdered, action: () => insertMd("1. "), title: "순서 목록" },
+                      { icon: Link, action: () => insertMd("[", "](url)"), title: "링크" },
+                    ].map(({ icon: Icon, action, title }) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={action}
+                        title={title}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-white transition-colors"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </button>
+                    ))}
+                  </div>
+                  {/* 편집 영역 */}
+                  <textarea
+                    ref={descRef}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="마크다운으로 프로젝트를 설명해주세요&#10;&#10;예: ## 개요&#10;이 프로젝트는..."
+                    className="w-full px-4 py-3 text-base outline-none h-48 resize-none font-mono"
+                    style={{ background: "var(--color-surface)", color: "var(--color-text-primary)" }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="rounded-xl px-5 py-4 h-48 overflow-y-auto prose prose-sm max-w-none"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-surface)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  {description ? (
+                    <MarkdownRenderer>{description}</MarkdownRenderer>
+                  ) : (
+                    <p className="text-base" style={{ color: "var(--color-text-tertiary)" }}>
+                      프리뷰할 내용이 없습니다.
+                    </p>
                   )}
                 </div>
               )}
-            </div>
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
-            {/* 프로젝트명 입력 */}
-            <div className="flex-1 min-w-0 flex flex-col gap-2">
-              <label
-                className="text-base font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                프로젝트명 <span style={{ color: "var(--color-error)" }}>*</span>
-              </label>
-              <input
-                type="text"
-                maxLength={50}
-                value={name}
-                onChange={(e) => isLeader && setName(e.target.value)}
-                readOnly={!isLeader}
-                placeholder="프로젝트명을 입력하세요"
-                className={`w-full px-4 py-3 rounded-xl text-base outline-none ${!isLeader ? "cursor-default" : ""}`}
-                style={{
-                  ...inputStyle(!!name),
-                  background: "var(--color-surface)",
-                }}
-                onFocus={(e) => {
-                  if (isLeader) e.currentTarget.style.borderColor = "var(--color-primary)";
-                }}
-                onBlur={(e) => {
-                  if (!name)
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 프로젝트 설명 (마크다운 에디터) */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              className="text-base font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              프로젝트 설명
-            </label>
-            {isLeader && (
-            <div
-              className="flex rounded-lg overflow-hidden"
-              style={{ border: "1px solid var(--color-border)" }}
-            >
-              <button
-                onClick={() => setDescTab("edit")}
-                className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
-                style={{
-                  background: descTab === "edit" ? "var(--color-primary)" : "transparent",
-                  color: descTab === "edit" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                }}
-              >
-                <Pencil className="w-3 h-3" />
-                편집
-              </button>
-              <button
-                onClick={() => setDescTab("preview")}
-                className="flex items-center gap-1 px-3 py-1 text-sm font-medium transition-colors"
-                style={{
-                  background: descTab === "preview" ? "var(--color-primary)" : "transparent",
-                  color: descTab === "preview" ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                }}
-              >
-                <Eye className="w-3 h-3" />
-                프리뷰
-              </button>
-            </div>
-            )}
-          </div>
-
-          {descTab === "edit" && isLeader ? (
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ border: "1px solid var(--color-border)" }}
-            >
-              {/* 툴바 */}
-              <div
-                className="flex items-center gap-0.5 px-2 py-1.5 border-b"
-                style={{ background: "var(--color-background)", borderColor: "var(--color-border)" }}
-              >
-                {[
-                  { icon: Heading2, action: () => insertMd("## "), title: "제목" },
-                  { icon: Bold, action: () => insertMd("**", "**"), title: "굵게" },
-                  { icon: Italic, action: () => insertMd("*", "*"), title: "기울임" },
-                  { icon: Code, action: () => insertMd("`", "`"), title: "인라인 코드" },
-                  { icon: List, action: () => insertMd("- "), title: "목록" },
-                  { icon: ListOrdered, action: () => insertMd("1. "), title: "순서 목록" },
-                  { icon: Link, action: () => insertMd("[", "](url)"), title: "링크" },
-                ].map(({ icon: Icon, action, title }) => (
-                  <button
-                    key={title}
-                    type="button"
-                    onClick={action}
-                    title={title}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-white transition-colors"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </button>
-                ))}
-              </div>
-              {/* 편집 영역 */}
-              <textarea
-                ref={descRef}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="마크다운으로 프로젝트를 설명해주세요&#10;&#10;예: ## 개요&#10;이 프로젝트는..."
-                className="w-full px-4 py-3 text-base outline-none h-48 resize-none font-mono"
-                style={{ background: "var(--color-surface)", color: "var(--color-text-primary)" }}
-              />
-            </div>
-          ) : (
-            <div
-              className="rounded-xl px-5 py-4 h-48 overflow-y-auto prose prose-sm max-w-none"
-              style={{
-                border: "1px solid var(--color-border)",
-                background: "var(--color-surface)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {description ? (
-                <MarkdownRenderer>{description}</MarkdownRenderer>
-              ) : (
-                <p className="text-base" style={{ color: "var(--color-text-tertiary)" }}>
-                  프리뷰할 내용이 없습니다.
+              {isLeader && (
+                <p
+                  className="text-sm text-right mt-1"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {description.length} 자
                 </p>
               )}
             </div>
-          )}
-          {isLeader && (
-          <p
-            className="text-sm text-right mt-1"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {description.length} 자
-          </p>
-          )}
-        </div>
 
-        {/* 도메인 */}
-        <div className="mb-4">
-          <label
-            className="text-base font-semibold mb-1.5 block"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            도메인
-          </label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {DOMAINS.map((d) => {
-              const sel = domain === d;
-              return (
-                <button
-                  key={d}
-                  onClick={() => isLeader && selectDomain(d)}
-                  disabled={!isLeader}
-                  className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
-                  style={{
-                    borderColor: sel
-                      ? "var(--color-primary)"
-                      : "var(--color-border)",
-                    color: sel
-                      ? "var(--color-text-primary)"
-                      : "var(--color-text-secondary)",
-                    background: sel
-                      ? "var(--color-primary-soft)"
-                      : "var(--color-surface)",
-                  }}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-      </section>
-
-      </div>{/* 좌측 컬럼 끝 */}
-
-      {/* ── 우측 컬럼 ── */}
-      <div className="flex flex-col gap-5">
-
-      {/* ── 섹션 3: 기술 스택 ── */}
-      <section
-        className="rounded-2xl p-6 shadow-sm"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          className="flex items-center gap-2 text-lg font-bold mb-1"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          기술 스택
-        </div>
-        <p
-          className="text-base mb-4"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          카테고리별로 사용할 기술을 선택하세요
-        </p>
-
-        {/* 아코디언 */}
-        <div className="flex flex-col gap-2">
-          {TECH_CATEGORIES.map((cat) => {
-            const Icon = cat.icon;
-            const isOpen = openCategory === cat.key;
-            const count = (techStacks[cat.key] ?? []).length;
-
-            return (
-              <div key={cat.key}>
-                <button
-                  onClick={() =>
-                    setOpenCategory(isOpen ? null : cat.key)
-                  }
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all"
-                  style={{
-                    background: isOpen
-                      ? "var(--color-primary-soft)"
-                      : "var(--color-background)",
-                    border: isOpen
-                      ? "1px solid var(--color-primary)"
-                      : "1px solid transparent",
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon
-                      className="w-4 h-4"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    />
-                    <span
-                      className="text-base font-semibold"
-                      style={{ color: "var(--color-text-primary)" }}
+            {/* 도메인 */}
+            <div className="mb-4">
+              <label
+                className="text-base font-semibold mb-1.5 block"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                도메인
+              </label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {DOMAINS.map((d) => {
+                  const sel = domain === d;
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => isLeader && selectDomain(d)}
+                      disabled={!isLeader}
+                      className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                      style={{
+                        borderColor: sel
+                          ? "var(--color-primary)"
+                          : "var(--color-border)",
+                        color: sel
+                          ? "var(--color-text-primary)"
+                          : "var(--color-text-secondary)",
+                        background: sel
+                          ? "var(--color-primary-soft)"
+                          : "var(--color-surface)",
+                      }}
                     >
-                      {cat.label}
-                    </span>
-                    {count > 0 && (
-                      <span
-                        className="w-5 h-5 rounded-full text-sm font-bold flex items-center justify-center text-white"
-                        style={{ background: "var(--color-primary)" }}
-                      >
-                        {count}
-                      </span>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+          </section>
+
+        </div>{/* 좌측 컬럼 끝 */}
+
+        {/* ── 우측 컬럼 ── */}
+        <div className="flex flex-col gap-5">
+
+          {/* ── 섹션 3: 기술 스택 ── */}
+          <section
+            className="rounded-2xl p-6 shadow-sm"
+            style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <div
+              className="flex items-center gap-2 text-lg font-bold mb-1"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              기술 스택
+            </div>
+            <p
+              className="text-base mb-4"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              카테고리별로 사용할 기술을 선택하세요
+            </p>
+
+            {/* 아코디언 */}
+            <div className="flex flex-col gap-2">
+              {TECH_CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const isOpen = openCategory === cat.key;
+                const count = (techStacks[cat.key] ?? []).length;
+
+                return (
+                  <div key={cat.key}>
+                    <button
+                      onClick={() =>
+                        setOpenCategory(isOpen ? null : cat.key)
+                      }
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all"
+                      style={{
+                        background: isOpen
+                          ? "var(--color-primary-soft)"
+                          : "var(--color-background)",
+                        border: isOpen
+                          ? "1px solid var(--color-primary)"
+                          : "1px solid transparent",
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon
+                          className="w-4 h-4"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        />
+                        <span
+                          className="text-base font-semibold"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {cat.label}
+                        </span>
+                        {count > 0 && (
+                          <span
+                            className="w-5 h-5 rounded-full text-sm font-bold flex items-center justify-center text-white"
+                            style={{ background: "var(--color-primary)" }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </div>
+                      {isOpen ? (
+                        <ChevronUp
+                          className="w-4 h-4"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        />
+                      ) : (
+                        <ChevronDown
+                          className="w-4 h-4"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        />
+                      )}
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 pb-4 pt-2">
+                        <div className="flex flex-wrap gap-2">
+                          {isLeader && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const selected = techStacks[cat.key] ?? [];
+                                const allSelected = cat.stacks.every((s) => selected.includes(s));
+                                setTechStacks((prev) => ({
+                                  ...prev,
+                                  [cat.key]: allSelected ? [] : [...cat.stacks],
+                                }));
+                              }}
+                              className="text-sm font-bold px-3 py-1.5 rounded-full border transition-colors"
+                              style={{
+                                borderColor: "var(--color-primary)",
+                                color: "var(--color-text-primary)",
+                                backgroundColor: "var(--color-primary-soft)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                                e.currentTarget.style.color = "#fff";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
+                                e.currentTarget.style.color = "var(--color-text-primary)";
+                              }}
+                            >
+                              {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
+                            </button>
+                          )}
+                          {cat.stacks.map((stack) => {
+                            const sel = (techStacks[cat.key] ?? []).includes(stack);
+                            return (
+                              <button
+                                key={stack}
+                                onClick={() => isLeader && toggleStack(cat.key, stack)}
+                                disabled={!isLeader}
+                                className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
+                                style={{
+                                  borderColor: sel
+                                    ? "var(--color-primary)"
+                                    : "var(--color-border)",
+                                  color: sel
+                                    ? "var(--color-text-primary)"
+                                    : "var(--color-text-secondary)",
+                                  background: sel
+                                    ? "var(--color-primary-soft)"
+                                    : "var(--color-surface)",
+                                }}
+                              >
+                                {stack}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
-                  {isOpen ? (
-                    <ChevronUp
-                      className="w-4 h-4"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    />
-                  ) : (
-                    <ChevronDown
-                      className="w-4 h-4"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    />
-                  )}
-                </button>
+                );
+              })}
+            </div>
 
-                {isOpen && (
-                  <div className="px-4 pb-4 pt-2">
-                    <div className="flex flex-wrap gap-2">
+            {/* 선택된 스택 요약 */}
+            {allSelected.length > 0 && (
+              <div className="mt-4">
+                <p
+                  className="text-base font-semibold mb-2"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  선택된 기술 스택
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {allSelected.map((stack) => (
+                    <span
+                      key={stack}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        background: "var(--color-primary-soft)",
+                        color: "var(--color-text-primary)",
+                        border: "1px solid var(--color-primary)",
+                      }}
+                    >
+                      {stack}
                       {isLeader && (
                         <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const selected = techStacks[cat.key] ?? [];
-                            const allSelected = cat.stacks.every((s) => selected.includes(s));
-                            setTechStacks((prev) => ({
-                              ...prev,
-                              [cat.key]: allSelected ? [] : [...cat.stacks],
-                            }));
-                          }}
-                          className="text-sm font-bold px-3 py-1.5 rounded-full border transition-colors"
-                          style={{
-                            borderColor: "var(--color-primary)",
-                            color: "var(--color-text-primary)",
-                            backgroundColor: "var(--color-primary-soft)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "var(--color-primary)";
-                            e.currentTarget.style.color = "#fff";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "var(--color-primary-soft)";
-                            e.currentTarget.style.color = "var(--color-text-primary)";
-                          }}
+                          onClick={() => removeStack(stack)}
+                          className="transition-colors"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.color = "var(--color-error)")
+                          }
+                          onMouseLeave={(e) =>
+                          (e.currentTarget.style.color =
+                            "var(--color-text-tertiary)")
+                          }
                         >
-                          {cat.stacks.every((s) => (techStacks[cat.key] ?? []).includes(s)) ? '전체 해제' : '전체 선택'}
+                          <X className="w-3 h-3" />
                         </button>
                       )}
-                      {cat.stacks.map((stack) => {
-                        const sel = (techStacks[cat.key] ?? []).includes(stack);
-                        return (
-                          <button
-                            key={stack}
-                            onClick={() => isLeader && toggleStack(cat.key, stack)}
-                            disabled={!isLeader}
-                            className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${isLeader ? "cursor-pointer" : "cursor-default"}`}
-                            style={{
-                              borderColor: sel
-                                ? "var(--color-primary)"
-                                : "var(--color-border)",
-                              color: sel
-                                ? "var(--color-text-primary)"
-                                : "var(--color-text-secondary)",
-                              background: sel
-                                ? "var(--color-primary-soft)"
-                                : "var(--color-surface)",
-                            }}
-                          >
-                            {stack}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                    </span>
+                  ))}
+                </div>
               </div>
-            );
-          })}
-        </div>
+            )}
+          </section>
 
-        {/* 선택된 스택 요약 */}
-        {allSelected.length > 0 && (
-          <div className="mt-4">
-            <p
-              className="text-base font-semibold mb-2"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              선택된 기술 스택
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {allSelected.map((stack) => (
-                <span
-                  key={stack}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
-                  style={{
-                    background: "var(--color-primary-soft)",
+          {/* ── 저장 버튼 (팀장만) ── */}
+          {isLeader && (
+            <button
+              disabled={!hasChanges || saving}
+              onClick={handleSave}
+              className="w-full block py-3 rounded-xl text-base font-bold transition-colors"
+              style={
+                hasChanges && !saving
+                  ? {
+                    background: "var(--color-primary)",
                     color: "var(--color-text-primary)",
-                    border: "1px solid var(--color-primary)",
-                  }}
+                  }
+                  : {
+                    background: "var(--color-border)",
+                    color: "var(--color-text-tertiary)",
+                    cursor: "not-allowed",
+                  }
+              }
+              onMouseEnter={(e) => {
+                if (hasChanges && !saving)
+                  e.currentTarget.style.background = "var(--color-primary-hover)";
+              }}
+              onMouseLeave={(e) => {
+                if (hasChanges && !saving)
+                  e.currentTarget.style.background = "var(--color-primary)";
+              }}
+            >
+              {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
+            </button>
+          )}
+
+          {/* ── 위험 영역 배너 (팀장만) ── */}
+          {isLeader && (
+            <div
+              className="rounded-2xl px-5 py-4 flex items-center justify-between"
+              style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
+            >
+              <div>
+                <p
+                  className="text-base font-bold"
+                  style={{ color: "var(--color-error)" }}
                 >
-                  {stack}
-                  {isLeader && (
-                  <button
-                    onClick={() => removeStack(stack)}
-                    className="transition-colors"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "var(--color-error)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color =
-                        "var(--color-text-tertiary)")
-                    }
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                  )}
-                </span>
-              ))}
+                  프로젝트 삭제
+                </p>
+                <p className="text-sm mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
+                  이 작업은 되돌릴 수 없습니다
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors"
+                style={{ background: "var(--color-error)" }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#DC2626")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "var(--color-error)")
+                }
+              >
+                삭제하기
+              </button>
             </div>
+          )}
+
+          {/* ── 팀 나가기 ── */}
+          <div
+            className="rounded-2xl px-5 py-4 flex items-center justify-between"
+            style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
+          >
+            <div>
+              <p
+                className="text-base font-bold"
+                style={{ color: "var(--color-error)" }}
+              >
+                팀 나가기
+              </p>
+            </div>
+            <button
+              onClick={() => setShowLeaveModal(true)}
+              className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors cursor-pointer"
+              style={{ background: "var(--color-error)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#DC2626")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "var(--color-error)")
+              }
+            >
+              나가기
+            </button>
           </div>
-        )}
-      </section>
 
-      {/* ── 저장 버튼 (팀장만) ── */}
-      {isLeader && (
-      <button
-        disabled={!hasChanges || saving}
-        onClick={handleSave}
-        className="w-full block py-3 rounded-xl text-base font-bold transition-colors"
-        style={
-          hasChanges && !saving
-            ? {
-                background: "var(--color-primary)",
-                color: "var(--color-text-primary)",
-              }
-            : {
-                background: "var(--color-border)",
-                color: "var(--color-text-tertiary)",
-                cursor: "not-allowed",
-              }
-        }
-        onMouseEnter={(e) => {
-          if (hasChanges && !saving)
-            e.currentTarget.style.background = "var(--color-primary-hover)";
-        }}
-        onMouseLeave={(e) => {
-          if (hasChanges && !saving)
-            e.currentTarget.style.background = "var(--color-primary)";
-        }}
-      >
-        {saving ? "저장 중..." : hasChanges ? "저장하기" : "변경사항 없음"}
-      </button>
-      )}
-
-      {/* ── 위험 영역 배너 (팀장만) ── */}
-      {isLeader && (
-      <div
-        className="rounded-2xl px-5 py-4 flex items-center justify-between"
-        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
-      >
-        <div>
-          <p
-            className="text-base font-bold"
-            style={{ color: "var(--color-error)" }}
-          >
-            프로젝트 삭제
-          </p>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(239,68,68,0.7)" }}>
-            이 작업은 되돌릴 수 없습니다
-          </p>
-        </div>
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors"
-          style={{ background: "var(--color-error)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "#DC2626")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "var(--color-error)")
-          }
-        >
-          삭제하기
-        </button>
-      </div>
-      )}
-
-      {/* ── 팀 나가기 ── */}
-      <div
-        className="rounded-2xl px-5 py-4 flex items-center justify-between"
-        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}
-      >
-        <div>
-          <p
-            className="text-base font-bold"
-            style={{ color: "var(--color-error)" }}
-          >
-            팀 나가기
-          </p>
-        </div>
-        <button
-          onClick={() => setShowLeaveModal(true)}
-          className="px-4 py-2 rounded-xl text-base font-bold text-white transition-colors cursor-pointer"
-          style={{ background: "var(--color-error)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "#DC2626")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "var(--color-error)")
-          }
-        >
-          나가기
-        </button>
-      </div>
-
-      </div>{/* 우측 컬럼 끝 */}
+        </div>{/* 우측 컬럼 끝 */}
       </div>{/* 그리드 끝 */}
 
       {/* ── 팀 나가기 확인 모달 ── */}
