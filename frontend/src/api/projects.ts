@@ -111,7 +111,7 @@ export const deleteProjectImage = (projectId: number) =>
   api.delete(`/v1/projects/${projectId}/image`);
 
 export const getSuggestedSkills = (projectId: number) =>
-  api.get<{ data: string[] }>(`/v1/projects/${projectId}/suggested-skills`);
+  api.get<{ data: { skills: string[]; myProjectRole: string | null } }>(`/v1/projects/${projectId}/suggested-skills`);
 
 export const registerGitRepo = (projectId: number, data: RegisterGitRepoRequest) =>
   api.put(`/v1/projects/${projectId}/git-repo`, data);
