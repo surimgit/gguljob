@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, FilePlus, Briefcase, Trash2, Pencil, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '../components/common';
 import { getMyPortfolios, savePortfolioAsFile, deletePortfolioApi, updatePortfolioTitle, downloadPortfolio, type PortfolioSummary } from '../api/portfolio';
 import portfolioImg from '../assets/images/portfolio.png';
 import BaseModal from '../components/common/BaseModal';
@@ -341,49 +340,9 @@ const PortfolioList = () => {
               불러오는 중...
             </div>
           ) : (
-            <div className="text-base leading-relaxed">
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  table: ({ children }) => (
-                    <div className="overflow-x-auto mb-3">
-                      <table className="w-full text-base border-collapse">{children}</table>
-                    </div>
-                  ),
-                  thead: ({ children }) => <thead style={{ background: 'var(--color-background)' }}>{children}</thead>,
-                  th: ({ children }) => (
-                    <th className="px-4 py-2 text-left text-sm font-bold border border-border" style={{ color: 'var(--color-text-primary)' }}>{children}</th>
-                  ),
-                  td: ({ children }) => (
-                    <td className="px-4 py-2 text-sm border border-border" style={{ color: 'var(--color-text-secondary)' }}>{children}</td>
-                  ),
-                  h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-3" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-xl font-bold mt-4 mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5" style={{ color: 'var(--color-text-primary)' }}>{children}</h3>,
-                  p: ({ children }) => <p className="text-base leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>{children}</p>,
-                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 text-base" style={{ color: 'var(--color-text-secondary)' }}>{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 text-base" style={{ color: 'var(--color-text-secondary)' }}>{children}</ol>,
-                  li: ({ children }) => <li className="mb-1">{children}</li>,
-                  code: ({ children }) => (
-                    <code className="px-1.5 py-0.5 rounded text-sm font-mono" style={{ background: 'var(--color-background)', color: 'var(--color-primary-hover)' }}>
-                      {children}
-                    </code>
-                  ),
-                  pre: ({ children }) => (
-                    <pre className="rounded-xl p-4 overflow-x-auto mb-3 text-sm font-mono" style={{ background: 'var(--color-background)' }}>
-                      {children}
-                    </pre>
-                  ),
-                  a: ({ href, children }) => (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--color-blue)' }}>{children}</a>
-                  ),
-                  strong: ({ children }) => <strong className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{children}</strong>,
-                  hr: () => <hr className="my-4 border-border" />,
-                }}
-              >
-                {markdownContent}
-              </Markdown>
-            </div>
+            <MarkdownRenderer className="text-base leading-relaxed">
+              {markdownContent}
+            </MarkdownRenderer>
           )}
         </div>
       </BaseModal>

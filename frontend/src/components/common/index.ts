@@ -6,3 +6,4 @@ export { default as BaseModal } from './BaseModal';
 export { default as TechStackInput } from './TechStackInput';
 export { default as SectionEmptyState } from './SectionEmptyState';
 export { default as Pagination } from './Pagination';
+export { default as MarkdownRenderer } from './MarkdownRenderer';
