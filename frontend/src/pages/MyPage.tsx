@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ProfileHeader,
@@ -145,11 +145,19 @@ const MyPage = () => {
       const updatedUser = await getMe();
       setUser(updatedUser);
       setIsOnboardingOpen(false);
-    } catch (err) {
-      console.error('[정보수정] 실패:', err);
-      alert('정보 수정에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      console.error('온보딩 수정 실패:', error);
+      alert('정보 수정에 실패했습니다.');
     }
   };
+
+  // initialData 메모이제이션
+  const memoizedInitialData = useMemo(
+    () => user ? userToFormData(user) : undefined,
+    [user?.id, user?.position, user?.experience, user?.mbti, 
+     user?.teamTendency, user?.workExperience, user?.goals?.join(','), 
+     user?.techStacks?.join(',')]
+  );
 
   return (
     <div className="min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-12">
@@ -176,46 +184,46 @@ const MyPage = () => {
           <MyApplications />
         </div>
 
-      <MyProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        onEdit={handleOpenEdit}
-        user={{
-          id: String(user?.id ?? ''),
-          name: profile.name,
-          role: profile.role ?? '',
-          bio: profile.bio,
-          avatarUrl: profile.avatarUrl,
-          techStacks: profile.techStacks,
-          projects: profile.projects,
-        }}
-      />
-      <ProfileEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => { setIsEditModalOpen(false); setIsProfileModalOpen(true); }}
-        onSave={handleSave}
-        initialData={profile}
-        availableProjects={myProjects}
-      />
-      <ProfileSetupModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onComplete={handleOnboardingComplete}
-        initialData={user ? userToFormData(user) : undefined}
-        mode="edit"
-      />
-      <WithdrawModal
-        isOpen={isWithdrawOpen}
-        onClose={() => setIsWithdrawOpen(false)}
-        onConfirm={handleWithdrawConfirm}
-      />
-      <WithdrawCompleteModal
-        isOpen={isCompleteOpen}
-        onClose={() => {
-          setIsCompleteOpen(false);
-          navigate('/', { replace: true });
-        }}
-      />
+        <MyProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          onEdit={handleOpenEdit}
+          user={{
+            id: String(user?.id ?? ''),
+            name: profile.name,
+            role: profile.role ?? '',
+            bio: profile.bio,
+            avatarUrl: profile.avatarUrl,
+            techStacks: profile.techStacks,
+            projects: profile.projects,
+          }}
+        />
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => { setIsEditModalOpen(false); setIsProfileModalOpen(true); }}
+          onSave={handleSave}
+          initialData={profile}
+          availableProjects={myProjects}
+        />
+        <ProfileSetupModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onComplete={handleOnboardingComplete}
+          initialData={memoizedInitialData}
+          mode="edit"
+        />
+        <WithdrawModal
+          isOpen={isWithdrawOpen}
+          onClose={() => setIsWithdrawOpen(false)}
+          onConfirm={handleWithdrawConfirm}
+        />
+        <WithdrawCompleteModal
+          isOpen={isCompleteOpen}
+          onClose={() => {
+            setIsCompleteOpen(false);
+            navigate('/', { replace: true });
+          }}
+        />
       </div>
     </div>
   );
