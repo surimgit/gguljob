@@ -110,7 +110,6 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   useEffect(() => {
     if (isOpen && !hasInitialized) {
       const initial = { ...DEFAULT_FORM, ...initialData };
-      console.log('[ProfileSetupModal] Initializing with:', initial);
       setInitialFormData(initial);
       setFormData(initial);
       setIsDirty(false);
@@ -138,13 +137,6 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
     const initial = normalizeForComparison(initialFormData);
     
     const hasChanged = JSON.stringify(current) !== JSON.stringify(initial);
-    
-    console.log('[ProfileSetupModal] isDirty check:', {
-      hasChanged,
-      currentJSON: JSON.stringify(current),
-      initialJSON: JSON.stringify(initial),
-    });
-    
     setIsDirty(hasChanged);
   }, [formData, initialFormData, isOpen, hasInitialized]);
 
@@ -152,21 +144,9 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
     const validations = Array.from({ length: TOTAL_STEPS }, (_, i) => {
       const stepNum = i + 1;
       const valid = isStepValid(stepNum, formData, mode);
-      console.log(`[Step ${stepNum} Validation]:`, valid, {
-        step: stepNum,
-        formData: stepNum === 1 ? formData.goals :
-                 stepNum === 2 ? formData.position :
-                 stepNum === 3 ? formData.experience :
-                 stepNum === 4 ? formData.workExperience :
-                 stepNum === 5 ? formData.skills :
-                 stepNum === 6 ? formData.mbti :
-                 formData.leaderScore
-      });
       return valid;
     });
-    const allValid = validations.every(Boolean);
-    console.log('[ProfileSetupModal] allStepsValid:', allValid, validations);
-    return allValid;
+    return validations.every(Boolean);
   }, [formData, mode]);
 
   if (!isOpen) return null;
@@ -195,12 +175,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   };
 
   const update = <K extends keyof FormData>(key: K, value: FormData[K]) => {
-    console.log('[ProfileSetupModal] update called:', key, value);
-    setFormData((prev) => {
-      const next = { ...prev, [key]: value };
-      console.log('[ProfileSetupModal] formData updated:', next);
-      return next;
-    });
+    setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -328,23 +303,17 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
           <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 flex-shrink-0">
             {mode === 'edit' ? (
               /* 수정 모드: 저장 버튼 */
-              <>
-                {/* 디버깅 정보 */}
-                <div className="text-xs text-gray-500 w-full text-center">
-                  Debug: isDirty={String(isDirty)}, allStepsValid={String(allStepsValid)}
-                </div>
-                <button
-                  onClick={() => setShowComplete(true)}
-                  disabled={!allStepsValid || !isDirty}
-                  className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
-                    allStepsValid && isDirty
-                      ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  저장
-                </button>
-              </>
+              <button
+                onClick={() => setShowComplete(true)}
+                disabled={!allStepsValid || !isDirty}
+                className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
+                  allStepsValid && isDirty
+                    ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                저장
+              </button>
             ) : (
               /* 온보딩 모드: 이전/다음 */
               <>
