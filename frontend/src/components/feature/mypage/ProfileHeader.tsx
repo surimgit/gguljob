@@ -76,19 +76,19 @@ const ProfileHeader = ({
         </div>
 
         {/* 액션 버튼 영역 */}
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex flex-col items-stretch gap-2 ml-auto pl-6">
           <button
             type="button"
             onClick={onEditInfo}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary font-semibold text-base transition-colors"
           >
             <Settings className="w-4 h-4" />
-            정보수정
+            정보 수정
           </button>
           <button
             type="button"
             onClick={onWithdraw}
-            className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-base transition-colors"
+            className="flex items-center justify-center gap-1.5 px-6 py-2 rounded-xl border border-border text-text-tertiary hover:text-text-secondary hover:bg-gray-50 text-sm transition-colors"
           >
             <UserX className="w-4 h-4" />
             탈퇴

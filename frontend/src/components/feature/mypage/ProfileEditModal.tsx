@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Camera, Trash2, Check, Loader2 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { BaseModal, TechStackInput } from '../../common';
+import { BaseModal } from '../../common';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
@@ -395,7 +395,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                   className="px-3 py-2 rounded-xl border border-border text-base bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
               </div>
-              <div className="flex flex-col gap-1" ref={roleDropdownRef}>
+              <div className="flex flex-col gap-1 flex-1" ref={roleDropdownRef}>
                 <label className="text-sm font-medium text-text-secondary">희망 직무</label>
                 <div className="relative">
                   <button
@@ -442,7 +442,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-                rows={2}
+                rows={4}
                 className="px-3 py-2 rounded-xl border border-border text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -451,15 +451,6 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
 
         {/* 콘텐츠 영역 */}
         <div className="bg-background mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-6">
-          {/* 기술 스택 */}
-          <div>
-            <h3 className="text-base font-bold text-text-primary mb-3 pl-3">기술 스택</h3>
-            <TechStackInput
-              value={form.techStacks}
-              onChange={(stacks) => setForm((prev) => ({ ...prev, techStacks: stacks }))}
-            />
-          </div>
-
           {/* 대표 프로젝트 */}
           <div>
             <div className="flex items-center justify-between mb-3">
