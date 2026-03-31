@@ -473,18 +473,17 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
         prevPageRef.current = currentPage;
     }, [currentPage]);
 
-    // 필터링 → 정렬 → 페이지네이션
-    const jobsFilteredByStack = (() => {
+    // 필터링 → 정렬 → 페이지네이션 (모두 useMemo로 캐싱)
+    const jobsFilteredByStack = useMemo(() => {
         if (!activeCategory) return jobs;
         if (activeSkill !== '전체') {
             return jobs.filter((job) => job.techStacks.includes(activeSkill));
         }
-        // 카테고리 선택 시: jobCategory 일치 또는 해당 카테고리 스킬 보유
         const categorySkills = SKILLS_BY_CATEGORY[activeCategory] ?? [];
         return jobs.filter(
             (job) => job.jobCategory === activeCategory || job.techStacks.some((t) => categorySkills.includes(t)),
         );
-    })();
+    }, [jobs, activeCategory, activeSkill]);
 
     const finalFilteredJobs = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -497,9 +496,9 @@ const JobListingSection = ({ allJobs, allJobsLoaded, bookmarkedIds, onToggleBook
         );
     }, [jobsFilteredByStack, searchQuery]);
 
-    const sorted = sortJobs(finalFilteredJobs, activeSort);
+    const sorted = useMemo(() => sortJobs(finalFilteredJobs, activeSort), [finalFilteredJobs, activeSort]);
     const totalPages = Math.ceil(sorted.length / DEFAULT_PAGE_SIZE);
-    const paginatedJobs = sorted.slice((currentPage - 1) * DEFAULT_PAGE_SIZE, currentPage * DEFAULT_PAGE_SIZE);
+    const paginatedJobs = useMemo(() => sorted.slice((currentPage - 1) * DEFAULT_PAGE_SIZE, currentPage * DEFAULT_PAGE_SIZE), [sorted, currentPage]);
 
     const handleCategoryChange = (category: RoleCode | null) => {
         setActiveCategory(category);
