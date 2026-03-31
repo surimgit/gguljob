@@ -283,11 +283,10 @@ const JobRecommendHero = ({ top3Jobs, bookmarkedIds, onToggleBookmark }: JobReco
                                 {hasMore && (
                                     <button
                                         onClick={() => setShowAllSkills((prev) => !prev)}
-                                        className={`flex items-center gap-1 font-semibold text-sm px-3.5 py-1.5 rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15)] cursor-pointer hover:opacity-80 transition-opacity ${
-                                            showAllSkills
+                                        className={`flex items-center gap-1 font-semibold text-sm px-3.5 py-1.5 rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15)] cursor-pointer hover:opacity-80 transition-opacity ${showAllSkills
                                                 ? 'bg-indigo-100 text-indigo-700'
                                                 : 'bg-[#F2B705] text-white'
-                                        }`}
+                                            }`}
                                     >
                                         {showAllSkills ? (
                                             <>접기 <ChevronUp className="w-4 h-4" /></>
