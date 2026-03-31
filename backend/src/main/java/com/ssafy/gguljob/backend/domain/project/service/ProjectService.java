@@ -628,6 +628,26 @@ public class ProjectService {
         }
     }
 
+    // 프로젝트 스킬 중 내 온보딩 스킬에 없는 것 반환 (스킬 추가 제안용)
+    @Transactional(readOnly = true)
+    public List<String> getSuggestedSkills(Long userId, Long projectId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("유저를 찾을 수 없습니다."));
+
+        Set<String> mySkills = user.getUserSkills().stream()
+            .map(us -> us.getSkill().getName())
+            .collect(Collectors.toSet());
+
+        List<String> projectSkills = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
+
+        return projectSkills.stream()
+            .filter(skill -> !mySkills.contains(skill))
+            .collect(Collectors.toList());
+    }
+
     // 프로젝트 팀원 목록 조회
     @Transactional(readOnly = true)
     public List<ProjectResponse.ProjectMemberDto> getProjectMembers(Long loginUserId, Long projectId) {

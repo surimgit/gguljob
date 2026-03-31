@@ -30,7 +30,10 @@ import { MarkdownRenderer } from "../../common";
 import toast from "react-hot-toast";
 
 import type { TeamDashboard, BackendProjectEditStatus } from "../../../types/project";
-import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject, deleteProject } from "../../../api/projects";
+import { getProjectEditForm, updateProject, uploadProjectImage, deleteProjectImage, leaveProject, deleteProject, getSuggestedSkills } from "../../../api/projects";
+import { updateProfileApi } from "../../../api/user";
+import { useAuthStore } from "../../../stores/authStore";
+import { ROLE_STACKS, API_TO_ROLE } from "../../../constants/skills";
 import {
   SKILL_NAME_TO_ID as CANONICAL_SKILL_NAME_TO_ID,
   SKILL_ID_TO_NAME as CANONICAL_SKILL_ID_TO_NAME,
@@ -161,6 +164,13 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
   const [editMembers, setEditMembers] = useState<{ userId: number; role: string }[]>([]);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // 스킬 추가 제안 모달
+  const currentUser = useAuthStore((s) => s.user);
+  const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
+  const [selectedSuggestedSkills, setSelectedSuggestedSkills] = useState<Set<string>>(new Set());
+  const [showSkillSuggestModal, setShowSkillSuggestModal] = useState(false);
+  const [addingSkills, setAddingSkills] = useState(false);
 
   const [status, setStatus] = useState<ProjectStatus>("active");
   const [originalTitle, setOriginalTitle] = useState("");
@@ -376,13 +386,55 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       });
       toast.success("프로젝트 설정이 저장되었습니다.");
       onSaved?.();
-      // 스냅샷 갱신
       setInitialSnapshot(JSON.stringify({ status, name, description, domain, techStacks }));
+
+      // 완료 상태로 변경된 경우 스킬 추가 제안
+      if (STATUS_TO_BACKEND[status] === "DONE") {
+        try {
+          const res = await getSuggestedSkills(projectId);
+          const allSuggested: string[] = res.data.data ?? [];
+
+          // 내 직무 카테고리에 해당하는 스킬만 필터링
+          const myRole = currentUser?.position
+            ? API_TO_ROLE[currentUser.position] ?? null
+            : null;
+          const roleSkillSet = myRole ? new Set(ROLE_STACKS[myRole] ?? []) : null;
+          const filtered = roleSkillSet
+            ? allSuggested.filter((s) => roleSkillSet.has(s))
+            : allSuggested;
+
+          if (filtered.length > 0) {
+            setSuggestedSkills(filtered);
+            setSelectedSuggestedSkills(new Set(filtered));
+            setShowSkillSuggestModal(true);
+          }
+        } catch {
+          // 제안 실패는 조용히 무시
+        }
+      }
     } catch (err) {
       console.error("프로젝트 설정 저장 실패:", err);
       toast.error("저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddSuggestedSkills = async () => {
+    if (!currentUser || addingSkills) return;
+    setAddingSkills(true);
+    try {
+      const currentSkills = currentUser.techStacks?.length
+        ? currentUser.techStacks
+        : (currentUser.skills?.map((s) => s.name) ?? []);
+      const merged = Array.from(new Set([...currentSkills, ...selectedSuggestedSkills]));
+      await updateProfileApi({ skills: merged });
+      toast.success(`스킬 ${selectedSuggestedSkills.size}개가 추가되었습니다.`);
+      setShowSkillSuggestModal(false);
+    } catch {
+      toast.error("스킬 추가에 실패했습니다.");
+    } finally {
+      setAddingSkills(false);
     }
   };
 
@@ -1106,6 +1158,75 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-error)")}
               >
                 삭제하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 스킬 추가 제안 모달 ── */}
+      {showSkillSuggestModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowSkillSuggestModal(false)}
+        >
+          <div
+            className="rounded-2xl px-10 py-8 flex flex-col gap-5 w-[480px] shadow-xl"
+            style={{ background: "var(--color-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                기술 스택을 추가하시겠습니까?
+              </p>
+              <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                이 프로젝트에서 사용했지만 아직 내 프로필에 없는 스킬입니다.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {suggestedSkills.map((skill) => {
+                const selected = selectedSuggestedSkills.has(skill);
+                return (
+                  <button
+                    key={skill}
+                    onClick={() =>
+                      setSelectedSuggestedSkills((prev) => {
+                        const next = new Set(prev);
+                        selected ? next.delete(skill) : next.add(skill);
+                        return next;
+                      })
+                    }
+                    className="px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors"
+                    style={{
+                      background: selected ? "var(--color-primary)" : "var(--color-background)",
+                      color: selected ? "#fff" : "var(--color-text-secondary)",
+                      border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-border)"}`,
+                    }}
+                  >
+                    {skill}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-3 mt-1">
+              <button
+                onClick={() => setShowSkillSuggestModal(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-base cursor-pointer"
+                style={{ background: "var(--color-background)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
+              >
+                건너뛰기
+              </button>
+              <button
+                onClick={handleAddSuggestedSkills}
+                disabled={selectedSuggestedSkills.size === 0 || addingSkills}
+                className="flex-1 py-3 rounded-2xl text-white font-semibold text-base cursor-pointer transition-opacity"
+                style={{
+                  background: "var(--color-primary)",
+                  opacity: selectedSuggestedSkills.size === 0 || addingSkills ? 0.5 : 1,
+                }}
+              >
+                {addingSkills ? "추가 중..." : `${selectedSuggestedSkills.size}개 추가하기`}
               </button>
             </div>
           </div>

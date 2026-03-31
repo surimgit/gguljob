@@ -321,5 +321,15 @@ public class ProjectController {
         var contributors = dashboardService.getNonMemberContributors(projectId);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "비멤버 기여자 조회 성공", contributors));
     }
+
+    @Operation(summary = "프로젝트 스킬 추가 제안", description = "프로젝트에서 사용한 스킬 중 내 온보딩 스킬에 없는 것을 반환합니다.")
+    @GetMapping("/{projectId}/suggested-skills")
+    public ResponseEntity<ApiResponseDto<List<String>>> getSuggestedSkills(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        List<String> skills = projectService.getSuggestedSkills(userDetails.getId(), projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "추가 가능한 스킬 조회 성공", skills));
+    }
 }
 
