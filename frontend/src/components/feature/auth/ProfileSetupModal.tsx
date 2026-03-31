@@ -58,7 +58,7 @@ const isStepValid = (step: number, formData: FormData, mode: 'onboarding' | 'edi
       case 5:
         return formData.skills.length > 0;
       case 6:
-        return formData.mbti !== "";
+        return true; // edit 모드에서는 MBTI 변경하지 않아도 됨
       case 7:
         return true; // leaderScore는 항상 값이 있음
       default:
