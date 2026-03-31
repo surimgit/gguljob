@@ -439,11 +439,12 @@ const ProjectSettings = ({ dashboard, projectId, isLeader: isLeaderProp, onSaved
       await updateProfileApi({
         skills: merged,
         description: currentUser.description ?? undefined,
-        roles: currentUser.role ? [currentUser.role] : undefined,
+        // position을 사용 (role은 deprecated)
+        roles: currentUser.position ? [currentUser.position] : undefined,
         experience: currentUser.experience ?? undefined,
         mbti: currentUser.mbti ?? undefined,
         teamTendency: currentUser.teamTendency ?? undefined,
-        workExperience: currentUser.workExperience ?? undefined,
+        workExperience: currentUser.workExperience as 'NEWCOMER' | 'ONE_TO_THREE' | 'FOUR_TO_SIX' | 'MORE_THAN_SEVEN' | undefined,
         goals: currentUser.goals ?? undefined,
       });
 
