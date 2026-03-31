@@ -19,7 +19,8 @@ public class ProjectRequest {
         String imageUrl,
         String documentUrl,
         @NotNull(message = "리더의 포지션(역할)은 필수입니다.")
-        PositionType leaderRole
+        PositionType leaderRole,
+        List<Long> skillIds
     ) {}
 
     // repoUrl 등록 요청
