@@ -115,6 +115,8 @@ public class ProjectService {
 
         projectMemberRepository.save(projectMember);
 
+        syncProjectSkills(savedProject, request.skillIds());
+
         log.info("Neo4j로 전송 시작");
         eventPublisher.publishEvent(ProjectSyncEvent.sync(savedProject.getId()));
 
@@ -126,21 +128,31 @@ public class ProjectService {
         List<ProjectMember> memberships = projectMemberRepository.findActiveProjectsByUserId(userId,
             MemberStatus.ATTEND);
 
+        if (memberships.isEmpty()) return List.of();
+
+        List<Long> projectIds = memberships.stream()
+            .map(pm -> pm.getProject().getId())
+            .toList();
+
+        // IN 쿼리로 한 번에 조회 (N+1 제거)
+        Map<Long, Map<String, Long>> roleCountsMap = projectMemberRepository.countRolesByProjectIds(projectIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                row -> (Long) row[0],
+                Collectors.toMap(row -> row[1].toString(), row -> (Long) row[2])
+            ));
+
+        Map<Long, List<String>> skillsMap = projectSkillRepository.findSkillNamesByProjectIds(projectIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                row -> (Long) row[0],
+                Collectors.mapping(row -> (String) row[1], Collectors.toList())
+            ));
+
         return memberships.stream().map(membership -> {
             Project project = membership.getProject();
-
-            // 역할별 인원수 계산
-            Map<String, Long> roleCounts = projectMemberRepository.countRolesByProjectId(
-                    project.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                    row -> row[0].toString(),
-                    row -> (Long) row[1]
-                ));
-
-            // 스킬 이름 전체 조회 (프론트에서 표시 개수 제어)
-            List<String> skills = projectSkillRepository.findAllSkillNamesByProjectId(project.getId());
-
+            Map<String, Long> roleCounts = roleCountsMap.getOrDefault(project.getId(), Map.of());
+            List<String> skills = skillsMap.getOrDefault(project.getId(), List.of());
             return ProjectResponse.Simple.of(project, roleCounts, skills);
         }).collect(Collectors.toList());
     }
@@ -616,6 +628,35 @@ public class ProjectService {
                 log.warn("프로젝트 ID {} 이미지 S3 삭제 실패 (고아 파일): {}", projectId, s3Key, e);
             }
         }
+    }
+
+    public record SuggestedSkillsResult(List<String> skills, String myProjectRole) {}
+
+    // 프로젝트 스킬 중 내 온보딩 스킬에 없는 것 반환 + 내 프로젝트 역할 (스킬 추가 제안용)
+    @Transactional(readOnly = true)
+    public SuggestedSkillsResult getSuggestedSkills(Long userId, Long projectId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 프로젝트입니다."));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("유저를 찾을 수 없습니다."));
+
+        Set<String> mySkills = user.getUserSkills().stream()
+            .map(us -> us.getSkill().getName())
+            .collect(Collectors.toSet());
+
+        List<String> projectSkills = projectSkillRepository.findAllSkillNamesByProjectId(projectId);
+
+        List<String> suggested = projectSkills.stream()
+            .filter(skill -> !mySkills.contains(skill))
+            .collect(Collectors.toList());
+
+        // 내 프로젝트 역할 조회 (없으면 null)
+        String myProjectRole = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
+            .map(pm -> pm.getRole().name())
+            .orElse(null);
+
+        return new SuggestedSkillsResult(suggested, myProjectRole);
     }
 
     // 프로젝트 팀원 목록 조회

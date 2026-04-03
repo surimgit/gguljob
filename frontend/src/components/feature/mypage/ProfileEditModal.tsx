@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Camera, Trash2, Check, Loader2 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { BaseModal, TechStackInput } from '../../common';
+import { BaseModal } from '../../common';
 import type { ProjectSimple } from '../../../types/project';
 import { updateProfileApi, uploadProfileImageApi, deleteProfileImageApi } from '../../../api/user';
 import type { ProfileUpdateRequest } from '../../../api/user';
@@ -231,12 +231,12 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           </div>
           <div className="text-center">
             <p className="text-base font-bold text-text-primary mb-1">저장 완료</p>
-            <p className="text-sm text-text-secondary">프로필이 성공적으로 저장되었습니다.</p>
+            <p className="text-base text-text-secondary">프로필이 성공적으로 저장되었습니다.</p>
           </div>
           <button
             type="button"
             onClick={() => { setShowSuccessModal(false); onClose(); }}
-            className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-semibold transition-colors"
+            className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-base font-semibold transition-colors"
           >
             확인
           </button>
@@ -315,14 +315,14 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                 <button
                   type="button"
                   onClick={handleCropCancel}
-                  className="flex-1 py-2.5 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-border text-text-secondary text-base font-medium hover:bg-gray-50 transition-colors"
                 >
                   취소
                 </button>
                 <button
                   type="button"
                   onClick={handleCropConfirm}
-                  className="flex-1 py-2.5 rounded-xl bg-[#F2B705] hover:bg-[#e0a804] text-white text-sm font-bold transition-colors shadow-[0_2px_8px_rgba(242,183,5,0.3)]"
+                  className="flex-1 py-2.5 rounded-xl bg-[#F2B705] hover:bg-[#e0a804] text-white text-base font-bold transition-colors shadow-[0_2px_8px_rgba(242,183,5,0.3)]"
                 >
                   적용하기
                 </button>
@@ -363,7 +363,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                 <button
                   type="button"
                   onClick={() => { fileInputRef.current?.click(); setShowImageMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-primary-soft transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-primary-soft transition-colors"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   사진 변경
@@ -373,7 +373,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                     type="button"
                     disabled={isDeletingImage}
                     onClick={() => { handleImageDelete(); setShowImageMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isDeletingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     {isDeletingImage ? '삭제 중...' : '사진 삭제'}
@@ -387,21 +387,21 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           <div className="flex flex-col gap-3 flex-1">
             <div className="flex gap-3">
               <div className="flex flex-col gap-1 flex-1">
-                <label className="text-xs font-medium text-text-secondary">이름 (GitHub 연동)</label>
+                <label className="text-sm font-medium text-text-secondary">이름 (GitHub 연동)</label>
                 <input
                   type="text"
                   value={form.name}
                   readOnly
-                  className="px-3 py-2 rounded-xl border border-border text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                  className="px-3 py-2 rounded-xl border border-border text-base bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
               </div>
-              <div className="flex flex-col gap-1" ref={roleDropdownRef}>
-                <label className="text-xs font-medium text-text-secondary">희망 직무</label>
+              <div className="flex flex-col gap-1 flex-1" ref={roleDropdownRef}>
+                <label className="text-sm font-medium text-text-secondary">희망 직무</label>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setRoleDropdownOpen((prev) => !prev)}
-                    className={`w-full flex items-center justify-between pl-3 pr-3 py-2 rounded-xl border text-sm bg-white text-text-primary transition-colors ${roleDropdownOpen ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-gray-400'}`}
+                    className={`w-full flex items-center justify-between pl-3 pr-3 py-2 rounded-xl border text-base bg-white text-text-primary transition-colors ${roleDropdownOpen ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-gray-400'}`}
                   >
                     <span className={form.role ? 'text-text-primary' : 'text-text-tertiary'}>
                       {form.role ? (ROLE_DISPLAY_NAMES[ROLE_LIST.find(c => ROLE_TO_API[c] === form.role) as keyof typeof ROLE_DISPLAY_NAMES] ?? form.role) : '상관 없음'}
@@ -416,7 +416,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                         <button
                           type="button"
                           onClick={() => { setForm((prev) => ({ ...prev, role: null })); setRoleDropdownOpen(false); }}
-                          className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-primary-soft ${!form.role ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
+                          className={`w-full text-left px-3 py-2 text-base transition-colors hover:bg-primary-soft ${!form.role ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
                         >
                           상관 없음
                         </button>
@@ -426,7 +426,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                           <button
                             type="button"
                             onClick={() => { setForm((prev) => ({ ...prev, role: ROLE_TO_API[code] })); setRoleDropdownOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-primary-soft ${form.role === ROLE_TO_API[code] ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
+                            className={`w-full text-left px-3 py-2 text-base transition-colors hover:bg-primary-soft ${form.role === ROLE_TO_API[code] ? 'bg-primary-soft font-semibold text-text-primary' : 'text-text-secondary'}`}
                           >
                             {ROLE_DISPLAY_NAMES[code]}
                           </button>
@@ -438,12 +438,12 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-text-secondary">소개</label>
+              <label className="text-sm font-medium text-text-secondary">소개</label>
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-                rows={2}
-                className="px-3 py-2 rounded-xl border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={4}
+                className="px-3 py-2 rounded-xl border border-border text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -451,25 +451,16 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
 
         {/* 콘텐츠 영역 */}
         <div className="bg-background mx-4 mb-4 rounded-2xl p-6 flex flex-col gap-6">
-          {/* 기술 스택 */}
-          <div>
-            <h3 className="text-base font-bold text-text-primary mb-3 pl-3">기술 스택</h3>
-            <TechStackInput
-              value={form.techStacks}
-              onChange={(stacks) => setForm((prev) => ({ ...prev, techStacks: stacks }))}
-            />
-          </div>
-
           {/* 대표 프로젝트 */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-bold text-text-primary pl-3">대표 프로젝트</h3>
-              <span className="text-xs text-text-tertiary">{form.projects.length}/2 선택</span>
+              <span className="text-sm text-text-tertiary">{form.projects.length}/2 선택</span>
             </div>
 
             {/* 프로젝트 리스트박스 */}
             {eligibleProjects.length === 0 ? (
-              <p className="text-sm text-text-tertiary py-4 text-center">
+              <p className="text-base text-text-tertiary py-4 text-center">
                 참여 중인 프로젝트가 없습니다.
               </p>
             ) : (
@@ -492,8 +483,8 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
                         }`}
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-text-primary truncate">{project.title}</p>
-                          <p className="text-xs text-text-tertiary">{STATUS_MAP[project.status] ?? project.status}</p>
+                          <p className="text-base font-medium text-text-primary truncate">{project.title}</p>
+                          <p className="text-sm text-text-tertiary">{STATUS_MAP[project.status] ?? project.status}</p>
                         </div>
                         {selected && <Check className="w-4 h-4 text-text-brown flex-shrink-0 ml-3" />}
                       </button>
@@ -511,7 +502,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-background transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-border text-text-secondary text-base font-medium hover:bg-background transition-colors"
           >
             취소
           </button>
@@ -519,7 +510,7 @@ const ProfileEditModal = ({ isOpen, onClose, onSave, initialData, availableProje
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-base font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
             {isSaving ? '저장 중...' : '저장'}

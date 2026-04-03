@@ -171,7 +171,7 @@ const TroubleshootingList = () => {
         {/* 카드 리스트 */}
         <div className="flex flex-col gap-4">
           {isLoading ? (
-            <p className="text-center py-12 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="text-center py-12 text-base" style={{ color: 'var(--color-text-tertiary)' }}>
               불러오는 중...
             </p>
           ) : filtered.length > 0 ? (
@@ -180,7 +180,7 @@ const TroubleshootingList = () => {
             ))
           ) : (
             <p
-              className="text-center py-12 text-sm"
+              className="text-center py-12 text-base"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
               {totalElements === 0 ? '트러블슈팅이 없습니다.' : '검색 결과가 없습니다.'}

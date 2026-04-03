@@ -271,14 +271,15 @@ public class ProjectController {
     public ResponseEntity<List<MemberCardDto>> getTop3RecommendedMembers(
         @PathVariable Long projectId
     ) {
+        // p0s10 캐시 재사용 - 별도 Neo4j 호출 없이 첫 페이지 결과에서 3개 추출
         org.springframework.data.domain.Page<MemberCardDto> result =
             matchingService.getRecommendedMembers(
                 projectId,
                 null, null, null,
-                org.springframework.data.domain.PageRequest.of(0, 3)
+                org.springframework.data.domain.PageRequest.of(0, 10)
             );
 
-        return ResponseEntity.ok(result.getContent());
+        return ResponseEntity.ok(result.getContent().stream().limit(3).toList());
     }
 
     @Operation(summary = "프로젝트 대표 이미지 등록/수정", description = "프로젝트 썸네일 이미지를 업로드합니다. 팀장만 가능합니다.")
@@ -319,6 +320,16 @@ public class ProjectController {
 
         var contributors = dashboardService.getNonMemberContributors(projectId);
         return ResponseEntity.ok(new ApiResponseDto<>(200, "비멤버 기여자 조회 성공", contributors));
+    }
+
+    @Operation(summary = "프로젝트 스킬 추가 제안", description = "프로젝트에서 사용한 스킬 중 내 온보딩 스킬에 없는 것과 내 프로젝트 역할을 반환합니다.")
+    @GetMapping("/{projectId}/suggested-skills")
+    public ResponseEntity<ApiResponseDto<ProjectService.SuggestedSkillsResult>> getSuggestedSkills(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long projectId) {
+
+        ProjectService.SuggestedSkillsResult result = projectService.getSuggestedSkills(userDetails.getId(), projectId);
+        return ResponseEntity.ok(new ApiResponseDto<>(200, "추가 가능한 스킬 조회 성공", result));
     }
 }
 

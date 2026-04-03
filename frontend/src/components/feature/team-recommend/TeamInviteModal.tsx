@@ -83,28 +83,28 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
       {/* 콘텐츠 */}
       <div className="px-8 py-5">
         <h2 className="text-lg font-bold text-text-primary mb-1">{memberName}님을 팀에 초대하기</h2>
-        <p className="text-sm text-text-secondary mb-4">초대할 프로젝트와 직무를 선택하세요</p>
+        <p className="text-base text-text-secondary mb-4">초대할 프로젝트와 직무를 선택하세요</p>
 
         {/* 프로젝트 선택 */}
         {fixedProjectId ? (
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-text-primary mb-2">
+            <label className="block text-base font-semibold text-text-primary mb-2">
               프로젝트
             </label>
-            <div className="rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm text-text-primary">
+            <div className="rounded-xl border-2 border-border bg-background px-4 py-2.5 text-base text-text-primary">
               {fixedProjectTitle ?? '프로젝트'}
             </div>
           </div>
         ) : (
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-text-primary mb-2">
+            <label className="block text-base font-semibold text-text-primary mb-2">
               프로젝트 선택 <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
-                className="w-full appearance-none rounded-xl border-2 border-border bg-white px-4 py-2.5 pr-10 text-sm text-text-primary focus:border-primary focus:outline-none transition-colors"
+                className="w-full appearance-none rounded-xl border-2 border-border bg-white px-4 py-2.5 pr-10 text-base text-text-primary focus:border-primary focus:outline-none transition-colors"
               >
                 <option value="">프로젝트를 선택하세요</option>
                 {projects.map((p) => (
@@ -118,7 +118,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
 
         {/* 직무 선택 */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-text-primary mb-2">
+          <label className="block text-base font-semibold text-text-primary mb-2">
             직무 선택 <span className="text-red-500">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -127,7 +127,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
                 key={job.role}
                 type="button"
                 onClick={() => setSelectedJob(selectedJob === job.role ? '' : job.role)}
-                className={`px-4 py-2 rounded-full border-2 text-sm font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-full border-2 text-base font-semibold transition-colors ${
                   selectedJob === job.role
                     ? 'border-primary-hover bg-primary-soft text-primary-hover'
                     : 'border-border bg-white text-text-secondary hover:border-primary hover:bg-primary-soft'
@@ -141,7 +141,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
 
         {/* 초대 메시지 */}
         <div className="mb-5">
-          <label className="block text-sm font-semibold text-text-primary mb-2">
+          <label className="block text-base font-semibold text-text-primary mb-2">
             초대 메시지
           </label>
           <textarea
@@ -153,9 +153,9 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
             }}
             placeholder="함께 하고 싶은 이유를 간단히 적어주세요"
             rows={3}
-            className="w-full rounded-xl border-2 border-border bg-white px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none resize-none transition-colors"
+            className="w-full rounded-xl border-2 border-border bg-white px-4 py-3 text-base text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none resize-none transition-colors"
           />
-          <p className="text-xs text-text-tertiary text-right mt-1">
+          <p className="text-sm text-text-tertiary text-right mt-1">
             {message.length}/{MAX_MESSAGE_LENGTH}
           </p>
         </div>
@@ -165,7 +165,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 py-3 rounded-xl border-2 border-border text-sm font-semibold text-text-secondary hover:bg-background transition-colors"
+            className="flex-1 py-3 rounded-xl border-2 border-border text-base font-semibold text-text-secondary hover:bg-background transition-colors"
           >
             취소
           </button>
@@ -173,7 +173,7 @@ const TeamInviteModal = ({ isOpen, onClose, memberName, userId, fixedProjectId, 
             type="button"
             onClick={handleSubmit}
             disabled={!isValid}
-            className="flex-1 py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-xl text-base font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-primary)',

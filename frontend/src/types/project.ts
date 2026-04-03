@@ -66,6 +66,7 @@ export interface CreateProjectRequest {
   imageUrl?: string;
   documentUrl?: string;
   leaderRole: string;
+  skillIds?: number[];
 }
 
 // POST /projects 응답

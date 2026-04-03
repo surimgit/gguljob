@@ -44,7 +44,7 @@ const Footer = () => {
           >
             GGULJOB
           </p>
-          <p className="text-sm font-bold text-text-brown mt-4">
+          <p className="text-base font-bold text-text-brown mt-4">
             © {new Date().getFullYear()} PROJECT GUIDE. THE ALL-IN-ONE PROJECT PLATFORM
           </p>
         </div>

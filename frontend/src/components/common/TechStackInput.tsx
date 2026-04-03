@@ -74,7 +74,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
             {value.map((stack) => (
               <span
                 key={stack}
-                className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-sm text-text-primary whitespace-nowrap"
+                className="flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-white text-base text-text-primary whitespace-nowrap"
               >
                 {stack}
                 <button type="button" onClick={() => remove(stack)}>
@@ -96,7 +96,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
             key={category}
             type="button"
             onClick={() => setActiveCategory(category)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               activeCategory === category
                 ? 'bg-primary text-text-primary'
                 : 'bg-background text-text-secondary hover:bg-primary-soft'
@@ -120,7 +120,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
                 onChange([...value, ...activeSkills.filter((s) => !value.includes(s))]);
               }
             }}
-            className="text-xs font-bold px-3 py-1.5 rounded-full border border-primary text-text-primary bg-primary-soft hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
+            className="text-sm font-bold px-3 py-1.5 rounded-full border border-primary text-text-primary bg-primary-soft hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
           >
             {activeSkills.every((s) => value.includes(s)) ? '전체 해제' : '전체 선택'}
           </button>
@@ -132,7 +132,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
               key={stack}
               type="button"
               onClick={() => (selected ? remove(stack) : add(stack))}
-              className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                 selected
                   ? 'border-primary bg-primary-soft text-text-primary font-medium'
                   : 'border-border bg-white text-text-secondary hover:border-primary hover:bg-primary-soft'
@@ -183,7 +183,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
               setHighlightedIndex(-1);
             }
           }}
-          className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 rounded-xl border border-border bg-white text-base focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {showSuggestions && suggestions.length > 0 && (
           <ul
@@ -195,7 +195,7 @@ const TechStackInput = ({ value, onChange }: Props) => {
                 key={s}
                 onMouseDown={() => add(s)}
                 onMouseEnter={() => setHighlightedIndex(idx)}
-                className={`px-4 py-2 text-sm text-text-primary cursor-pointer transition-colors ${
+                className={`px-4 py-2 text-base text-text-primary cursor-pointer transition-colors ${
                   idx === highlightedIndex ? 'bg-primary-soft' : 'hover:bg-primary-soft'
                 }`}
               >

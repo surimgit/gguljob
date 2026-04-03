@@ -63,7 +63,7 @@ const MemberCard = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span
-              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              className="text-base font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{
                 background: `${posColor}1a`,
                 color: posColor,
@@ -72,7 +72,7 @@ const MemberCard = ({
               {getRoleDisplayName(position)}
             </span>
             <span
-              className="text-sm font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              className="text-base font-bold px-3 py-1 rounded-full whitespace-nowrap"
               style={{ background: lvStyle.bg, color: lvStyle.color }}
             >
               {getExperienceLevelDisplay(level)}
@@ -80,7 +80,7 @@ const MemberCard = ({
           </div>
         </div>
         <span
-          className="text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0"
+          className="text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0"
           style={{
             background: matchStyle.bg,
             color: matchStyle.color,
@@ -92,7 +92,7 @@ const MemberCard = ({
 
       {/* 2행: 한줄 소개 */}
       <p
-        className="text-sm font-medium leading-relaxed mb-5 line-clamp-2 whitespace-pre-line"
+        className="text-base font-medium leading-relaxed mb-5 line-clamp-2 whitespace-pre-line"
         style={{ color: "var(--color-text-secondary)" }}
       >
         {introduction}
@@ -104,7 +104,7 @@ const MemberCard = ({
           {techStacks.map((stack) => (
             <span
               key={stack}
-              className="text-sm font-semibold px-2.5 py-1 rounded"
+              className="text-base font-semibold px-2.5 py-1 rounded"
               style={{
                 background: "var(--color-border)",
                 color: "var(--color-text-secondary)",

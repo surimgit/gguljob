@@ -17,7 +17,7 @@ const WithdrawCompleteModal = ({ isOpen, onClose }: WithdrawCompleteModalProps) 
 
         {/* 텍스트 영역 */}
         <h2 className="text-xl font-bold text-gray-900">탈퇴 완료</h2>
-        <p className="text-sm text-gray-500 text-center leading-relaxed">
+        <p className="text-base text-gray-500 text-center leading-relaxed">
           회원 탈퇴가 완료되었습니다.
           <br />
           서비스를 이용해주셔서 감사합니다.

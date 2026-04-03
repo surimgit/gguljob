@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useMemo, type FC } from "react";
 import { X } from "lucide-react";
 import gguljobLogo from "../../../assets/images/gguljob_logo.png";
 import Step1Goals from "./steps/Step1Goals";
@@ -33,7 +33,40 @@ interface Props {
 const TOTAL_STEPS = 7;
 const SHOW_PROGRESS = [true, true, true, true, true, true, true];
 
-const isStepValid = (step: number, formData: FormData): boolean => {
+const STEP_TABS = [
+  { step: 1, label: '목표' },
+  { step: 2, label: '직무' },
+  { step: 3, label: '경험' },
+  { step: 4, label: '경력' },
+  { step: 5, label: '기술' },
+  { step: 6, label: 'MBTI' },
+  { step: 7, label: '성향' },
+];
+
+const isStepValid = (step: number, formData: FormData, mode: 'onboarding' | 'edit' = 'onboarding'): boolean => {
+  // edit 모드에서는 이미 데이터가 있으므로 덜 엄격하게 검증
+  if (mode === 'edit') {
+    switch (step) {
+      case 1:
+        return formData.goals.length > 0;
+      case 2:
+        return formData.position !== "";
+      case 3:
+        return formData.experience !== "";
+      case 4:
+        return true; // workExperience는 선택사항
+      case 5:
+        return formData.skills.length > 0;
+      case 6:
+        return true; // edit 모드에서는 MBTI 변경하지 않아도 됨
+      case 7:
+        return true; // leaderScore는 항상 값이 있음
+      default:
+        return false;
+    }
+  }
+  
+  // onboarding 모드: 엄격한 검증
   switch (step) {
     case 1:
       return formData.goals.length > 0;
@@ -69,22 +102,58 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
   const [formData, setFormData] = useState<FormData>({ ...DEFAULT_FORM, ...initialData });
   const [showComplete, setShowComplete] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<FormData>({ ...DEFAULT_FORM });
+  const [isDirty, setIsDirty] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  // 모달이 열릴 때마다 initialData로 동기화
+  // 모달이 열릴 때만 initialData로 동기화 (한 번만)
   useEffect(() => {
-    if (isOpen) {
-      setFormData({ ...DEFAULT_FORM, ...initialData });
+    if (isOpen && !hasInitialized) {
+      const initial = { ...DEFAULT_FORM, ...initialData };
+      setInitialFormData(initial);
+      setFormData(initial);
+      setIsDirty(false);
       setStep(1);
       setShowComplete(false);
       setShowExitWarning(false);
+      setHasInitialized(true);
+    } else if (!isOpen) {
+      setHasInitialized(false);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, hasInitialized]);
+
+  // formData 변경 감지
+  useEffect(() => {
+    if (!isOpen || !hasInitialized) return;
+    
+    // 배열은 정렬해서 비교 (순서 무관)
+    const normalizeForComparison = (data: FormData) => ({
+      ...data,
+      goals: [...data.goals].sort(),
+      skills: [...data.skills].sort(),
+    });
+    
+    const current = normalizeForComparison(formData);
+    const initial = normalizeForComparison(initialFormData);
+    
+    const hasChanged = JSON.stringify(current) !== JSON.stringify(initial);
+    setIsDirty(hasChanged);
+  }, [formData, initialFormData, isOpen, hasInitialized]);
+
+  const allStepsValid = useMemo(() => {
+    const validations = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+      const stepNum = i + 1;
+      const valid = isStepValid(stepNum, formData, mode);
+      return valid;
+    });
+    return validations.every(Boolean);
+  }, [formData, mode]);
 
   if (!isOpen) return null;
 
   const handleExit = () => setShowExitWarning(true);
 
-  const canNext = isStepValid(step, formData);
+  const canNext = isStepValid(step, formData, mode);
   const showProgress = SHOW_PROGRESS[step - 1];
 
   const handleNext = () => {
@@ -134,27 +203,58 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               </button>
             </div>
 
-            {/* 진행 바 영역 — 항상 동일한 높이 유지, 미표시 시 invisible */}
-            <div className={showProgress ? "" : "invisible"}>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[13px] text-gray-500 font-medium">
-                  프로필 설정
-                </span>
-                <span className="text-[13px] text-primary font-bold">
-                  {step}/{TOTAL_STEPS}
-                </span>
+            {mode === 'edit' ? (
+              /* 수정 모드: 상단 탭 네비게이션 */
+              <div
+                role="tablist"
+                aria-label="프로필 설정 단계"
+                className="flex mb-4 rounded-xl overflow-x-auto"
+                style={{ background: 'var(--color-background, #F7F8FA)', border: '1px solid var(--color-border, #E5E7EB)' }}
+              >
+                {STEP_TABS.map(({ step: s, label }) => {
+                  const active = step === s;
+                  return (
+                    <button
+                      key={s}
+                      id={`step-tab-${s}`}
+                      role="tab"
+                      aria-selected={active}
+                      aria-controls={`step-panel-${s}`}
+                      onClick={() => setStep(s)}
+                      className={`flex-1 py-2.5 text-[13px] cursor-pointer transition-colors ${
+                        active
+                          ? 'bg-primary font-bold text-gray-900'
+                          : 'font-medium text-[#9CA3AF] hover:bg-white'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="h-[5px] rounded-full bg-gray-200 mb-6 overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-300"
-                  style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-                />
+            ) : (
+              /* 온보딩 모드: 기존 진행 바 */
+              <div className={showProgress ? "" : "invisible"}>
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-[13px] text-gray-500 font-medium">
+                    프로필 설정
+                  </span>
+                  <span className="text-[13px] text-primary font-bold">
+                    {step}/{TOTAL_STEPS}
+                  </span>
+                </div>
+                <div className="h-[5px] rounded-full bg-gray-200 mb-6 overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-300"
+                    style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Step Content */}
-          <div className="pl-5 pr-4 pb-6 flex-1 overflow-y-auto">
+          <div id={`step-panel-${step}`} role={mode === 'edit' ? 'tabpanel' : undefined} aria-labelledby={mode === 'edit' ? `step-tab-${step}` : undefined} className="pl-5 pr-4 pb-6 flex-1 overflow-y-auto">
             {step === 1 && (
               <Step1Goals
                 selected={formData.goals}
@@ -201,27 +301,45 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
 
           {/* Footer Buttons */}
           <div className="flex gap-2.5 pl-6 pr-9 pt-3 pb-6 flex-shrink-0">
-            {step > 1 && (
+            {mode === 'edit' ? (
+              /* 수정 모드: 저장 버튼 */
               <button
-                onClick={handlePrev}
-                className="flex-2 py-3.5 rounded-xl border border-gray-300 bg-transparent text-[15px] font-semibold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors duration-150"
-              >
-                이전
-              </button>
-            )}
-            <button
-              onClick={handleNext}
-              disabled={!canNext}
-              className={`py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150
-                ${step === 1 ? "flex-1" : "flex-[2]"}
-                ${
-                  canNext
+                onClick={() => setShowComplete(true)}
+                disabled={!allStepsValid || !isDirty}
+                className={`flex-1 py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150 ${
+                  allStepsValid && isDirty
                     ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
-            >
-              {step === TOTAL_STEPS ? "완료" : "다음"}
-            </button>
+              >
+                저장
+              </button>
+            ) : (
+              /* 온보딩 모드: 이전/다음 */
+              <>
+                {step > 1 && (
+                  <button
+                    onClick={handlePrev}
+                    className="flex-2 py-3.5 rounded-xl border border-gray-300 bg-transparent text-[15px] font-semibold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    이전
+                  </button>
+                )}
+                <button
+                  onClick={handleNext}
+                  disabled={!canNext}
+                  className={`py-3.5 rounded-xl border-none text-[15px] font-bold transition-colors duration-150
+                    ${step === 1 ? "flex-1" : "flex-[2]"}
+                    ${
+                      canNext
+                        ? "bg-primary text-white cursor-pointer hover:bg-amber-600"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
+                >
+                  {step === TOTAL_STEPS ? "완료" : "다음"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -242,7 +360,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 {mode === 'edit' ? '수정을 취소하시겠습니까?' : '프로필 설정을 완료해주세요'}
               </h3>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              <p className="text-base text-gray-500 mb-6 leading-relaxed">
                 {mode === 'edit' ? (
                   '변경사항이 저장되지 않습니다.'
                 ) : (
@@ -252,7 +370,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowExitWarning(false)}
-                  className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 rounded-xl border border-gray-300 text-base font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   {mode === 'edit' ? '계속 수정' : '계속 설정하기'}
                 </button>
@@ -261,7 +379,7 @@ const ProfileSetupModal: FC<Props> = ({ isOpen, onClose, onComplete, initialData
                     setShowExitWarning(false);
                     onClose();
                   }}
-                  className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-red-500 text-base font-semibold text-white hover:bg-red-600 transition-colors"
                 >
                   나가기
                 </button>

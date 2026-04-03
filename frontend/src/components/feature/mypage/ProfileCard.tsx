@@ -15,7 +15,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
       />
       <div>
         <p className="text-lg font-semibold text-[#111827]">{user.name}</p>
-        <p className="text-sm text-gray-500">{user.email}</p>
+        <p className="text-base text-gray-500">{user.email}</p>
       </div>
     </Card>
   );

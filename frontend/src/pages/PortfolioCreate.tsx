@@ -2,8 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, FolderOpen, CheckCircle2, Sparkles, Copy, Check, RotateCcw, Download, List } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '../components/common';
 import chatbotImg from '../assets/images/chatbot.png';
 import { getMyProjects } from '../api/projects';
 import { getTroubleshootings } from '../api/troubleshooting';
@@ -37,11 +36,11 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
     >
       {/* 헤더 */}
       <div className="flex items-center justify-between w-full">
-        <span className="text-xs font-bold" style={{ color: 'var(--color-amber)' }}>
+        <span className="text-sm font-bold" style={{ color: 'var(--color-amber)' }}>
           {project.domain}
         </span>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs font-medium" style={{ color: isActive ? 'var(--color-success-dark)' : 'var(--color-text-tertiary)' }}>
+          <span className="flex items-center gap-1 text-sm font-medium" style={{ color: isActive ? 'var(--color-success-dark)' : 'var(--color-text-tertiary)' }}>
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? 'var(--color-success-dark)' : 'var(--color-text-tertiary)' }} />
             {project.status === 'RECRUITING' ? '모집중' : project.status === 'PROCEEDING' ? '진행중' : '완료'}
           </span>
@@ -52,7 +51,7 @@ const ProjectCard = ({ project, active, hasSelectedTs, onToggle }: { project: Pr
       {/* 본문 */}
       <div>
         <h3 className="text-base font-bold text-text-primary">{project.title}</h3>
-        <p className="text-sm text-text-secondary mt-1">{project.teamName}</p>
+        <p className="text-base text-text-secondary mt-1">{project.teamName}</p>
       </div>
 
       {/* 기술 스택 */}
@@ -90,7 +89,7 @@ const TsCard = ({ item, selected, onToggle }: { item: TsItemWithProject; selecte
       >
         {item.tsId}
       </span>
-      <h4 className="text-sm font-bold text-text-primary leading-snug flex-1 truncate">{item.title}</h4>
+      <h4 className="text-base font-bold text-text-primary leading-snug flex-1 truncate">{item.title}</h4>
       {selected && <CheckCircle2 className="w-5 h-5 text-primary-hover flex-shrink-0" />}
     </div>
     <div className="flex flex-col gap-0.5 px-4 pb-3 border-t border-border pt-2 w-full" style={{ background: '#FAF9F6' }}>
@@ -223,7 +222,7 @@ const PortfolioCreate = () => {
         </div>
         <Link
           to="/mypage/portfolio"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-border bg-surface hover:bg-background transition-colors text-text-secondary"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-base font-bold border border-border bg-surface hover:bg-background transition-colors text-text-secondary"
         >
           <List className="w-4 h-4" />
           내 포트폴리오
@@ -238,24 +237,24 @@ const PortfolioCreate = () => {
               <span className="text-base font-bold text-[#6366f1]">Step 3.</span>
               <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 생성</h2>
             </div>
-            <p className="text-sm text-text-secondary -mt-2">선택한 트러블슈팅을 기반으로 포트폴리오를 생성합니다</p>
+            <p className="text-base text-text-secondary -mt-2">선택한 트러블슈팅을 기반으로 포트폴리오를 생성합니다</p>
 
             {/* 선택 요약 */}
             <div className="flex flex-col gap-3 bg-[#FAF9F6] rounded-xl p-4 border border-border">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-text-primary">선택된 프로젝트</span>
-                <span className="text-sm font-bold text-[#6366f1]">{selectedProjects.length}개</span>
+                <span className="text-base font-bold text-text-primary">선택된 프로젝트</span>
+                <span className="text-base font-bold text-[#6366f1]">{selectedProjects.length}개</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-text-primary">선택된 트러블슈팅</span>
-                <span className="text-sm font-bold text-[#6366f1]">{selectedTs.length}개</span>
+                <span className="text-base font-bold text-text-primary">선택된 트러블슈팅</span>
+                <span className="text-base font-bold text-[#6366f1]">{selectedTs.length}개</span>
               </div>
             </div>
 
             {/* 선택된 트러블슈팅 목록 */}
             {selectedTsItems.length > 0 && (
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-bold text-text-primary">포함된 트러블슈팅</span>
+                <span className="text-base font-bold text-text-primary">포함된 트러블슈팅</span>
                 <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
                   {selectedTsItems.map((ts) => (
                     <div
@@ -268,7 +267,7 @@ const PortfolioCreate = () => {
                       >
                         {ts.tsId}
                       </span>
-                      <span className="text-xs text-text-secondary truncate">{ts.title}</span>
+                      <span className="text-sm text-text-secondary truncate">{ts.title}</span>
                     </div>
                   ))}
                 </div>
@@ -279,7 +278,7 @@ const PortfolioCreate = () => {
             <button
               type="button"
               onClick={handleReset}
-              className="w-full py-3 mt-auto rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
+              className="w-full py-3 mt-auto rounded-xl text-base font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
               다시 선택하기
@@ -297,7 +296,7 @@ const PortfolioCreate = () => {
                 <button
                   type="button"
                   onClick={() => generatedPortfolioId && savePortfolioAsFile(generatedPortfolioId).catch(() => toast.error('다운로드에 실패했습니다.'))}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
                 >
                   <Download className="w-4 h-4" />
                   다운로드
@@ -305,56 +304,16 @@ const PortfolioCreate = () => {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border border-border bg-white hover:bg-background transition-colors text-text-secondary"
                 >
                   {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   {copied ? '복사됨' : '복사'}
                 </button>
               </div>
             </div>
-            <div className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh] text-sm leading-relaxed">
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  table: ({ children }) => (
-                    <div className="overflow-x-auto mb-3">
-                      <table className="w-full text-sm border-collapse">{children}</table>
-                    </div>
-                  ),
-                  thead: ({ children }) => <thead style={{ background: 'var(--color-background)' }}>{children}</thead>,
-                  th: ({ children }) => (
-                    <th className="px-4 py-2 text-left text-xs font-bold border border-border" style={{ color: 'var(--color-text-primary)' }}>{children}</th>
-                  ),
-                  td: ({ children }) => (
-                    <td className="px-4 py-2 text-xs border border-border" style={{ color: 'var(--color-text-secondary)' }}>{children}</td>
-                  ),
-                  h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-3" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-xl font-bold mt-4 mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5" style={{ color: 'var(--color-text-primary)' }}>{children}</h3>,
-                  p: ({ children }) => <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>{children}</p>,
-                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</ol>,
-                  li: ({ children }) => <li className="mb-1">{children}</li>,
-                  code: ({ children }) => (
-                    <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--color-background)', color: 'var(--color-primary-hover)' }}>
-                      {children}
-                    </code>
-                  ),
-                  pre: ({ children }) => (
-                    <pre className="rounded-xl p-4 overflow-x-auto mb-3 text-xs font-mono" style={{ background: 'var(--color-background)' }}>
-                      {children}
-                    </pre>
-                  ),
-                  a: ({ href, children }) => (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--color-blue)' }}>{children}</a>
-                  ),
-                  strong: ({ children }) => <strong className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{children}</strong>,
-                  hr: () => <hr className="my-4 border-border" />,
-                }}
-              >
-                {generatedMd}
-              </Markdown>
-            </div>
+            <MarkdownRenderer className="bg-[#FAF9F6] border border-border rounded-xl p-6 overflow-auto max-h-[70vh] text-base leading-relaxed">
+              {generatedMd}
+            </MarkdownRenderer>
           </div>
         </div>
       ) : (
@@ -365,15 +324,15 @@ const PortfolioCreate = () => {
             <span className="text-base font-bold text-primary-hover">Step 1.</span>
             <h2 className="text-lg font-bold text-text-primary">프로젝트 선택</h2>
           </div>
-          <p className="text-sm text-text-secondary -mt-2">포트폴리오에 포함할 프로젝트를 선택하세요</p>
+          <p className="text-base text-text-secondary -mt-2">포트폴리오에 포함할 프로젝트를 선택하세요</p>
           {projectsLoading ? (
             <div className="flex items-center justify-center py-16 text-text-tertiary">
-              <p className="text-sm font-medium">불러오는 중...</p>
+              <p className="text-base font-medium">불러오는 중...</p>
             </div>
           ) : projects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
               <FolderOpen className="w-10 h-10 mb-3 opacity-40" />
-              <p className="text-sm font-medium">참여 중인 프로젝트가 없습니다</p>
+              <p className="text-base font-medium">참여 중인 프로젝트가 없습니다</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
@@ -389,7 +348,7 @@ const PortfolioCreate = () => {
             </div>
           )}
           {selectedProjects.length > 0 && (
-            <p className="text-xs font-bold text-text-secondary text-center">{selectedProjects.length}개 프로젝트 선택됨</p>
+            <p className="text-sm font-bold text-text-secondary text-center">{selectedProjects.length}개 프로젝트 선택됨</p>
           )}
         </div>
 
@@ -399,20 +358,20 @@ const PortfolioCreate = () => {
             <span className="text-base font-bold text-primary-hover">Step 2.</span>
             <h2 className="text-lg font-bold text-text-primary">트러블슈팅 선택</h2>
           </div>
-          <p className="text-sm text-text-secondary -mt-2">포트폴리오에 포함할 트러블슈팅을 선택하세요</p>
+          <p className="text-base text-text-secondary -mt-2">포트폴리오에 포함할 트러블슈팅을 선택하세요</p>
 
           {selectedProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
               <FolderOpen className="w-10 h-10 mb-3 opacity-40" />
-              <p className="text-sm font-medium">프로젝트를 먼저 선택해주세요</p>
+              <p className="text-base font-medium">프로젝트를 먼저 선택해주세요</p>
             </div>
           ) : tsLoading ? (
             <div className="flex items-center justify-center py-16 text-text-tertiary">
-              <p className="text-sm font-medium">불러오는 중...</p>
+              <p className="text-base font-medium">불러오는 중...</p>
             </div>
           ) : filteredTs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
-              <p className="text-sm font-medium">선택한 프로젝트에 트러블슈팅이 없습니다</p>
+              <p className="text-base font-medium">선택한 프로젝트에 트러블슈팅이 없습니다</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
@@ -427,7 +386,7 @@ const PortfolioCreate = () => {
             </div>
           )}
           {selectedTs.length > 0 && (
-            <p className="text-xs font-bold text-text-secondary text-center">{selectedTs.length}개 트러블슈팅 선택됨</p>
+            <p className="text-sm font-bold text-text-secondary text-center">{selectedTs.length}개 트러블슈팅 선택됨</p>
           )}
         </div>
 
@@ -437,7 +396,7 @@ const PortfolioCreate = () => {
             <span className="text-base font-bold text-[#6366f1]">Step 3.</span>
             <h2 className="text-lg font-bold text-text-primary">AI 포트폴리오 생성</h2>
           </div>
-          <p className="text-sm text-text-secondary -mt-2">선택한 트러블슈팅으로 포트폴리오를 생성합니다</p>
+          <p className="text-base text-text-secondary -mt-2">선택한 트러블슈팅으로 포트폴리오를 생성합니다</p>
 
           {generating ? (
             <div className="flex flex-col items-center justify-center py-12 gap-5">
@@ -446,7 +405,7 @@ const PortfolioCreate = () => {
               </div>
               <div className="flex flex-col items-center gap-2">
                 <span className="text-lg font-bold text-text-primary">포트폴리오 생성 중...</span>
-                <span className="text-sm text-text-secondary">트러블슈팅을 분석하고 있습니다</span>
+                <span className="text-base text-text-secondary">트러블슈팅을 분석하고 있습니다</span>
               </div>
               <div className="flex items-center gap-1.5 mt-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse" style={{ animationDelay: '0ms' }} />
@@ -459,19 +418,19 @@ const PortfolioCreate = () => {
               {/* 선택 요약 */}
               <div className="flex flex-col gap-3 bg-[#FAF9F6] rounded-xl p-4 border border-border">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-text-primary">선택된 프로젝트</span>
-                  <span className="text-sm font-bold text-[#6366f1]">{selectedProjects.length}개</span>
+                  <span className="text-base font-bold text-text-primary">선택된 프로젝트</span>
+                  <span className="text-base font-bold text-[#6366f1]">{selectedProjects.length}개</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-text-primary">선택된 트러블슈팅</span>
-                  <span className="text-sm font-bold text-[#6366f1]">{selectedTs.length}개</span>
+                  <span className="text-base font-bold text-text-primary">선택된 트러블슈팅</span>
+                  <span className="text-base font-bold text-[#6366f1]">{selectedTs.length}개</span>
                 </div>
               </div>
 
               {/* 선택된 트러블슈팅 목록 */}
               {selectedTsItems.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-bold text-text-primary">포함될 트러블슈팅</span>
+                  <span className="text-base font-bold text-text-primary">포함될 트러블슈팅</span>
                   <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto">
                     {selectedTsItems.map((ts) => (
                       <div
@@ -484,7 +443,7 @@ const PortfolioCreate = () => {
                         >
                           {ts.tsId}
                         </span>
-                        <span className="text-xs text-text-secondary truncate">{ts.title}</span>
+                        <span className="text-sm text-text-secondary truncate">{ts.title}</span>
                       </div>
                     ))}
                   </div>
@@ -497,7 +456,7 @@ const PortfolioCreate = () => {
                   <img src={chatbotImg} alt="AI" className="w-full h-full object-cover" />
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-3 border border-border">
-                  <p className="text-xs text-text-secondary leading-relaxed">
+                  <p className="text-sm text-text-secondary leading-relaxed">
                     선택한 트러블슈팅을 AI가 분석하여 포트폴리오를 자동 생성합니다.
                     <br />생성 후 직접 수정 · 보완할 수 있습니다.
                   </p>
@@ -508,7 +467,7 @@ const PortfolioCreate = () => {
               <button
                 onClick={handleGenerate}
                 disabled={selectedTs.length === 0}
-                className="w-full py-4 mt-auto rounded-xl text-sm font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed border-0 outline-none"
+                className="w-full py-4 mt-auto rounded-xl text-base font-bold tracking-wide text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed border-0 outline-none"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
               >
                 <Sparkles className="w-4 h-4" />

@@ -168,7 +168,7 @@ const Navbar = () => {
                 const id = toast.custom(
                     (t) => (
                         <div
-                            className="pointer-events-none px-4 py-3 bg-white rounded-xl shadow-lg border border-gray-100 text-sm text-gray-800 flex items-center gap-2"
+                            className="pointer-events-none px-4 py-3 bg-white rounded-xl shadow-lg border border-gray-100 text-base text-gray-800 flex items-center gap-2"
                             style={{
                                 animation: t.visible
                                     ? 'toast-slide-in 0.2s ease-out forwards'
@@ -353,7 +353,7 @@ const Navbar = () => {
                                     )}
                                     <span
                                         aria-hidden="true"
-                                        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
+                                        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-sm whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
                                     >
                                         알림
                                     </span>
@@ -388,7 +388,7 @@ const Navbar = () => {
                                 </svg>
                                 <span
                                     aria-hidden="true"
-                                    className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
+                                    className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-sm whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
                                 >
                                     마이페이지
                                 </span>
@@ -413,7 +413,7 @@ const Navbar = () => {
                                 </svg>
                                 <span
                                     aria-hidden="true"
-                                    className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-xs whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
+                                    className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2 py-1 rounded-md bg-text-brown text-white text-sm whitespace-nowrap opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150"
                                 >
                                     로그아웃
                                 </span>
@@ -463,7 +463,7 @@ const Navbar = () => {
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
-                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-base transition-colors"
                         >
                             내 프로젝트
                         </Link>
@@ -474,7 +474,7 @@ const Navbar = () => {
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
-                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-base transition-colors"
                         >
                             프로젝트 찾기
                         </Link>
@@ -485,7 +485,7 @@ const Navbar = () => {
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
-                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-base transition-colors"
                         >
                             포트폴리오
                         </Link>
@@ -496,7 +496,7 @@ const Navbar = () => {
                                 closeMobileMenu();
                                 window.scrollTo(0, 0);
                             }}
-                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-sm transition-colors"
+                            className="block px-3 py-2.5 text-text-primary hover:bg-primary-soft rounded-lg font-medium text-base transition-colors"
                         >
                             채용
                         </Link>
@@ -601,13 +601,13 @@ const Navbar = () => {
                         <div className="bg-white rounded-2xl w-full max-w-[380px] p-6 shadow-2xl pointer-events-auto text-center">
                             <div className="text-4xl mb-3">👋</div>
                             <h3 className="text-lg font-bold text-gray-900 mb-2">로그아웃 하시겠습니까?</h3>
-                            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                            <p className="text-base text-gray-500 mb-6 leading-relaxed">
                                 다시 로그인하면 이전 데이터를 그대로 이용할 수 있습니다.
                             </p>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setShowLogoutConfirm(false)}
-                                    className="flex-1 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="flex-1 py-3 rounded-xl border border-gray-300 text-base font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
                                     취소
                                 </button>
@@ -616,7 +616,7 @@ const Navbar = () => {
                                         setShowLogoutConfirm(false);
                                         handleLogout();
                                     }}
-                                    className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
+                                    className="flex-1 py-3 rounded-xl bg-red-500 text-base font-semibold text-white hover:bg-red-600 transition-colors"
                                 >
                                     로그아웃
                                 </button>

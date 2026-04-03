@@ -51,10 +51,10 @@ const OAuthCallback = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-gray-700 text-sm mb-4">{error}</p>
+          <p className="text-gray-700 text-base mb-4">{error}</p>
           <button
             onClick={() => navigate('/', { replace: true })}
-            className="text-sm text-primary underline"
+            className="text-base text-primary underline"
           >
             메인으로 돌아가기
           </button>
@@ -69,7 +69,7 @@ const OAuthCallback = () => {
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">로그인 중...</p>
+            <p className="text-gray-500 text-base">로그인 중...</p>
           </div>
         </div>
       )}

@@ -18,7 +18,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
   return (
   <Link
     to={`/my-projects/${project.projectId}`}
-    className="flex items-start gap-6 border-2 border-border rounded-2xl p-6 hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 h-full"
+    className="flex items-center gap-6 border-2 border-border rounded-2xl p-6 hover:bg-primary-soft hover:border-primary-hover hover:shadow-md transition-all duration-200 h-full"
   >
     {/* 썸네일 */}
     <div
@@ -37,7 +37,7 @@ const ProjectCard = ({ project }: { project: ProjectSimple }) => {
     </div>
 
     {/* 콘텐츠 */}
-    <div className="flex flex-col gap-3 flex-1 min-w-0">
+    <div className="flex flex-col justify-center gap-3 flex-1 min-w-0">
       <h3 className="text-[18px] font-bold text-text-primary leading-snug">
         {project.title}
       </h3>

@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.ssafy.gguljob.backend.domain.job.dto.response.JobRecommendationResponse;
@@ -35,6 +37,10 @@ public class JobRecommendationService {
   private final JobPostingRepository jobPostingRepository;
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
+
+  @Lazy
+  @Autowired
+  private JobRecommendationService self;
 
   private static final List<String> BASE_LEVELS = List.of("신입", "신입·경력", "경력무관", "경력");
 
@@ -116,7 +122,7 @@ public class JobRecommendationService {
   }
 
   public List<RecommendedJobDto> getTop3Recommendations(Long userId) {
-    List<RecommendedJobDto> all = getAllJobsWithScoring(userId);
+    List<RecommendedJobDto> all = self.getAllJobsWithScoring(userId);
     return all.size() <= 3 ? all : all.subList(0, 3);
   }
 
@@ -131,7 +137,7 @@ public class JobRecommendationService {
     List<RecommendedJobDto> allCandidates;
     if (sortByDeadline) {
       // 전체 스캔 후 RDB deadline 정렬 (getAllJobsWithScoring이 이미 경력 필터 적용)
-      List<RecommendedJobDto> all = getAllJobsWithScoring(userId);
+      List<RecommendedJobDto> all = self.getAllJobsWithScoring(userId);
       List<Long> allIds = all.stream().map(RecommendedJobDto::getJobId).collect(Collectors.toList());
       Map<Long, RecommendedJobDto> scoreMap = all.stream()
           .collect(Collectors.toMap(RecommendedJobDto::getJobId, Function.identity()));
@@ -146,7 +152,7 @@ public class JobRecommendationService {
           .collect(Collectors.toList());
     } else {
       // getAllJobsWithScoring이 이미 경력 필터 적용된 결과를 반환
-      allCandidates = getAllJobsWithScoring(userId);
+      allCandidates = self.getAllJobsWithScoring(userId);
     }
 
     long totalElements = allCandidates.size();

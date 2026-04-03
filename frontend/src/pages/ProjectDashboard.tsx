@@ -240,7 +240,7 @@ const ProjectDashboard = () => {
                   >
                     <button
                       onMouseEnter={() => setPersonalDropdownOpen(true)}
-                      className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
+                      className={`flex items-center gap-2 px-5 py-2 rounded-xl text-base cursor-pointer transition-colors ${
                         isActive ? "font-bold" : "font-medium"
                       }`}
                       style={
@@ -290,7 +290,7 @@ const ProjectDashboard = () => {
                                 setPersonalDropdownOpen(false);
                                 window.scrollTo(0, 0);
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-base transition-colors"
                               style={{
                                 color:
                                   activeTab === "personal" &&
@@ -342,7 +342,7 @@ const ProjectDashboard = () => {
                     setPersonalDropdownOpen(false);
                     window.scrollTo(0, 0);
                   }}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
+                  className={`flex items-center gap-2 px-5 py-2 rounded-xl text-base cursor-pointer transition-colors ${
                     isActive ? "font-bold" : "font-medium"
                   }`}
                   style={
@@ -422,7 +422,7 @@ const ProjectDashboard = () => {
                         {projectInfo.title}
                       </h1>
                       <span
-                        className="px-2.5 py-0.5 rounded-full text-sm font-semibold flex-shrink-0"
+                        className="px-2.5 py-0.5 rounded-full text-base font-semibold flex-shrink-0"
                         style={{
                           background: getCategoryColorPair(projectInfo.domain).bg,
                           color: getCategoryColorPair(projectInfo.domain).text,
@@ -439,7 +439,7 @@ const ProjectDashboard = () => {
                         const s = statusMap[projectInfo.status] ?? statusMap.PROCEEDING;
                         return (
                           <span
-                            className="flex items-center gap-1 text-sm font-semibold flex-shrink-0"
+                            className="flex items-center gap-1 text-base font-semibold flex-shrink-0"
                             style={{ color: s.color }}
                           >
                             <span
@@ -453,7 +453,7 @@ const ProjectDashboard = () => {
                     </div>
                     {/* 2행: teamName */}
                     {projectInfo.teamName && (
-                      <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                      <p className="text-base font-medium" style={{ color: "var(--color-text-secondary)" }}>
                         {projectInfo.teamName}
                       </p>
                     )}
@@ -467,7 +467,7 @@ const ProjectDashboard = () => {
                       {(projectInfo.skills ?? []).map((stack) => (
                         <span
                           key={stack}
-                          className="px-3 py-1 rounded-full text-xs font-medium border"
+                          className="px-3 py-1 rounded-full text-sm font-medium border"
                           style={{
                             background: "var(--color-primary)",
                             color: "var(--color-text-primary)",
@@ -578,7 +578,7 @@ const ProjectDashboard = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold"
                           style={
                             gitRepoInfo?.repoUrl
                               ? { background: "#DCFCE7", color: "#16A34A" }
@@ -604,7 +604,7 @@ const ProjectDashboard = () => {
                               setEditingRepo(true);
                               setRepoInput(gitRepoInfo?.repoUrl ?? "");
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors"
                             style={{
                               border: "1px solid var(--color-border)",
                               color: "var(--color-text-secondary)",
@@ -638,7 +638,7 @@ const ProjectDashboard = () => {
                                   console.error("레포 연동 해제 실패:", err);
                                 });
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors"
                             style={{
                               border: "1px solid #FECACA",
                               color: "var(--color-error)",
@@ -666,7 +666,7 @@ const ProjectDashboard = () => {
                             value={repoInput}
                             onChange={(e) => setRepoInput(e.target.value)}
                             placeholder="https://github.com/owner/repo"
-                            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                            className="flex-1 px-3 py-2 rounded-lg text-base outline-none"
                             style={{ border: "1px solid var(--color-border)" }}
                             onFocus={(e) =>
                               (e.currentTarget.style.borderColor =
@@ -684,7 +684,7 @@ const ProjectDashboard = () => {
                             value={tokenInput}
                             onChange={(e) => setTokenInput(e.target.value)}
                             placeholder="ghp_xxxx 또는 github_pat_xxxx"
-                            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                            className="flex-1 px-3 py-2 rounded-lg text-base outline-none"
                             style={{ border: "1px solid var(--color-border)" }}
                             onFocus={(e) =>
                               (e.currentTarget.style.borderColor =
@@ -739,7 +739,7 @@ const ProjectDashboard = () => {
                                 });
                             }}
                             disabled={!repoInput || !tokenInput}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-lg text-base font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
                             style={{ background: "var(--color-primary-hover)" }}
                           >
                             저장
@@ -749,7 +749,7 @@ const ProjectDashboard = () => {
                               setEditingRepo(false);
                               setTokenInput("");
                             }}
-                            className="px-3 py-2 rounded-lg text-sm font-medium"
+                            className="px-3 py-2 rounded-lg text-base font-medium"
                             style={{
                               border: "1px solid var(--color-border)",
                               color: "var(--color-text-secondary)",
@@ -758,7 +758,7 @@ const ProjectDashboard = () => {
                             취소
                           </button>
                         </div>
-                        <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                        <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
                           GitHub Settings → Developer settings → Personal access tokens에서 발급하세요. repo 권한이 필요합니다.
                           <br />
                           토큰은 <code className="font-mono">ghp_</code> 또는{" "}
@@ -788,7 +788,7 @@ const ProjectDashboard = () => {
                             href={gitRepoInfo.repoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-bold truncate hover:underline flex items-center gap-1"
+                            className="text-base font-bold truncate hover:underline flex items-center gap-1"
                             style={{ color: "var(--color-blue)" }}
                           >
                             {gitRepoInfo.repoUrl}
@@ -796,7 +796,7 @@ const ProjectDashboard = () => {
                           </a>
                         ) : (
                           <span
-                            className="text-sm font-bold"
+                            className="text-base font-bold"
                             style={{ color: "var(--color-text-tertiary)" }}
                           >
                             연동된 레포 없음
@@ -813,7 +813,7 @@ const ProjectDashboard = () => {
                               setCopied(true);
                               setTimeout(() => setCopied(false), 2000);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium transition-colors"
                             style={{
                               border: "1px solid var(--color-border)",
                               color: copied
@@ -832,7 +832,7 @@ const ProjectDashboard = () => {
                         {activeSecret && (
                           <button
                             onClick={() => setShowWebhookModal(true)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium transition-colors"
                             style={{
                               border: "1px solid var(--color-border)",
                               color: "var(--color-text-secondary)",
@@ -870,7 +870,7 @@ const ProjectDashboard = () => {
                                 handleRecommend(false);
                               }
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-semibold text-white"
                             style={{ background: "#6366f1" }}
                           >
                             <Sparkles className="w-3.5 h-3.5" />
@@ -881,7 +881,7 @@ const ProjectDashboard = () => {
                               setEditingTopic(true);
                               setTopicInput(projectInfo.topic ?? "");
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors"
                             style={{
                               border: "1px solid var(--color-border)",
                               color: "var(--color-text-secondary)",
@@ -909,7 +909,7 @@ const ProjectDashboard = () => {
                           value={topicInput}
                           onChange={(e) => setTopicInput(e.target.value)}
                           placeholder="프로젝트 주제를 입력하세요"
-                          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                          className="flex-1 px-3 py-2 rounded-lg text-base outline-none"
                           style={{ border: "1px solid var(--color-border)" }}
                           onFocus={(e) =>
                             (e.currentTarget.style.borderColor =
@@ -933,14 +933,14 @@ const ProjectDashboard = () => {
                               );
                           }}
                           disabled={!topicInput.trim()}
-                          className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
+                          className="px-4 py-2 rounded-lg text-base font-semibold text-white disabled:opacity-40"
                           style={{ background: "var(--color-primary-hover)" }}
                         >
                           저장
                         </button>
                         <button
                           onClick={() => setEditingTopic(false)}
-                          className="px-3 py-2 rounded-lg text-sm font-medium"
+                          className="px-3 py-2 rounded-lg text-base font-medium"
                           style={{
                             border: "1px solid var(--color-border)",
                             color: "var(--color-text-secondary)",
@@ -979,7 +979,7 @@ const ProjectDashboard = () => {
                               AI 주제 추천
                             </span>
                             <span
-                              className="text-sm"
+                              className="text-base"
                               style={{ color: "var(--color-text-tertiary)" }}
                             >
                               팀에 맞는 주제를 추천해요
@@ -987,7 +987,7 @@ const ProjectDashboard = () => {
                           </div>
                           <button
                             onClick={() => handleRecommend(true)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#c7d2fe] bg-white"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium border border-[#c7d2fe] bg-white"
                             style={{
                               color: "var(--color-text-secondary)",
                             }}
@@ -1006,7 +1006,7 @@ const ProjectDashboard = () => {
                             placeholder="키워드를 입력하세요 (예: 인증, 배포)"
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
-                            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none bg-white"
+                            className="flex-1 px-3 py-2 rounded-lg text-base outline-none bg-white"
                             style={{
                               border: "1px solid #c7d2fe",
                             }}
@@ -1019,7 +1019,7 @@ const ProjectDashboard = () => {
                           />
                           <button
                             onClick={() => handleRecommend(true)}
-                            className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                            className="flex items-center gap-1 px-4 py-2 rounded-lg text-base font-semibold text-white"
                             style={{ background: "#6366f1" }}
                           >
                             <Sparkles className="w-3.5 h-3.5" />
@@ -1035,13 +1035,13 @@ const ProjectDashboard = () => {
                               style={{ color: "var(--color-text-tertiary)" }}
                             >
                               <RefreshCw className="w-4 h-4 animate-spin" />
-                              <span className="text-sm">
+                              <span className="text-base">
                                 AI가 주제를 추천하고 있어요...
                               </span>
                             </div>
                           ) : topics.length === 0 ? (
                             <p
-                              className="text-sm text-center py-4"
+                              className="text-base text-center py-4"
                               style={{ color: "var(--color-text-tertiary)" }}
                             >
                               키워드를 입력하고 추천 버튼을 눌러보세요
@@ -1056,7 +1056,7 @@ const ProjectDashboard = () => {
                                   onClick={() =>
                                     setSelectedTopic(isSelected ? null : idx)
                                   }
-                                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm text-left"
+                                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-base text-left"
                                   style={{
                                     border: `1px solid ${isSelected ? "#6366f1" : "#c7d2fe"}`,
                                     background: isSelected
@@ -1068,7 +1068,7 @@ const ProjectDashboard = () => {
                                   }}
                                 >
                                   <span
-                                    className="text-xs font-bold w-4"
+                                    className="text-sm font-bold w-4"
                                     style={{
                                       color: isSelected
                                         ? "#6366f1"
@@ -1085,7 +1085,7 @@ const ProjectDashboard = () => {
 
                         {/* 적용 버튼 */}
                         <button
-                          className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors"
+                          className="w-full py-3 rounded-xl text-base font-bold text-white transition-colors"
                           style={
                             selectedTopic !== null
                               ? { background: "#7C3AED" }
@@ -1150,7 +1150,7 @@ const ProjectDashboard = () => {
                     <div className="flex flex-col gap-2.5">
                       {rankings.length === 0 && (
                         <p
-                          className="text-sm text-center py-4"
+                          className="text-base text-center py-4"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
                           아직 PR 기록이 없습니다
@@ -1176,7 +1176,7 @@ const ProjectDashboard = () => {
                           onClick={() => setProfileUserId(member.userId)}
                         >
                           <span
-                            className="text-sm font-black w-5 text-center"
+                            className="text-base font-black w-5 text-center"
                             style={{
                               color:
                                 idx === 0
@@ -1194,7 +1194,7 @@ const ProjectDashboard = () => {
                             />
                           ) : (
                             <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                               style={{
                                 background:
                                   AVATAR_COLORS[idx % AVATAR_COLORS.length],
@@ -1204,7 +1204,7 @@ const ProjectDashboard = () => {
                             </div>
                           )}
                           <span
-                            className="text-sm font-semibold flex-1"
+                            className="text-base font-semibold flex-1"
                             style={{ color: "var(--color-text-primary)" }}
                           >
                             {member.userName}
@@ -1225,7 +1225,7 @@ const ProjectDashboard = () => {
                             />
                           </div>
                           <span
-                            className="text-sm font-black w-8 text-right"
+                            className="text-base font-black w-8 text-right"
                             style={{
                               color:
                                 idx === 0
@@ -1256,7 +1256,7 @@ const ProjectDashboard = () => {
                     <div className="flex flex-col gap-1">
                       {activities.length === 0 && (
                         <p
-                          className="text-sm text-center py-4"
+                          className="text-base text-center py-4"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
                           아직 활동 기록이 없습니다
@@ -1280,7 +1280,7 @@ const ProjectDashboard = () => {
                             />
                           ) : activity.userName ? (
                             <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                               style={{
                                 background:
                                   AVATAR_COLORS[idx % AVATAR_COLORS.length],
@@ -1304,21 +1304,21 @@ const ProjectDashboard = () => {
                           <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                             {activity.userName && (
                               <p
-                                className="text-sm font-bold"
+                                className="text-base font-bold"
                                 style={{ color: "var(--color-text-secondary)" }}
                               >
                                 {activity.userName}
                               </p>
                             )}
                             <p
-                              className="text-xs font-medium line-clamp-2"
+                              className="text-sm font-medium line-clamp-2"
                               style={{ color: "var(--color-text-primary)" }}
                             >
                               {activity.content}
                             </p>
                             {activity.label && (
                               <p
-                                className="text-xs font-mono font-semibold"
+                                className="text-sm font-mono font-semibold"
                                 style={{ color: "var(--color-blue)" }}
                               >
                                 {activity.label}
@@ -1326,7 +1326,7 @@ const ProjectDashboard = () => {
                             )}
                           </div>
                           <span
-                            className="text-xs flex-shrink-0 font-medium"
+                            className="text-sm flex-shrink-0 font-medium"
                             style={{ color: "var(--color-text-tertiary)" }}
                           >
                             {formatTime(activity.createdAt)}
@@ -1350,7 +1350,7 @@ const ProjectDashboard = () => {
                 className="fixed bottom-8 right-8 w-40 h-40 hover:scale-110 z-40 border-0 bg-transparent animate-float flex flex-col items-center"
               >
                 <div
-                  className="mb-1 px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg whitespace-nowrap transition-opacity duration-200"
+                  className="mb-1 px-3 py-1.5 rounded-full text-sm font-bold text-white shadow-lg whitespace-nowrap transition-opacity duration-200"
                   style={{
                     background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
                     opacity: chatbotOpen ? 0 : 1,
@@ -1439,7 +1439,7 @@ const ProjectDashboard = () => {
                   setPayloadCopied(true);
                   setTimeout(() => setPayloadCopied(false), 2000);
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium flex-shrink-0 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium flex-shrink-0 transition-colors"
                 style={{
                   border: "1px solid var(--color-border)",
                   color: payloadCopied
@@ -1508,7 +1508,7 @@ const ProjectDashboard = () => {
                   setSecretCopied(true);
                   setTimeout(() => setSecretCopied(false), 2000);
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium flex-shrink-0 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium flex-shrink-0 transition-colors"
                 style={{
                   border: "1px solid var(--color-border)",
                   color: secretCopied
@@ -1535,7 +1535,7 @@ const ProjectDashboard = () => {
               Which events would you like to trigger this webhook?
             </label>
             <p
-              className="text-sm mb-3"
+              className="text-base mb-3"
               style={{ color: "var(--color-text-secondary)" }}
             >
               <span className="font-semibold">
@@ -1553,7 +1553,7 @@ const ProjectDashboard = () => {
               {["Pull requests", "Issue comments", "Pushes"].map((event) => (
                 <span
                   key={event}
-                  className="px-4 py-2 rounded-full text-sm font-semibold"
+                  className="px-4 py-2 rounded-full text-base font-semibold"
                   style={{
                     background: "var(--color-primary)",
                     color: "var(--color-text-primary)",

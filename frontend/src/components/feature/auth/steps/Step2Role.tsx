@@ -45,7 +45,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
     <div>
       <div className="sticky top-0 bg-surface z-10 pb-3 pt-1">
         <h2 className="text-2xl font-bold text-gray-900 mb-1.5">어떤 직무를 희망하시나요?</h2>
-        <p className="text-sm text-gray-500">하나를 선택해주세요</p>
+        <p className="text-base text-gray-500">하나를 선택해주세요</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -71,7 +71,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
                     className={isSelected ? 'text-primary' : 'text-gray-500'}
                     strokeWidth={1.5}
                   />
-                  <span className={`text-sm ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
+                  <span className={`text-base ${isSelected ? 'font-semibold' : 'font-normal'} text-gray-900`}>
                     {name}
                   </span>
                 </button>
@@ -87,7 +87,7 @@ const Step2Role: FC<Props> = ({ selected, onChange }) => {
                 className={selected === 'NONE' ? 'text-primary' : 'text-gray-400'}
                 strokeWidth={1.5}
               />
-              <span className={`text-sm ${selected === 'NONE' ? 'font-semibold' : 'font-normal'} text-gray-900`}>
+              <span className={`text-base ${selected === 'NONE' ? 'font-semibold' : 'font-normal'} text-gray-900`}>
                 상관 없음
               </span>
             </button>

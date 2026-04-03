@@ -1,4 +1,4 @@
-export type PositionType = 'BE' | 'FE' | 'AI' | 'PM' | 'INFRA' | 'DESIGN';
+export type PositionType = 'BE' | 'FE' | 'AI' | 'PM' | 'INFRA' | 'DESIGN' | 'DEVOPS' | 'DATA' | 'MOBILE' | 'DB';
 
 export type ExperienceLevel = 'BEGINNER' | 'JUNIOR' | 'MID_LEVEL' | 'SENIOR';
 

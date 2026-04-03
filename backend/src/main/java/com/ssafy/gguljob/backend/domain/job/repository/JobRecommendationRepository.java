@@ -41,20 +41,10 @@ public class JobRecommendationRepository {
     String cypherQuery =
         """
             MATCH (u:User {id: $userId})
-            CALL {
-              WITH u
-              MATCH (j:Job)
-              RETURN j, 0.0 AS rawVScore
-
-              UNION
-
-              WITH u
-              WITH u WHERE u.embedding IS NOT NULL
-              CALL db.index.vector.queryNodes("job_embedding", 6000, u.embedding)
-              YIELD node AS j, score
-              RETURN j, score AS rawVScore
-            }
-            WITH j, u, sum(rawVScore) AS vectorScore
+            WHERE u.embedding IS NOT NULL
+            CALL db.index.vector.queryNodes("job_embedding", 300, u.embedding)
+            YIELD node AS j, score
+            WITH j, u, score AS vectorScore
 
             OPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)<-[:REQUIRES_SKILL]-(j)
             WITH j, u, vectorScore, count(s) AS graphScore
