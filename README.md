@@ -4,6 +4,10 @@
 
 SSAFY 2학기 자율 프로젝트 - 영철부지 팀
 
+## 팀원 소개
+
+![alt text](images/gguljob_members.png)
+
 ---
 
 ## 프로젝트 소개
